@@ -853,6 +853,12 @@ function TitleStatusActions({ title, variant, className }) {
   // both have to be swallowed. Touch is stopped too, because the spatial
   // viewport begins a pan from touchstart.
   const swallow = (e) => { e.stopPropagation(); };
+  // The saving spinner sits on the corner of the button just pressed (or the
+  // first button while the collection loads) instead of after the buttons,
+  // where it took room and pushed them aside while a signed-in mark was being
+  // saved (Notion V4 Tasks, "Signed in: marking a title briefly pushes the
+  // Seen / Watchlist buttons left").
+  const [lastKind, setLastKind] = React.useState(null);
   const act = (fn, kind) => (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -862,9 +868,13 @@ function TitleStatusActions({ title, variant, className }) {
     const to = from === on ? 'none' : on;
     fn(title.id);
     setPop(to === 'none' ? null : kind);
+    setLastKind(kind);
     emitStatusChange({ title, from, to, states });
   };
 
+  const firstKind = offerSeen ? 'seen' : 'watch';
+  const pressed = lastKind === 'watch' || (lastKind === 'seen' && offerSeen) ? lastKind : firstKind;
+  const spinOn = busy ? pressed : loading ? firstKind : null;
   const cls = [
     'tsa',
     inline ? 'inline' : 'overlay',
@@ -891,6 +901,7 @@ function TitleStatusActions({ title, variant, className }) {
         onClick={act(toggleSeen, 'seen')}
       >
         <CheckIcon/>
+        {spinOn === 'seen' && <span className="tsa-spin" aria-hidden="true"/>}
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
       </button>}
       <button
@@ -906,9 +917,9 @@ function TitleStatusActions({ title, variant, className }) {
         onClick={act(toggleWatchlist, 'watch')}
       >
         <BookmarkIcon filled={listed}/>
+        {spinOn === 'watch' && <span className="tsa-spin" aria-hidden="true"/>}
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(listed ? 'status.onWatch' : 'status.watchlist')}</span>}
       </button>
-      {(loading || busy) && <span className="tsa-spin" aria-hidden="true"/>}
       {/* The overlay variant has no room for a message; it carries the red
           treatment plus a tooltip, and the drawer/sheet spells it out. */}
       {error && inline && <span className="tsa-err" role="status">{window.MCU_I18N.tr('status.notSaved', { error })}</span>}

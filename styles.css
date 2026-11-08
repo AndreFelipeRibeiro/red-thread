@@ -505,6 +505,12 @@ body { background: var(--v3-bg); }
   border: 2px solid var(--v3-border-strong); border-top-color: var(--v3-text);
   animation: tsa-spin 700ms linear infinite;
 }
+/* On the corner of the button being saved, out of the row's layout, so the
+   buttons never move while a mark saves. (.tsa-btn is position: relative.) */
+.tsa-btn > .tsa-spin {
+  position: absolute; top: -5px; right: -5px; z-index: 3; box-sizing: border-box;
+  background: var(--background); pointer-events: none;
+}
 @keyframes tsa-spin { to { transform: rotate(360deg); } }
 .tsa-err { font-size: var(--fs-xs); color: var(--destructive); font-family: var(--font-mono, ui-monospace, monospace); flex-basis: 100%; }
 

@@ -275,6 +275,30 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     await ctx.close();
   }
 
+  // ---- "Signed in: marking a title briefly pushes the buttons left" ---------
+  // The saving spinner now sits on the pressed button's corner: put it there
+  // exactly as TitleStatusActions renders it, and neither button moves.
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { ...prefs, desktopView: 'list' }, {});
+    await page.goto(URL); await settle(page);
+    const r = await page.evaluate(() => {
+      const row = document.querySelector('.dl-tsa');
+      const rects = () => [...row.querySelectorAll('.tsa-btn')].map(b => { const x = b.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.width)]; });
+      const before = rects();
+      const spin = document.createElement('span'); spin.className = 'tsa-spin'; spin.setAttribute('aria-hidden', 'true');
+      row.querySelector('.tsa-btn.seen').appendChild(spin);
+      const after = rects();
+      const sr = spin.getBoundingClientRect(), br = row.querySelector('.tsa-btn.seen').getBoundingClientRect();
+      spin.remove();
+      return { before, after, badgeOnCorner: sr.right > br.right - 4 && sr.top < br.top + 4, pos: getComputedStyle(spin).position };
+    });
+    out.savingSpinner = r;
+    expect(JSON.stringify(r.before) === JSON.stringify(r.after), 'the saving spinner moved the buttons: ' + JSON.stringify(r));
+    expect(r.badgeOnCorner, 'the saving spinner is not on the button corner: ' + JSON.stringify(r));
+    errors.push(...e);
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(JSON.stringify({ ...out, errors, errorCount: errors.length }, null, 1));
   server.close();

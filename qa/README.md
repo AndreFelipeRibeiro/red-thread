@@ -217,6 +217,13 @@ relative to `qa/`, and build it yourself first:
   below the headers, flashes and takes keyboard focus; on a phone the Up
   next title scrolls nothing and a folded seen title brings its fold's
   header into view, still folded),
+  `test-micro` (Batch 8's micro-interactions, each with Reduce motion: icon
+  buttons shrink while pressed; the All titles bar fills and guide segments
+  fade; marking plays the Seen pop and a counter bump that lasts; a card a
+  filter brings back fades in, and a collection change fades cards; Up next
+  slides between titles with the leaving one inert; a pinned character's
+  thread draws in order once the cards land; the saving spinner never moves
+  the buttons),
   `test-segpill` (the sliding selection: in the sort, type, collection and
   view groups and the phone collection row the pill sits on the selected
   button in English, Portuguese and at Large text, slides on a change and

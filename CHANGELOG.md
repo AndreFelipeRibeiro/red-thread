@@ -13,6 +13,22 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — Marking a title no longer nudges its buttons while it saves
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Signed in: marking a title briefly pushes the Seen /
+Watchlist buttons left (the saving spinner)". Signed in, the saving spinner
+was added after the two buttons while a mark saved, pushing them about 12px
+left for a moment (Andre's screen recording, desktop List).
+
+- The spinner is now a small badge on the corner of the button being saved
+  (the first button while the collection loads), out of the layout.
+- test-micro: with the spinner on a List row's Seen button, neither button
+  moves.
+- Verified: frames from the recording; test-micro; full Batch 8 regression on the final tree. A real
+  signed-in save is still to be seen on staging.
+
 ## V4 design — A pinned character's thread draws itself
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
