@@ -771,13 +771,18 @@ function CollectionIcon({ kind }) {
 // changes layout: 'toolbar' keeps every label where there is room; 'compact'
 // labels just All and the active option, leaving the others as icons.
 // Count badge on Seen and Watchlist. Hidden at zero; pops in when it first
-// appears and rolls up or down when the number changes.
+// appears and rolls up or down when the number changes. The direction is
+// kept until the bump ends (Notion V4 Tasks, "Micro-interaction: the Seen
+// check pops in and the counters tick"): worked out afresh on every render,
+// it was gone with the next one (the toast, sync) about 20ms in, which cut
+// the bump and the roll short.
 function CountBadge({ n, kind, appeared }) {
-  const prev = React.useRef(n);
-  const dir = n > prev.current ? 'up' : n < prev.current ? 'down' : '';
-  React.useEffect(() => { prev.current = n; }, [n]);
+  const [tick, setTick] = React.useState({ n, dir: '' });
+  if (tick.n !== n) setTick({ n, dir: n > tick.n ? 'up' : 'down' });
+  const dir = tick.n === n ? tick.dir : '';
   return (
-    <span key={n} className={`coll-count ${kind}${appeared ? ' new' : ''}${dir ? ' ' + dir : ''}`} aria-hidden="true">
+    <span key={n} className={`coll-count ${kind}${appeared ? ' new' : ''}${dir ? ' ' + dir : ''}`} aria-hidden="true"
+      onAnimationEnd={(e) => { if (e.animationName === 'count-bump') setTick((t) => (t.dir ? { n: t.n, dir: '' } : t)); }}>
       <span className="coll-num">{n}</span>
     </span>
   );
@@ -848,6 +853,12 @@ function TitleStatusActions({ title, variant, className }) {
   // both have to be swallowed. Touch is stopped too, because the spatial
   // viewport begins a pan from touchstart.
   const swallow = (e) => { e.stopPropagation(); };
+  // The saving spinner sits on the corner of the button just pressed (or the
+  // first button while the collection loads) instead of after the buttons,
+  // where it took room and pushed them aside while a signed-in mark was being
+  // saved (Notion V4 Tasks, "Signed in: marking a title briefly pushes the
+  // Seen / Watchlist buttons left").
+  const [lastKind, setLastKind] = React.useState(null);
   const act = (fn, kind) => (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -857,9 +868,13 @@ function TitleStatusActions({ title, variant, className }) {
     const to = from === on ? 'none' : on;
     fn(title.id);
     setPop(to === 'none' ? null : kind);
+    setLastKind(kind);
     emitStatusChange({ title, from, to, states });
   };
 
+  const firstKind = offerSeen ? 'seen' : 'watch';
+  const pressed = lastKind === 'watch' || (lastKind === 'seen' && offerSeen) ? lastKind : firstKind;
+  const spinOn = busy ? pressed : loading ? firstKind : null;
   const cls = [
     'tsa',
     inline ? 'inline' : 'overlay',
@@ -886,6 +901,7 @@ function TitleStatusActions({ title, variant, className }) {
         onClick={act(toggleSeen, 'seen')}
       >
         <CheckIcon/>
+        {spinOn === 'seen' && <span className="tsa-spin" aria-hidden="true"/>}
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
       </button>}
       <button
@@ -901,9 +917,9 @@ function TitleStatusActions({ title, variant, className }) {
         onClick={act(toggleWatchlist, 'watch')}
       >
         <BookmarkIcon filled={listed}/>
+        {spinOn === 'watch' && <span className="tsa-spin" aria-hidden="true"/>}
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(listed ? 'status.onWatch' : 'status.watchlist')}</span>}
       </button>
-      {(loading || busy) && <span className="tsa-spin" aria-hidden="true"/>}
       {/* The overlay variant has no room for a message; it carries the red
           treatment plus a tooltip, and the drawer/sheet spells it out. */}
       {error && inline && <span className="tsa-err" role="status">{window.MCU_I18N.tr('status.notSaved', { error })}</span>}

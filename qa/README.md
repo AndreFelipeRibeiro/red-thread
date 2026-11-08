@@ -24,7 +24,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 53 check scripts in 55 runs (`test-fit` runs three times: English, Portuguese, and Portuguese at the Large text size) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 54 check scripts in 56 runs (`test-fit` runs three times: English, Portuguese, and Portuguese at the Large text size) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
 | `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). Text whose background axe cannot resolve comes back *incomplete*, not as a violation, so this scan passes it; `test-contrast.js` is what measures those. |
@@ -217,6 +217,13 @@ relative to `qa/`, and build it yourself first:
   below the headers, flashes and takes keyboard focus; on a phone the Up
   next title scrolls nothing and a folded seen title brings its fold's
   header into view, still folded),
+  `test-micro` (Batch 8's micro-interactions, each with Reduce motion: icon
+  buttons shrink while pressed; the All titles bar fills and guide segments
+  fade; marking plays the Seen pop and a counter bump that lasts; a card a
+  filter brings back fades in, and a collection change fades cards; Up next
+  slides between titles with the leaving one inert; a pinned character's
+  thread draws in order once the cards land; the saving spinner never moves
+  the buttons),
   `test-segpill` (the sliding selection: in the sort, type, collection and
   view groups and the phone collection row the pill sits on the selected
   button in English, Portuguese and at Large text, slides on a change and

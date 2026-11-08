@@ -59,13 +59,23 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
     await page.goto(URL); await settle(page);
     const g = GROUPS[0];
     const start = (await page.evaluate(PILL, g)).x;
+    // The pill's place on every frame from the click: a slide shows places
+    // between the start and the end, a jump none. (One sample 90ms in could
+    // land after the 300ms slide on a loaded machine.)
+    await page.evaluate((g) => {
+      window.__x = []; const t0 = performance.now();
+      const tick = () => { const p = document.querySelector(g + ' > .seg-pill'); window.__x.push(Math.round(p.getBoundingClientRect().left)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }, g);
     await page.locator(g + ' button').nth(4).click();
-    await page.waitForTimeout(90);
-    const mid = (await page.evaluate(PILL, g)).x;
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
+    const xs = await page.evaluate(() => window.__x);
     const end = await page.evaluate(PILL, g);
-    out.slide = { start, mid, end: end.x };
-    expect(mid > start + 10 && mid < end.x - 10, `the pill did not slide: ${JSON.stringify(out.slide)}`);
+    const between = xs.filter(x => x > start + 10 && x < end.x - 10);
+    out.slide = { start, between: between.length, mid: between[0], end: end.x };
+    // At least one place in between (about 12 normally; a choked machine may
+    // draw only one frame of the slide).
+    expect(between.length >= 1, `the pill did not slide: ${JSON.stringify(out.slide)}`);
     expect(aligned(end), 'after the slide the pill is not on the new button: ' + JSON.stringify(end));
     // The collection and view groups follow too.
     await page.locator('.tb-sort-row .coll-switch button').nth(2).click();

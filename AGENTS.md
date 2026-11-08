@@ -126,10 +126,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (53 check scripts in 55 runs plus the accessibility scan in English,
+    (54 check scripts in 56 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **58 check runs clean**
+    output, not just the exit code. A good run is **59 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)

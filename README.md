@@ -113,6 +113,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - In the toolbar's segmented groups (sort, type, collection, view, the filter
   choices) and the phone collection row, the selection slides to the item
   you pick rather than switching over; with Reduce motion it moves at once.
+- Small motion elsewhere, all off with Reduce motion: icon buttons give a
+  little when pressed; progress bars and guide meters fill; marking a title
+  pops its check and ticks the Seen / Watchlist counters; cards a filter
+  brings back fade in; Up next slides to the next title; a pinned
+  character's thread draws itself along their titles.
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the

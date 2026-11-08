@@ -505,6 +505,12 @@ body { background: var(--v3-bg); }
   border: 2px solid var(--v3-border-strong); border-top-color: var(--v3-text);
   animation: tsa-spin 700ms linear infinite;
 }
+/* On the corner of the button being saved, out of the row's layout, so the
+   buttons never move while a mark saves. (.tsa-btn is position: relative.) */
+.tsa-btn > .tsa-spin {
+  position: absolute; top: -5px; right: -5px; z-index: 3; box-sizing: border-box;
+  background: var(--background); pointer-events: none;
+}
 @keyframes tsa-spin { to { transform: rotate(360deg); } }
 .tsa-err { font-size: var(--fs-xs); color: var(--destructive); font-family: var(--font-mono, ui-monospace, monospace); flex-basis: 100%; }
 
@@ -1402,10 +1408,21 @@ body { background: var(--v3-bg); }
 /* The poster-overlay controls laid out in the card's own row. */
 .tsa.overlay.un-tsa { position: static; transform: none; flex-direction: row; gap: 6px; }
 .tsa.overlay.un-tsa .tsa-btn { width: max(36px, 2.25rem); height: max(36px, 2.25rem); backdrop-filter: none; background: var(--v3-surface-2); border-color: var(--v3-border-strong); }
-/* A new suggestion fades in (the card stays, its content changes). */
+/* A new suggestion fades in (the card stays, its content changes). When it
+   replaces one just marked (UpNextSlide in upnext.tsx; Notion V4 Tasks,
+   "Micro-interaction: Up next slides to the next title"), the old one slides
+   out to the left as the new one slides in from the right. Both sit in one
+   grid cell, so the card keeps its size; the wrapper takes the place in the
+   row the body used to have. */
+.un-slide { display: grid; flex: 1 1 auto; min-width: 0; }
+.un-slide > * { grid-area: 1 / 1; min-width: 0; }
+.un-leave { pointer-events: none; animation: un-out 240ms cubic-bezier(.2,.8,.2,1) both; }
 .un-fade { animation: un-in 260ms ease both; }
+.un-fade.un-enter { animation: un-slide-in 320ms cubic-bezier(.2,.8,.2,1) both; }
 @keyframes un-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .un-fade { animation: none; } }
+@keyframes un-out { to { opacity: 0; transform: translateX(-24px); } }
+@keyframes un-slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .un-fade, .un-fade.un-enter, .un-leave { animation: none; } }
 
 /* Phones: a full-width card at the top of the List or Grid. */
 .un-inline { margin: 0 0 14px; }
@@ -2604,3 +2621,76 @@ html:not(.dark) .card { box-shadow: 0 1px 2px rgb(0 0 0 / .05), 0 10px 24px -14p
 html:not(.dark) :is(.g-module.spatial, .un-chip, .line-tooltip, .mcu-toast, .bulk-bar) {
   box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 10px 28px -12px rgb(0 0 0 / .2);
 }
+
+/* ---------------------------------------------------------------------------
+   PRESS EFFECT (Notion V4 Tasks, "Micro-interaction: a press effect on icon
+   buttons"). Icon buttons shrink a little while pressed and spring back on
+   release. It uses the separate `scale` property, so it never fights a
+   button's own transform, and the transition list keeps the colour fades
+   these buttons had (none had a transition of their own). Not on Spatial
+   cards (they lift) and nothing here changes layout. Reduce motion: none.
+   ------------------------------------------------------------------------- */
+:is(.settings-btn, .m-gbtn, .m-acct, .cb-step button, .cb-close, .drawer-close, .zoom-btn, .tsa-btn,
+    .share-btn, .cb-share, .m-sheet-x, .mt-x, .mt-share, .un-btn, .g-share, .gp-share, .gm-share) {
+  transition: scale 160ms cubic-bezier(.2,.8,.2,1), background-color 150ms ease, color 150ms ease,
+    border-color 150ms ease, box-shadow 150ms ease;
+}
+:is(.settings-btn, .m-gbtn, .m-acct, .cb-step button, .cb-close, .drawer-close, .zoom-btn, .tsa-btn,
+    .share-btn, .cb-share, .m-sheet-x, .mt-x, .mt-share, .un-btn, .g-share, .gp-share, .gm-share):active:not(:disabled) {
+  scale: .92;
+  transition-duration: 70ms, 150ms, 150ms, 150ms, 150ms;
+}
+:root.reduce-motion :is(.settings-btn, .m-gbtn, .m-acct, .cb-step button, .cb-close, .drawer-close, .zoom-btn, .tsa-btn,
+    .share-btn, .cb-share, .m-sheet-x, .mt-x, .mt-share, .un-btn, .g-share, .gp-share, .gm-share):active { scale: none; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.settings-btn, .m-gbtn, .m-acct, .cb-step button, .cb-close, .drawer-close, .zoom-btn, .tsa-btn,
+      .share-btn, .cb-share, .m-sheet-x, .mt-x, .mt-share, .un-btn, .g-share, .gp-share, .gm-share):active { scale: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   PROGRESS FILLS (Notion V4 Tasks, "Micro-interaction: progress bars fill
+   smoothly"). The All titles and phase meters (.pgh-fill, .pgh-seg) already
+   fill and light up; the guide meters now do too: the guide card's and the
+   phone dock's segments fade to their lit colour, and the bars in the Guides
+   menu fill to their new width. Transitions only run on a change, so nothing
+   animates on first paint. Reduce motion: no fill animation.
+   ------------------------------------------------------------------------- */
+.gm-segs i, .g-dock-meter i { transition: background-color 260ms ease, box-shadow 260ms ease; }
+/* The phase meters' segments light up with a stagger; the Reduce motion rule
+   shortens animations but keeps their delays, so it is switched off outright. */
+:root.reduce-motion .pgh-bar.seg.lit .pgh-seg.on { animation: none; }
+.g-bar span { transition: width 600ms cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) {
+  .gm-segs i, .g-dock-meter i, .g-bar span { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   CARDS COMING BACK (Notion V4 Tasks, "Micro-interaction: cards fade softly
+   when a filter changes"). A collection change already fades cards to and
+   from their dimmed look (.card's 220ms opacity transition); a filter that
+   brings cards back into the layout now fades them in rather than popping
+   them in. Opacity only: no GPU layer per card (AGENTS.md, Spatial
+   performance). Reduce motion: they appear at once.
+   ------------------------------------------------------------------------- */
+.card.enter { animation: card-enter 300ms ease-out backwards; }
+@keyframes card-enter { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .card.enter { animation: none; } }
+
+/* ---------------------------------------------------------------------------
+   THREAD DRAWS ITSELF (Notion V4 Tasks, "Micro-interaction: a pinned
+   character's thread draws itself"). Each segment of a pinned character's
+   thread carries pathLength=1 and strokes in after its own delay (--d, set
+   from its place along the thread). Only the dash offset animates: no layer
+   per card, no backdrop filter (AGENTS.md, Spatial performance). Reduce
+   motion: the thread appears at once.
+   ------------------------------------------------------------------------- */
+.connection-layer path.thread-draw {
+  stroke-dasharray: 1;
+  animation: thread-draw 520ms cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes thread-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* The Reduce motion rule shortens animations but keeps their delays, so the
+   staggered draw is switched off outright. */
+:root.reduce-motion .connection-layer path.thread-draw { animation: none; }
+@media (prefers-reduced-motion: reduce) { .connection-layer path.thread-draw { animation: none; } }

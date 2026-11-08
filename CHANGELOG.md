@@ -13,6 +13,139 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 maintenance — test-segpill checks the slide frame by frame
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "QA: test-segpill's slide check can miss the slide on a
+loaded machine". A slow regression run (11 minutes against 8) failed
+`test-segpill`: its one sample, 90ms after the click, landed after the 300ms
+slide had finished. The app was fine.
+
+- The check records the pill's place on every frame from the click and
+  expects places between the start and the end (11-12 of them in practice).
+  The new Batch 8 check, test-micro, does the same throughout.
+- Verified: test-segpill twice; full Batch 8 regression on the final tree (59
+  check runs clean).
+
+## V4 fix — Marking a title no longer nudges its buttons while it saves
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Signed in: marking a title briefly pushes the Seen /
+Watchlist buttons left (the saving spinner)". Signed in, the saving spinner
+was added after the two buttons while a mark saved, pushing them about 12px
+left for a moment (Andre's screen recording, desktop List).
+
+- The spinner is now a small badge on the corner of the button being saved
+  (the first button while the collection loads), out of the layout.
+- test-micro: with the spinner on a List row's Seen button, neither button
+  moves.
+- Verified: frames from the recording; test-micro; full Batch 8 regression on
+  the final tree (59 check runs clean). A real signed-in save is still to be
+  seen on staging.
+
+## V4 design — A pinned character's thread draws itself
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Micro-interaction: a pinned character's thread draws
+itself".
+
+- Pinning a character strokes each segment of its thread in, one after another
+  in the order its titles are laid out (about 0.8s in all), once the cards have
+  landed. Hovering lights the thread at once, as before. Reduce motion: at
+  once.
+- test-micro: Tony Stark's 11 segments, staggered, none finished as the cards
+  land, all finished 1.6s later; hovering draws nothing.
+- README describes Batch 8's motion.
+- Verified: test-micro; full Batch 8 regression on the final tree (59 check
+  runs clean). Not tried on a real iPhone.
+
+## V4 design — Up next slides to the next title
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Micro-interaction: Up next slides to the next title when one
+is marked seen".
+
+- In all four Up next layouts, the title just marked slides out to the left
+  (an inert copy, hidden from screen readers) while the next slides in from
+  the right; the card keeps its size. Reduce motion: an instant swap.
+- test-micro: desktop meter row and phone chip mid-slide, heights unchanged,
+  then settled; nothing leaving with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree (59 check
+  runs clean).
+
+## V4 design — Cards a filter brings back fade in
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Micro-interaction: cards fade softly when a filter changes".
+A collection change already faded cards to and from their dimmed look; cards
+that a type, phase, budget or Released filter brings back popped in.
+
+- They now fade in over 300ms, opacity only (no per-card GPU layer). Not on
+  first paint, nor when Spatial opens again from List. Reduce motion: none.
+- test-micro: none on first paint or after List; Iron Man caught mid-fade
+  coming back; a collection change caught mid-dim; at once with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree (59 check
+  runs clean). Cards that a filter removes still go at once.
+
+## V4 fix — The Seen / Watchlist counters finish their bump
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Micro-interaction: the Seen check pops in and the Seen /
+Watchlist counters tick". The pop and the counters' bump already existed, but
+the counter's bump and number roll were cut off about 20ms in: its direction
+was worked out on each render, so the next one dropped it.
+
+- `CountBadge` keeps the direction until the bump ends (about 460ms now).
+- test-micro: a List row's Seen plays the pop and the bump, still ticking
+  250ms in; neither with Reduce motion.
+- Verified: traced in the browser (23ms before, about 460ms after); test-
+  micro; full Batch 8 regression on the final tree (59 check runs clean).
+
+## V4 design — Guide meters fill smoothly
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Micro-interaction: progress bars fill smoothly". The All
+titles and phase meters already filled; the guide meters jumped.
+
+- The guide card's and the phone dock's segments fade to their lit colour
+  (260ms) and the Guides menu bars fill (600ms). Nothing animates on load.
+- The phase meters' staggered light-up now respects the Reduce motion setting
+  (the rule shortened animations but kept their delays).
+- test-micro: the All titles bar is caught mid-fill after marking Up next; the
+  guide segments carry their fade; neither with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree (59 check
+  runs clean).
+
+## V4 design — Icon buttons give a little when pressed
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-08 after Andre's approval, in Batch 8.
+
+Notion V4 Tasks, "Micro-interaction: a press effect on icon buttons".
+
+- Settings, guides and account buttons, stepper arrows, close buttons, zoom
+  buttons, Seen / Watchlist, Up next and share buttons shrink to 92% while
+  pressed and spring back (the separate `scale` property, so no button's own
+  transform is touched). Disabled buttons don't react; Reduce motion: none.
+- New check `qa/test-micro.js`, which holds all of Batch 8: pressed scale 0.92,
+  released none, none with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree (59 check
+  runs clean). Not tried on a real iPhone.
+
 ## V4 design — The selection slides in the toolbar's segmented groups
 
 Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
