@@ -236,6 +236,45 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     await ctx.close();
   }
 
+  // ---- "a pinned character's thread draws itself" ----------------------------
+  // Pinning Tony Stark (from Iron Man's cast): his segments carry the draw,
+  // staggered, caught part-way soon after and fully drawn later; hovering a
+  // character draws nothing; Reduce motion: drawn at once.
+  for (const [label, extra] of [['motion', ''], ['reduced', REDUCED]]) {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, prefs, {}, extra);
+    await page.goto(URL); await settle(page);
+    const SEGS = () => [...document.querySelectorAll('.connection-layer path.thread-draw[data-ch]')].map(p => ({
+      off: Number(getComputedStyle(p).strokeDashoffset.replace('px', '')) || 0, d: getComputedStyle(p).getPropertyValue('--d').trim() }));
+    // Hovering a cast row lights the thread but draws nothing.
+    await page.locator('.card[data-id="iron-man"]').click(); await page.waitForTimeout(1200);
+    await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).hover(); await page.waitForTimeout(150);
+    const hover = await page.evaluate(SEGS);
+    // The draw waits for the cards to land (the lines hide while they glide).
+    // Every frame from the click on: the first frame with drawing segments is
+    // `early` (a slow machine can't skip past it).
+    await page.evaluate((SEGSs) => {
+      const segs = eval('(' + SEGSs + ')');
+      window.__t = []; const t0 = performance.now();
+      const tick = () => { const s = segs(); if (s.length) window.__t.push(s); if (performance.now() - t0 < 2500) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }, SEGS.toString());
+    await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click();
+    await page.waitForTimeout(2600);
+    const early = (await page.evaluate(() => window.__t))[0] || [];
+    const late = await page.evaluate(SEGS);
+    const r = out['thread ' + label] = { hover: hover.length, segs: early.length, earlyDrawn: early.filter(x => x.off < 0.02).length, delays: [...new Set(early.map(x => x.d))].length, lateUndrawn: late.filter(x => x.off > 0.02).length };
+    expect(r.hover === 0, `${label}: hovering a character drew its thread`);
+    expect(r.segs > 3, `${label}: pinning Tony Stark gave ${r.segs} drawing segments`);
+    if (label === 'motion') {
+      expect(r.earlyDrawn < r.segs && r.delays > 3, 'the thread did not draw in order: ' + JSON.stringify(r));
+    } else {
+      expect(r.earlyDrawn === r.segs, 'Reduce motion: the thread did not appear at once: ' + JSON.stringify(r));
+    }
+    expect(r.lateUndrawn === 0, `${label}: part of the thread never finished drawing: ` + JSON.stringify(r));
+    errors.push(...e.map(x => label + ': ' + x));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(JSON.stringify({ ...out, errors, errorCount: errors.length }, null, 1));
   server.close();

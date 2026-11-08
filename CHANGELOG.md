@@ -13,6 +13,22 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — A pinned character's thread draws itself
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Micro-interaction: a pinned character's thread draws
+itself".
+
+- Pinning a character strokes each segment of its thread in, one after another
+  in the order its titles are laid out (about 0.8s in all), once the cards have
+  landed. Hovering lights the thread at once, as before. Reduce motion: at
+  once.
+- test-micro: Tony Stark's 11 segments, staggered, none finished as the cards
+  land, all finished 1.6s later; hovering draws nothing.
+- README describes Batch 8's motion.
+- Verified: test-micro; full Batch 8 regression on the final tree. Not tried on a real iPhone.
+
 ## V4 design — Up next slides to the next title
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).

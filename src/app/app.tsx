@@ -669,7 +669,7 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route, drawChar }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination, in place of the character threads. A single path in the
   // existing layer, so the canvas performance rules hold.
@@ -800,6 +800,24 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
   // First pass: render lines + endpoints, collect labels for collision resolution
   const labels = [];
 
+  // A pinned character's thread draws itself (Notion V4 Tasks, "Micro-
+  // interaction: a pinned character's thread draws itself"): each of its lit
+  // segments strokes in, one after another in the order its titles are laid
+  // out, about 0.8s in all. Only pinning draws (hovering lights the thread at
+  // once); the class is added when the pin starts and stays while it lasts,
+  // so later renders never replay it. A pin that re-lays the canvas hides the
+  // lines while the cards glide (linesSettling): the canvas passes no
+  // drawChar until they land, so the thread draws where it can be seen.
+  // Reduce motion: the thread appears at once.
+  const drawRank = new Map();
+  if (drawChar && !pair) {
+    const order = new Map(visibleTitles.map((t, i) => [t.id, i]));
+    const segs = connections.filter(c => c.characters.some(ch => primeOf(ch) === primeOf(drawChar)))
+      .sort((x, y) => Math.min(order.get(x.a) ?? 0, order.get(x.b) ?? 0) - Math.min(order.get(y.a) ?? 0, order.get(y.b) ?? 0));
+    const step = segs.length > 1 ? Math.min(90, 700 / (segs.length - 1)) : 0;
+    segs.forEach((c, i) => drawRank.set(c.a + '__' + c.b, Math.round(i * step)));
+  }
+
   const lineEls = connections.map(conn => {
     const p1 = positions[conn.a], p2 = positions[conn.b];
     if (!p1 || !p2) return null;
@@ -828,6 +846,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
       const strokeW = emphasized ? 3 : 1.8;
       const showLabel = emphasized && (isPair || involvesFocus);
+      const drawDelay = emphasized && drawChar && primeOf(ch) === primeOf(drawChar) ? drawRank.get(conn.a + '__' + conn.b) : undefined;
+      const draw = drawDelay !== undefined ? { className: 'thread-draw', pathLength: 1, style: { '--d': drawDelay + 'ms' } } : null;
 
       if (showLabel) {
         // Spread labels along the curve based on N: t in (0.15..0.85), then
@@ -842,13 +862,16 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       return (
         <g key={ch+i+conn.a+conn.b}>
           {emphasized && (
-            <path d={curve(p1,p2,offset,i,isPair)} fill="none" stroke={charObj.color} strokeWidth={strokeW + 6} opacity={0.25} filter="url(#strong-glow)" strokeLinecap="round"/>
+            <path d={curve(p1,p2,offset,i,isPair)} fill="none" stroke={charObj.color} strokeWidth={strokeW + 6} opacity={0.25} filter="url(#strong-glow)" strokeLinecap="round"
+              {...(draw ? { className: draw.className, pathLength: draw.pathLength, style: draw.style } : {})}/>
           )}
           <path
             d={curve(p1,p2,offset,i,isPair)}
             data-a={conn.a} data-b={conn.b} data-ch={ch} data-em={emphasized ? '1' : '0'}
             onClick={(e) => { e.stopPropagation(); if (onPickConnection) onPickConnection({ a: conn.a, b: conn.b }); }}
-            style={{transition:'opacity 220ms, stroke-width 220ms', cursor: 'pointer'}}
+            style={{transition:'opacity 220ms, stroke-width 220ms', cursor: 'pointer', ...(draw ? draw.style : {})}}
+            className={draw ? draw.className : undefined}
+            pathLength={draw ? draw.pathLength : undefined}
             fill="none"
             stroke={charObj.color}
             strokeWidth={strokeW}
@@ -3169,6 +3192,7 @@ function App() {
           hoveredTitle={hoveredTitle}
           activeChar={activeChar}
           activeChars={activeChars}
+          drawChar={linesSettling ? null : highlightedChar}
           litIds={activeChar ? highlightedIds : null}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
