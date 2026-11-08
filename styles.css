@@ -2629,3 +2629,20 @@ html:not(.dark) :is(.g-module.spatial, .un-chip, .line-tooltip, .mcu-toast, .bul
   :is(.settings-btn, .m-gbtn, .m-acct, .cb-step button, .cb-close, .drawer-close, .zoom-btn, .tsa-btn,
       .share-btn, .cb-share, .m-sheet-x, .mt-x, .mt-share, .un-btn, .g-share, .gp-share, .gm-share):active { scale: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   PROGRESS FILLS (Notion V4 Tasks, "Micro-interaction: progress bars fill
+   smoothly"). The All titles and phase meters (.pgh-fill, .pgh-seg) already
+   fill and light up; the guide meters now do too: the guide card's and the
+   phone dock's segments fade to their lit colour, and the bars in the Guides
+   menu fill to their new width. Transitions only run on a change, so nothing
+   animates on first paint. Reduce motion: no fill animation.
+   ------------------------------------------------------------------------- */
+.gm-segs i, .g-dock-meter i { transition: background-color 260ms ease, box-shadow 260ms ease; }
+/* The phase meters' segments light up with a stagger; the Reduce motion rule
+   shortens animations but keeps their delays, so it is switched off outright. */
+:root.reduce-motion .pgh-bar.seg.lit .pgh-seg.on { animation: none; }
+.g-bar span { transition: width 600ms cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce) {
+  .gm-segs i, .g-dock-meter i, .g-bar span { transition: none; }
+}

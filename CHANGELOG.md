@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Guide meters fill smoothly
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Micro-interaction: progress bars fill smoothly". The All
+titles and phase meters already filled; the guide meters jumped.
+
+- The guide card's and the phone dock's segments fade to their lit colour
+  (260ms) and the Guides menu bars fill (600ms). Nothing animates on load.
+- The phase meters' staggered light-up now respects the Reduce motion setting
+  (the rule shortened animations but kept their delays).
+- test-micro: the All titles bar is caught mid-fill after marking Up next; the
+  guide segments carry their fade; neither with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree.
+
 ## V4 design — Icon buttons give a little when pressed
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
