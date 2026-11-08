@@ -13,6 +13,20 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 maintenance — test-segpill checks the slide frame by frame
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "QA: test-segpill's slide check can miss the slide on a
+loaded machine". A slow regression run (11 minutes against 8) failed
+`test-segpill`: its one sample, 90ms after the click, landed after the 300ms
+slide had finished. The app was fine.
+
+- The check records the pill's place on every frame from the click and
+  expects places between the start and the end (11-12 of them in practice).
+  The new Batch 8 check, test-micro, does the same throughout.
+- Verified: test-segpill twice; full Batch 8 regression on the final tree.
+
 ## V4 fix — Marking a title no longer nudges its buttons while it saves
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
