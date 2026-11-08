@@ -185,6 +185,57 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     await ctx.close();
   }
 
+  // ---- "Up next slides to the next title when one is marked seen" -----------
+  // Desktop Spatial's meter row and the phone chip: right after marking, the
+  // old title is on its way out (inert, hidden from screen readers) and the
+  // next one on its way in; then only the next one is left. Reduce motion:
+  // an instant swap with nothing leaving.
+  for (const [label, opts, extra, row] of [
+    ['desktop', DESK, '', '.un-mrow'], ['phone', PHONE, '', '.un-chip'], ['reduced', DESK, REDUCED, '.un-mrow']]) {
+    const { ctx, page, errors: e } = await ctxPage(browser, opts, opts === PHONE ? { ...prefs, viewMode: 'spatial' } : prefs, seenBefore('she-hulk'), extra);
+    await page.goto(URL); await settle(page);
+    const READ = (row) => {
+      const r = document.querySelector(row);
+      if (!r) return null;
+      const leave = r.querySelector('.un-leave'), cur = r.querySelector('.un-slide > :not(.un-leave)');
+      return {
+        leaving: leave ? leave.querySelector('.un-title').textContent : null,
+        leaveInert: leave ? leave.hasAttribute('inert') && leave.getAttribute('aria-hidden') === 'true' : null,
+        current: cur ? cur.querySelector('.un-title').textContent : null,
+        entering: !!(cur && cur.classList.contains('un-enter')),
+        rowH: Math.round(r.getBoundingClientRect().height),
+      };
+    };
+    const before = await page.evaluate(READ, row);
+    // Record every frame from the press on, so a slow machine can't skip the
+    // slide: `mid` is the first frame with a title leaving (or, if none ever
+    // left, the first frame after the swap).
+    await page.evaluate(([row, READ]) => {
+      const read = eval('(' + READ + ')');
+      window.__frames = [];
+      const t0 = performance.now();
+      const tick = () => { window.__frames.push(read(row)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }, [row, READ.toString()]);
+    const btn = page.locator(row + ' .tsa-btn.seen').first();
+    if (opts === PHONE) await btn.tap(); else await btn.click();
+    await page.waitForTimeout(950);
+    const frames = await page.evaluate(() => window.__frames);
+    const mid = frames.find(f => f && f.leaving) || frames.find(f => f && f.current !== before.current) || null;
+    const end = await page.evaluate(READ, row);
+    out['upnext ' + label] = { before, mid, end };
+    if (label === 'reduced') {
+      expect(mid && !mid.leaving && mid.current !== before.current, 'Reduce motion: Up next did not swap at once: ' + JSON.stringify(mid));
+    } else {
+      expect(mid && mid.leaving === before.current && mid.leaveInert && mid.current !== before.current && mid.entering,
+        `${label}: Up next did not slide (${JSON.stringify({ before, mid })})`);
+      expect(mid && Math.abs(mid.rowH - before.rowH) <= 2, `${label}: the Up next row changed height while sliding (${before.rowH} → ${mid && mid.rowH})`);
+    }
+    expect(end && !end.leaving && end.current === (mid && mid.current), `${label}: Up next did not settle: ${JSON.stringify(end)}`);
+    errors.push(...e.map(x => label + ': ' + x));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(JSON.stringify({ ...out, errors, errorCount: errors.length }, null, 1));
   server.close();

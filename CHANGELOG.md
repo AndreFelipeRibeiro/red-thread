@@ -13,6 +13,20 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Up next slides to the next title
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Micro-interaction: Up next slides to the next title when one
+is marked seen".
+
+- In all four Up next layouts, the title just marked slides out to the left
+  (an inert copy, hidden from screen readers) while the next slides in from
+  the right; the card keeps its size. Reduce motion: an instant swap.
+- test-micro: desktop meter row and phone chip mid-slide, heights unchanged,
+  then settled; nothing leaving with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree.
+
 ## V4 design — Cards a filter brings back fade in
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).

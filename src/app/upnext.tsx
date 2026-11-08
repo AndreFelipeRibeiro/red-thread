@@ -14,6 +14,7 @@
 // words and actions are the same everywhere. Seen and Watchlist reuse
 // TitleStatusActions, so marking goes through the usual toast, Undo and sync.
 
+import React from 'react';
 import type { Title, UpNextInfo, UpNextWithTitle } from '../types/catalog';
 
 const UpNI18N = window.MCU_I18N;
@@ -111,13 +112,48 @@ function UpNextNote({ title }: { title: Title }) {
   return <div className="un-note"><window.StoryYear title={title} detail/></div>;
 }
 
+// The next title slides in and the one just marked slides out (Notion V4
+// Tasks, "Micro-interaction: Up next slides to the next title when one is
+// marked seen"), in every Up next layout. The leaving copy is inert (no
+// clicks, no focus, hidden from screen readers) and shares one grid cell with
+// the new one, so nothing reflows; it is dropped when its slide ends, or after
+// half a second at most. Reduce motion: an instant swap, as before.
+function UpNextSlide({ id, className, children }: { id: string; className: string; children: React.ReactNode }) {
+  const latest = React.useRef<React.ReactNode>(children);
+  const [shown, setShown] = React.useState(id);
+  const [leaving, setLeaving] = React.useState<{ id: string; node: React.ReactNode } | null>(null);
+  if (shown !== id) {
+    setShown(id);
+    const reduced = !!(window.MCU_MOTION && window.MCU_MOTION.reduced());
+    setLeaving(reduced ? null : { id: shown, node: latest.current });
+  }
+  React.useEffect(() => { latest.current = children; });
+  React.useEffect(() => {
+    if (!leaving) return undefined;
+    const timer = setTimeout(() => setLeaving(null), 500);
+    return () => clearTimeout(timer);
+  }, [leaving]);
+  return (
+    <div className="un-slide">
+      {leaving && (
+        <div className={className + ' un-leave'} key={'leave:' + leaving.id} aria-hidden="true"
+          ref={(el) => { if (el) el.setAttribute('inert', ''); }}
+          onAnimationEnd={(e) => { if (e.animationName === 'un-out') setLeaving(null); }}>
+          {leaving.node}
+        </div>
+      )}
+      <div className={className + ' un-fade' + (leaving ? ' un-enter' : '')} key={id}>{children}</div>
+    </div>
+  );
+}
+
 // Phones (List and Grid): a full-width card at the top of the list.
 function UpNextCard({ info }: { info: UpNextWithTitle }) {
   const PosterArt = window.PosterArt;
   const t = info.result.title;
   return (
     <section className="un-card un-gcard" data-title-id={t.id} aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
-      <div className="un-fade" key={t.id}>
+      <UpNextSlide id={t.id} className="un-gcard-body">
         <button type="button" className="un-open" onClick={() => info.onOpen(t.id)}>
           <span className="un-gposter" aria-hidden="true">
             <PosterArt title={t}/>
@@ -135,7 +171,7 @@ function UpNextCard({ info }: { info: UpNextWithTitle }) {
           <UpNextStatus info={info} title={t}/>
           <UpNextHide info={info}/>
         </div>
-      </div>
+      </UpNextSlide>
     </section>
   );
 }
@@ -151,7 +187,7 @@ function UpNextStrip({ info }: { info: UpNextInfo }) {
     <div className="un-strip-wrap">
       <section className="un-card un-strip" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
         <div className="un-strip-label" title={untr('upnext.rule')}>{info.lead}<span>{info.detail}</span></div>
-        <div className="un-fade un-strip-body" key={t.id}>
+        <UpNextSlide id={t.id} className="un-strip-body">
           <button type="button" className="un-open" onClick={() => info.onOpen(t.id)}>
             <span className="un-sposter" aria-hidden="true"><PosterArt title={t}/></span>
             <span className="un-stext">
@@ -164,7 +200,7 @@ function UpNextStrip({ info }: { info: UpNextInfo }) {
           </button>
           <UpNextStatus info={info} title={t} variant="inline"/>
           <UpNextHide info={info}/>
-        </div>
+        </UpNextSlide>
       </section>
     </div>
   );
@@ -178,7 +214,7 @@ function UpNextMeterRow({ info }: { info: UpNextInfo }) {
   const t = r.title;
   return (
     <section className="un-mrow" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
-      <div className="un-fade un-mrow-body" key={t.id}>
+      <UpNextSlide id={t.id} className="un-mrow-body">
         <button type="button" className="un-open" onClick={() => info.onOpen(t.id)}>
           <span className="un-mposter" aria-hidden="true"><PosterArt title={t}/></span>
           <span className="un-mtext">
@@ -188,7 +224,7 @@ function UpNextMeterRow({ info }: { info: UpNextInfo }) {
         </button>
         <UpNextStatus info={info} title={t} variant="inline" className="un-compact"/>
         <UpNextHide info={info}/>
-      </div>
+      </UpNextSlide>
     </section>
   );
 }
@@ -201,7 +237,7 @@ function UpNextChip({ info }: { info: UpNextInfo }) {
   const t = r.title;
   return (
     <section className="un-chip" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
-      <div className="un-fade un-chip-body" key={t.id}>
+      <UpNextSlide id={t.id} className="un-chip-body">
         <button type="button" className="un-open" onClick={() => info.onOpen(t.id)}>
           <span className="un-cposter" aria-hidden="true"><PosterArt title={t}/></span>
           <span className="un-ctext">
@@ -211,7 +247,7 @@ function UpNextChip({ info }: { info: UpNextInfo }) {
           <span className="un-chev" aria-hidden="true">›</span>
         </button>
         <UpNextStatus info={info} title={t} className="un-chip-tsa"/>
-      </div>
+      </UpNextSlide>
     </section>
   );
 }

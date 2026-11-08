@@ -1402,10 +1402,21 @@ body { background: var(--v3-bg); }
 /* The poster-overlay controls laid out in the card's own row. */
 .tsa.overlay.un-tsa { position: static; transform: none; flex-direction: row; gap: 6px; }
 .tsa.overlay.un-tsa .tsa-btn { width: max(36px, 2.25rem); height: max(36px, 2.25rem); backdrop-filter: none; background: var(--v3-surface-2); border-color: var(--v3-border-strong); }
-/* A new suggestion fades in (the card stays, its content changes). */
+/* A new suggestion fades in (the card stays, its content changes). When it
+   replaces one just marked (UpNextSlide in upnext.tsx; Notion V4 Tasks,
+   "Micro-interaction: Up next slides to the next title"), the old one slides
+   out to the left as the new one slides in from the right. Both sit in one
+   grid cell, so the card keeps its size; the wrapper takes the place in the
+   row the body used to have. */
+.un-slide { display: grid; flex: 1 1 auto; min-width: 0; }
+.un-slide > * { grid-area: 1 / 1; min-width: 0; }
+.un-leave { pointer-events: none; animation: un-out 240ms cubic-bezier(.2,.8,.2,1) both; }
 .un-fade { animation: un-in 260ms ease both; }
+.un-fade.un-enter { animation: un-slide-in 320ms cubic-bezier(.2,.8,.2,1) both; }
 @keyframes un-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .un-fade { animation: none; } }
+@keyframes un-out { to { opacity: 0; transform: translateX(-24px); } }
+@keyframes un-slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .un-fade, .un-fade.un-enter, .un-leave { animation: none; } }
 
 /* Phones: a full-width card at the top of the List or Grid. */
 .un-inline { margin: 0 0 14px; }
