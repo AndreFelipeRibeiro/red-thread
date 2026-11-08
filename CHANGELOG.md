@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Cards a filter brings back fade in
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Micro-interaction: cards fade softly when a filter changes".
+A collection change already faded cards to and from their dimmed look; cards
+that a type, phase, budget or Released filter brings back popped in.
+
+- They now fade in over 300ms, opacity only (no per-card GPU layer). Not on
+  first paint, nor when Spatial opens again from List. Reduce motion: none.
+- test-micro: none on first paint or after List; Iron Man caught mid-fade
+  coming back; a collection change caught mid-dim; at once with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree. Cards that a filter removes still go at
+  once.
+
 ## V4 fix — The Seen / Watchlist counters finish their bump
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).

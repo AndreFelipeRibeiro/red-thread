@@ -297,8 +297,11 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip }) {
+function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering }) {
   const phaseColor = PHASE_COLORS[title.phase];
+  // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
+  // cards fade softly when a filter changes"); the canvas's first cards don't.
+  const [enter, setEnter] = useState(!!entering);
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
   const status = statusOf(title.id);
@@ -308,7 +311,8 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
   return (
     <div
       data-id={title.id}
-      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''}${isRingFocus ? ' ring-focus' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}${guideSkip && guideSkip.state === 'skipped' ? ' g-skipped' : ''}`}
+      onAnimationEnd={enter ? (e) => { if (e.animationName === 'card-enter') setEnter(false); } : undefined}
+      className={`card${enter ? ' enter' : ''} ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''}${isRingFocus ? ' ring-focus' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}${guideSkip && guideSkip.state === 'skipped' ? ' g-skipped' : ''}`}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
@@ -2051,6 +2055,11 @@ function App() {
   // top-left corner). Frame it, unless a card is already selected (opened from a
   // detail sheet or the List's drawer): the focus-ring auto-fit owns it then.
   const spatialShown = isTouch ? viewMode === 'spatial' : desktopView === 'spatial';
+  // True once the canvas has shown its cards: from then on a card that mounts
+  // is one a filter brought back, and it fades in. Reset while the canvas is
+  // hidden, so opening Spatial again shows every card at once.
+  const cardsShownRef = useRef(false);
+  useEffect(() => { cardsShownRef.current = spatialShown; }, [spatialShown]);
 
   // The desktop details drawer opens below the toolbar (its height changes with
   // the width and language), so the view switch, language and account stay
@@ -3188,6 +3197,7 @@ function App() {
           return (
             <Card
               key={t.id}
+              entering={cardsShownRef.current}
               title={t}
               pos={positions[t.id] || {x:0,y:0}}
               onClick={() => onCardTap(t.id)}

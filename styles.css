@@ -2646,3 +2646,15 @@ html:not(.dark) :is(.g-module.spatial, .un-chip, .line-tooltip, .mcu-toast, .bul
 @media (prefers-reduced-motion: reduce) {
   .gm-segs i, .g-dock-meter i, .g-bar span { transition: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   CARDS COMING BACK (Notion V4 Tasks, "Micro-interaction: cards fade softly
+   when a filter changes"). A collection change already fades cards to and
+   from their dimmed look (.card's 220ms opacity transition); a filter that
+   brings cards back into the layout now fades them in rather than popping
+   them in. Opacity only: no GPU layer per card (AGENTS.md, Spatial
+   performance). Reduce motion: they appear at once.
+   ------------------------------------------------------------------------- */
+.card.enter { animation: card-enter 300ms ease-out backwards; }
+@keyframes card-enter { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .card.enter { animation: none; } }

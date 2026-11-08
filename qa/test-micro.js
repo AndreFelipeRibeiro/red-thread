@@ -132,6 +132,59 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     await ctx.close();
   }
 
+  // ---- "cards fade softly when a filter changes" -----------------------------
+  // A type filter set back to All brings Iron Man back: it fades in. The first
+  // paint and switching from List back to Spatial fade nothing. A collection
+  // change fades a card to its dimmed look. Reduce motion: no fade-in.
+  for (const [label, extra] of [['motion', ''], ['reduced', REDUCED]]) {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, prefs, seenBefore('she-hulk'), extra);
+    await page.goto(URL); await settle(page);
+    const OP = () => { const c = document.querySelector('.card[data-id="iron-man"]'); return c ? { enter: c.classList.contains('enter'), op: Number(getComputedStyle(c).opacity) } : null; };
+    const r = out['cards ' + label] = {};
+    r.firstPaint = await page.evaluate(() => document.querySelectorAll('.card.enter').length);
+    expect(r.firstPaint === 0, `${label}: ${r.firstPaint} cards fade in on first paint`);
+    await page.locator('.tb-type-controls .segmented button:nth-of-type(3)').click(); await page.waitForTimeout(900);
+    // Every frame from the click on: Iron Man's opacity as it comes back.
+    await page.evaluate((OPs) => {
+      const op = eval('(' + OPs + ')');
+      window.__f = []; const t0 = performance.now();
+      const tick = () => { window.__f.push(op()); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }, OP.toString());
+    await page.locator('.tb-type-controls .segmented button:nth-of-type(1)').click(); await page.waitForTimeout(1000);
+    const seen = (await page.evaluate(() => window.__f)).filter(Boolean);
+    r.back = seen.find(f => f.enter && f.op > 0.05 && f.op < 0.9) || seen[0] || null;
+    r.fadeFrames = seen.filter(f => f.op > 0.05 && f.op < 0.9).length;
+    r.settled = await page.evaluate(OP);
+    // At least one frame mid-fade (about 13 normally); none with Reduce motion.
+    if (label === 'motion') expect(r.back && r.back.enter && r.fadeFrames >= 1, 'a card brought back did not fade in: ' + JSON.stringify({ back: r.back, frames: r.fadeFrames }));
+    else expect(r.fadeFrames === 0, 'Reduce motion: a card brought back faded in: ' + JSON.stringify({ frames: r.fadeFrames }));
+    expect(r.settled && !r.settled.enter && r.settled.op > 0.95, 'a card brought back did not settle: ' + JSON.stringify(r.settled));
+    // List and back: every card at once.
+    await page.locator('.tb-view-switch button').nth(1).click(); await page.waitForTimeout(600);
+    await page.locator('.tb-view-switch button').nth(0).click(); await page.waitForTimeout(120);
+    r.afterList = await page.evaluate(() => document.querySelectorAll('.card.enter').length);
+    expect(r.afterList === 0, `${label}: ${r.afterList} cards fade in when Spatial opens again`);
+    // The collection dim (Unseen: Iron Man is seen, so it dims).
+    if (label === 'motion') {
+      await page.waitForTimeout(800);
+      // Record the card's opacity every frame, so a slow frame can't skip the fade.
+      await page.evaluate(() => {
+        window.__ops = [];
+        const t0 = performance.now();
+        const tick = () => { const c = document.querySelector('.card[data-id="iron-man"]'); window.__ops.push(Number(getComputedStyle(c).opacity)); if (performance.now() - t0 < 700) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+      });
+      await page.locator('.tb-sort-row .coll-switch button:nth-of-type(2)').click(); await page.waitForTimeout(800);
+      const ops = await page.evaluate(() => window.__ops);
+      r.dimSteps = ops.filter(o => o > 0.3 && o < 0.95).length;
+      r.dimEnd = ops[ops.length - 1];
+      expect(r.dimSteps >= 1 && r.dimEnd < 0.5, 'a collection change did not fade the card: ' + JSON.stringify({ steps: r.dimSteps, end: r.dimEnd }));
+    }
+    errors.push(...e.map(x => label + ': ' + x));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(JSON.stringify({ ...out, errors, errorCount: errors.length }, null, 1));
   server.close();
