@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — The Seen / Watchlist counters finish their bump
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Micro-interaction: the Seen check pops in and the Seen /
+Watchlist counters tick". The pop and the counters' bump already existed, but
+the counter's bump and number roll were cut off about 20ms in: its direction
+was worked out on each render, so the next one dropped it.
+
+- `CountBadge` keeps the direction until the bump ends (about 460ms now).
+- test-micro: a List row's Seen plays the pop and the bump, still ticking
+  250ms in; neither with Reduce motion.
+- Verified: traced in the browser (23ms before, about 460ms after);
+  test-micro; full Batch 8 regression on the final tree.
+
 ## V4 design — Guide meters fill smoothly
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).

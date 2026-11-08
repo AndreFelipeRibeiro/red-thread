@@ -771,13 +771,18 @@ function CollectionIcon({ kind }) {
 // changes layout: 'toolbar' keeps every label where there is room; 'compact'
 // labels just All and the active option, leaving the others as icons.
 // Count badge on Seen and Watchlist. Hidden at zero; pops in when it first
-// appears and rolls up or down when the number changes.
+// appears and rolls up or down when the number changes. The direction is
+// kept until the bump ends (Notion V4 Tasks, "Micro-interaction: the Seen
+// check pops in and the counters tick"): worked out afresh on every render,
+// it was gone with the next one (the toast, sync) about 20ms in, which cut
+// the bump and the roll short.
 function CountBadge({ n, kind, appeared }) {
-  const prev = React.useRef(n);
-  const dir = n > prev.current ? 'up' : n < prev.current ? 'down' : '';
-  React.useEffect(() => { prev.current = n; }, [n]);
+  const [tick, setTick] = React.useState({ n, dir: '' });
+  if (tick.n !== n) setTick({ n, dir: n > tick.n ? 'up' : 'down' });
+  const dir = tick.n === n ? tick.dir : '';
   return (
-    <span key={n} className={`coll-count ${kind}${appeared ? ' new' : ''}${dir ? ' ' + dir : ''}`} aria-hidden="true">
+    <span key={n} className={`coll-count ${kind}${appeared ? ' new' : ''}${dir ? ' ' + dir : ''}`} aria-hidden="true"
+      onAnimationEnd={(e) => { if (e.animationName === 'count-bump') setTick((t) => (t.dir ? { n: t.n, dir: '' } : t)); }}>
       <span className="coll-num">{n}</span>
     </span>
   );

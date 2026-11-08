@@ -89,6 +89,49 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     await ctx.close();
   }
 
+  // ---- "the Seen check pops in and the counters tick" ------------------------
+  // Already in the app since V3 (TitleStatusActions' `pop`, CountBadge's
+  // up / down): marking a title plays the button's pop and the Seen counter's
+  // bump and roll; with Reduce motion they are cut to nothing.
+  for (const [label, extra] of [['motion', ''], ['reduced', REDUCED]]) {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { ...prefs, desktopView: 'list' }, seenBefore('she-hulk'), extra);
+    await page.goto(URL); await settle(page);
+    // Record every frame from the click on (a slow machine can't skip it):
+    // the button's pop, the counter's class, and how long "up" lasted.
+    await page.evaluate(() => {
+      window.__frames = [];
+      const t0 = performance.now();
+      const tick = () => {
+        const b = document.querySelector('.tsa-btn.seen.pop'), c = document.querySelector('.tb-sort-row .coll-count.seen');
+        const a = (el) => el ? { name: getComputedStyle(el).animationName, dur: parseFloat(getComputedStyle(el).animationDuration) } : null;
+        window.__frames.push({ t: performance.now() - t0, pop: a(b), count: a(c), countCls: c ? c.className : '' });
+        if (performance.now() - t0 < 1500) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    await page.locator('.dl-tsa .tsa-btn.seen:not(.on)').first().click();
+    await page.waitForTimeout(1600);
+    const frames = await page.evaluate(() => window.__frames);
+    const popped = frames.find(f => f.pop);
+    const ups = frames.filter(f => /\bup\b/.test(f.countCls));
+    const r = { pop: popped ? popped.pop : null, count: ups.length ? ups[0].count : null,
+      countCls: ups.length ? ups[0].countCls : '', upForMs: ups.length ? Math.round(ups[ups.length - 1].t - ups[0].t) : 0 };
+    // The counter's "up" has to last most of its 420ms bump: it used to be
+    // dropped by the next render, about 20ms in.
+    r.countLater = r.upForMs >= 250 ? r.countCls : '';
+    out['pop ' + label] = r;
+    if (label === 'motion') {
+      expect(r.pop && /tsa-pop/.test(r.pop.name) && r.pop.dur > 0.3, 'the Seen button did not pop: ' + JSON.stringify(r.pop));
+      expect(r.count && /count-bump/.test(r.count.name) && /\bup\b/.test(r.countCls), 'the Seen counter did not tick up: ' + JSON.stringify(r));
+      expect(/\bup\b/.test(r.countLater || ''), 'the Seen counter stopped ticking early: ' + JSON.stringify(r));
+    } else {
+      expect(!r.pop || r.pop.dur < 0.01, 'Reduce motion: the Seen button still pops: ' + JSON.stringify(r.pop));
+      expect(!r.count || r.count.dur < 0.01, 'Reduce motion: the counter still bumps: ' + JSON.stringify(r.count));
+    }
+    errors.push(...e.map(x => label + ': ' + x));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(JSON.stringify({ ...out, errors, errorCount: errors.length }, null, 1));
   server.close();
