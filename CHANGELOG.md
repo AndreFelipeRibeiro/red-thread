@@ -13,6 +13,20 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Icon buttons give a little when pressed
+
+Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Micro-interaction: a press effect on icon buttons".
+
+- Settings, guides and account buttons, stepper arrows, close buttons, zoom
+  buttons, Seen / Watchlist, Up next and share buttons shrink to 92% while
+  pressed and spring back (the separate `scale` property, so no button's own
+  transform is touched). Disabled buttons don't react; Reduce motion: none.
+- New check `qa/test-micro.js`, which holds all of Batch 8: pressed scale 0.92,
+  released none, none with Reduce motion.
+- Verified: test-micro; full Batch 8 regression on the final tree. Not tried on a real iPhone.
+
 ## V4 design — The selection slides in the toolbar's segmented groups
 
 Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
