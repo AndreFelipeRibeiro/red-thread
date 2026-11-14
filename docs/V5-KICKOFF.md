@@ -38,19 +38,20 @@ a design choice conflicts with accessibility, performance or localisation.
 
 | What | Where |
 |---|---|
-| V5 code | Branch `version/5.0`, worktree folder `Red Thread (V5)` (next to `MCU Connections`) |
-| V5 preview | https://red-thread-git-version-50-afr-bfcd.vercel.app/ (deploys on the first push to `version/5.0`) |
-| V4 maintenance | Branch `version/4.0`, worktree folder `MCU-V4`, preview https://red-thread-git-version-40-afr-bfcd.vercel.app/ |
-| Production | `main` → https://redthread.tv/ (V4) |
+| V5 code | Branch `version/5.0`, folder `Red Thread/red-thread-wip` (a linked worktree of `Red Thread/red-thread-live`) |
+| V5 preview | https://red-thread-git-version-50-afr-bfcd.vercel.app/ |
+| Production | `main` → https://redthread.tv/ (V4), folder `red-thread-live` (merges and hotfixes only) |
+| V4 (history) | Branch `version/4.0`, tags `v4.0` and `v4-final`, preview https://red-thread-git-version-40-afr-bfcd.vercel.app/ |
 | Vercel | Project `red-thread` (team `afr-bfcd`), built by Git integration from the committed `vercel.json` |
-| Local dev | `npm run dev` / `npm run preview` on http://localhost:8126/ (strict port; Google sign-in only works there). One worktree's server at a time: V4 and V5 share the port. |
+| Local dev | `npm run dev` / `npm run preview` on http://localhost:8126/ (strict port; Google sign-in only works there). One folder's server at a time: both folders use the port. TMDB token for `tools/refresh-watch.js` in the gitignored `.env`. |
 | Backlog | Notion **Red Thread - V5** → **V5 Tasks** (not created yet; until then, Version = V5 tickets on V4 Tasks) |
 | Figma | Figma MCP, registered in `.mcp.json`; the V5 file is linked from the Notion V5 page once it exists |
 | Next major version | Notion **New Major Version Checklist** (https://app.notion.com/p/40a9e188029f811a85e4c6e333dd8c0b) |
 
-`MCU-V3`, `MCU-V4` and `Red Thread (V5)` are linked worktrees of the
-`MCU Connections` checkout. Sandboxed shells may report them as "prunable".
-They are not: never run `git worktree prune`.
+`red-thread-wip` is a linked worktree of the `red-thread-live` checkout.
+Sandboxed shells may report it as "prunable". It is not: never run
+`git worktree prune`. The two folders replaced `MCU Connections`, `MCU-V3`,
+`MCU-V4` and `Red Thread (V5)` on 2026-11-14 (docs/decisions.md).
 
 ## First session checklist
 
@@ -91,23 +92,21 @@ Propose, don't start.
 
 ## Andre's to-do (outside the code)
 
-- Add the V5 preview to sign-in, so Google sign-in works there:
-  - Google Cloud → Google Auth Platform → Clients → Web client 1 →
-    **Authorized JavaScript origins**:
-    `https://red-thread-git-version-50-afr-bfcd.vercel.app` (no slash).
-  - Supabase → Authentication → URL Configuration → **Redirect URLs**:
-    `https://red-thread-git-version-50-afr-bfcd.vercel.app/` (with the slash).
+- ~~Add the V5 preview to sign-in~~ — done 2026-11-14 (Google Cloud → Web
+  client 1 → Authorized JavaScript origins:
+  `https://red-thread-git-version-50-afr-bfcd.vercel.app`; Supabase → Redirect
+  URLs: `https://red-thread-git-version-50-afr-bfcd.vercel.app/`). Try Google
+  sign-in, sync and sign-out on the preview once.
 - Create the Notion **Red Thread - V5** page and **V5 Tasks** board (or ask an
   agent to, following the checklist), and port the V5 tickets from V4 Tasks.
 - Create the V5 Figma file and link it on the Notion V5 page.
-- Open `Red Thread (V5)` in Codex if Codex will work on V5.
+- Open `red-thread-wip` in Codex if Codex will work on V5.
+- Update the Notion **New Major Version Checklist** for the two-folder setup
+  (no new folder per version; `red-thread-wip` switches branch) and the
+  `red-thread-*` preview names.
 
 ## Open decisions
 
 - V5 scope, goals and release criteria (Andre is writing them).
-- Whether V4 keeps receiving fixes while V5 is built, and how often they are
-  merged forward.
-- Folder names: the rename ticket planned `red-thread` / `red-thread-v4`; V5
-  lives in `Red Thread (V5)`. Settle one convention before the folders move.
 - Whether V5's art direction keeps shadcn/ui on Base UI as the component base
   (restyled through tokens) or changes it.

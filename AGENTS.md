@@ -10,7 +10,7 @@ original V3 plan, kept as history: each opens with a note saying so, and lines
 that no longer hold carry dated *Superseded* notes. The README describes the
 app as it is now.
 
-This checkout is **V5** (branch `version/5.0`, worktree `Red Thread (V5)`).
+This checkout is **V5** (branch `version/5.0`, folder `red-thread-wip`).
 Read [docs/V5-KICKOFF.md](docs/V5-KICKOFF.md) before V5 work: it sets out
 what V5 is, the environment and the order of work.
 [docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) and docs/V4-PLAN.md are V4's
@@ -150,17 +150,29 @@ came to be.
   (renamed from `MCU-Connections` on 2026-11-02; GitHub redirects the old web
   and Git addresses as long as no repository is ever created under the old
   name). The Vercel project is `red-thread`.
-- `version/5.0` is **V5 staging**, checked out in the `Red Thread (V5)`
-  worktree. It started on 2026-11-14 from `d11d5b5` (V4 Batch 8, the commit
-  `main` and `version/4.0` shared). Every push deploys the Vercel preview
+- **Two local folders, named by role** (since 2026-11-14), side by side in
+  one parent folder, `Developer/Red Thread/`:
+  - `red-thread-live` — `main`, production. The main checkout (it holds the
+    repository's `.git`). Used only for merges to `main` and for hotfixes.
+  - `red-thread-wip` — the version in progress, a linked worktree of
+    `red-thread-live`. Today `version/5.0`; when the next version starts, this
+    folder switches to its new branch instead of a new folder being made.
+- `version/5.0` is **V5 staging**, checked out in `red-thread-wip`. It
+  started on 2026-11-14 from `d11d5b5` (V4 Batch 8, the commit `main` and
+  `version/4.0` shared). Every push deploys the Vercel preview
   `https://red-thread-git-version-50-afr-bfcd.vercel.app/`.
-- `version/4.0` is **V4 staging** (worktree `MCU-V4`, preview
-  `https://red-thread-git-version-40-afr-bfcd.vercel.app/`). V4 is released;
-  V4 fixes, if any, are made there under that branch's own AGENTS.md and then
-  merged forward into `version/5.0` with the user's approval.
-- `version/3.0` is V3, kept as history (worktree `MCU-V3`, preview
-  `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`, its address
-  from before the rename).
+- **Hotfixes to production** are made on `main` in `red-thread-live`, with
+  the user's explicit approval for that change, then `main` is merged into
+  `version/5.0` so V5 carries the fix.
+- Released versions are history: branches and their Vercel previews are kept,
+  and each shipped state has a tag (`v2-import`, `v3-final`, `v4.0`,
+  `v4-final`; V5 gets `v5.0` at its first merge to `main`). Create and push a
+  tag only with the user's approval.
+  - `version/4.0` (tag `v4-final`), preview
+    `https://red-thread-git-version-40-afr-bfcd.vercel.app/`.
+  - `version/3.0` (tag `v3-final`), preview
+    `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` (its
+    address from before the rename).
 - `main` is **production**: `https://redthread.tv/`. The project's own
   `https://mcu-connections.vercel.app/` redirects there, path and query
   included (`vercel.json`), and so does `www`. It serves V4 (last merge: V4
@@ -182,9 +194,11 @@ came to be.
   approve.
 - Do not run `git reset --hard`, `git checkout -- .`, `git clean`, `git stash`,
   rebases, force pushes or `git worktree prune` without explicit approval.
-  `MCU-V3`, `MCU-V4` and `Red Thread (V5)` are linked worktrees of the
-  `MCU Connections` checkout; they can look missing or "prunable" from a
-  sandboxed shell. They are not.
+  `red-thread-wip` is a linked worktree of the `red-thread-live` checkout; it
+  can look missing or "prunable" from a sandboxed shell. It is not. Move or
+  rename either folder only with `git worktree move` / `git worktree repair`
+  (the main checkout: `mv`, then `git worktree repair` inside it), never in
+  Finder.
 
 ## Commits and CHANGELOG.md
 
@@ -567,7 +581,7 @@ them from the Spatial layout).
 ## Working with another agent
 
 Claude and Codex take turns in the same `version/5.0` worktree
-(`Red Thread (V5)`).
+(`red-thread-wip`).
 Uncommitted changes are the hand-off point; the Notion claim says who holds
 which ticket. When asked to review the other agent's work, read only
 (`git diff`) and report. Edit only if the user asks.

@@ -13,6 +13,32 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — Two local folders, version tags and V5 sign-in
+
+Recorded: 2026-11-14 17:23 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The local checkouts are now two folders named by role, inside
+  `Developer/Red Thread/`: `red-thread-live` (`main`: merges and hotfixes)
+  and `red-thread-wip` (the version in progress, `version/5.0` today). They
+  replace `MCU Connections`, `MCU-V3`, `MCU-V4` and `Red Thread (V5)`; moved
+  with `git worktree move`, `mv` and `git worktree repair`. Production
+  hotfixes are made on `main` and merged into `version/5.0`.
+- Shipped states are tagged on GitHub: `v2-import` (`f567dbf`), `v3-final`
+  (`a44891a`), `v4.0` (`553e0ac`) and `v4-final` (`d11d5b5`). Every version
+  branch and its Vercel preview is kept.
+- The V5 preview is allowed for Google sign-in: its origin was added to the
+  Google OAuth client and its address to Supabase's redirect URLs.
+- `AGENTS.md`, `docs/V5-KICKOFF.md`, `docs/HANDOFF.md` and
+  `docs/decisions.md` describe the two folders, the hotfix flow, the tags and
+  the old sign-in addresses to retire in early 2027.
+- Verified: `git worktree list` shows the two folders, both in step with
+  GitHub; `npm run typecheck` in `red-thread-wip`; every production and
+  preview address loaded (the V3 preview only at its `mcu-connections-…`
+  address); the Google and Supabase lists re-read after saving.
+- Limits: documentation only. Google sign-in on the V5 preview is untested
+  (Google can take up to a few hours to apply the change). The Notion
+  checklist still describes one folder per version.
+
 ## V5 maintenance — V5 workspace setup
 
 Recorded: 2026-11-14 16:37 EST (-0500). Pushed to `version/5.0` (V5 staging).
