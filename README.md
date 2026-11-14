@@ -14,7 +14,8 @@ tracking, Google sign-in and cloud sync across devices.
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/) — V3 as released (its address from before the Vercel project was renamed).
   See the changelog for approved maintenance changes and deployment checks.
 - Work continues on `version/5.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
-  The Notion V5 Tasks board is the roadmap and the live queue, and
+  The Notion master backlog (one board for every version) is the roadmap and
+  the live queue, and
   [docs/V5-KICKOFF.md](docs/V5-KICKOFF.md) is the V5 brief (V4 and V3 Tasks,
   [docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) and the original
   [phase checklist](V3-TASKS.md) are kept as history). V4 fixes, if any, are

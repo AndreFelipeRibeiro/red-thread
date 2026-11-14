@@ -21,7 +21,9 @@ because it is how most of the behaviour got here.
 
 - **V5 is open** since 2026-11-14 on `version/5.0` (folder
   `red-thread-wip`), branched from `d11d5b5`: look and feel, UX/UI and
-  branding. Its scope and tickets are being written; see V5-KICKOFF.md.
+  branding. Its scope and tickets are being written in the Notion master
+  backlog (**Red Thread - Backlog/Tasks (MASTER)**, one board for every
+  version, which replaced the per-version boards); see V5-KICKOFF.md.
 - **V4 is released**: its last batch (Batch 8) reached `main` on 2026-11-08
   (`d11d5b5`, tag `v4-final`). Production hotfixes are made on `main` in
   `red-thread-live` and merged into `version/5.0`. The V4 notes below are

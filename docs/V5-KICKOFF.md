@@ -44,8 +44,8 @@ a design choice conflicts with accessibility, performance or localisation.
 | V4 (history) | Branch `version/4.0`, tags `v4.0` and `v4-final`, preview https://red-thread-git-version-40-afr-bfcd.vercel.app/ |
 | Vercel | Project `red-thread` (team `afr-bfcd`), built by Git integration from the committed `vercel.json` |
 | Local dev | `npm run dev` / `npm run preview` on http://localhost:8126/ (strict port; Google sign-in only works there). One folder's server at a time: both folders use the port. TMDB token for `tools/refresh-watch.js` in the gitignored `.env`. |
-| Backlog | Notion **Red Thread - V5** → **V5 Tasks** (not created yet; until then, Version = V5 tickets on V4 Tasks) |
-| Figma | Figma MCP, registered in `.mcp.json`; the V5 file is linked from the Notion V5 page once it exists |
+| Backlog | Notion **Red Thread - Backlog/Tasks (MASTER)** (https://app.notion.com/p/4189e188029f809c9a95e8b91ae22bdf), one board for every version; V5 tickets have Version = V5 |
+| Figma | Figma MCP, registered in `.mcp.json`; the V5 file is linked from the Notion **Red Thread** page once it exists |
 | Next major version | Notion **New Major Version Checklist** (https://app.notion.com/p/40a9e188029f811a85e4c6e333dd8c0b) |
 
 `red-thread-wip` is a linked worktree of the `red-thread-live` checkout.
@@ -97,13 +97,15 @@ Propose, don't start.
   `https://red-thread-git-version-50-afr-bfcd.vercel.app`; Supabase → Redirect
   URLs: `https://red-thread-git-version-50-afr-bfcd.vercel.app/`). Try Google
   sign-in, sync and sign-out on the preview once.
-- Create the Notion **Red Thread - V5** page and **V5 Tasks** board (or ask an
-  agent to, following the checklist), and port the V5 tickets from V4 Tasks.
-- Create the V5 Figma file and link it on the Notion V5 page.
+- ~~Create the V5 backlog~~ — done 2026-11-14: the Notion master backlog
+  holds every version's tickets. Add V5's scope there and drag the Backlog
+  into priority order.
+- Create the V5 Figma file and link it on the Notion **Red Thread** page.
 - Open `red-thread-wip` in Codex if Codex will work on V5.
 - Update the Notion **New Major Version Checklist** for the two-folder setup
-  (no new folder per version; `red-thread-wip` switches branch) and the
-  `red-thread-*` preview names.
+  (no new folder per version; `red-thread-wip` switches branch), the single
+  master backlog (no new board per version) and the `red-thread-*` preview
+  names.
 
 ## Open decisions
 

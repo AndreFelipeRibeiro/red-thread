@@ -13,6 +13,26 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — One master backlog in Notion
+
+Recorded: 2026-11-14 17:56 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The backlog is now one Notion database for every version, **Red Thread -
+  Backlog/Tasks (MASTER)**, under the top-level Red Thread page. It started
+  as a copy of V4 Tasks; **Version** says which release a ticket is for,
+  batches restart per version and Completion order runs on across versions.
+  V3 Tasks and V4 Tasks are history, and new versions get no board of their
+  own.
+- `AGENTS.md` (Start of every session, Backlog workflow, Deferred work),
+  `README.md`, `docs/V5-KICKOFF.md`, `docs/HANDOFF.md` and
+  `docs/decisions.md` point at it.
+- Verified: the master database's schema, views and rows read through the
+  Notion connector (56 completed V4 tickets, 3 V5 tickets in Backlog, 11
+  unversioned ideas in Deferred), matching V4 Tasks row for row.
+- Limits: documentation only. Nothing in Notion was changed; the database's
+  description still says "Shared V4 queue", and the New Major Version
+  Checklist still describes a board per version.
+
 ## V5 maintenance — Two local folders, version tags and V5 sign-in
 
 Recorded: 2026-11-14 17:23 EST (-0500). Pushed to `version/5.0` (V5 staging).

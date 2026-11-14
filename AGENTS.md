@@ -24,7 +24,8 @@ came to be.
    discard or commit another agent's pending work.
 2. `git fetch origin`; if `version/5.0` moved, fast-forward only
    (`git pull --ff-only`) on a clean tree.
-3. Open the Notion **V5 Tasks** board (see "Backlog workflow"). Ship anything already in **Approved**
+3. Open the Notion master backlog's **All tasks** board (see "Backlog
+   workflow"). Ship anything already in **Approved**
    first (the user cleared it; commit, push, then complete it), then take the
    right ticket and claim it (see Backlog workflow) before writing code.
 
@@ -226,18 +227,18 @@ came to be.
 - Before pushing, check staged content and commit metadata (no personal emails,
   home paths or secrets), and verify the pushed tree matches what you tested.
 
-## Backlog workflow (Notion V5 Tasks)
+## Backlog workflow (Notion master backlog)
 
-The backlog is the Notion database **V5 Tasks**, under a **Red Thread - V5**
-page beside **Red Thread - V4** in **Red Thread - Bugs and Features Backlog**.
-*Not created yet (2026-11-14):* Andre is still scoping V5. Until the board
-exists, V5 tickets are the ones with Version = V5 on **V4 Tasks**
-(`https://app.notion.com/p/f8e1ebb392a6450d8ef883458e12bd76`; data source
-`collection://629a6bf8-a98d-47b1-b64d-9bad9d29a2b8`); replace this paragraph
-with the V5 Tasks URL and data source id when it is made. **V4 Tasks** then
-becomes V4's history and holds any V4 maintenance tickets; open V5 and
-unversioned tickets are copied from it, each copy linking its original in
-**V4 ticket**. **V3 Tasks** (under **Red Thread - V3**) is V3's history.
+The backlog is one Notion database for every version: **Red Thread -
+Backlog/Tasks (MASTER)**, under the top-level **Red Thread** page
+(`https://app.notion.com/p/4189e188029f809c9a95e8b91ae22bdf`; data source
+`collection://6d19e188-029f-8328-8e70-07717fc07aa6`; the **All tasks** board
+is `view://f6b9e188-029f-83bb-a3bc-08b3404d87ee`). Since 2026-11-14 it
+replaces the per-version boards: it started as a copy of **V4 Tasks** (V4's
+completed tickets, the V5 tickets and the unversioned ideas), and the
+**Version** field says which release a ticket belongs to. New versions do not
+get a board of their own. **V4 Tasks** (under **Red Thread - V4**) and **V3
+Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 
 - **Priority = the order of the Backlog column in the "All tasks" board view**,
   top first. Take the top unclaimed ticket unless the user names others. Do not
@@ -245,19 +246,44 @@ unversioned tickets are copied from it, each copy linking its original in
   view). The user drags cards to set the order; agents cannot reorder cards
   and must not add priority numbers. A card titled `———` is the user's divider:
   tickets above it are the next ones to do.
+- **Hierarchy: Epic > Task > Sub-task.** **Level** says which one a ticket is,
+  and **Parent item** / **Sub-items** link them (Notion's sub-items relation).
+  - Claim only **leaf tickets**: tickets with no Sub-items. An Epic, or a Task
+    that has Sub-items, is a container: never claim it, set it In progress or
+    put code against it. Work its children, top of the Backlog column first.
+  - A parent is Completed only when all of its Sub-items are Completed; the
+    agent that completes the last child proposes closing the parent in its
+    handoff, and the user approves it like any other ticket.
+  - New work found while on a ticket becomes a new ticket under the same
+    parent (Level and Parent item set), not extra scope on the current one.
+  - The **All tasks** board filters out containers (Sub-items is empty), so
+    every card on it is claimable; cards show their **Parent item** and
+    **Level**. Epics are in the **Epics** table view, with their tasks listed
+    under Sub-items.
+  - Read the parent's page before starting a child: epics hold the goal, the
+    audit or source behind it, and what is out of scope.
+  - A "Before you start" line in a ticket names tickets that must be Completed
+    first. If they are not, skip to the next leaf ticket and say so.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
   Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
   Improvement, Feature, Design, Workflow, Maintenance), **Version** (V5, V6),
-  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **V4 ticket**
-  (the original record, for tickets ported from V4), **Latest commit**,
-  **Completed on** (date-time), **Completion order** (number, starting at 1).
+  **Level** (Epic, Task, Sub-task), **Parent item** / **Sub-items**,
+  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **Latest commit**,
+  **Completed on** (date-time), **Completion order** (number; it continues
+  across versions, so V4's tickets hold 1–56).
+  Empty fields are hidden on ticket pages (hide-when-empty layout); they
+  still exist, so set them through the API or the property menu as usual.
+  The old **V3 ticket** field was removed on 2026-11-14: tickets carried over
+  from V3 link their original in the page body ("Carried over from V3").
 - **Version** and **Batch** say where a ticket belongs in the shipping history.
   Set both when you claim a ticket: Version is V5 for V5 work, and Batch is the
   batch it is being worked in. They are what the calendar recap's title line is
   built from, so a ticket with no batch has no recap to belong to.
-  - V5 batches start again at **Batch 1**. Add the next Batch option when a
-    new batch starts. Tickets closed together in one approval share a batch.
-  - V6 tickets and unversioned ideas ported from V4 stay **Deferred**. Leave a
+  - Batches restart at **Batch 1** for each version, so a batch is named by
+    Version and Batch together (V5 Batch 1 is not V4 Batch 1). Add the next
+    Batch option only when a version needs one it does not have. Tickets
+    closed together in one approval share a batch.
+  - V6 tickets and unversioned ideas stay **Deferred**. Leave a
     ticket without a Version unless it says which one it is for; guessing a
     version for an idea nobody has scheduled is worse than leaving it blank.
 - Read the whole ticket page, **including any screenshots or images**: fetch
@@ -559,9 +585,9 @@ them from the Spatial layout).
 - **Phase 6, email/password accounts:** Deferred. It waits on a custom domain
   (for reliable transactional email) and on its own plan and explicit
   approval. Do not add forms, recovery handlers or SMTP settings before then.
-- V5's look and feel, UX/UI and branding work are V5 Backlog tickets (Notion
-  V5 Tasks). V6 tickets and unversioned ideas stay Deferred there until the
-  user moves them.
+- V5's look and feel, UX/UI and branding work are Version = V5 tickets in
+  the Notion master backlog. V6 tickets and unversioned ideas stay Deferred
+  there until the user moves them.
 - Other open decisions are listed in docs/HANDOFF.md.
 - Supabase free tier: accept pauses; no keep-alive automation.
 
