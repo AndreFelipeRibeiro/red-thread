@@ -8,14 +8,23 @@ rulebook and [decisions.md](decisions.md) the running decision log. This file is
 the current handoff. `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` are
 the original V3 plan, kept as history (each says so at the top).
 
-**Updated 2026-10-31, when V4 opened.** V3 is finished and live; this checkout
-is V4. Read [V4-KICKOFF.md](V4-KICKOFF.md) for what V4 is and the order of
-work, and [V4-PLAN.md](V4-PLAN.md) for the build migration and its findings.
+**Updated 2026-11-14, when V5 opened.** V4 is finished and live; this checkout
+is V5 (branch `version/5.0`, worktree `Red Thread (V5)`, preview
+https://red-thread-git-version-50-afr-bfcd.vercel.app/). Read
+[V5-KICKOFF.md](V5-KICKOFF.md) for what V5 is and the order of work. V4's
+[V4-KICKOFF.md](V4-KICKOFF.md) and [V4-PLAN.md](V4-PLAN.md) explain the build
+migration and the design system V5 builds on.
 Everything below describes the app as it now stands; the batch history is kept
 because it is how most of the behaviour got here.
 
 ## Where things stand
 
+- **V5 is open** since 2026-11-14 on `version/5.0` (worktree
+  `Red Thread (V5)`), branched from `d11d5b5`: look and feel, UX/UI and
+  branding. Its scope and tickets are being written; see V5-KICKOFF.md.
+- **V4 is released**: its last batch (Batch 8) reached `main` on 2026-11-08
+  (`d11d5b5`). V4 fixes, if any, are made on `version/4.0` in `MCU-V4` and
+  merged forward with the user's approval. The V4 notes below are history.
 - **V3 is released.** Batch 10 merged to production on 2026-10-31
   (`a44891a`), and `main`, `version/3.0` and `version/4.0` all started from
   that commit. V3 stays on `version/3.0` as history.

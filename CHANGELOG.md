@@ -13,6 +13,36 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — V5 workspace setup
+
+Recorded: 2026-11-14 16:37 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Opens V5 on branch `version/5.0`, branched from `d11d5b5` (V4 Batch 8, the
+  commit `main` and `version/4.0` shared), in the worktree `Red Thread (V5)`,
+  deployed as the preview
+  `https://red-thread-git-version-50-afr-bfcd.vercel.app/`. V5 is a
+  look-and-feel release: art direction from Figma, UX/UI and branding.
+- `AGENTS.md` retargeted to V5: `version/5.0` as staging, `version/4.0` as V4
+  maintenance merged forward, merges to `main` from `version/5.0`, Notion
+  **V5 Tasks** as the backlog (not created yet; until then, the Version = V5
+  tickets on V4 Tasks), the **V4 ticket** field, batches restarting at Batch 1,
+  the `V5` CHANGELOG prefix and recap title, and the Figma section no longer
+  tied to V4.
+- `docs/V5-KICKOFF.md` added: what V5 is (goals to be confirmed with Andre's
+  scope), where everything lives, the first-session checklist, the order of
+  work, Andre's to-do and the open decisions.
+- `README.md` carries the V5 preview link and its sign-in redirect row;
+  `docs/decisions.md` records the start of V5; `docs/HANDOFF.md` says where
+  things stand; `package.json` is 5.0.0.
+- Verified: `npm ci`, `npm run typecheck` and `npm run build` in the new
+  worktree; `qa/setup.sh`; `qa/smoke.js` against the local build
+  (`npm run preview` on port 8126: desktop and phone, no errors).
+- Limits: documentation and configuration only — no app code, so no
+  regression run. Google sign-in on the V5 preview waits on its Google and
+  Supabase entries (Andre's to-do), so it is untested. The Notion V5 page and
+  board and the V5 Figma file do not exist yet.
+
+
 ## V4 maintenance — test-segpill checks the slide frame by frame
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);

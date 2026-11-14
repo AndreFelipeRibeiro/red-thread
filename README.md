@@ -9,14 +9,16 @@ tracking, Google sign-in and cloud sync across devices.
 - [Production](https://redthread.tv/) — V4, published from `main`. The
   project's own `mcu-connections.vercel.app` and `www.redthread.tv` redirect
   there.
-- [V4 preview](https://red-thread-git-version-40-afr-bfcd.vercel.app/) — V4 in progress, published from `version/4.0`.
+- [V5 preview](https://red-thread-git-version-50-afr-bfcd.vercel.app/) — V5 in progress (look and feel, UX/UI, branding), published from `version/5.0`.
+- [V4 preview](https://red-thread-git-version-40-afr-bfcd.vercel.app/) — V4 as released, published from `version/4.0`.
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/) — V3 as released (its address from before the Vercel project was renamed).
   See the changelog for approved maintenance changes and deployment checks.
-- Work continues on `version/4.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
-  The Notion V4 Tasks board is the roadmap and the live queue, and
-  [docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) is the V4 brief (V3 Tasks and the
-  original [phase checklist](V3-TASKS.md) are kept as history). V3 fixes, if
-  any, are made on `version/3.0` and merged forward.
+- Work continues on `version/5.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
+  The Notion V5 Tasks board is the roadmap and the live queue, and
+  [docs/V5-KICKOFF.md](docs/V5-KICKOFF.md) is the V5 brief (V4 and V3 Tasks,
+  [docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) and the original
+  [phase checklist](V3-TASKS.md) are kept as history). V4 fixes, if any, are
+  made on `version/4.0` and merged forward.
   Future changes still require review and approval before committing/pushing
   and a separate approval before merging to main. Email/password Phase 6 is deferred.
 
@@ -469,6 +471,7 @@ In Supabase → Authentication → URL Configuration, set the **Site URL** to
 | Environment | Google JavaScript origin | Supabase redirect URL |
 |---|---|---|
 | Production | `https://redthread.tv` | `https://redthread.tv/` |
+| V5 preview | `https://red-thread-git-version-50-afr-bfcd.vercel.app` | `https://red-thread-git-version-50-afr-bfcd.vercel.app/` |
 | V4 preview | `https://red-thread-git-version-40-afr-bfcd.vercel.app` | `https://red-thread-git-version-40-afr-bfcd.vercel.app/` |
 | Local (`npm run dev` and `npm run preview`, both fixed to this port) | `http://localhost:8126` | `http://localhost:8126/` |
 

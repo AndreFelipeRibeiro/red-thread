@@ -10,18 +10,21 @@ original V3 plan, kept as history: each opens with a note saying so, and lines
 that no longer hold carry dated *Superseded* notes. The README describes the
 app as it is now.
 
-This checkout is **V4** (branch `version/4.0`, worktree `MCU-V4`). Read
-[docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) before V4 work: it sets out the V4
-plan, the environment and the Figma workflow.
+This checkout is **V5** (branch `version/5.0`, worktree `Red Thread (V5)`).
+Read [docs/V5-KICKOFF.md](docs/V5-KICKOFF.md) before V5 work: it sets out
+what V5 is, the environment and the order of work.
+[docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) and docs/V4-PLAN.md are V4's
+brief and plan, kept because they explain how the build and the design system
+came to be.
 
 ## Start of every session
 
 1. `git status` in the worktree. If there are uncommitted changes you did not
    make in this session, stop and ask the user. Never edit, stash, reset,
    discard or commit another agent's pending work.
-2. `git fetch origin`; if `version/4.0` moved, fast-forward only
+2. `git fetch origin`; if `version/5.0` moved, fast-forward only
    (`git pull --ff-only`) on a clean tree.
-3. Open the Notion **V4 Tasks** board. Ship anything already in **Approved**
+3. Open the Notion **V5 Tasks** board (see "Backlog workflow"). Ship anything already in **Approved**
    first (the user cleared it; commit, push, then complete it), then take the
    right ticket and claim it (see Backlog workflow) before writing code.
 
@@ -147,40 +150,41 @@ plan, the environment and the Figma workflow.
   (renamed from `MCU-Connections` on 2026-11-02; GitHub redirects the old web
   and Git addresses as long as no repository is ever created under the old
   name). The Vercel project is `red-thread`.
-- `version/4.0` is **V4 staging**, checked out in the `MCU-V4` worktree. Every
-  push deploys the Vercel preview
-  `https://red-thread-git-version-40-afr-bfcd.vercel.app/` (the project's
-  name since 2026-11-02; before that it was
-  `mcu-connections-git-version-40-afr-bfcd.vercel.app`).
-- `version/3.0` is **V3 staging** (worktree `MCU-V3`, preview
+- `version/5.0` is **V5 staging**, checked out in the `Red Thread (V5)`
+  worktree. It started on 2026-11-14 from `d11d5b5` (V4 Batch 8, the commit
+  `main` and `version/4.0` shared). Every push deploys the Vercel preview
+  `https://red-thread-git-version-50-afr-bfcd.vercel.app/`.
+- `version/4.0` is **V4 staging** (worktree `MCU-V4`, preview
+  `https://red-thread-git-version-40-afr-bfcd.vercel.app/`). V4 is released;
+  V4 fixes, if any, are made there under that branch's own AGENTS.md and then
+  merged forward into `version/5.0` with the user's approval.
+- `version/3.0` is V3, kept as history (worktree `MCU-V3`, preview
   `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`, its address
-  from before the rename; a new push would move it to
-  `red-thread-git-version-30-afr-bfcd.vercel.app`). V3 fixes, if any, are
-  made there under that branch's own AGENTS.md and then merged forward into
-  `version/4.0` with the user's approval.
+  from before the rename).
 - `main` is **production**: `https://redthread.tv/`. The project's own
   `https://mcu-connections.vercel.app/` redirects there, path and query
-  included (`vercel.json`), and so does `www`. It serves V4 since the first V4
-  release (2026-11-01, Andre's approval). Each later batch reaches `main` only
-  with the user's explicit approval for that merge; V3 is history on
-  `version/3.0`.
-- All three deploy automatically through Vercel's Git integration; there is no
-  Vercel CLI step. Check a deploy with the commit status on GitHub.
+  included (`vercel.json`), and so does `www`. It serves V4 (last merge: V4
+  Batch 8, `d11d5b5`). Each V5 batch reaches `main` only with the user's
+  explicit approval for that merge.
+- Every branch deploys automatically through Vercel's Git integration; there
+  is no Vercel CLI step. Check a deploy with the commit status on GitHub.
+  Build settings live in the committed `vercel.json`, never in the Vercel
+  dashboard, whose settings apply to every branch including production.
 - Keep iterations local and uncommitted until the user approves committing and
   pushing **that** revision, either in chat or by setting the ticket's Status to
   **Approved** in Notion. Prior approval does not carry over to a new revision.
   Do not push layout experiments for review.
 - **Never merge to `main` without the user's explicit approval for that merge.**
-  Merge with `git merge --no-ff version/3.0` from an up-to-date `main`, push
-  `main`, then fast-forward `version/3.0` to the merge commit so both match.
+  Merge with `git merge --no-ff version/5.0` from an up-to-date `main`, push
+  `main`, then fast-forward `version/5.0` to the merge commit so both match.
 - Work usually ships in batches: implement and verify a few tickets, push the
   batch to staging for the user to try (often on a phone), then merge when they
   approve.
 - Do not run `git reset --hard`, `git checkout -- .`, `git clean`, `git stash`,
   rebases, force pushes or `git worktree prune` without explicit approval.
-  `MCU-V3` and `MCU-V4` are linked worktrees of the `MCU Connections`
-  checkout; they can look missing or "prunable" from a sandboxed shell. They
-  are not.
+  `MCU-V3`, `MCU-V4` and `Red Thread (V5)` are linked worktrees of the
+  `MCU Connections` checkout; they can look missing or "prunable" from a
+  sandboxed shell. They are not.
 
 ## Commits and CHANGELOG.md
 
@@ -192,8 +196,8 @@ plan, the environment and the Figma workflow.
   or `Co-authored-by: Codex <codex@openai.com>`. Keep existing credits; never
   claim tools or checks that were not used.
 - Every committed change gets a CHANGELOG.md entry at the top:
-  `## V4 fix|improvement|feature|design|maintenance — <short title>` (older
-  entries keep their `V3` prefix), then
+  `## V5 fix|improvement|feature|design|maintenance — <short title>` (older
+  entries keep their `V3` or `V4` prefix), then
   `Recorded: YYYY-MM-DD HH:MM EDT (-0400).` and its staging/production status,
   then bullets for the change, the verification actually performed, and the
   limits. Times are real: take them from git
@@ -208,14 +212,18 @@ plan, the environment and the Figma workflow.
 - Before pushing, check staged content and commit metadata (no personal emails,
   home paths or secrets), and verify the pushed tree matches what you tested.
 
-## Backlog workflow (Notion V4 Tasks)
+## Backlog workflow (Notion V5 Tasks)
 
-The backlog is the Notion database **V4 Tasks**, under the **Red Thread - V4** page
+The backlog is the Notion database **V5 Tasks**, under a **Red Thread - V5**
+page beside **Red Thread - V4** in **Red Thread - Bugs and Features Backlog**.
+*Not created yet (2026-11-14):* Andre is still scoping V5. Until the board
+exists, V5 tickets are the ones with Version = V5 on **V4 Tasks**
 (`https://app.notion.com/p/f8e1ebb392a6450d8ef883458e12bd76`; data source
-`collection://629a6bf8-a98d-47b1-b64d-9bad9d29a2b8`). **V3 Tasks** (under
-**Red Thread - V3**) is V3's history and holds any V3 maintenance tickets. Open V4,
-V5 and unversioned tickets were copied from it on 2026-10-31; each copy links
-its original in **V3 ticket**.
+`collection://629a6bf8-a98d-47b1-b64d-9bad9d29a2b8`); replace this paragraph
+with the V5 Tasks URL and data source id when it is made. **V4 Tasks** then
+becomes V4's history and holds any V4 maintenance tickets; open V5 and
+unversioned tickets are copied from it, each copy linking its original in
+**V4 ticket**. **V3 Tasks** (under **Red Thread - V3**) is V3's history.
 
 - **Priority = the order of the Backlog column in the "All tasks" board view**,
   top first. Take the top unclaimed ticket unless the user names others. Do not
@@ -225,17 +233,17 @@ its original in **V3 ticket**.
   tickets above it are the next ones to do.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
   Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
-  Improvement, Feature, Design, Workflow, Maintenance), **Version** (V4, V5),
-  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **V3 ticket**
-  (the original record, for tickets ported from V3), **Latest commit**,
+  Improvement, Feature, Design, Workflow, Maintenance), **Version** (V5, V6),
+  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **V4 ticket**
+  (the original record, for tickets ported from V4), **Latest commit**,
   **Completed on** (date-time), **Completion order** (number, starting at 1).
 - **Version** and **Batch** say where a ticket belongs in the shipping history.
-  Set both when you claim a ticket: Version is V4 for V4 work, and Batch is the
+  Set both when you claim a ticket: Version is V5 for V5 work, and Batch is the
   batch it is being worked in. They are what the calendar recap's title line is
   built from, so a ticket with no batch has no recap to belong to.
-  - V4 batches start again at **Batch 1**. Add the next Batch option when a
+  - V5 batches start again at **Batch 1**. Add the next Batch option when a
     new batch starts. Tickets closed together in one approval share a batch.
-  - V5 tickets and unversioned ideas ported from V3 stay **Deferred**. Leave a
+  - V6 tickets and unversioned ideas ported from V4 stay **Deferred**. Leave a
     ticket without a Version unless it says which one it is for; guessing a
     version for an idea nobody has scheduled is worse than leaving it blank.
 - Read the whole ticket page, **including any screenshots or images**: fetch
@@ -252,7 +260,7 @@ its original in **V3 ticket**.
   the ticket stays Awaiting review until the user approves it.
 - **Approved** is the user's own flag, set by them and nobody else. It means
   they have approved *that ticket's current revision* and you may commit and
-  push it to `version/4.0` without asking again. Never set it yourself, and
+  push it to `version/5.0` without asking again. Never set it yourself, and
   never read it as approval for anything beyond that ticket.
   - It does **not** authorise a merge to `main`. That still needs the user's
     explicit approval for that merge (see "Branches, deploys and approvals").
@@ -282,7 +290,7 @@ exists to avoid.
 
 Title line, then one bullet per ticket:
 
-> **Red Thread V4 – Backlog batch <n> (<a few keywords>)**
+> **Red Thread V5 – Backlog batch <n> (<a few keywords>)**
 >
 > - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
 > - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
@@ -398,15 +406,16 @@ rules carry over unchanged.
 - Search uses one normalisation, `MCU_I18N.fold()` (case and accents), for
   filtering, suggestions and highlights.
 
-## Figma (V4)
+## Figma
 
-V4's new look is designed in Figma and brought into code through the Figma MCP
+Red Thread's look (V4's re-skin, and V5's look and feel and branding work) is
+designed in Figma and brought into code through the Figma MCP
 server (remote, `https://mcp.figma.com/mcp`). `.mcp.json` in the repository
 root registers it for Claude Code in this folder; each person authenticates
 once (`/mcp`, then figma, then Authenticate). Codex adds it with
 `codex mcp add figma --url https://mcp.figma.com/mcp`.
 
-- Figma is the source of truth for the V4 design: variables (colour, type,
+- Figma is the source of truth for the design: variables (colour, type,
   spacing, radius, motion) and components. Code mirrors the variables as
   design tokens in one place, with the same names; components use tokens,
   never raw values copied from a frame.
@@ -536,9 +545,9 @@ them from the Spatial layout).
 - **Phase 6, email/password accounts:** Deferred. It waits on a custom domain
   (for reliable transactional email) and on its own plan and explicit
   approval. Do not add forms, recovery handlers or SMTP settings before then.
-- The build step, the new look and feel and Dark/Light mode are V4 Backlog
-  tickets (Notion V4 Tasks). V5 tickets and unversioned ideas stay Deferred
-  there until the user moves them.
+- V5's look and feel, UX/UI and branding work are V5 Backlog tickets (Notion
+  V5 Tasks). V6 tickets and unversioned ideas stay Deferred there until the
+  user moves them.
 - Other open decisions are listed in docs/HANDOFF.md.
 - Supabase free tier: accept pauses; no keep-alive automation.
 
@@ -557,7 +566,8 @@ them from the Spatial layout).
 
 ## Working with another agent
 
-Claude and Codex take turns in the same `version/4.0` worktree (`MCU-V4`).
+Claude and Codex take turns in the same `version/5.0` worktree
+(`Red Thread (V5)`).
 Uncommitted changes are the hand-off point; the Notion claim says who holds
 which ticket. When asked to review the other agent's work, read only
 (`git diff`) and report. Edit only if the user asks.
