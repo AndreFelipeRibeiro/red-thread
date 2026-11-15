@@ -282,6 +282,7 @@ declare global {
     GuideIcon: GuidesUI['GuideIcon'];
     GuidesButton: GuidesUI['GuidesButton'];
     GuidesPage: GuidesUI['GuidesPage'];
+    ThemeLab: typeof import('../app/theme-lab')['ThemeLab'];
     GuidePromo: GuidesUI['GuidePromo'];
     GuideOff: GuidesUI['GuideOff'];
     GuideOffHint: GuidesUI['GuideOffHint'];

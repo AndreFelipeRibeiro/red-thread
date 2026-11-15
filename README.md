@@ -412,6 +412,15 @@ npm run build && npm run preview
 The catalog does not require Supabase to render. This is not an offline app or
 a service worker.
 
+### Theme lab (development and previews only)
+
+In development (`npm run dev`) and on Vercel previews (`*.vercel.app`), a
+"Theme lab" button sits in the bottom-left corner. It swaps theme presets live
+on the real app: Default, Editorial (from the V5 navigation hi-fi screens) and
+Studio, plus the body and display typefaces, the corner radius, the density
+and any pasted tweakcn / shadcn export. The choice is kept per device. It never
+appears on redthread.tv (`src/app/theme-lab.tsx`).
+
 ### Automated checks (optional)
 
 `qa/` holds headless browser checks (Playwright and axe-core) for agents and

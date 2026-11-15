@@ -491,6 +491,10 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   shadcn/ui on Base UI, starting from shadcn's Vega style with the Neutral base
   colour and theme, default radius, Inter and lucide icons (shadcn preset
   `base-vega`). Light and dark themes from day one.
+- `--font-sans` and `--spacing` are declared in a plain `@theme` block, not
+  `@theme inline`, so the utilities read them as variables: the dev-only Theme
+  lab (`src/app/theme-lab.tsx`, development and `*.vercel.app` previews only)
+  tries other typefaces and densities by setting them. Keep them that way.
 - Start from the library defaults; V4's art direction arrives later through
   Figma variables. Do not carry V3's colours (`--v3-bg`, `--v3-accent`, …) in
   as a starting point.

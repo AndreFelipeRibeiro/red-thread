@@ -3118,6 +3118,8 @@ function App() {
           </window.Sheet>
         )}
         <window.StatusToast touch/>
+        {/* Dev and preview builds only (theme-lab.tsx). */}
+        <window.ThemeLab/>
         <window.ShareImageHost touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
@@ -3231,6 +3233,8 @@ function App() {
         search={search}
       />
       <window.StatusToast touch={false}/>
+      {/* Dev and preview builds only (theme-lab.tsx). */}
+      <window.ThemeLab/>
       <window.ShareImageHost touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>

@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — Theme lab: try visual directions on the real app
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- A dev-only panel (`src/app/theme-lab.tsx`), in development and on Vercel
+  previews only, never on redthread.tv: presets (the app's own look,
+  Editorial, Studio), body and display typefaces, corner radius, density, and
+  a pasted tweakcn / shadcn export as a Custom preset. The choice is kept on
+  the device.
+- `--font-sans` and `--spacing` moved to a plain `@theme` block so the lab can
+  set them (AGENTS.md notes why).
+- QA: new `test-themelab`.
+- Verified: typecheck and build; full `qa/regress.sh` on the final tree, 62 check runs clean.
+- Limits: real iPhone not checked.
+
 ## V5 improvement — The Account menu holds account things only
 
 Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
