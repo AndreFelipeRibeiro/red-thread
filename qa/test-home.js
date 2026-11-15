@@ -188,21 +188,23 @@ const STATE = () => {
     await ctx.close();
   }
 
-  // ---- Phone: a search, a filter and the Watchlist tab; Grid keeps its view -
+  // ---- Phone: a search, a filter and the Watchlist tab; an old Grid link or
+  // setting opens the List (Notion "Phone: remove the Grid view") ----------
   for (const [view, prefsView] of [['list', 'list'], ['grid', 'grid']]) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: prefsView, desktopView: 'spatial', sort: 'title', sortDir: 'asc' });
     await page.goto(URL + (view === 'grid' ? '?view=grid&sort=title&phase=2' : '?sort=title&phase=2')); await settle(page);
     await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
     await page.locator('.m-search-input input').fill('iron'); await page.waitForTimeout(300);
     await page.locator('.m-search-input input').blur();
-    await page.locator('.coll-switch button').nth(3).tap(); await page.waitForTimeout(500);
+    await page.locator('.coll-switch button[data-coll="watchlist"]').tap(); await page.waitForTimeout(500);
     await page.evaluate(() => { const a = document.querySelector('.m-scrollarea'); if (a) a.scrollTop = 200; });
     const link = await page.evaluate(() => { const a = document.querySelector('a.m-brandrow'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label') }; });
     expect(link && link.href === '/' && link.name === 'Red Thread, home', `phone logo is not a home link: ${JSON.stringify(link)}`);
     await page.locator('a.m-brandrow').tap(); await page.waitForTimeout(900);
     const s = await page.evaluate(STATE);
     out['phone_' + view] = s;
-    firstState(s, 'phone ' + view, view === 'grid' ? 'grid' : null);
+    firstState(s, 'phone ' + view, null);
+    expect(await page.locator('.m-lrow').count() > 0 && !(await page.locator('.m-card').count()), `phone ${view}: not the List`);
     expect(s.coll && /All/.test(s.coll) || s.coll === null, `phone ${view}: collection tab ${s.coll}`);
     expect(s.listTop === 0, `phone ${view}: not scrolled to the top (${s.listTop})`);
     errors.push(...e);

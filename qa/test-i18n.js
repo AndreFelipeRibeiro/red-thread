@@ -83,14 +83,12 @@ const scan = (list) => (() => {
       await page.locator('.m-fpill').click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape'); await page.waitForTimeout(250);
       await page.locator('.m-lrow-open').first().click(); await page.waitForTimeout(350); texts.push(...await page.evaluate(scan())); out[name].sheetTitle = await page.locator('.m-dtitle').textContent(); await page.keyboard.press('Escape'); await page.waitForTimeout(250);
       await page.locator('.m-appbar-top .m-acct').click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape'); await page.waitForTimeout(250);
-      // My list's Grid button (the View menu is gone; Notion "Phone: bottom bar…").
-      await page.locator('.m-layout button').nth(1).click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
       await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan()));
       await page.locator('.sort-menu-pop [data-sort="title"][data-dir="asc"]').click(); await page.waitForTimeout(400);
-      out[name].azFirst = await page.evaluate(() => [...document.querySelectorAll('.m-ctitle')].slice(0, 4).map(e => e.textContent));
-      await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
-      await page.screenshot({ path: path.join(S, 'shots', 'pt-mobile-grid.png') });
-      await page.locator('.coll-switch button').nth(0).click();
+      out[name].azFirst = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].slice(0, 4).map(e => e.textContent));
+      await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
+      await page.screenshot({ path: path.join(S, 'shots', 'pt-mobile-list.png') });
+      await page.locator('.coll-switch button[data-coll="all"]').click();
       await page.locator('.m-tab[data-section="explore"]').click(); await page.waitForTimeout(700); texts.push(...await page.evaluate(scan()));
     } else {
       await page.locator('.filters-pill:not(.g-btn)').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape');

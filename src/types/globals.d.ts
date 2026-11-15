@@ -206,7 +206,6 @@ declare global {
     MobileTopBar: PhoneHeader['MobileTopBar'];
     MobileNavBar: PhoneHeader['MobileNavBar'];
     MyListBar: PhoneHeader['MyListBar'];
-    MobileGrid: Mobile['MobileGrid'];
     MobileList: Mobile['MobileList'];
     FilterSheet: PhoneHeader['FilterSheet'];
     CastSheet: TitleDetails['CastSheet'];
@@ -233,7 +232,6 @@ declare global {
     Synopsis: TitleDetails['Synopsis'];
     SortMenu: HeaderControls['SortMenu'];
     sortPhrase: HeaderControls['sortPhrase'];
-    ViewMenu: HeaderControls['ViewMenu'];
     SettingsPanel: SettingsModule['SettingsPanel'];
     SettingsSheet: SettingsModule['SettingsSheet'];
     SettingsButton: SettingsModule['SettingsButton'];

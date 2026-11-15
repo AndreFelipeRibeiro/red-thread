@@ -106,7 +106,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
     // My list: the header row plus the collection switch, which lives there.
     await page.goto('http://127.0.0.1:' + QA_PORT + '/?view=list'); await require('./ready').appReady(page);
-    if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
+    if (MODE === 'watch') { await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(300); }
     out['d' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (MODE === 'watch' ? 'watch' : '') + (TEXT ? '-' + TEXT : '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
     await ctx.close();
@@ -114,7 +114,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
   for (const w of [320, 360, 375, 390, 430]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
-    if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
+    if (MODE === 'watch') { await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(300); }
     out['m' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     await ctx.close();
   }

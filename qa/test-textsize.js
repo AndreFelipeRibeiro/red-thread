@@ -87,7 +87,7 @@ const SCAN = () => {
   // ---- The floor, at the default size --------------------------------------
   for (const [label, opts, pages] of [
     ['desktop', DESK, ['', '?view=list', '?title=iron-man', '?guide=before-doomsday&view=list']],
-    ['phone', PHONE, ['', '?view=grid', '?title=iron-man', '?guide=before-doomsday&view=list']],
+    ['phone', PHONE, ['', '?title=iron-man', '?guide=before-doomsday&view=list']],
   ]) {
     const { ctx, page } = await open(opts);
     for (const q of pages) {

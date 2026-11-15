@@ -169,7 +169,7 @@ function UpNextSlide({ id, className, children }: { id: string; className: strin
   );
 }
 
-// Phones (List and Grid): a full-width card at the top of the list.
+// Phones (the List): a full-width card at the top of the list.
 function UpNextCard({ info }: { info: UpNextWithTitle }) {
   const PosterArt = window.PosterArt;
   const t = info.result.title;

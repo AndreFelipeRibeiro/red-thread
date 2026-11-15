@@ -186,13 +186,12 @@ async function openCentreCard(page, tally) {
   return null;
 }
 // Phones (Notion "Phone: bottom bar becomes Explore, My list and Guides"):
-// Spatial is the Explore tab; List and Grid are My list's layout buttons.
+// Spatial is the Explore tab, the List is My list (the Grid is gone).
 const phoneView = async (page, v) => {
   if (v === 'spatial') { await page.locator('.m-tab[data-section="explore"]').click(); return; }
   if (!(await page.locator('.m-listbar').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
-  await page.locator('.m-layout button').nth(v === 'grid' ? 1 : 0).click();
 };
-const pickView = (page, n) => phoneView(page, ['list', 'grid', 'spatial'][n]);
+const pickView = (page, n) => phoneView(page, ['list', 'list', 'spatial'][n]);
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();

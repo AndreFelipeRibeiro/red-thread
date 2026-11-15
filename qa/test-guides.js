@@ -393,12 +393,12 @@ const DATA = () => {
   if (closed.g || closed.pill || !closed.gallery) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
   await finish('phone', ctx, errors);
 
-  // Phone Grid and Spatial: cards, and the guide's dock carrying the next stop
+  // Phone: an old Grid link opens the guide's List; Spatial: the guide's dock carrying the next stop
   // (the separate Up next chip steps aside while a guide is open).
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs(seed1)));
   await page.goto(URL + `?view=grid&guide=${plan.id}`); await settle(page);
-  const cards = await page.locator('.g-grid .g-card').count();
-  if (cards !== plan.ess.length) err(`phone Grid: ${cards} cards, expected ${plan.ess.length}`);
+  const grid = await page.evaluate(() => ({ cards: document.querySelectorAll('.g-grid, .g-card').length, stops: document.querySelectorAll('.g-stop').length }));
+  if (grid.cards || !grid.stops) err(`phone ?view=grid: ${JSON.stringify(grid)}, expected the guide's List`);
   await page.goto(URL + `?view=spatial&guide=${plan.id}`); await settle(page); await page.waitForTimeout(600);
   const chip = await page.evaluate(() => ({
     pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.un-chip'),

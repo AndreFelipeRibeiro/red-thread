@@ -6,7 +6,7 @@
 //
 // Moved out of mobile.tsx so they can be built on the design system: this file
 // is listed with `@source` in src/index.css, so the class recipes exported
-// below (used by MobileGrid and MobileList, which stay in mobile.tsx with their
+// below (used by MobileList, which stay in mobile.tsx with their
 // grouping and reorder logic) are generated from here.
 //
 // Same content, order and actions as before; only the building blocks
@@ -255,7 +255,7 @@ export function EmptyState({ title, sub, mark, action, desktop = false }: EmptyP
 }
 
 // ---------------------------------------------------------------------------
-// Phone List and Grid: layout recipes (MobileGrid / MobileList in mobile.tsx)
+// Phone List: layout recipes (MobileList in mobile.tsx)
 // ---------------------------------------------------------------------------
 
 /** The section heading over a run of titles: a year, a story era. */
@@ -272,11 +272,10 @@ export const PHASE_DIVIDER = 'm-phase-divider sticky top-[-14px] z-4 -mx-3.5 mt-
 export const PHASE_DIVIDER_ALL = cn('overall [&_.pgh-label]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]', DIM);
 export const GBLOCK = 'm-gblock relative';
 export const GROUP = 'm-group [.m-group+&]:mt-4';
-export const GRID = 'm-grid grid grid-cols-2 gap-3.5 min-[600px]:grid-cols-3';
 export const LIST = 'm-list flex flex-col gap-[9px]';
 /** The All tab's flat column of collapsible wrappers. Motion starts once the
- *  collection has loaded (`settled`); the Grid's sections keep its 14px gap. */
-export const flatClass = (grid: boolean, settled: boolean) => cn(grid ? 'm-gflat [&_.m-fx:not(.shut)>.m-fx-in]:pb-3.5' : 'm-flat',
+ *  collection has loaded (`settled`). */
+export const flatClass = (settled: boolean) => cn('m-flat',
   'flex min-w-0 flex-col [--fx:0ms] [--fx-fade:0ms] [--fx-ease:cubic-bezier(.2,.8,.2,1)]', settled && 'settled [--fx:340ms] [--fx-fade:220ms]');
 
 // The row and card a title gets. Their surfaces are shadcn's Card; the
@@ -294,36 +293,6 @@ type CardProps = {
   t: Title; seen: boolean; watch: boolean; current: boolean;
   matchedChars?: string[] | null; search?: string; onSelect: (id: string) => void;
 };
-
-/** A title in the phone Grid: poster with its PH badge and scores, then
- *  title, year and budget, "Set in" and the search match. */
-export function PhoneCard({ t, seen, watch, current, matchedChars, search, onSelect }: CardProps) {
-  const I = I18N();
-  const { PosterArt, StoryYear, ReleaseBadge } = window;
-  return (
-    <div data-flip-id={t.id} data-row-id={t.id}
-      className={cn('m-card relative block overflow-hidden', SURFACE, seen && 'seen', watch && WATCH, current && CURRENT)}>
-      <button className="m-card-open block w-full cursor-pointer rounded-[inherit] text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset" onClick={() => onSelect(t.id)}>
-        <div className={cn('m-pw relative aspect-[2/3]', THUMB, seen && SEEN_WASH)}>
-          <PosterArt title={t}/>
-          <PhaseBadge phase={t.phase}/>
-          <ScoreBadges title={t} compact/>
-        </div>
-        <div className={cn('m-cmeta px-[9px] pt-2 pb-2.5', seen && 'opacity-82')}>
-          <div className="m-ctitle line-clamp-2 min-h-[31px] text-xs leading-[1.25] font-medium tracking-tight text-pretty"><Highlight text={I.titleName(t)} query={search}/></div>
-          <div className={cn('m-cyear mt-[5px] flex items-center justify-between tabular-nums text-muted-foreground', XS)}>
-            <span>{t.year}<ReleaseBadge title={t} className="m-crelease"/></span>
-            {t.budget != null && <b className={cn('font-semibold', DIM)}>{I.budget(t.budget)}</b>}
-          </div>
-          <StoryYear title={t} className="m-cstory mt-1 flex"/>
-          <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
-        </div>
-      </button>
-      {/* Top-right: the PH badge owns top-left. */}
-      <window.TitleStatusActions title={t} className="m-card-tsa top-[7px] right-[7px] bottom-auto flex-row [transform:none] [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn_svg]:size-4"/>
-    </div>
-  );
-}
 
 type RowProps = CardProps & {
   rank: number | null; ranked: boolean; chrono: boolean; lead: 'rt' | 'imdb'; compact: boolean;

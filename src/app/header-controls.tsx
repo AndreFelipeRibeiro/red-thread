@@ -25,16 +25,13 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
-// [value, icon]; labels come from view.* in the active language.
-export const VIEW_MODES: [string, string][] = [['list', '☰'], ['grid', '▦'], ['spatial', '◈']];
-
 // Sort: one menu holds every sort and both of its directions (Notion "Merge
 // sort and order into one Sort menu"). It replaces the six sort tabs (the
 // desktop strip, the phone's bottom bar), the Order toggle and the Order row
 // in Filters. Each choice reads as a plain phrase ("Release date, oldest
 // first"); a sort's usual direction comes first. Desktop shows the whole
 // phrase on the trigger; phones show the sort's short name. shadcn's Popover,
-// its choices ghost buttons that say which one is current (like ViewMenu):
+// its choices ghost buttons that say which one is current:
 // Escape, a tap outside and a choice all close it, and focus goes back to the
 // trigger. Hooks: `sort-menu`, `sort-menu-trigger`, `sort-menu-pop`, and
 // `data-sort` / `data-dir` on each choice.
@@ -110,54 +107,6 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
   );
 }
 
-// List / Grid / Spatial as one compact menu (phone), so the second header row
-// has room for the collection switch: shadcn's Popover, its choices ghost
-// buttons that say which one is current. Escape, a tap outside and a choice
-// all close it, and focus goes back to the trigger. `iconOnly` is the guide's
-// short bar, where the menu sits beside search; in the collection row the
-// label folds away at the row's first fitting step instead.
-export function ViewMenu({ viewMode, setViewMode, iconOnly = false }: {
-  viewMode: string;
-  setViewMode: (mode: string) => void;
-  iconOnly?: boolean;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const current = VIEW_MODES.find(([v]) => v === viewMode) || VIEW_MODES[0];
-  const currentLabel = tr('view.' + current[0]);
-  const hidden = 'sr-only';
-  return (
-    <div className="sort-order mobile-order view-menu relative shrink-0">
-      <Popover open={open} onOpenChange={setOpen}>
-        {/* The popover's own button in the outline look: Base UI needs the
-            real element as its anchor (see the Filters trigger in toolbar.tsx). */}
-        <PopoverTrigger className={cn(buttonVariants({ variant: 'outline' }), 'sort-order-trigger h-11 min-w-0 gap-[7px] px-3 text-xs',
-          iconOnly && 'gap-1.5')} aria-label={tr('view.aria', { label: currentLabel })}>
-          <span className="vi text-sm leading-none opacity-80" aria-hidden="true">{current[1]}</span>
-          <span className={cn('vm-label', iconOnly ? hidden
-            : 'group-data-[fit=1]/viewrow:sr-only group-data-[fit=2]/viewrow:sr-only group-data-[fit=3]/viewrow:sr-only')}>{currentLabel}</span>
-          <svg className="sort-order-chevron block size-3 flex-[0_0_12px]" width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-        </PopoverTrigger>
-        {/* Opening puts focus on the current view, as the menu always did. */}
-        <PopoverContent align="end" sideOffset={8} initialFocus={() => document.querySelector<HTMLElement>('.sort-order-pop [aria-pressed="true"]')}
-          className="sort-order-pop w-auto min-w-[180px] gap-0 p-1" role="group" aria-label={tr('view.label')}>
-          <div className="sort-order-heading px-2 py-1.5 text-xs font-medium text-muted-foreground">{tr('view.label')}</div>
-          {VIEW_MODES.map(([v, ic]) => (
-            <Button key={v} variant="ghost" aria-pressed={viewMode === v}
-              className="h-11 w-full justify-between gap-[18px] px-2.5 text-sm font-normal aria-pressed:bg-accent aria-pressed:text-accent-foreground"
-              onClick={() => { setViewMode(v); setOpen(false); }}>
-              <span><span className="vi me-[9px] text-sm leading-none opacity-80" aria-hidden="true">{ic}</span>{tr('view.' + v)}</span>
-              <span aria-hidden="true">{viewMode === v ? '✓' : ''}</span>
-            </Button>
-          ))}
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
 // Count badge on Seen and Watchlist. Hidden at zero; pops in when it first
 // appears and rolls up or down when the number changes. The direction is
 // kept until the bump ends (Notion V4 Tasks, "Micro-interaction: the Seen
@@ -181,11 +130,11 @@ function CountBadge({ n, kind, appeared }: { n: number; kind: string; appeared: 
   );
 }
 
-// All / Unseen / Seen / Watchlist, always visible in the toolbar (desktop) and
-// the second header row (phone) rather than inside Filters: shadcn's
+// All / Unseen / Seen / Watchlist, at the top of My list (desktop and
+// phone): shadcn's
 // ToggleGroup in the segmented look, with the sliding selection. `variant`
 // only changes layout: 'toolbar' keeps every label where there is room;
-// 'compact' (phone) labels just All and the active option at its compact
+// 'compact' (phone) labels just All (it has no icon) and the active option at its compact
 // steps, leaving the others as icons.
 //
 // `short`: the phone row ran out of room, so options with a shorter label
@@ -214,13 +163,13 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
       className={cn('coll-switch relative h-11 shrink-0 items-stretch gap-0.5 rounded-lg bg-muted p-[3px]', `coll-${variant}`,
         compact && 'min-w-0 flex-1')}>
       <window.SegPill value={value}/>
-      {window.COLLECTION_OPTIONS.map(([v], i) => {
+      {window.COLLECTION_OPTIONS.map(([v]) => {
         const full = tr('collection.' + v);
         const shortL = v === 'watchlist' ? tr('collection.watchlistShort') : full;
         const l = short ? shortL : full;
         const n = counts[v] || 0;
         const label = n ? tr('collection.countAria', { label: l, n }) : l;
-        const on = value === v, first = i === 0;
+        const on = value === v, first = v === 'all';
         // Which compact steps drop this option's label (the row's data-fit).
         const labelSteps = compact
           ? (first || on ? '' : 'group-data-[fit=2]/viewrow:hidden group-data-[fit=3]/viewrow:hidden')
@@ -228,7 +177,7 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
             : on ? 'group-data-[fit=4]/sortrow:hidden group-data-[fit=5]/sortrow:hidden'
               : 'group-data-[fit=2]/sortrow:hidden group-data-[fit=3]/sortrow:hidden group-data-[fit=4]/sortrow:hidden group-data-[fit=5]/sortrow:hidden';
         return (
-          <ToggleGroupItem key={v} value={v} aria-label={label} title={label}
+          <ToggleGroupItem key={v} value={v} data-coll={v} aria-label={label} title={label}
             className={cn('relative z-1 h-auto min-w-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-transparent aria-pressed:text-foreground [&_svg:not([class*=\'size-\'])]:size-[13px]',
               compact ? cn('flex-[1_1_auto] px-2', on && 'grow-2')
                 : 'group-data-[fit=2]/sortrow:px-2.5 group-data-[fit=3]/sortrow:px-2.5 group-data-[fit=4]/sortrow:px-2.5 group-data-[fit=5]/sortrow:px-2.5',
@@ -248,4 +197,4 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
   );
 }
 
-Object.assign(window, { SortMenu, sortPhrase, ViewMenu, CollectionSwitch });
+Object.assign(window, { SortMenu, sortPhrase, CollectionSwitch });

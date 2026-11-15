@@ -870,7 +870,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
   const done = gloc(guide.done);
   const meta = (t) => [gtr(t.type === 'film' ? 'type.film.one' : 'type.series.one'), t.year, gtr('phase.label', { n: t.phase })].join(' · ');
 
-  const phone = surface === 'phone', desk = surface === 'desktop', grid = phone && layout === 'grid';
+  const phone = surface === 'phone', desk = surface === 'desktop';
   // A stop's Seen / Watchlist: a column beside it, side by side in the
   // table and in compact rows.
   const tsaCls = (compact) => cn('g-tsa static flex-col gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(34px,2.125rem)] [&_.tsa-btn]:backdrop-blur-none',
@@ -885,7 +885,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
     optional && cn('optional', !desk && 'border-dashed'), skipped && cn('skipped border-dashed', desk ? 'border-input' : 'py-1.5'),
     isNext && cn('next bg-muted', desk ? 'shadow-[inset_3px_0_0_var(--primary)]' : NEXT_RING),
     current && cn('current', desk ? 'shadow-[inset_3px_0_0_var(--primary)]' : 'shadow-[0_0_0_2px_var(--ring)]'),
-    dest && cn('dest', desk ? '' : 'border-dashed border-input bg-transparent shadow-none', grid && 'mt-3'));
+    dest && cn('dest', desk ? '' : 'border-dashed border-input bg-transparent shadow-none'));
   const openCls = (skipped) => cn('g-open flex min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-md text-left', FOCUS, skipped && 'opacity-55');
   const thumbCls = (compact, skipped) => cn('g-thumb h-[66px] w-11 flex-[0_0_44px] rounded-md', THUMB,
     compact && (desk ? 'h-9 w-6 basis-6 rounded-[4px] opacity-60' : 'h-[42px] w-7 basis-7 rounded-[4px] opacity-60'), skipped && 'h-[42px] w-7 basis-7');
@@ -936,48 +936,6 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
       <span className={cn('g-acts inline-flex flex-none', desk && 'items-center justify-end gap-1.5')}><window.TitleStatusActions title={target} className={tsaCls(false)}/></span>
     </div>
   );
-
-  if (surface === 'phone' && layout === 'grid') {
-    return (
-      <div className={cn(S.SCROLL, 'g-scroll')}>
-        {header}
-        <GuideMeter guide={guide} includeOptional={includeOptional} bulk className="mb-3"/>
-        <div className="g-grid grid grid-cols-2 gap-3">
-          {stops.map(s => {
-            const seen = statusOf(s.id) === 'seen';
-            const skipped = isSkipped(s);
-            const isNext = next && next.id === s.id;
-            return (
-              <div key={s.id} data-row-id={s.id} className={cn('g-card relative flex flex-col overflow-hidden', CARD, isNext && cn('next col-span-full bg-muted', NEXT_RING),
-                seen && 'seen', s.optional && 'optional border-dashed', skipped && 'skipped border-dashed', currentId === s.id && 'current')}>
-                <button type="button" className={cn(openCls(false), 'items-stretch gap-0', isNext ? 'flex-row gap-3 px-3 pt-3' : 'flex-col', skipped && 'opacity-50')} onClick={() => onOpen(s.id)}>
-                  <span className={cn('g-poster relative block aspect-[2/3] bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover [&>:first-child_svg]:size-full', isNext && 'w-[72px] flex-[0_0_72px] overflow-hidden rounded-lg', seen && SEEN_WASH)}>
-                    <PosterArt title={s.title}/>
-                    <GuideNum stop={s} seen={seen} next={isNext} skipped={skipped}
-                      className={cn('absolute top-[7px] left-[7px] z-2 bg-[rgba(10,12,20,.88)] text-(--on-image)', seen && 'bg-[#5fa856]', isNext && 'bg-primary text-primary-foreground')}/>
-                    {skipped && <span className={cn('g-skiptag absolute top-1/2 left-1/2 -translate-1/2 rounded-md bg-[rgba(10,12,20,.85)] px-2 py-[3px] font-bold tracking-[.8px] text-(--on-image) uppercase', XS)} aria-hidden="true">{gtr('guide.skippedTag')}</span>}</span>
-                  <span className={cn(textCls, isNext ? 'p-0' : 'px-2.5 pt-2 pb-2.5')}>
-                    {isNext && <span className="un-tag mb-[3px] text-xs font-medium text-foreground">{gtr('guide.nextStop')}</span>}
-                    <span className={titleCls(seen)}>{GI18N.titleName(s.title)}{s.optional && <span className={otag}>{gtr('guide.optionalTag')}</span>}</span>
-                    {!seen && !skipped && <span className={whyCls}>{why(s)}</span>}
-                  </span>
-                </button>
-                {skipped
-                  ? <UnskipButton guide={guide} stop={s} className="g-card-unskip mx-2.5 mb-2.5 min-h-[max(36px,2.25rem)] self-start" onDone={afterSkip}/>
-                  : <>
-                      <window.TitleStatusActions title={s.title}
-                        className={cn('g-card-tsa z-2 gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(34px,2.125rem)] [&_.tsa-btn]:backdrop-blur-none', isNext ? 'static flex-row pt-2 pr-3 pb-3 pl-24' : 'absolute top-[7px] right-[7px] flex-col')}/>
-                      {canSkip(s) && <SkipButton guide={guide} stop={s} className="g-card-skip absolute top-[7px] left-[39px] z-2 size-[max(32px,2rem)] bg-[color-mix(in_oklab,var(--background)_82%,transparent)]" onDone={afterSkip}/>}
-                    </>}
-              </div>
-            );
-          })}
-        </div>
-        {destRow}
-        {announcer}
-      </div>
-    );
-  }
 
   const rows = stops.map(s => {
     const seen = statusOf(s.id) === 'seen';

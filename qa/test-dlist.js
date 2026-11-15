@@ -47,7 +47,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   await page.locator('.drawer-close').click(); await page.waitForTimeout(1200);
   await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(400);
   // filters
-  await page.fill('.search-wrap input', 'man'); await page.locator('.ml-status .coll-switch button').nth(1).click(); await page.waitForTimeout(500);
+  await page.fill('.search-wrap input', 'man'); await page.locator('.ml-status .coll-switch button[data-coll="unseen"]').click(); await page.waitForTimeout(500);
   out.filtered = { ...(await st()), matchedFaces: await page.evaluate(() => document.querySelectorAll('.dl-face.matched').length), chips: await page.evaluate(() => [...document.querySelectorAll('.dlist .ctx-chip')].map(c => c.textContent)) };
   await page.fill('.search-wrap input', 'zzzz'); await page.waitForTimeout(400);
   out.empty = await page.evaluate(() => ({ empty: !!document.querySelector('.dl-empty'), ctx: (document.querySelector('.dlist .ctx-count') || {}).textContent }));

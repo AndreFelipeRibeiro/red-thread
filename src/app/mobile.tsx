@@ -10,9 +10,9 @@ import type { Title } from '../types/catalog';
 import { cn } from 'cn';
 import * as S from './shell';
 import {
-  ScoreBadges, PhaseBadge, ProgressHeader, BulkHeaderAction, MatchBadge, EmptyState, PhoneCard, PhoneRow,
+  ScoreBadges, PhaseBadge, ProgressHeader, BulkHeaderAction, MatchBadge, EmptyState, PhoneRow,
   seenRuns, useSeenFolds, useSettled, Fx, SeenRunHead,
-  GLABEL, GLABEL_STORY, PHASE_DIVIDER, PHASE_DIVIDER_ALL, GBLOCK, GROUP, GRID, LIST, flatClass,
+  GLABEL, GLABEL_STORY, PHASE_DIVIDER, PHASE_DIVIDER_ALL, GBLOCK, GROUP, LIST, flatClass,
 } from './list-parts';
 
 const { useState: mUseState } = React;
@@ -283,122 +283,7 @@ const StoryYear = (props) => <window.StoryYear {...props}/>;
 const ReleaseLine = (props) => <window.ReleaseLine {...props}/>;
 const ReleaseBadge = (props) => <window.ReleaseBadge {...props}/>;
 
-// The card is a <div> wrapping a dedicated open button rather than one big
-// <button>, because the status toggles are buttons too and a nested <button>
-// is invalid HTML. The open button still covers the whole poster + meta area,
-// so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen, progress, sort, upNext }) {
-  const PosterArt = window.PosterArt;
-  const { statusOf } = window.useCollection();
-  const folds = useSeenFolds();
-  const settled = useSettled();
-  // Up next: a full-width card at the top. See upNextPlacement.
-  const place = upNextPlacement(upNext);
-  const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
-  // The lifted title's row, for a step that scrolls to it (a pinned character
-  // or guide stepping onto the suggestion).
-  const top = place.topNode && <div className={`${S.UN_INLINE} top`} data-row-id={place.hideId || undefined}>{place.topNode}</div>;
-  // The caller decides which of these it hands over: phase headings belong to
-  // the By Phase tab, and every other order gets one meter over the whole
-  // catalogue instead.
-  const phased = !!(progress && progress.byPhase);
-  const overall = (progress && progress.all) || null;
-  const blocks = [];
-  if (phased) {
-    let last = null;
-    titles.forEach(t => {
-      if (t.phase !== last) { blocks.push({ phase: t.phase, items: [] }); last = t.phase; }
-      blocks[blocks.length - 1].items.push(t);
-    });
-  } else {
-    blocks.push({ phase: null, items: titles });
-  }
-  // All tab: runs of seen titles sit under a full-width header and fold away.
-  // Each run breaks the grid into sections; when runs form or split the cards
-  // glide to their new cells (the run layout is part of the reorder key).
-  // Runs are found inside each block, so one never straddles a divider: the
-  // phase boundary is the stronger grouping, and a fold that swallowed it
-  // would hide which phase the cards below belong to.
-  const blockRuns = blocks.map(b => (collapseSeen ? seenRuns(b.items, statusOf) : []));
-  const runKey = blockRuns.map(rs => rs.map(r => r[0].id + ':' + r.length).join(',')).join('|');
-  const blockKey = blocks.map(b => (b.phase || 'x') + ':' + b.items.length).join(',');
-  const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey + '|' + (place.hideId || ''), { paused: flipPaused });
-  if (!allTitles.length) return <div className={S.SCROLL} ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
-  const card = (t) => (
-    <PhoneCard key={t.id} t={t} matchedChars={searchCharMatches ? searchCharMatches[t.id] : null} search={search} onSelect={onSelect}
-      seen={statusOf(t.id) === 'seen'} watch={!!markWatch && statusOf(t.id) === 'watchlist'} current={currentId === t.id}/>
-  );
-  const anyRuns = blockRuns.some(rs => rs.length);
-  if (!phased && !overall && !anyRuns) {
-    return (
-      <div className={S.SCROLL} ref={flipRef}>
-        {header}
-        {top}
-        <div className={GRID}>{titles.map(card)}</div>
-      </div>
-    );
-  }
-  // Sections: plain cards between runs, and each run (header + its cards).
-  const sectionsOf = (items, runs) => {
-    const sections = [];
-    const runOf = new Map();
-    runs.forEach(r => { const info = { key: r[0].id, items: r, shut: folds.isShut(r) }; r.forEach(t => runOf.set(t.id, info)); });
-    items.forEach(t => {
-      const run = runOf.get(t.id) || null;
-      const last = sections[sections.length - 1];
-      if (last && last.run === run) last.items.push(t);
-      else sections.push({ run, items: [t] });
-    });
-    return sections.map(sec => sec.run ? (
-      <React.Fragment key={'run:' + sec.run.key}>
-        <Fx appear={settled}>
-          <SeenRunHead items={sec.run.items} shut={sec.run.shut} onToggle={() => folds.toggle(sec.run.items)}/>
-        </Fx>
-        <Fx open={!sec.run.shut}><div className={GRID}>{sec.items.map(card)}</div></Fx>
-      </React.Fragment>
-    ) : (
-      <Fx key={'cards:' + sec.items[0].id}><div className={GRID}>{sec.items.map(card)}</div></Fx>
-    ));
-  };
-  return (
-    <div className={S.SCROLL} ref={flipRef}>
-      {header}
-      {top}
-      <div className={flatClass(true, settled)}>
-        {blocks.map((b, i) => {
-          const p = b.phase && progress.byPhase[b.phase];
-          // Each block is its own sticky container, so a phase heading gives
-          // way to the next one at the boundary instead of the two stacking.
-          // The divider sits outside the Fx wrappers on purpose: those take
-          // overflow:hidden while a run folds, which would strand it.
-          return (
-            <div className={GBLOCK} key={'b:' + (b.phase || 'x') + '#' + i}>
-              {p && (
-                /* No data-flip-id: the reorder animation moves what it tracks
-                   with a transform, and a sticky element's own rect already
-                   depends on the scroll position — the two together pinned the
-                   bar below the top of the scroll area. */
-                <div className={PHASE_DIVIDER}>
-                  <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}
-                    action={<BulkHeaderAction ids={allTitles.filter(t => t.phase === b.phase).map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
-                </div>
-              )}
-              {!p && overall && (
-                <div className={cn(PHASE_DIVIDER, PHASE_DIVIDER_ALL)}>
-                  <ProgressHeader label={mtr('progress.all')} {...overall}
-                    action={<BulkHeaderAction ids={allTitles.map(t => t.id)} group={mtr('progress.all')}/>}/>
-                </div>
-              )}
-              {b.items.length ? sectionsOf(b.items, blockRuns[i]) : null}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// Up next in a phone List or Grid: always at the top of the list, above the
+// Up next in the phone List: always at the top of the list, above the
 // All titles meter, like the desktop List strip (changed from in-line on
 // 2026-10-29). The suggestion's own row or card is left out of the list, so a
 // title never appears twice. Returns the card to show and the title to hide.
@@ -575,7 +460,7 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
         {header}
         {top}
         {overallHead}
-        <div className={flatClass(false, settled)}>
+        <div className={flatClass(settled)}>
           {chunks.map((c) => (
             <div className={GBLOCK} key={c.key}>{c.items.map(renderEntry)}</div>
           ))}
@@ -828,12 +713,12 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
 }
 
 
-Object.assign(window, { useFitSteps, useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileGrid, MobileList, FocusPop, Sheet, Highlight });
+Object.assign(window, { useFitSteps, useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileList, FocusPop, Sheet, Highlight });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
 export { useFitSteps, useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip,
-  MobileGrid, MobileList, FocusPop, Sheet, Highlight,
+  MobileList, FocusPop, Sheet, Highlight,
   MPHASE_COLORS };

@@ -51,7 +51,6 @@ const state = () => {
 
   for (const [label, url, motion] of [
     ['list', '', 'no-preference'],
-    ['grid', '?view=grid', 'no-preference'],
     ['list, reduced motion', '', 'reduce'],
   ]) {
     const ctx = await browser.newContext({ ...PHONE, reducedMotion: motion });

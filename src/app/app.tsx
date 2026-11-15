@@ -647,7 +647,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 // unknown values fall back to those defaults.
 const PREFS_KEY = 'mcu.prefs.v1';
 const PREFS_VERSION = 1;
-const VIEW_MODE_VALUES = ['list', 'grid', 'spatial'];
+// 'grid' (the phone's old Grid) is read as the List, for saved links.
+const VIEW_MODE_VALUES = ['list', 'spatial'];
 const DESKTOP_VIEW_VALUES = ['spatial', 'list'];
 
 // A sort saved for one desktop section ({ sort, sortDir }), or null.
@@ -690,7 +691,7 @@ function readURLState() {
   let q;
   try { q = new URLSearchParams(window.location.search); } catch (e) { return out; }
   out.any = URL_KEYS.some(k => q.has(k));
-  const v = q.get('view'); if (VIEW_MODE_VALUES.indexOf(v) !== -1 || v === 'guides') out.view = v;
+  const v = q.get('view'); if (v === 'grid') out.view = 'list'; else if (VIEW_MODE_VALUES.indexOf(v) !== -1 || v === 'guides') out.view = v;
   const s = q.get('sort'); if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, s)) out.sort = s;
   const o = q.get('order'); if (o === 'asc' || o === 'desc') out.order = o;
   const ph = q.get('phase'); if (/^[1-6]$/.test(ph || '')) out.phase = ph;
@@ -735,7 +736,7 @@ function App() {
     const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release, guidesPage: urlAtLoad.view === 'guides', sections: {} };
     if (urlAtLoad.view) {
       const v = urlAtLoad.view === 'guides' ? 'list' : urlAtLoad.view;
-      p.viewMode = v; p.desktopView = v === 'grid' ? 'list' : v;
+      p.viewMode = v; p.desktopView = v;
     }
     if (urlAtLoad.sort) { p.sort = urlAtLoad.sort; p.sortDir = DEFAULT_SORT_DIR[urlAtLoad.sort]; }
     if (urlAtLoad.order) p.sortDir = urlAtLoad.order;
@@ -770,7 +771,7 @@ function App() {
   // either the gallery of guides (guidesPage) or the open guide's own list.
   // Explore and My list each keep their own sort and filters: what one section
   // leaves behind is parked here and comes back when it is shown again. The
-  // collection filter (To watch, Seen, Watchlist) belongs to My list only.
+  // collection filter (Unseen, Seen, Watchlist) belongs to My list only.
   const [guidesPage, setGuidesPage] = useState(!!initialPrefs.guidesPage);
   const sectionStore = useRef(null);
   if (!sectionStore.current) {
@@ -2167,12 +2168,9 @@ function App() {
   };
   // The section shown, and moving between them (see sectionStore). Phones
   // use the same three (Notion "Phone: bottom bar becomes Explore, My list
-  // and Guides"): Explore is Spatial; My list is the List or the Grid, the
-  // last one used (listModeRef).
+  // and Guides"): Explore is Spatial, My list the List.
   const spatialNow = isTouch ? viewMode === 'spatial' : desktopView === 'spatial';
   const section = spatialNow ? 'explore' : (guide || guidesPage) ? 'guides' : 'mylist';
-  const listModeRef = useRef(viewMode === 'grid' ? 'grid' : 'list');
-  if (viewMode === 'list' || viewMode === 'grid') listModeRef.current = viewMode;
   const slotOf = (s) => (s === 'explore' ? 'explore' : 'list');
   const goSection = (next, opts) => {
     if (next === section && !(opts && opts.force)) return;
@@ -2190,9 +2188,8 @@ function App() {
     if (next === 'mylist' && guideId) closeGuide();
     setGuidesPage(next === 'guides');
     if (isTouch) {
-      // Phones: Spatial, or the List / Grid last used.
       if (next === 'explore') setViewMode('spatial');
-      else { setViewMode(listModeRef.current); setSelectedId(null); }
+      else { setViewMode('list'); setSelectedId(null); }
       return;
     }
     if (opts && opts.select) {
@@ -2203,10 +2200,9 @@ function App() {
     } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
   };
   const showInExplore = (id) => goSection('explore', { select: id, force: true });
-  // Phones: My list's collection tabs and List / Grid, at the top of the list.
+  // Phones: My list's collection tabs, at the top of the list.
   const myListBar = isTouch ? (
-    <window.MyListBar collection={collectionFilter} setCollection={setCollectionFilter} layout={viewMode === 'grid' ? 'grid' : 'list'}
-      setLayout={(v) => { if (v !== viewMode) { window.captureViewFlip(); setViewMode(v); } }}/>
+    <window.MyListBar collection={collectionFilter} setCollection={setCollectionFilter}/>
   ) : null;
   // `showing` is overridable because the Spatial canvas counts what is actually
   // on it: selecting a card fades every unconnected title out, so the pill has
@@ -3070,7 +3066,6 @@ function App() {
               currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
           )}
           {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage onPick={(id) => openGuide(id)}/>}
-          {!guide && !guidesPage && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={<>{myListBar}{contextSummary('line')}</>} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={<>{myListBar}{contextSummary('line')}</>} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className={S.M_SPATIAL_WRAP}>

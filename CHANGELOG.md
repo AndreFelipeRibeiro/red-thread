@@ -13,6 +13,18 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 improvement — Phone: the Grid view is removed
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- My list (now Titles) is one list on the phone: the List / Grid switch and
+  the guide's phone grid are gone, and a saved Grid setting or an old
+  `?view=grid` link opens the List. The code only the Grid used is deleted
+  (`MobileGrid`, `PhoneCard`, the grid recipes, the unused View menu).
+- The status tabs carry `data-coll`, so the QA checks pick a tab by name.
+- README's navigation section catches up with the sections.
+- Verified: the checks the change touches; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
 ## V5 maintenance — Theme lab: try visual directions on the real app
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

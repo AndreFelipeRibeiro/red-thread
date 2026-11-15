@@ -88,9 +88,6 @@ const phoneView = (page, name) => page.evaluate(async (n) => {
   if (!tab('explore')) return 'no bottom bar';
   if (/Spatial|Espacial/.test(n)) { tab('explore').click(); await new Promise(r => setTimeout(r, 2200)); return 'ok'; }
   if (!document.querySelector('.m-listbar')) { tab('mylist').click(); await new Promise(r => setTimeout(r, 700)); }
-  const b = document.querySelectorAll('.m-layout button')[/Grid|Grade/.test(n) ? 1 : 0];
-  if (!b) return 'no layout button';
-  b.click();
   await new Promise(r => setTimeout(r, 2200));
   return 'ok';
 }, name);
@@ -391,7 +388,7 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   // ---- Phone: the rule in every view and order ----------------------------
   const { page: m } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.signInNudge.v1','2');");
   await go(m);
-  for (const view of ['Grid', 'List', 'Spatial']) {
+  for (const view of ['List', 'Spatial']) {
     const sw = await phoneView(m, view);
     if (sw !== 'ok') { errors.push(`could not reach the phone ${view}: ${sw}`); continue; }
     for (const sort of SORTS) {
@@ -441,9 +438,8 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     };
   });
   // My list keeps its own sort (Notion navigation), so By Phase is picked there.
-  await phoneView(m, 'Grid');
+  await phoneView(m, 'List');
   await phoneSort(m, PHONE_SORT.phase);
-  R.gridPhase = await readDividers(m);
   // The sticky divider pins flush to the top of the scroll area, and stays out
   // of the reorder animation: a transform on a sticky element left it hanging.
   R.gridSticky = await m.evaluate(async () => {
@@ -459,19 +455,14 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     sa.scrollTop = 0;
     return out;
   });
-  if (!R.gridSticky) errors.push('no sticky divider in the phone Grid');
+  if (!R.gridSticky) errors.push('no sticky divider in the phone List');
   else {
-    if (Math.abs(R.gridSticky.pinnedOffset) > 1) errors.push(`the pinned Grid divider sits ${R.gridSticky.pinnedOffset}px from the top of the scroll area, not flush`);
+    if (Math.abs(R.gridSticky.pinnedOffset) > 1) errors.push(`the pinned List divider sits ${R.gridSticky.pinnedOffset}px from the top of the scroll area, not flush`);
     if (R.gridSticky.transform !== 'none') errors.push(`the sticky divider carries ${R.gridSticky.transform}; it must stay out of the reorder animation`);
     if (R.gridSticky.flipId) errors.push('the sticky divider has a data-flip-id again');
   }
-  await phoneView(m, 'List');
   R.listPhase = await readDividers(m);
-  if (R.gridPhase.n !== 6) errors.push(`the Grid in By Phase shows ${R.gridPhase.n} phase dividers, expected 6`);
   if (R.listPhase.n !== 6) errors.push(`the List in By Phase shows ${R.listPhase.n} phase dividers, expected 6`);
-  ['position', 'top', 'labelSize'].forEach((k) => {
-    if (R.gridPhase[k] !== R.listPhase[k]) errors.push(`the List divider's ${k} is ${R.listPhase[k]} but the Grid's is ${R.gridPhase[k]}; they must be the same component`);
-  });
   if (R.listPhase.position !== 'sticky') errors.push(`the List divider is ${R.listPhase.position}, not sticky`);
   if (R.listPhase.segs !== R.gridPhase.segs) errors.push(`the List draws ${R.listPhase.segs} segments but the Grid draws ${R.gridPhase.segs}`);
   if (!R.listPhase.segs) errors.push('the meter has no segments');

@@ -148,10 +148,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'og.charAlt': 'Os títulos de {name} em ordem, ligados por um fio',
     'og.guideAlt': '{name}: os títulos essenciais do guia em ordem',
 
-    'view.label': 'Visualização',
-    'view.aria': 'Visualização: {label}',
     'view.list': 'Lista',
-    'view.grid': 'Grade',
     'view.spatial': 'Espacial',
     'home.link': 'Red Thread, início',
     'home.announce': 'De volta ao início',

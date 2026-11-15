@@ -110,7 +110,7 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
     const g = '.m-listbar .coll-switch';
     out.phone = await page.evaluate(PILL, g);
     expect(aligned(out.phone), 'phone: the pill is not on the selected collection: ' + JSON.stringify(out.phone));
-    await page.locator(g + ' button').nth(2).tap(); await page.waitForTimeout(600);
+    await page.locator(g + ' button[data-coll="seen"]').tap(); await page.waitForTimeout(600);
     out.phoneAfter = await page.evaluate(PILL, g);
     expect(aligned(out.phoneAfter), 'phone: after a tap the pill is not on the new collection: ' + JSON.stringify(out.phoneAfter));
     errors.push(...e);

@@ -39,7 +39,7 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   await page.fill('.m-searchbar input', 'man');
   await page.locator('.m-searchbar input').evaluate(el => el.blur());
-  await page.locator('.m-listbar .coll-switch button').nth(1).click(); await page.waitForTimeout(600);
+  await page.locator('.m-listbar .coll-switch button[data-coll="unseen"]').click(); await page.waitForTimeout(600);
   out.mFiltered = { ...(await line('.ctx-line')), rows: await page.locator('.m-lrow-open').count() };
   await page.locator('.ctx-line .ctx-clear').tap(); await page.waitForTimeout(600);
   out.mAfterClear = { ...(await line('.ctx-line')), search: await page.inputValue('.m-searchbar input') };

@@ -179,7 +179,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   //    not out yet it says when the next one arrives.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({})));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(700);
+  await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(700);
   r = await page.evaluate(() => ({ head: (document.querySelector('.un-head') || {}).textContent, btn: (document.querySelector('.un-state .un-btn') || {}).textContent }));
   out.watchEmpty = r;
   if (r.head !== 'Nothing on your Watchlist to watch yet') err(`empty Watchlist reads "${r.head}"`);
@@ -190,7 +190,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   if (unreleased.length) {
     ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({ [unreleased[0].id]: 'watchlist' })));
     await page.goto(URL + '?view=list'); await settle(page);
-    await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(700);
+    await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(700);
     r = await page.evaluate(() => ({ head: (document.querySelector('.un-head') || {}).textContent, arrival: (document.querySelector('.un-arrival-title') || {}).textContent, top: !!document.querySelector('.un-inline.top .un-state') }));
     out.watchNotOut = r;
     if (r.head !== 'Nothing on your Watchlist is out yet' || r.arrival !== name(unreleased[0].id)) err(`Watchlist with nothing out reads "${r.head}" / "${r.arrival}"`);
@@ -207,12 +207,11 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   if (r.id !== firstSeries.id) err(`Series filter: suggested ${r.id}, expected ${firstSeries.id}`);
   if (!/Series/.test(r.tag || '')) err(`the card should name the Series filter: "${r.tag}"`);
 
-  // 9. Phone Grid: one full-width card at the top, the title's own card left out.
+  // 9. An old phone Grid link opens the List: no Grid cards (Notion "Phone:
+  // remove the Grid view").
   await page.goto(URL + '?view=grid'); await settle(page);
-  r = await page.evaluate(() => ({ cards: document.querySelectorAll('.un-gcard').length, title: (document.querySelector('.un-gcard .un-title') || {}).textContent,
-    own: [...document.querySelectorAll('.m-card .m-ctitle')].map(e => e.textContent) }));
-  if (r.cards !== 1 || r.title !== name(out.expect.release)) err(`Grid: ${r.cards} Up next cards, title ${r.title}`);
-  if (r.own.includes(r.title)) err('Grid: the suggested title also appears as a normal card');
+  r = await page.evaluate(() => ({ cards: document.querySelectorAll('.m-card').length, rows: document.querySelectorAll('.m-lrow').length }));
+  if (r.cards || !r.rows) err(`?view=grid on a phone: ${JSON.stringify(r)}, expected the List`);
 
   // 10. Phone Spatial: a chip that opens the details.
   await page.goto(URL + '?view=spatial'); await settle(page);

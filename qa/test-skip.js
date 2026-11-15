@@ -245,21 +245,21 @@ const STATE = () => {
     await ctx.close();
   }
 
-  // ---- Phone Grid, in Portuguese --------------------------------------------
+  // ---- Phone List, in Portuguese (an old Grid link opens the List) --------------------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'pt-BR' });
     await page.goto(URL + '?view=grid&guide=before-doomsday'); await appReady(page);
-    const b = page.locator('.g-card[data-row-id="loki-s2"] .g-card-skip');
+    const b = page.locator('.g-stop[data-row-id="loki-s2"] .g-skip');
     expect((await b.getAttribute('aria-label')) === 'Pular Loki – Temporada 2 neste guia', `pt-BR Skip name: ${await b.getAttribute('aria-label')}`);
     await b.tap(); await page.waitForTimeout(500);
     let s = await page.evaluate(STATE);
-    const tag = await page.evaluate(() => (document.querySelector('.g-card[data-row-id="loki-s2"] .g-skiptag') || {}).textContent);
-    expect(s.skipped.join() === 'loki-s2' && tag === 'Pulado' && /1 pulado/.test(s.skipNote || ''), `pt-BR grid: ${JSON.stringify(s)} tag ${tag}`);
-    await page.locator('.g-card[data-row-id="loki-s2"] .g-unskip').tap(); await page.waitForTimeout(500);
+    const tag = await page.evaluate(() => (document.querySelector('.g-stop[data-row-id="loki-s2"] .g-skiptag-inline') || {}).textContent);
+    expect(s.skipped.join() === 'loki-s2' && tag === 'Pulado' && /1 pulado/.test(s.skipNote || ''), `pt-BR list: ${JSON.stringify(s)} tag ${tag}`);
+    await page.locator('.g-stop[data-row-id="loki-s2"] .g-unskip').tap(); await page.waitForTimeout(500);
     s = await page.evaluate(STATE);
-    expect(!s.skipped.length, `grid unskip: ${s.skipped}`);
+    expect(!s.skipped.length, `list unskip: ${s.skipped}`);
     const wide = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
-    expect(!wide, 'the phone grid scrolls sideways');
+    expect(!wide, 'the phone guide List scrolls sideways');
     errors.push(...e);
     await ctx.close();
   }

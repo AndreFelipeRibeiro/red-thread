@@ -162,9 +162,8 @@ export function MobileNavBar({ section, onSection }: { section: PhoneSection; on
   );
 }
 
-// My list's own bar on phones: the collection tabs, then List / Grid (Grid
-// stays until Andre decides; Notion "Decide the navigation model"). Hooks:
-// `m-listbar`, `m-layout`, and `on` on the chosen layout.
+// My list's own bar on phones: the collection tabs (the phone's Grid was
+// removed, Notion "Phone: remove the Grid view"). Hook: `m-listbar`.
 //
 // Portuguese labels are much longer than English ones (Notion "Top nav (PT) /
 // content overflowing"), so the row tries each step and keeps the first that
@@ -173,25 +172,16 @@ export function MobileNavBar({ section, onSection }: { section: PhoneSection; on
 //   shows only "All" and the selected option's label;  3  "Para ver" in place
 //   of "Para assistir" (Andre's approval). The steps are CSS keyed on the row
 //   (group/viewrow).
-export function MyListBar({ collection, setCollection, layout, setLayout }: {
-  collection: string; setCollection: (v: string) => void; layout: string; setLayout: (v: string) => void;
+export function MyListBar({ collection, setCollection }: {
+  collection: string; setCollection: (v: string) => void;
 }) {
   const { lang } = window.useI18n();
   const row = React.useRef<HTMLDivElement | null>(null);
-  const fit = window.useFitSteps(row, 3, [lang, collection, layout]);
+  const fit = window.useFitSteps(row, 3, [lang, collection]);
   return (
     <>
     <div ref={row} className="m-listbar group/viewrow mb-1.5 flex min-w-0 items-center gap-2" data-fit={fit}>
       <CollectionSwitch value={collection} onChange={setCollection} variant="compact" short={fit >= 3}/>
-      <div className="m-layout ml-auto flex flex-none items-center rounded-lg bg-muted p-[3px]" role="group" aria-label={tr('view.label')}>
-        {[['list', 'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01'], ['grid', 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z']].map(([v, d]) => (
-          <button key={v} type="button" aria-pressed={layout === v} aria-label={tr('view.' + v)} title={tr('view.' + v)}
-            className={cn('flex size-[max(36px,2.25rem)] cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50', layout === v && 'on bg-background text-foreground shadow-xs dark:bg-input/50')}
-            onClick={() => setLayout(v)}>
-            <svg className="size-4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>
-          </button>
-        ))}
-      </div>
     </div>
     {/* "Mark what you've seen" moved here from the Account sheet (Notion
         "Take the collection filters out of the Account menu"). */}

@@ -65,7 +65,7 @@ const STATE = () => ({
     expect(s.tab === 'My list' && s.myList && s.myColl && s.coll === 1 && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
     await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
     await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); await page.waitForTimeout(400);
-    await page.locator('.ml-status .coll-switch button').nth(2).click(); await page.waitForTimeout(400);
+    await page.locator('.ml-status .coll-switch button[data-coll="seen"]').click(); await page.waitForTimeout(400);
     await TAB(page, 'Explore'); await page.waitForTimeout(900);
     s = await page.evaluate(STATE);
     out.exploreAgain = s;
@@ -83,7 +83,7 @@ const STATE = () => ({
     await page.keyboard.press('Escape'); await page.locator('.ml-title').click();
 
     // Show in Explore from the details.
-    await page.locator('.ml-status .coll-switch button').nth(0).click(); await page.waitForTimeout(400);
+    await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
     await page.locator('.dl-row[data-row-id="thor"] .dl-open').click(); await page.waitForTimeout(800);
     await page.locator('.drawer.open .td-explore').click(); await page.waitForTimeout(1500);
     s = await page.evaluate(STATE);

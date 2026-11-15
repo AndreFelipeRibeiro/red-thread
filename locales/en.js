@@ -149,10 +149,7 @@ window.MCU_LOCALES.en = {
     'og.charAlt': '{name}’s titles in order, joined by one thread',
     'og.guideAlt': '{name}: the guide’s essential titles in order',
 
-    'view.label': 'View',
-    'view.aria': 'View: {label}',
     'view.list': 'List',
-    'view.grid': 'Grid',
     'view.spatial': 'Spatial',
     'home.link': 'Red Thread, home',
     'home.announce': 'Back to the start',

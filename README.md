@@ -32,13 +32,16 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   On phones the zoom control stays hidden and shows only while you zoom.
   Release/Chrono open closer and centred on the titles in view; closing a title's
   details glides the camera back to where you were.
-- Desktop navigation is grouped like the mobile header. The top row has the
-  brand, then search, Order, Filters and All/Films/Series, then the language
-  menu and account at the right; the second row has the sort modes and
-  Unseen/Seen/Watchlist. Below 1280px the search group moves to its own row
-  between them, and labels shorten step by step on narrower desktops. The account
-  control shows Sign in or the signed-in user's name, shortened visually when
-  space is limited.
+- Three sections: **Explore** (the Spatial canvas), **My list** (the List,
+  with the All / Unseen / Seen / Watchlist tabs) and **Guides** (a gallery of
+  the guides, then the open guide). Explore and My list each keep their own
+  sort and filters. On desktop they are tabs in one header row: the wordmark,
+  the tabs, search ("/" focuses it), Sort and Filters (Type is inside Filters),
+  then sync, Settings and Account; the row fits from 900px in English and
+  Portuguese. On phones they are the bottom bar; the header holds the wordmark
+  and the search, Settings and Account buttons, and one row below it holds
+  Sort, Filters and how many titles are seen ("2 of 60 seen"). "Show in Explore" in a
+  title's details selects it on the canvas.
 - A context summary shows what the controls don't: how many titles match and
   which filters are on. On desktop it floats at the top-left of Spatial: the
   count, a removable chip per active filter (search, collection, type, phase,
@@ -49,29 +52,24 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
   cards, list rows and details, alongside the release year. Chronological order
   follows those timeframes, and the mobile Chrono list groups by them.
-- Mobile view navigation is List / Grid / Spatial. List rows place IMDb and
-  Rotten Tomatoes numeric badges together beneath their phase/budget metadata,
-  with rank numbers when sorting by rating.
-- Flip the direction with the Order toggle beside desktop sorting or beside
-  mobile search on the second header row: every sort has two directions, so a
-  tap reverses the order. Its label shows the current order (Newest, 6 → 1,
-  Z–A) and its sort icon's bars flip with it. In Spatial, connection lines and
+- Phones show My list as a List (the Grid was removed on 2026-11-15; old
+  `?view=grid` links open the List). Rows place IMDb and Rotten Tomatoes
+  numeric badges together beneath their phase/budget metadata, with rank
+  numbers when sorting by rating.
+- One Sort menu holds every sort in both directions as plain phrases
+  ("Release date, oldest first"). In Spatial, connection lines and
   row labels wait for the cards to finish moving after a new layout (row labels
-  also after a selection closes), then fade back in. Mobile uses quieter search text and taller bottom sort tabs.
-  Filters offers the two full order labels for the current mode without repeating
-  the sort navigation; mobile A–Z is now a main navigation tab. Grid, List and
-  Spatial use the same order; unrated titles stay last for either rating direction.
-  Changing the sort mode, order, All / Unseen / Seen / Watchlist or the phase,
-  films/series and budget filters animates mobile Grid/List and the desktop List:
+  also after a selection closes), then fade back in. The List and Spatial use
+  the same order; unrated titles stay last for either rating direction.
+  Changing the sort, the status tab or the phase, films/series and budget
+  filters animates the phone and desktop Lists:
   titles glide to their new slots, echoing Spatial. On phones, changes made in the
-  filter sheet play when the sheet closes.
-  Switching between List and Grid on phones moves each title from its old spot
-  while the old layout fades (all off with reduced motion).
+  filter sheet play when the sheet closes (all off with reduced motion).
 - Menus in the desktop toolbar (language, order, filters, account, search
   suggestions) open over the details drawer; the zoom control moves left of it.
-- Phase, film/series, budget and release (Released only) filters. All / Unseen / Seen / Watchlist is an
-  always-visible switch (desktop toolbar; mobile second header row, beside the
-  List/Grid/Spatial menu), with a dashed-ring, check and bookmark icon for each state.
+- Phase, film/series, budget and release (Released only) filters. All /
+  Unseen / Seen / Watchlist are My list's tabs, with a dashed-ring, check and
+  bookmark icon for each state; Explore always shows every title.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
   language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without
@@ -125,7 +123,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
   cast drawer, which sits below the toolbar. Columns drop as the List narrows.
-- Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
+- Cast drawer on desktop; List and Spatial views with detail sheets on mobile.
 - Details read the same on desktop and phones: poster beside the phase, type,
   year, title, release date and story timeframe; then IMDb and RT scores
   ("Ratings after release" for a title not out yet), the budget ("Not
@@ -595,7 +593,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/about.tsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
 | `src/app/celebrate.tsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
 | `src/app/app.tsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
-| `src/app/mobile.tsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
+| `src/app/mobile.tsx` | Phone List, filters, details and accessible sheets |
 | `src/app/upnext.tsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.tsx`) |
 | `src/app/watch.tsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
 | `src/main.ts` | V4 bundle entry: imports the data layer and then every view below, in the order `index.html` used to load them. The files still share their components through `window`, so the bundle changed how the app is delivered, not how its pieces fit together |
