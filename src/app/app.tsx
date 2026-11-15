@@ -1,11 +1,13 @@
 // @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
 // ticket "Convert the app to TypeScript": this file is renamed and inside the
-// type-checked project, but still has 693 errors under `strict`, almost all of
+// type-checked project, but still has 697 errors under `strict`, almost all of
 // them component props and callback parameters that need real types rather
 // than `any`. Delete this line and type the file; the shared surface it reads
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
+import * as B from './banners';
+import * as S from './shell';
 import ReactDOM from 'react-dom/client';
 
 // Red Thread — the app shell and the floating (Spatial) canvas layout
@@ -37,8 +39,9 @@ const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.
 window.tr = tr;               // about, account, celebrate, desktop-list, mobile, tracking
 window.typeLabel = typeLabel; // desktop-list.jsx
 
-const CARD_W = 170;
-const CARD_H = 270;
+// The card's size, which the layout reads (spatial-card.tsx draws the card).
+const CARD_W = window.CARD_SIZE.w;
+const CARD_H = window.CARD_SIZE.h;
 // The phone's reading zoom: about 2.5 titles across (one title step is
 // CARD_W * 1.15), capped at 100%. The timelines open at it, and every order
 // uses it to frame Up next and a title whose details just closed, so cards
@@ -143,60 +146,10 @@ function budgetMatches(t, band) {
 // what release and story order mean.
 window.sortTitles = sortTitles;
 
-// What the view is showing that the controls don't: how many titles match and,
-// when filtering, which filters are on. The sort, order and collection already
-// show on their own controls, so they are not repeated here. Variants:
-//   'float' - desktop Spatial, top-left of the canvas: the count, one removable
-//             chip per filter (search, collection, type, phase, budget) and
-//             Clear all. With `inList` it sits at the top of the desktop List.
-//   'line'  - top of the mobile List/Grid (scrolls away with it).
-//   'pill'  - mobile Spatial, top-left of the canvas clear of the zoom control.
-// Phones show the count and how many filters, plus Clear; the search box,
-// collection switch and Filters badge already name them.
-// `showing` counts titles matching every filter, including the collection one,
-// which only dims cards in Spatial.
-function ContextSummary({ variant, inList, showing, total, filters: f }) {
-  const chips = [];
-  const query = f.search.trim();
-  if (query) chips.push(['search', `“${query}”`, () => f.setSearch('')]);
-  if (f.collectionFilter !== 'all') chips.push(['collection', tr('collection.' + f.collectionFilter), () => f.setCollectionFilter('all')]);
-  if (f.typeFilter !== 'all') chips.push(['type', tr(f.typeFilter === 'film' ? 'type.films' : 'type.series'), () => f.setTypeFilter('all')]);
-  if (f.phaseFilter !== 'all') chips.push(['phase', tr('phase.label', { n: f.phaseFilter }), () => f.setPhaseFilter('all')]);
-  if (f.budgetFilter !== 'all') chips.push(['budget', tr('budget.' + f.budgetFilter), () => f.setBudgetFilter('all')]);
-  if (f.releaseFilter !== 'all') chips.push(['release', tr('filter.release.chip'), () => f.setReleaseFilter('all')]);
-  const clearAll = () => {
-    f.setSearch(''); f.setCollectionFilter('all'); f.setTypeFilter('all');
-    f.setPhaseFilter('all'); f.setBudgetFilter('all'); f.setReleaseFilter('all');
-  };
-  const count = showing === total ? tr('header.count', { n: total }) : tr('header.countOf', { shown: showing, total });
-  // Keep the canvas pan/pinch handlers from treating a click here as a drag.
-  const stop = e => e.stopPropagation();
-
-  if (variant === 'float') {
-    return (
-      <div className={`ctx ctx-float${inList ? ' ctx-static' : ''}`} onMouseDown={stop} onWheel={stop}>
-        <span className="ctx-count" role="status">{count}</span>
-        {chips.map(([key, label, clear]) => (
-          <button key={key} className="ctx-chip" onClick={clear} title={tr('context.remove', { label })}
-            aria-label={tr('context.remove', { label })}>
-            {label}<span aria-hidden="true">×</span>
-          </button>
-        ))}
-        {chips.length > 1 && <button className="ctx-clear" onClick={clearAll}>{tr('filters.clearAll')}</button>}
-      </div>
-    );
-  }
-
-  return (
-    <div className={`ctx ctx-${variant}`} onTouchStart={stop} onMouseDown={stop}>
-      <span className="ctx-text" role="status">
-        <span className="ctx-seg"><b>{count}</b></span>
-        {chips.length > 0 && <>{' '}<span className="ctx-seg ctx-nfilters">· {tr('context.filters', { n: chips.length })}</span></>}
-      </span>
-      {chips.length > 0 && <button className="ctx-clear" onClick={clearAll}>{tr('context.clear')}</button>}
-    </div>
-  );
-}
+// What the view is showing that the controls don't (how many titles match and
+// which filters are on): ContextSummary lives in spatial-chrome.tsx (Notion
+// "shadcn pass 2/5"), on the design system.
+const ContextSummary = window.ContextSummary;
 
 // Compute layout positions per sort mode on an even grid: cards in a row share
 // a top edge and neighbours are a constant distance apart (a per-card random
@@ -297,107 +250,9 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering }) {
-  const phaseColor = PHASE_COLORS[title.phase];
-  // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
-  // cards fade softly when a filter changes"); the canvas's first cards don't.
-  const [enter, setEnter] = useState(!!entering);
-  const downRef = useRef({ x: 0, y: 0, moved: false });
-  const { statusOf } = window.useCollection();
-  const status = statusOf(title.id);
-  // Below TSA_MIN_SCALE the toggles are rendered smaller than a usable hit
-  // target, so they withdraw and the seen state reads as a static marker only.
-  const showActions = (scale || 1) >= window.TSA_MIN_SCALE;
-  return (
-    <div
-      data-id={title.id}
-      onAnimationEnd={enter ? (e) => { if (e.animationName === 'card-enter') setEnter(false); } : undefined}
-      className={`card${enter ? ' enter' : ''} ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''}${isRingFocus ? ' ring-focus' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}${guideSkip && guideSkip.state === 'skipped' ? ' g-skipped' : ''}`}
-      style={{
-        '--phase-color': phaseColor,
-        ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
-        // 2D on purpose: a 3D transform would give each of the 64 cards its own
-        // GPU layer, which phones cannot afford when zoomed far out.
-        transform: `translate(${pos.x}px, ${pos.y}px) scale(var(--lift, 1))`,
-        width: CARD_W + 'px',
-        height: CARD_H + 'px',
-      }}
-      onMouseDown={(e) => {
-        downRef.current = { x: e.clientX, y: e.clientY, moved: false };
-        onDragStart(e, title.id);
-      }}
-      onClick={(e) => {
-        const dx = Math.abs(e.clientX - downRef.current.x);
-        const dy = Math.abs(e.clientY - downRef.current.y);
-        if (dx < 4 && dy < 4) onClick();
-      }}
-      onMouseEnter={() => onHover(title.id)}
-      onMouseLeave={() => onHover(null)}
-    >
-      {focusable && (
-        // The keyboard way into a card, like the List's title button. It comes
-        // first, so Tab reaches the card before its Seen/Watchlist buttons;
-        // it covers the card for the focus ring but lets pointer clicks
-        // through to the card's own handler. Enter or Space opens it.
-        <button type="button" className="card-open" aria-label={I18N.titleName(title)}
-          onFocus={() => onFocusCard && onFocusCard(title.id)}
-          onClick={(e) => { e.stopPropagation(); onClick(); }}/>
-      )}
-      <div className="card-poster">
-        <PosterArt title={title}/>
-        <div className="card-badges">
-          {/* An open guide numbers its stops on the canvas (a check once
-              seen, + for optional, an arrow for the destination): the badge
-              sits under the type label, which always shows. */}
-          <span className="card-badges-start">
-            <span className="badge type-badge">{I18N.upper(typeLabel(title.type))}</span>
-            {guideBadge && <span className={`card-gnum ${guideBadge.cls}`} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>}
-            {/* Skip a guide stop, under its number, once the card is large
-                enough for buttons. */}
-            {showActions && guideSkip && guideSkip.state === 'can' && <window.GuideSkipControl guide={guide} info={guideSkip} className="card-skipctl" onDone={onGuideSkip}/>}
-          </span>
-          <span className="badge phase-badge" style={{background: phaseColor, color:'var(--on-color)'}}>{phaseLabel(title.phase)}</span>
-        </div>
-        {/* A skipped stop: a "Skipped" tag and Unskip, centred on the poster,
-            in place of Seen and Watchlist. */}
-        {showActions && guideSkip && guideSkip.state === 'skipped' && (
-          <div className="card-skipover">
-            <span className="card-skiptag" aria-hidden="true">{tr('guide.skippedTag')}</span>
-            <window.GuideSkipControl guide={guide} info={guideSkip} className="card-unskipctl" onDone={onGuideSkip}/>
-          </div>
-        )}
-        {showActions
-          ? !(guideSkip && guideSkip.state === 'skipped') && <window.TitleStatusActions title={title} className="card-tsa"/>
-          : <span className="card-seen-mark"><window.SeenMarker seen={status === 'seen'}/></span>}
-        <div className="rating-row">
-          {title.imdb != null && (
-            <div className="card-rating imdb" title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
-              <span className="imdb-tag">IMDb</span>
-              {title.imdb.toFixed(1)}
-            </div>
-          )}
-          {title.rt != null && (
-            <div className="card-rating rt" title={tr('score.rt')}>
-              <span className="rt-tag">RT</span>
-              {title.rt}%
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="card-meta">
-        <div className="card-title"><window.Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
-        <div className="card-year">
-          <span>{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>
-          {title.budget != null && (
-            <span className="card-budget">{I18N.budget(title.budget)}</span>
-          )}
-        </div>
-        <window.StoryYear title={title} className="card-story"/>
-        <window.MatchBadge matchedChars={matchedChars} query={searchQuery} title={title}/>
-      </div>
-    </div>
-  );
-}
+// The Spatial card lives in spatial-card.tsx (Notion "shadcn pass 2/5"),
+// built on the design system; it is published on window like the other views.
+const Card = window.SpatialCard;
 
 // How the visitor last interacted: the details drawer only takes focus when it
 // was opened from the keyboard, so a mouse or touch open shows no focus ring.
@@ -457,203 +312,22 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     return () => { cancelAnimationFrame(outer); cancelAnimationFrame(inner); };
   }, [current]);
   if (!title) return null;
-  // The close button sits in the panel's corner, outside the scrolling body,
-  // so it stays put while the details scroll and the text column keeps its width.
+  // The frame and the cast list are on the design system (title-details.tsx,
+  // Notion "shadcn pass 3/5"); the behaviour above stays here.
   return (
-    <aside ref={asideRef} className={`drawer${open ? ' open' : ''}`} aria-hidden={!open} aria-labelledby="drawer-title"
-      onTransitionEnd={e => { if (!current && e.target === e.currentTarget) setTitle(null); }}>
-      <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
-      <div className="drawer-scroll" ref={scrollRef}>
-        <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
-          cast={
-            <window.DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })} labelClass="drawer-section-label" bodyClass="cast-list">
-              {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
-              {title.cast.map(ch => {
-                const c = window.CHARACTERS[ch];
-                if (!c) return null;
-                const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
-                return (
-                  <button
-                    key={ch}
-                    data-char={ch}
-                    style={{ '--match-color': c.color }}
-                    className={`cast-row ${isActive ? 'active' : ''}`}
-                    onClick={() => onCharacterClick(ch)}
-                    onMouseEnter={() => onCharacterHover(ch)}
-                    onMouseLeave={() => onCharacterHover(null)}
-                  >
-                    <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                      <window.Portrait
-                        url={window.castPortrait(current, ch)}
-                        alt={I18N.charName(ch)} initials={c.initials}/>
-                    </div>
-                    <div className="cast-text">
-                      <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
-                      <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
-                    </div>
-                    <div className="cast-color-dot" style={{background:c.color}}/>
-                  </button>
-                );
-              })}
-            </window.DetailSection>
-          }/>
-      </div>
-    </aside>
+    <window.DrawerFrame asideRef={asideRef} scrollRef={scrollRef} open={open} onClose={onClose}
+      onSlid={() => { if (!current) setTitle(null); }}>
+      <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
+        cast={<window.DrawerCast title={title} activeChar={activeChar} activeChars={activeChars} search={search}
+          onCharacterClick={onCharacterClick} onCharacterHover={onCharacterHover}/>}/>
+    </window.DrawerFrame>
   );
 }
 
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
-const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
-
-function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
-  const [popOpen, setPopOpen] = useState(false);
-  const popRef = useRef(null);
-  // The sort row fits by measuring (window.useFitSteps; Notion "Font size
-  // increase"), so it holds in Portuguese and at every Text size:
-  //   1  short sort labels;  2  the collection switch labels only All and the
-  //   selected option;  3  the view switch shows icons only;  4  the switch
-  //   labels only All;  5  unselected sort tabs show their icon only.
-  const sortRow = useRef(null);
-  const sortFit = window.useFitSteps(sortRow, 5, [I18N.lang, sort, collectionFilter, desktopView]);
-  // Collection has its own always-visible switch, so it is not counted here.
-  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
-  useEffect(() => {
-    if (!popOpen) return;
-    const away = (e) => { if (popRef.current && !popRef.current.contains(e.target)) setPopOpen(false); };
-    const esc = (e) => { if (e.key === 'Escape') setPopOpen(false); };
-    document.addEventListener('mousedown', away);
-    document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
-  }, [popOpen]);
-  // An open guide shows only its own stops: in the List (and the phone List
-  // and Grid) it ignores the layout tabs, Order, filters, type and collection;
-  // in Spatial the layout tabs and Order still arrange the canvas. What it
-  // ignores is dimmed with a tooltip (GuideOff), and kept for when it closes.
-  const guideOn = !!guideId;
-  const listOff = guideOn && desktopView === 'list';
-  const Off = window.GuideOff;
-  // Grouped like the mobile header. The top row holds the brand, then search,
-  // order, filters and type, then language + account at the right edge; on
-  // narrower desktops the search group wraps onto its own row (CSS). Below it:
-  // sort modes and the collection switch.
-  return (
-    <div className="toolbar" role="banner">
-      <div className="tb-row tb-top-row">
-        {/* The logo is a link home: it resets the app in place (onHome). */}
-        <a className="brand" href="/" onClick={onHome} aria-label={tr('home.link')} title={tr('home.link')}>
-          <span className="brand-mark logo-mark" aria-hidden="true"/>
-          {/* The wordmark is drawn (.logo-word); the name stays as text for
-              screen readers and the page outline. */}
-          <h1 className="brand-title"><span className="logo-word" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span></h1>
-        </a>
-        <div className="tb-filter-row">
-          <div className="search-wrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-            <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
-              ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')}/>
-          </div>
-          <Off off={listOff}><div className="tb-order-control">
-            <span className="tb-order-label">{tr('order.label')}</span>
-            <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
-          </div></Off>
-          <Off off={guideOn}><div className="filters-pop-wrap" ref={popRef}>
-            <button className={`filters-pill${popOpen?' open':''}${activeFilters?' active':''}`} onClick={()=>setPopOpen(o=>!o)}
-              aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              <span className="filters-label">{tr('filters.title')}</span>{activeFilters ? <span className="fcount">{activeFilters}</span> : null}
-            </button>
-            {popOpen && (
-              <div className="filters-pop">
-                <div className="control-group">
-                  <label>{tr('filters.phase')}</label>
-                  <div className="segmented">
-                    {['all','1','2','3','4','5','6'].map(p=>(
-                      <button key={p} className={phaseFilter===p?'on':''} onClick={()=>setPhaseFilter(p)}
-                        style={p!=='all' && phaseFilter===p ? {background:PHASE_COLORS[p],color:'var(--on-color)',borderColor:PHASE_COLORS[p]} : {}}
-                      >{p==='all'?tr('filters.all'):p}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="control-group">
-                  <label>{tr('filters.budget')}</label>
-                  <div className="segmented">
-                    <window.SegPill value={budgetFilter}/>
-                    {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
-                      <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{tr(k)}</button>
-                    ))}
-                  </div>
-                </div>
-                {/* Released only sits with the other catalogue filters rather
-                    than in the toolbar, so the navigation does not grow. */}
-                <div className="control-group">
-                  <label>{tr('filter.release')}</label>
-                  <div className="segmented">
-                    <window.SegPill value={releaseFilter}/>
-                    {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
-                      <button key={v} className={releaseFilter===v?'on':''} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{tr(k)}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="control-group">
-                  <label>{tr('order.label')}</label>
-                  <div className="segmented">
-                    <window.SegPill value={sortDir}/>
-                    {sortDirectionLabels(sort).map((label, i) => (
-                      <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
-                        aria-pressed={sortDir===(i===0?'asc':'desc')}
-                        onClick={()=>setSortDir(i===0?'asc':'desc')}>{label}</button>
-                    ))}
-                  </div>
-                </div>
-                {activeFilters > 0 && (
-                  <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}>{tr('filters.clear')}</button>
-                )}
-              </div>
-            )}
-          </div></Off>
-          <Off off={guideOn}><div className="control-group tb-type-controls">
-            <div className="segmented">
-              <window.SegPill value={typeFilter}/>
-              {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
-                <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{tr(k)}</button>
-              ))}
-            </div>
-          </div></Off>
-          {guideOn && <window.GuideOffHint/>}
-        </div>
-        <div className="tb-end">
-          <window.SyncStatus/>
-          <window.GuidesButton currentId={guideId} onPick={onOpenGuide}/>
-          {/* Theme and language live in Settings (Notion "Settings menu"). */}
-          <window.SettingsButton onOpen={onSettings} open={settingsOpen}/>
-          <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
-        </div>
-      </div>
-      <div className="tb-row tb-sort-row" ref={sortRow} data-fit={sortFit}>
-        <Off off={listOff}><div className="control-group tb-sort-controls">
-          <div className="segmented">
-            <window.SegPill value={sort}/>
-            {SORT_OPTIONS.map(([v,ic])=>(
-              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={tr('sort.' + v)}>
-                <span className="si">{ic}</span><span className="lg">{tr('sort.' + v)}</span><span className="sm">{tr('sort.short.' + v)}</span>
-              </button>
-            ))}
-          </div>
-        </div></Off>
-        <Off off={guideOn}><window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/></Off>
-        <div className="segmented tb-view-switch" role="group" aria-label={tr('view.label')}>
-          <window.SegPill value={desktopView}/>
-          {[['spatial', '◈'], ['list', '☰']].map(([v, ic]) => (
-            <button key={v} className={desktopView === v ? 'on' : ''} aria-pressed={desktopView === v}
-              title={tr('view.' + v)} aria-label={tr('view.' + v)} onClick={() => setDesktopView(v)}>
-              <span className="vi" aria-hidden="true">{ic}</span><span className="vl">{tr('view.' + v)}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+// The desktop toolbar lives in toolbar.tsx (Notion "shadcn pass 1/5"), built on
+// the design system; it is published on window like the other views.
+const Toolbar = window.Toolbar;
 
 // Connection layer with bolder lines and improved bezier control
 // Label pill width from the rendered name (11px Inter, dot + 20px on the
@@ -687,7 +361,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       return `M ${a.x} ${a.y} Q ${mx - dy / dist * sag} ${my + dx / dist * sag} ${b.x} ${b.y}`;
     };
     return (
-      <svg className="connection-layer guide-route" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
+      <svg className={`${S.THREADS} guide-route`} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
         {segs.map(([a, b, dashed], i) => (
           <path key={i} d={d(a, b)} fill="none" style={{ stroke: 'var(--primary)' }} strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
             strokeDasharray={dashed ? '10 9' : undefined} opacity={dashed ? 0.7 : 0.9}/>
@@ -934,13 +608,13 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       <rect x={l.x - l.w/2} y={l.y - l.h/2} width={l.w} height={l.h} rx={l.h/2}
         style={{ fill: 'var(--background)' }} stroke={l.color} strokeWidth="1.2" opacity="0.97"/>
       <circle cx={l.x - l.w/2 + 11} cy={l.y} r={3.5} fill={l.color}/>
-      <text x={l.x - l.w/2 + 20} y={l.y + 3.6} fontSize="11" fontFamily="'Inter Variable', sans-serif" fontWeight="500" style={{ fill: 'var(--foreground)' }}>{l.text}</text>
+      <text x={l.x - l.w/2 + 20} y={l.y + 3.6} fontSize="11" fontWeight="500" style={{ fill: 'var(--foreground)', fontFamily: 'var(--font-sans)' }}>{l.text}</text>
     </g>
   ));
 
   return (
     <>
-    <svg className="connection-layer" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
+    <svg className={S.THREADS} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
       <defs>
         <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3" result="b"/>
@@ -954,8 +628,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       {lineEls}
       <style>{`.connection-layer path { pointer-events: stroke; }`}</style>
     </svg>
-    {/* Labels above the cards (z-index in styles.css), so none hides behind one. */}
-    <svg className="connection-labels" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
+    {/* Labels above the cards (z-index: shell.tsx), so none hides behind one. */}
+    <svg className={S.LABELS} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
       {labelEls}
     </svg>
     </>
@@ -3012,38 +2686,38 @@ function App() {
       : (creditedHere || roster.length < 2) ? named
       : tr('credit.more', { name: named, n: roster.length - 1 });
     return (
-      <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
-        <span className="cb-photo" style={{ background: c.color }}>
+      <div className={`${B.BANNER}${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
+        <span className={`${B.PHOTO} size-10`} style={{ background: c.color }}>
           <window.Portrait url={photo} alt="" initials={c.initials}/>
         </span>
-        <span className="cb-who">
+        <span className={B.BANNER_WHO}>
           <b>{who}</b>
-          <span className="cb-sub">{sub} · {tr('header.count', { n: count })}</span>
+          <span className={B.BANNER_SUB}>{sub} · {tr('header.count', { n: count })}</span>
         </span>
         {pinned && <>
           {/* A character with its own guide offers it: the same titles,
               curated, with a reason for each. */}
           {window.MCU_GUIDE && window.MCU_GUIDE.forChar(activeChar) && (
-            <button type="button" className="cb-guide" onClick={() => openGuide(window.MCU_GUIDE.forChar(activeChar).id)}>
+            <button type="button" className={B.BANNER_GUIDE} onClick={() => openGuide(window.MCU_GUIDE.forChar(activeChar).id)}>
               <window.GuideIcon size={14}/>{tr('guide.seeCurated')}
             </button>
           )}
-          <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
+          <div className={`${B.SEGMENTED} cb-mode h-[max(34px,2.125rem)]`} role="group" aria-label={tr('highlight.modeAria')}>
             <window.SegPill value={charOnly}/>
-            <button className={charOnly ? 'on' : ''} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
-            <button className={!charOnly ? 'on' : ''} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
+            <button className={`${B.SEGMENT}${charOnly ? ' on' : ''}`} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
+            <button className={`${B.SEGMENT}${!charOnly ? ' on' : ''}`} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
           </div>
-          <div className="cb-step">
-            <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!pinnedTitles.length}>‹</button>
-            <span className="cb-pos" aria-live="polite">{stepIndex >= 0
+          <div className={B.STEP}>
+            <button className={B.STEP_BTN} onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!pinnedTitles.length}>‹</button>
+            <span className={B.POS} aria-live="polite">{stepIndex >= 0
               ? tr('highlight.position', { i: stepIndex + 1, n: pinnedTitles.length })
               : tr('header.count', { n: pinnedTitles.length })}</span>
-            <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
+            <button className={B.STEP_BTN} onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
           </div>
         </>}
-        {pinned && <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: who })}
+        {pinned && <window.ShareButton iconOnly size={15} className={B.BANNER_SHARE} label={tr('share.charLabel', { name: who })}
           payload={() => charSharePayload(activeChar)}/>}
-        <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
+        <button className={B.CLOSE} aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
           onClick={unpinCharacter}>×</button>
       </div>
     );
@@ -3065,38 +2739,38 @@ function App() {
     const n = pinnedTitles.length;
     const charGuide = window.MCU_GUIDE ? window.MCU_GUIDE.forChar(ch) : null;
     return (
-      <div className="char-pill" style={{ '--char-color': c.color }}>
-        <div className="cp-bar">
-          <span className="cp-who">
-            <span className="cb-photo" style={{ background: c.color }}>
+      <div className={B.PILL} style={{ '--char-color': c.color }}>
+        <div className={B.PILL_BAR}>
+          <span className={B.PILL_WHO}>
+            <span className={B.PILL_PHOTO} style={{ background: c.color }}>
               <window.Portrait url={photo} alt="" initials={c.initials}/>
             </span>
-            <span className="cp-text">
-              <span className="cp-name">{pinnedActor || I18N.charName(ch)}</span>
-              <span className="cp-actor">{pinnedActor
+            <span className={B.PILL_TEXT}>
+              <span className={B.PILL_NAME}>{pinnedActor || I18N.charName(ch)}</span>
+              <span className={B.PILL_ACTOR}>{pinnedActor
                 ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
                 : (creditedHere || roster.length < 2) ? named
                 : tr('credit.more', { name: named, n: roster.length - 1 })}</span>
             </span>
           </span>
-          <div className="cb-step">
-            <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
+          <div className={B.PILL_STEP}>
+            <button className={B.PILL_BTN} onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
             {/* Before the first step just the number of titles (read out as
                 "13 titles"), so the name keeps its space; then "1/13". */}
-            <span className="cb-pos" aria-live="polite">{stepIndex >= 0
+            <span className={B.PILL_POS} aria-live="polite">{stepIndex >= 0
               ? tr('highlight.short', { i: stepIndex + 1, n })
               : <>{n}<span className="story-sr"> {tr('highlight.titlesWord', { n })}</span></>}</span>
-            <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
+            <button className={B.PILL_BTN} onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
           </div>
           {charGuide && (
-            <button type="button" className="cp-guide" aria-label={tr('guide.seeCurated')} title={tr('guide.seeCurated')}
+            <button type="button" className={B.PILL_GUIDE} aria-label={tr('guide.seeCurated')} title={tr('guide.seeCurated')}
               onClick={() => openGuide(charGuide.id)}>
               <window.GuideIcon size={16}/>
             </button>
           )}
-          <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
+          <window.ShareButton iconOnly size={15} className={B.PILL_SHARE} label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
             payload={() => charSharePayload(ch)}/>
-          <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
+          <button className={B.PILL_CLOSE} aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
         </div>
       </div>
     );
@@ -3128,7 +2802,7 @@ function App() {
 
   const canvasEl = (
     <div
-      className="viewport"
+      className={S.VIEWPORT}
       ref={viewportRef}
       /* Focusing a card would let the browser scroll this clipped box; the
          camera does the moving instead (revealCard), so keep it at 0,0. */
@@ -3156,9 +2830,9 @@ function App() {
         setDrawerId(null);
       }}
     >
-      <div className="canvas-bg"/>
+      <div className={S.CANVAS_BG}/>
       <div
-        className={`canvas${linesSettling ? ' lines-settling' : ''}${bandsReturning ? ' bands-settling' : ''}`}
+        className={`${S.CANVAS}${linesSettling ? ' lines-settling' : ''}${bandsReturning ? ' bands-settling' : ''}`}
         style={{
           width: canvasW + 'px',
           height: canvasH + 'px',
@@ -3179,11 +2853,11 @@ function App() {
             ? (viewProgress.byPhase && viewProgress.byPhase[b.phase])
             : (viewProgress.byEra && viewProgress.byEra[b.era]));
           return (
-            <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}${g ? '' : ' plain'}`}
-              style={{ transform: `translate(${b.x}px, ${b.y - BAND_LABEL_H}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
+            <window.BandLabel key={b.phase ? 'p' + b.phase : 'e' + b.era} x={b.x} y={b.y - BAND_LABEL_H} phase={b.phase}
+              color={b.phase ? PHASE_COLORS[b.phase] : undefined} plain={!g} touch={isTouch}>
               {g ? <window.ProgressHeader band label={label} seen={g.seen} released={g.released} upcoming={g.upcoming}
                      color={b.phase ? PHASE_COLORS[b.phase] : undefined}/> : label}
-            </div>
+            </window.BandLabel>
           );
         })}
         <FloatingConnections
@@ -3243,22 +2917,14 @@ function App() {
               matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
               searchQuery={search}
               scale={view.scale}
+              touch={isTouch}
             />
           );
         })}
       </div>
-      <div className={`zoom-ctl${isTouch ? ' touch' : ''}${isTouch && !zoomPeek && zoomEdit == null ? ' rest' : ''}`}>
-        <button className="zoom-btn" onClick={()=>{ if (isTouch) peekZoom(); applyScale(s=>s/1.15); }} disabled={view.scale <= ZOOM_MIN + 1e-4} aria-label={tr('canvas.zoomOut')}>&minus;</button>
-        {zoomEdit != null
-          ? <input className="zoom-val edit" autoFocus value={zoomEdit} inputMode="decimal"
-              onChange={e=>setZoomEdit(e.target.value)} onBlur={commitZoomEdit}
-              onKeyDown={e=>{ if(e.key==='Enter') commitZoomEdit(); if(e.key==='Escape') setZoomEdit(null); }}/>
-          : <button className="zoom-val"
-              onClick={isTouch ? ()=>setZoomEdit(String(Math.round(view.scale*100))) : undefined}
-              onDoubleClick={isTouch ? undefined : ()=>setZoomEdit(String(Math.round(view.scale*100)))}
-              title={tr(isTouch ? 'canvas.zoomTypeTouch' : 'canvas.zoomTypeDesktop')}>{Math.round(view.scale * 100)}%</button>}
-        <button className="zoom-btn" onClick={()=>{ if (isTouch) peekZoom(); applyScale(s=>s*1.15); }} disabled={view.scale >= 2 - 1e-4} aria-label={tr('canvas.zoomIn')}>+</button>
-      </div>
+      <window.ZoomControl scale={view.scale} min={ZOOM_MIN} max={2} touch={isTouch} rest={isTouch && !zoomPeek && zoomEdit == null}
+        edit={zoomEdit} onEdit={setZoomEdit} onCommit={commitZoomEdit} onCancel={() => setZoomEdit(null)}
+        onStep={(f) => { if (isTouch) peekZoom(); applyScale(s => s * f); }}/>
       {filtered.length === 0 && (() => {
         // Nothing matches: say so and offer the one action that brings titles
         // back, instead of an empty canvas. Events stop here so the button
@@ -3266,19 +2932,10 @@ function App() {
         const searching = !!search.trim();
         const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all';
         const label = searching && filtering ? tr('empty.clearBoth') : searching ? tr('search.clear') : tr('filters.clear');
-        const stop = e => e.stopPropagation();
-        return (
-          <div className="spatial-empty" role="status" onMouseDown={stop} onTouchStart={stop} onTouchEnd={stop} onClick={stop}>
-            <div className="spatial-empty-t">{tr('empty.title')}</div>
-            <div className="spatial-empty-s">{tr('empty.sub')}</div>
-            {(searching || filtering) && (
-              <button className="spatial-empty-btn" onClick={() => {
-                if (searching) setSearch('');
-                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }
-              }}>{label}</button>
-            )}
-          </div>
-        );
+        return <window.SpatialEmpty actionLabel={searching || filtering ? label : null} onAction={() => {
+          if (searching) setSearch('');
+          if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }
+        }}/>;
       })()}
       {/* ringIds is the selected title plus everything sharing a character
           with it — exactly the cards left standing on the canvas. */}
@@ -3291,11 +2948,11 @@ function App() {
       {/* An open guide carries its progress in its own module (desktop) or
           dock (phones). */}
       {!selectedId && !guide && ((viewProgress && viewProgress.all) || upNextInMeter) && (
-        <div className="spatial-overall">
+        <window.SpatialOverall touch={isTouch}>
           {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
           {/* Desktop only: phones get a chip above the gesture hint. */}
           {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
-        </div>
+        </window.SpatialOverall>
       )}
       {guide && !isTouch && guideModule('spatial')}
       {focusPop}
@@ -3304,7 +2961,7 @@ function App() {
 
   if (isTouch) {
     return (
-      <div className={`app touch ${device}`}>
+      <div className={`${S.APP} touch ${device}`}>
         {upAnnouncer}
         {homeAnnouncer}
         {themeAnnouncer}
@@ -3325,16 +2982,16 @@ function App() {
           onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
-        <div role="main" className={`m-main${charPill || guide ? ' has-pill' : ''}`}
+        <div role="main" className={`${S.M_MAIN}${charPill || guide ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {guide && viewMode !== 'spatial' && (
             <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
-              currentId={stepCurrent} onOpen={(id) => setDrawerId(id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
+              currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
           )}
           {!guide && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {!guide && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
-            <div className="m-spatial-wrap">
+            <div className={S.M_SPATIAL_WRAP}>
               {canvasEl}
               {/* An open guide's dock carries its next stop, so the chip steps
                   aside while it is open. */}
@@ -3377,7 +3034,7 @@ function App() {
         )}
         {sheet === 'guides' && (
           <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
-            <h2 className="g-sheet-title">{tr('guide.menuTitle')}</h2>
+            <h2 className={S.GUIDES_SHEET_TITLE}>{tr('guide.menuTitle')}</h2>
             <window.GuideMenu currentId={guideId} onPick={(id) => { setSheet(null); openGuide(id); }}/>
           </window.Sheet>
         )}
@@ -3417,7 +3074,7 @@ function App() {
   }
 
   return (
-    <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
+    <div className={`${S.APP} ${drawerTitle ? 'drawer-open' : ''}`}>
       {upAnnouncer}
       {homeAnnouncer}
       {themeAnnouncer}
@@ -3446,7 +3103,9 @@ function App() {
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
             module={guideModule('list')}
-            currentId={stepCurrent} openId={drawerId} onOpen={toggleDetails} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            // A stop opened by a click becomes the guide's current one too,
+            // like ← → and ↑ ↓: the marker and "Stop n of N" follow it.
+            currentId={stepCurrent} openId={drawerId} onOpen={(id) => { setStepId(id); toggleDetails(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
             onFollow={(id) => {
               // The stop becomes the guide's current one too, so ← → carry on
               // from it and the banner announces "Stop n of N", as it does for
@@ -3470,22 +3129,8 @@ function App() {
         : canvasEl}
 
       {hoveredConnection && (
-        <div className="line-tooltip" style={{left: hoveredConnection.x + 12, top: hoveredConnection.y + 12}}>
-          {(() => {
-            const ta = window.TITLES.find(x => x.id === hoveredConnection.a), tb = window.TITLES.find(x => x.id === hoveredConnection.b);
-            return ta && tb ? <div className="tt-titles">{I18N.titleName(ta)} <span aria-hidden="true">↔</span> {I18N.titleName(tb)}</div> : null;
-          })()}
-          <div className="tt-label">{tr('canvas.sharedCharacters')}</div>
-          {hoveredConnection.characters.map(c => {
-            const ch = window.CHARACTERS[c];
-            return (
-              <div key={c} className="tt-row">
-                <span className="tt-dot" style={{background: ch.color}}/>
-                <span>{I18N.charName(c)}</span>
-              </div>
-            );
-          })}
-        </div>
+        <window.LineTooltip x={hoveredConnection.x} y={hoveredConnection.y} a={hoveredConnection.a} b={hoveredConnection.b}
+          characters={hoveredConnection.characters}/>
       )}
 
       {/* Settings takes the details drawer's place rather than stacking a

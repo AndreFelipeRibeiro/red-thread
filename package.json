@@ -1,7 +1,7 @@
 {
   "name": "red-thread",
   "private": true,
-  "version": "4.0.0",
+  "version": "5.0.0",
   "type": "module",
   "description": "An interactive explorer for the Marvel Cinematic Universe. V4 builds with Vite; see docs/V4-PLAN.md.",
   "scripts": {

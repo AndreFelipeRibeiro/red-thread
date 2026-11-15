@@ -87,7 +87,8 @@ const STATE = () => {
     next: (document.querySelector('.g-stop.next, .g-card.next') || { getAttribute: () => null }).getAttribute('data-row-id'),
     bulk: (document.querySelector('.g-meter .pgh-action, .gm-foot .pgh-action, .g-meter button') || {}).textContent || null,
     stops: (document.querySelector('.guide-banner .cb-pos, .g-pill .cb-pos, .g-pill [aria-live]') || {}).textContent || null,
-    focus: a ? (a.className || a.tagName) + '@' + ((a.closest && a.closest('[data-row-id]')) ? a.closest('[data-row-id]').getAttribute('data-row-id') : '') : null,
+    // The control by its hook class (shadcn-styled buttons carry many classes).
+    focus: a ? (['g-unskip', 'g-skip'].find(c => a.classList && a.classList.contains(c)) || a.className || a.tagName) + '@' + ((a.closest && a.closest('[data-row-id]')) ? a.closest('[data-row-id]').getAttribute('data-row-id') : '') : null,
     live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean),
     stored: localStorage.getItem('mcu.guideSkips.v1'),
     // Complete: phones say so in a .g-ready line; the desktop card says it by

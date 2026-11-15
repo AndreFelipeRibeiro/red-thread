@@ -29,7 +29,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.mRows = await page.locator('.m-lrow').count();
   out.mWatch = await coll(3); await page.waitForTimeout(900);
   out.mAll = await coll(0); await page.waitForTimeout(900);
-  const view = async (label) => { await page.locator('.view-menu .sort-order-trigger').tap(); await page.waitForTimeout(250); await page.locator('.view-menu .sort-order-pop button', { hasText: label }).tap(); return probe(page); };
+  const view = async (label) => { await page.locator('.view-menu .sort-order-trigger').tap(); await page.waitForTimeout(250); await page.locator('.sort-order-pop button', { hasText: label }).tap(); return probe(page); };
   out.mToGrid = await view('Grid'); await page.waitForTimeout(250);
   await page.screenshot({ path: path.join(S, 'shots', 'anim-m-mid.png') });
   await page.waitForTimeout(700); out.mGridAfter = await settled(page); out.mCards = await page.locator('.m-card').count();

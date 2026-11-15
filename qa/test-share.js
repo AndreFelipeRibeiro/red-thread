@@ -153,7 +153,10 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await go(page, '?title=' + last);
     await page.locator('.drawer .tsa-btn.seen').click();
     await page.waitForSelector('.mcu-toast.milestone', { timeout: 3000 }).catch(() => {});
-    const order = await page.evaluate(() => [...document.querySelectorAll('.mcu-toast.milestone button')].map(b => b.className.split(' ')[0]));
+    // Each button by its hook class (shadcn's Buttons list the library's
+    // classes first, so the first class is not the hook any more).
+    const order = await page.evaluate(() => [...document.querySelectorAll('.mcu-toast.milestone button')]
+      .map(b => ['mt-undo', 'share-btn', 'mt-x'].find(c => b.classList.contains(c)) || b.className.split(' ')[0]));
     out.toastButtons = order;
     expect(order.indexOf('mt-undo') === 0 && order.indexOf('share-btn') === 1, 'milestone toast: expected Undo then Share, got ' + JSON.stringify(order));
     await page.locator('.mcu-toast .mt-share').click();
@@ -236,7 +239,8 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     const { ctx, page } = await open(PHONE, SEEN + SHEET + "localStorage.setItem('mcu.lang.v1','pt-BR');");
     await go(page, '?title=iron-man');
     const btn = page.locator('.m-sheet .td-share');
-    expect((await btn.textContent()).trim() === 'Compartilhar', 'pt-BR: the button does not read Compartilhar');
+    // Icon-only in the details: its name (label and tooltip) carries the text.
+    expect(/^Compartilhar /.test(await btn.getAttribute('aria-label') || ''), 'pt-BR: the button is not named Compartilhar');
     await btn.click(); await page.waitForTimeout(200);
     const d = await page.evaluate(() => window.__shared[0] || null);
     out.ptTitle = d && d.text;

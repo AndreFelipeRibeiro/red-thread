@@ -75,7 +75,9 @@ const OFF = (sels) => {
   Object.entries(sels).forEach(([k, sel]) => {
     const els = [...document.querySelectorAll(sel)];
     r[k] = !els.length ? 'missing' : els.every(b => b.getAttribute('aria-disabled') === 'true' && b.getAttribute('aria-describedby') === 'guide-off-hint') ? 'off'
-      : els.every(b => !b.hasAttribute('aria-disabled')) ? 'on' : 'mixed';
+      // "on" is aria-disabled absent or "false": the design system's toggles
+      // (shadcn pass 1/5) always write the attribute, as "false" when enabled.
+      : els.every(b => b.getAttribute('aria-disabled') !== 'true') ? 'on' : 'mixed';
   });
   return r;
 };

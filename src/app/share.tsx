@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from 'cn';
 
 // Sharing (Notion V4 Tasks, "Share 1/3 — Share buttons and links"). One helper
 // does it everywhere, so every button behaves the same:
@@ -39,7 +40,7 @@ let hideTimer: ReturnType<typeof setTimeout> | undefined;
 function toastHost(): HTMLDivElement {
   if (host && host.isConnected) return host;
   host = document.createElement('div');
-  host.className = 'share-toast';
+  host.className = 'share-toast pointer-events-none fixed top-[calc(16px+env(safe-area-inset-top,0px))] left-1/2 z-400 flex max-w-[min(92vw,440px)] -translate-x-1/2 -translate-y-2 flex-col items-center gap-1 rounded-lg border bg-popover px-4 py-2.5 text-center text-sm font-medium text-popover-foreground opacity-0 shadow-lg transition-[opacity,translate] duration-160 motion-reduce:transition-none [&.show]:pointer-events-auto [&.show]:translate-y-0 [&.show]:opacity-100';
   host.setAttribute('role', 'status');
   host.setAttribute('aria-live', 'polite');
   document.body.appendChild(host);
@@ -59,7 +60,7 @@ function say(message: string, link?: string) {
   if (link) {
     // Copying failed: show the link so it can be selected by hand.
     const a = document.createElement('span');
-    a.className = 'share-toast-link';
+    a.className = 'share-toast-link text-xs font-normal break-all text-muted-foreground select-all';
     a.textContent = link;
     el.appendChild(a);
   }
@@ -141,6 +142,12 @@ export function ShareIcon({ size = 16 }: { size?: number }) {
  *  visible text is "Share" unless `iconOnly`. `payload` is read on click, so
  *  the message always matches what is on screen. Clicks never reach the canvas
  *  or card behind it. */
+/** The Share button's look (shadcn's outline Button, with the icon buttons'
+ *  press effect); callers size it with their own utilities, which merge. The
+ *  share card's actions use it too, with SHARE_PRIMARY for the main one. */
+export const SHARE_BTN = 'share-btn inline-flex h-[max(36px,2.25rem)] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border bg-background px-3 text-sm leading-none font-medium text-foreground no-underline shadow-xs outline-none transition-[scale,background-color,color,border-color,box-shadow] duration-150 hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-disabled:scale-92 motion-reduce:active:scale-100 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 [:root.reduce-motion_&]:active:scale-100 [&_svg]:flex-none';
+export const SHARE_PRIMARY = 'border-transparent bg-primary text-primary-foreground hover:bg-primary/90 dark:border-transparent dark:bg-primary dark:hover:bg-primary/90';
+
 export function ShareButton({ label, payload, onShare, className = '', iconOnly = false, text, size }: {
   label: string; payload: () => SharePayload; className?: string; iconOnly?: boolean; text?: string; size?: number;
   /** Instead of sharing the link: what the share card (share-image.tsx) does
@@ -150,7 +157,7 @@ export function ShareButton({ label, payload, onShare, className = '', iconOnly 
   const tr = window.MCU_I18N.tr;
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   return (
-    <button type="button" className={`share-btn${iconOnly ? ' icon' : ''}${className ? ' ' + className : ''}`}
+    <button type="button" className={cn(SHARE_BTN, iconOnly && 'icon w-9 px-0', className)}
       aria-label={label} title={iconOnly ? label : undefined}
       onMouseDown={stop} onTouchStart={stop}
       onClick={(e) => { e.stopPropagation(); if (onShare) onShare(); else share(payload()); }}>
@@ -160,6 +167,6 @@ export function ShareButton({ label, payload, onShare, className = '', iconOnly 
   );
 }
 
-const MCU_SHARE = { share, copy, url: shareURL, PUBLIC_URL };
+const MCU_SHARE = { share, copy, url: shareURL, PUBLIC_URL, BTN: SHARE_BTN, PRIMARY: SHARE_PRIMARY };
 Object.assign(window, { ShareButton, ShareIcon, MCU_SHARE });
 export { MCU_SHARE };

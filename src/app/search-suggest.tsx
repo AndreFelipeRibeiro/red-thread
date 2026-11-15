@@ -8,6 +8,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+// The suggestion list is on the design system since Notion "shadcn pass 5/5"
+// (listed with `@source` in src/index.css): the menu's look (popover surface,
+// ring, accent on the active row). It stays a listbox driven from the input
+// (combobox keys, focus kept in the box). Hook classes kept: `ss-*`, `on`.
+
 // Search input with suggestions (desktop toolbar and mobile app bar). From two
 // characters it previews matching guides, actors, characters and titles under the box
 // (an empty box lists the guides),
@@ -119,8 +124,8 @@ function SsLabel({ text, query }) {
 function SsThumb({ item }) {
   const media = window.MEDIA;
   const [failed, setFailed] = React.useState(false);
-  if (item.kind === 'title') return <span className="ss-thumb poster"><window.PosterArt title={item.title}/></span>;
-  if (item.kind === 'guide') return <span className="ss-thumb guide"><window.GuideArt guide={item.guide} size={32} round/></span>;
+  if (item.kind === 'title') return <span className="ss-thumb inline-flex flex-none items-center justify-center overflow-hidden text-(length:--fs-xs) font-bold text-(--on-color) [&_img]:block [&_img]:size-full [&_img]:object-cover poster h-[34px] w-6 rounded-[4px] bg-muted"><window.PosterArt title={item.title}/></span>;
+  if (item.kind === 'guide') return <span className="ss-thumb inline-flex flex-none items-center justify-center overflow-hidden text-(length:--fs-xs) font-bold text-(--on-color) [&_img]:block [&_img]:size-full [&_img]:object-cover guide size-8 rounded-full"><window.GuideArt guide={item.guide} size={32} round/></span>;
   const id = item.kind === 'actor' ? item.chars[0] : item.id;
   const c = window.CHARACTERS[id] || {};
   // A row naming a specific performer shows that performer's face, so the
@@ -130,7 +135,7 @@ function SsThumb({ item }) {
     return path && (window.mediaURL ? window.mediaURL('a', id, media.profile_base + path) : media.profile_base + path);
   })();
   return (
-    <span className="ss-thumb face" style={{ background: c.color || '#555' }}>
+    <span className="ss-thumb inline-flex flex-none items-center justify-center overflow-hidden text-(length:--fs-xs) font-bold text-(--on-color) [&_img]:block [&_img]:size-full [&_img]:object-cover face size-8 rounded-full" style={{ background: c.color || '#555' }}>
       {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)}/> : <span aria-hidden="true">{c.initials}</span>}
     </span>
   );
@@ -213,22 +218,22 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
 
   let lastKind = null;
   const pop = open ? (
-    <ul className="ss-pop" id={listId} role="listbox" aria-label={tr('suggest.label')}>
+    <ul className="ss-pop absolute top-[calc(100%+6px)] left-0 z-80 m-0 max-h-[min(60vh,520px)] w-full max-w-[520px] min-w-80 list-none overflow-y-auto rounded-md bg-popover p-1.5 text-popover-foreground shadow-md ring-1 ring-foreground/10 in-[.m-searchrow]:max-w-none in-[.m-searchrow]:min-w-0" id={listId} role="listbox" aria-label={tr('suggest.label')}>
       {items.map((item, i) => {
         const head = item.kind !== lastKind ? tr('suggest.' + item.kind + 's') : null;
         lastKind = item.kind;
         return (
           <React.Fragment key={item.key}>
-            {head && <li className="ss-head" role="presentation">{head}</li>}
+            {head && <li className="ss-head px-2 py-1.5 text-xs font-medium text-muted-foreground" role="presentation">{head}</li>}
             <li id={`${listId}-${i}`} role="option" aria-selected={i === active}
-              className={`ss-item${i === active ? ' on' : ''}`}
+              className={`ss-item flex min-h-[max(44px,2.75rem)] cursor-pointer items-center gap-2.5 rounded-sm px-2 py-[5px]${i === active ? ' on bg-accent text-accent-foreground' : ''}`}
               onMouseDown={e => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(item)}>
               <SsThumb item={item}/>
-              <span className="ss-text">
-                <span className="ss-main"><SsLabel text={item.label} query={value}/></span>
-                <span className="ss-sub">{secondary(item)}</span>
+              <span className="ss-text flex min-w-0 flex-1 flex-col">
+                <span className="ss-main truncate text-sm text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))] [&_b]:font-bold [&_b]:text-foreground"><SsLabel text={item.label} query={value}/></span>
+                <span className="ss-sub truncate text-(length:--fs-xs) text-muted-foreground">{secondary(item)}</span>
               </span>
-              {item.kind !== 'title' && item.kind !== 'guide' && <span className="ss-count">{tr('header.count', { n: item.n })}</span>}
+              {item.kind !== 'title' && item.kind !== 'guide' && <span className="ss-count flex-none text-(length:--fs-xs) tabular-nums text-muted-foreground">{tr('header.count', { n: item.n })}</span>}
             </li>
           </React.Fragment>
         );

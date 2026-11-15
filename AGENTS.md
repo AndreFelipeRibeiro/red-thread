@@ -10,18 +10,22 @@ original V3 plan, kept as history: each opens with a note saying so, and lines
 that no longer hold carry dated *Superseded* notes. The README describes the
 app as it is now.
 
-This checkout is **V4** (branch `version/4.0`, worktree `MCU-V4`). Read
-[docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) before V4 work: it sets out the V4
-plan, the environment and the Figma workflow.
+This checkout is **V5** (branch `version/5.0`, folder `red-thread-wip`).
+Read [docs/V5-KICKOFF.md](docs/V5-KICKOFF.md) before V5 work: it sets out
+what V5 is, the environment and the order of work.
+[docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) and docs/V4-PLAN.md are V4's
+brief and plan, kept because they explain how the build and the design system
+came to be.
 
 ## Start of every session
 
 1. `git status` in the worktree. If there are uncommitted changes you did not
    make in this session, stop and ask the user. Never edit, stash, reset,
    discard or commit another agent's pending work.
-2. `git fetch origin`; if `version/4.0` moved, fast-forward only
+2. `git fetch origin`; if `version/5.0` moved, fast-forward only
    (`git pull --ff-only`) on a clean tree.
-3. Open the Notion **V4 Tasks** board. Ship anything already in **Approved**
+3. Open the Notion master backlog's **All tasks** board (see "Backlog
+   workflow"). Ship anything already in **Approved**
    first (the user cleared it; commit, push, then complete it), then take the
    right ticket and claim it (see Backlog workflow) before writing code.
 
@@ -94,7 +98,11 @@ plan, the environment and the Figma workflow.
   `src/data/data.ts` (catalog; permanent title ids), `src/data/guides.ts`,
   `src/data/media-data.ts` (TMDB paths), `src/config.ts` (public Supabase URL +
   publishable key), `src/main.ts` (the bundle entry), `schema.sql`,
-  `styles.css`, `styles-mobile.css`. The README's "Project structure" table is the full list.
+  `src/index.css` (tokens, the Tailwind entry and the few page-level rules;
+  V3's `styles.css` and `styles-mobile.css` were deleted with the shadcn pass,
+  2026-11-14), `src/app/shell.tsx` and `src/app/banners.tsx` (class recipes
+  for the app frame, the pinned character and the guide's module, used by
+  `app.tsx` and `mobile.tsx`). The README's "Project structure" table is the full list.
 - Docs: `README.md` (features, setup, deploy), `CHANGELOG.md`, `docs/` (handoff,
   decisions, catalog audit and sources, privacy review, V3 verification log).
 
@@ -147,40 +155,55 @@ plan, the environment and the Figma workflow.
   (renamed from `MCU-Connections` on 2026-11-02; GitHub redirects the old web
   and Git addresses as long as no repository is ever created under the old
   name). The Vercel project is `red-thread`.
-- `version/4.0` is **V4 staging**, checked out in the `MCU-V4` worktree. Every
-  push deploys the Vercel preview
-  `https://red-thread-git-version-40-afr-bfcd.vercel.app/` (the project's
-  name since 2026-11-02; before that it was
-  `mcu-connections-git-version-40-afr-bfcd.vercel.app`).
-- `version/3.0` is **V3 staging** (worktree `MCU-V3`, preview
-  `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`, its address
-  from before the rename; a new push would move it to
-  `red-thread-git-version-30-afr-bfcd.vercel.app`). V3 fixes, if any, are
-  made there under that branch's own AGENTS.md and then merged forward into
-  `version/4.0` with the user's approval.
+- **Two local folders, named by role** (since 2026-11-14), side by side in
+  one parent folder, `Developer/Red Thread/`:
+  - `red-thread-live` — `main`, production. The main checkout (it holds the
+    repository's `.git`). Used only for merges to `main` and for hotfixes.
+  - `red-thread-wip` — the version in progress, a linked worktree of
+    `red-thread-live`. Today `version/5.0`; when the next version starts, this
+    folder switches to its new branch instead of a new folder being made.
+- `version/5.0` is **V5 staging**, checked out in `red-thread-wip`. It
+  started on 2026-11-14 from `d11d5b5` (V4 Batch 8, the commit `main` and
+  `version/4.0` shared). Every push deploys the Vercel preview
+  `https://red-thread-git-version-50-afr-bfcd.vercel.app/`.
+- **Hotfixes to production** are made on `main` in `red-thread-live`, with
+  the user's explicit approval for that change, then `main` is merged into
+  `version/5.0` so V5 carries the fix.
+- Released versions are history: branches and their Vercel previews are kept,
+  and each shipped state has a tag (`v2-import`, `v3-final`, `v4.0`,
+  `v4-final`; V5 gets `v5.0` at its first merge to `main`). Create and push a
+  tag only with the user's approval.
+  - `version/4.0` (tag `v4-final`), preview
+    `https://red-thread-git-version-40-afr-bfcd.vercel.app/`.
+  - `version/3.0` (tag `v3-final`), preview
+    `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` (its
+    address from before the rename).
 - `main` is **production**: `https://redthread.tv/`. The project's own
   `https://mcu-connections.vercel.app/` redirects there, path and query
-  included (`vercel.json`), and so does `www`. It serves V4 since the first V4
-  release (2026-11-01, Andre's approval). Each later batch reaches `main` only
-  with the user's explicit approval for that merge; V3 is history on
-  `version/3.0`.
-- All three deploy automatically through Vercel's Git integration; there is no
-  Vercel CLI step. Check a deploy with the commit status on GitHub.
+  included (`vercel.json`), and so does `www`. It serves V4 (last merge: V4
+  Batch 8, `d11d5b5`). Each V5 batch reaches `main` only with the user's
+  explicit approval for that merge.
+- Every branch deploys automatically through Vercel's Git integration; there
+  is no Vercel CLI step. Check a deploy with the commit status on GitHub.
+  Build settings live in the committed `vercel.json`, never in the Vercel
+  dashboard, whose settings apply to every branch including production.
 - Keep iterations local and uncommitted until the user approves committing and
   pushing **that** revision, either in chat or by setting the ticket's Status to
   **Approved** in Notion. Prior approval does not carry over to a new revision.
   Do not push layout experiments for review.
 - **Never merge to `main` without the user's explicit approval for that merge.**
-  Merge with `git merge --no-ff version/3.0` from an up-to-date `main`, push
-  `main`, then fast-forward `version/3.0` to the merge commit so both match.
+  Merge with `git merge --no-ff version/5.0` from an up-to-date `main`, push
+  `main`, then fast-forward `version/5.0` to the merge commit so both match.
 - Work usually ships in batches: implement and verify a few tickets, push the
   batch to staging for the user to try (often on a phone), then merge when they
   approve.
 - Do not run `git reset --hard`, `git checkout -- .`, `git clean`, `git stash`,
   rebases, force pushes or `git worktree prune` without explicit approval.
-  `MCU-V3` and `MCU-V4` are linked worktrees of the `MCU Connections`
-  checkout; they can look missing or "prunable" from a sandboxed shell. They
-  are not.
+  `red-thread-wip` is a linked worktree of the `red-thread-live` checkout; it
+  can look missing or "prunable" from a sandboxed shell. It is not. Move or
+  rename either folder only with `git worktree move` / `git worktree repair`
+  (the main checkout: `mv`, then `git worktree repair` inside it), never in
+  Finder.
 
 ## Commits and CHANGELOG.md
 
@@ -192,8 +215,8 @@ plan, the environment and the Figma workflow.
   or `Co-authored-by: Codex <codex@openai.com>`. Keep existing credits; never
   claim tools or checks that were not used.
 - Every committed change gets a CHANGELOG.md entry at the top:
-  `## V4 fix|improvement|feature|design|maintenance — <short title>` (older
-  entries keep their `V3` prefix), then
+  `## V5 fix|improvement|feature|design|maintenance — <short title>` (older
+  entries keep their `V3` or `V4` prefix), then
   `Recorded: YYYY-MM-DD HH:MM EDT (-0400).` and its staging/production status,
   then bullets for the change, the verification actually performed, and the
   limits. Times are real: take them from git
@@ -208,14 +231,18 @@ plan, the environment and the Figma workflow.
 - Before pushing, check staged content and commit metadata (no personal emails,
   home paths or secrets), and verify the pushed tree matches what you tested.
 
-## Backlog workflow (Notion V4 Tasks)
+## Backlog workflow (Notion master backlog)
 
-The backlog is the Notion database **V4 Tasks**, under the **Red Thread - V4** page
-(`https://app.notion.com/p/f8e1ebb392a6450d8ef883458e12bd76`; data source
-`collection://629a6bf8-a98d-47b1-b64d-9bad9d29a2b8`). **V3 Tasks** (under
-**Red Thread - V3**) is V3's history and holds any V3 maintenance tickets. Open V4,
-V5 and unversioned tickets were copied from it on 2026-10-31; each copy links
-its original in **V3 ticket**.
+The backlog is one Notion database for every version: **Red Thread -
+Backlog/Tasks (MASTER)**, under the top-level **Red Thread** page
+(`https://app.notion.com/p/4189e188029f809c9a95e8b91ae22bdf`; data source
+`collection://6d19e188-029f-8328-8e70-07717fc07aa6`; the **All tasks** board
+is `view://f6b9e188-029f-83bb-a3bc-08b3404d87ee`). Since 2026-11-14 it
+replaces the per-version boards: it started as a copy of **V4 Tasks** (V4's
+completed tickets, the V5 tickets and the unversioned ideas), and the
+**Version** field says which release a ticket belongs to. New versions do not
+get a board of their own. **V4 Tasks** (under **Red Thread - V4**) and **V3
+Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 
 - **Priority = the order of the Backlog column in the "All tasks" board view**,
   top first. Take the top unclaimed ticket unless the user names others. Do not
@@ -223,19 +250,50 @@ its original in **V3 ticket**.
   view). The user drags cards to set the order; agents cannot reorder cards
   and must not add priority numbers. A card titled `———` is the user's divider:
   tickets above it are the next ones to do.
+- **Hierarchy: Epic > Task > Sub-task.** **Level** says which one a ticket is,
+  and **Parent item** / **Sub-items** link them (Notion's sub-items relation).
+  - Claim only **leaf tickets**: tickets with no Sub-items. An Epic, or a Task
+    that has Sub-items, is a container: never claim it, set it In progress or
+    put code against it. Work its children, top of the Backlog column first.
+  - A parent is Completed only when all of its Sub-items are Completed; the
+    agent that completes the last child proposes closing the parent in its
+    handoff, and the user approves it like any other ticket.
+  - New work found while on a ticket becomes a new ticket under the same
+    parent (Level and Parent item set), not extra scope on the current one.
+  - **When the user names an epic or a parent task** ("work the shadcn pass
+    epic"), work its leaf tickets in their Backlog column order, one at a
+    time: claim, build, verify, hand off to Awaiting review, then take the
+    next. Stop where the user said to stop (e.g. "stop after 1/5"), when a
+    ticket is Blocked, or when the next one's "Before you start" isn't met,
+    and say which ticket is next. Keep to one epic or batch per session.
+  - The **All tasks** board filters out containers (Sub-items is empty), so
+    every card on it is claimable; cards show their **Parent item** and
+    **Level**. Epics are in the **Epics** table view, with their tasks listed
+    under Sub-items.
+  - Read the parent's page before starting a child: epics hold the goal, the
+    audit or source behind it, and what is out of scope.
+  - A "Before you start" line in a ticket names tickets that must be Completed
+    first. If they are not, skip to the next leaf ticket and say so.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
   Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
-  Improvement, Feature, Design, Workflow, Maintenance), **Version** (V4, V5),
-  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **V3 ticket**
-  (the original record, for tickets ported from V3), **Latest commit**,
-  **Completed on** (date-time), **Completion order** (number, starting at 1).
+  Improvement, Feature, Design, Workflow, Maintenance), **Version** (V5, V6),
+  **Level** (Epic, Task, Sub-task), **Parent item** / **Sub-items**,
+  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **Latest commit**,
+  **Completed on** (date-time), **Completion order** (number; it continues
+  across versions, so V4's tickets hold 1–56).
+  Empty fields are hidden on ticket pages (hide-when-empty layout); they
+  still exist, so set them through the API or the property menu as usual.
+  The old **V3 ticket** field was removed on 2026-11-14: tickets carried over
+  from V3 link their original in the page body ("Carried over from V3").
 - **Version** and **Batch** say where a ticket belongs in the shipping history.
-  Set both when you claim a ticket: Version is V4 for V4 work, and Batch is the
+  Set both when you claim a ticket: Version is V5 for V5 work, and Batch is the
   batch it is being worked in. They are what the calendar recap's title line is
   built from, so a ticket with no batch has no recap to belong to.
-  - V4 batches start again at **Batch 1**. Add the next Batch option when a
-    new batch starts. Tickets closed together in one approval share a batch.
-  - V5 tickets and unversioned ideas ported from V3 stay **Deferred**. Leave a
+  - Batches restart at **Batch 1** for each version, so a batch is named by
+    Version and Batch together (V5 Batch 1 is not V4 Batch 1). Add the next
+    Batch option only when a version needs one it does not have. Tickets
+    closed together in one approval share a batch.
+  - V6 tickets and unversioned ideas stay **Deferred**. Leave a
     ticket without a Version unless it says which one it is for; guessing a
     version for an idea nobody has scheduled is worse than leaving it blank.
 - Read the whole ticket page, **including any screenshots or images**: fetch
@@ -252,7 +310,7 @@ its original in **V3 ticket**.
   the ticket stays Awaiting review until the user approves it.
 - **Approved** is the user's own flag, set by them and nobody else. It means
   they have approved *that ticket's current revision* and you may commit and
-  push it to `version/4.0` without asking again. Never set it yourself, and
+  push it to `version/5.0` without asking again. Never set it yourself, and
   never read it as approval for anything beyond that ticket.
   - It does **not** authorise a merge to `main`. That still needs the user's
     explicit approval for that merge (see "Branches, deploys and approvals").
@@ -282,7 +340,7 @@ exists to avoid.
 
 Title line, then one bullet per ticket:
 
-> **Red Thread V4 – Backlog batch <n> (<a few keywords>)**
+> **Red Thread V5 – Backlog batch <n> (<a few keywords>)**
 >
 > - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
 > - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
@@ -311,11 +369,8 @@ and type below as it lands (Figma first, then code); the accessibility,
 keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
 rules carry over unchanged.
 
-- V3's colour tokens (`styles.css :root`) are prefixed `--v3-` so they
-  cannot collide with the design system's (shadcn defines `--border` and
-  `--accent` too), and since the first re-skin pass each is *defined from* a
-  design-system token (`--v3-surface: var(--card)` and so on), so V3's rules
-  follow the theme. Write new rules with the design system's tokens directly,
+- V3's colour tokens (`--v3-*`) are gone with V3's stylesheets (Notion
+  "shadcn pass 6", 2026-11-14). Write styles with the design system's tokens,
   never a raw colour. `PHASE_COLORS` in `app.tsx` (and `MPHASE_COLORS`) hold
   `var(--phase-N)`; code that paints on a canvas resolves them first.
 - Text on the dark overlays that sit on posters uses `--on-image` (fixed light
@@ -342,13 +397,15 @@ rules carry over unchanged.
   breakpoint for anything holding words: breakpoints can't know a
   translation's length or the text size. `test-fit` fails when something
   doesn't fit.
-- Type: the design system's Inter (`--font-sans`, served with the bundle) and
-  the system monospace (`--font-mono`) for labels, numbers and badges
-  (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
+- Type: the design system's Inter (`--font-sans`, served with the bundle)
+  everywhere, numbers included: no monospace is left in the UI, and figures
+  that need to line up (counts, ratings, budgets, table columns) use tabular
+  figures (`tabular-nums`) instead (Andre's decision, 2026-11-14, replacing
+  the system monospace of 2026-11-01). Bebas Neue appears only in the generated
   poster art. Logo: two SVG files, each drawn as a CSS mask so the next
   version is a file swap. `src/assets/logo-mark.svg` is the mark (today the
   work-in-progress push pin), painted with `--logo` (the designer's red, the
-  same in both themes; `.logo-mark` in `styles.css`) everywhere the mark
+  same in both themes; `.logo-mark` in `src/index.css`) everywhere the mark
   appears, including the share cards and link previews;
   `src/assets/logo-wordmark.svg` is the lettering, painted with
   `--foreground` (`.logo-word`) beside the mark in the toolbar and the phone
@@ -383,7 +440,7 @@ rules carry over unchanged.
 - Phones: each sheet owns one history entry, so the browser Back button closes
   it. Respect `prefers-reduced-motion`, and the visitor's Reduce motion
   setting: scripts ask `window.MCU_MOTION.reduced()` rather than the media
-  query, and turning it on puts `reduce-motion` on `<html>`, which `styles.css` answers by
+  query, and turning it on puts `reduce-motion` on `<html>`, which `src/index.css` answers by
   cutting every transition and animation.
 - Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`; the sliding
   selection in segmented groups (`src/app/seg-pill.tsx`) uses 300ms on the
@@ -398,15 +455,16 @@ rules carry over unchanged.
 - Search uses one normalisation, `MCU_I18N.fold()` (case and accents), for
   filtering, suggestions and highlights.
 
-## Figma (V4)
+## Figma
 
-V4's new look is designed in Figma and brought into code through the Figma MCP
+Red Thread's look (V4's re-skin, and V5's look and feel and branding work) is
+designed in Figma and brought into code through the Figma MCP
 server (remote, `https://mcp.figma.com/mcp`). `.mcp.json` in the repository
 root registers it for Claude Code in this folder; each person authenticates
 once (`/mcp`, then figma, then Authenticate). Codex adds it with
 `codex mcp add figma --url https://mcp.figma.com/mcp`.
 
-- Figma is the source of truth for the V4 design: variables (colour, type,
+- Figma is the source of truth for the design: variables (colour, type,
   spacing, radius, motion) and components. Code mirrors the variables as
   design tokens in one place, with the same names; components use tokens,
   never raw values copied from a frame.
@@ -443,33 +501,24 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   `src/main.ts` loads `src/index.css` and starts the theme, with no visible
   change, because V3's stylesheets still paint every surface. Putting the
   components into the app is Phase 4, one ticket per surface.
-- **The first re-skin pass (2026-11-01) restyled V3's markup**, it did not
-  rewrite it: each surface's look is a "RE-SKIN, FIRST PASS — <surface>"
-  section at the end of `styles.css` or `styles-mobile.css`, which gives V3's
-  classes shadcn's exact class recipes through `@apply` (both stylesheets
-  start with `@reference "./src/index.css"` for that). It sits last so it wins
-  over V3's rules of the same weight; V3's layout rules above it stay. New
-  work on a surface either edits its section or, better, swaps that surface's
-  markup for the React components in `src/components/ui/` and deletes the
-  section and the V3 rules it overrides together (docs/decisions.md).
-- **How a surface opts in** when its markup moves onto the components
-  (Settings, `src/app/settings.tsx`, was the first, built that way from the
-  start):
-  - Tailwind's preflight reset is scoped to `.v4` (`src/preflight-v4.css`,
-    generated from Tailwind's own; its header says why). A converted surface
-    puts class `v4` on its root, and a component that portals out of a
-    surface carries `v4` on its portaled root itself (`dialog.tsx`,
-    `tooltip.tsx`; add it to any new one that portals).
-  - Tailwind generates classes only from the files listed with `@source` in
-    `src/index.css`. Add the surface's file there in the ticket that converts
-    it; until then its class names are V3's and must not become utilities.
-  - V3's stylesheets are unlayered, so they beat every Tailwind class on an
-    element they match, whatever the order. Retire a surface's V3 rules in the
-    ticket that converts it.
-  - `qa/test-v4scope.js` holds this seam: the reset stays out of V3 and works
-    inside `.v4`, the two token sets don't collide, and the theme is wired.
-  - When no V3 surface is left: delete `src/preflight-v4.css`, import
-    `"tailwindcss"` whole, and drop the `v4` classes and the `--v3-` tokens.
+- **Every surface is on the design system** since the shadcn pass (Notion
+  epic "shadcn pass", 2026-11-14): V3's stylesheets, its first re-skin pass,
+  the `.v4` opt-in class and the scoped reset are gone, and Tailwind's own
+  preflight applies to the whole page.
+- **Tailwind generates classes only from the files listed with `@source` in
+  `src/index.css`** (`source(none)` on the utilities import). A file that
+  writes Tailwind classes must be listed. `app.tsx` and `mobile.tsx` are
+  deliberately not: they hold many old class names that are also Tailwind
+  utilities, so they take their classes from recipe files that are listed
+  (`src/app/shell.tsx`, `banners.tsx`, `list-parts.tsx`). Class names the app
+  and the QA checks read stay on the markup as hooks (`dl-row`, `m-lrow`,
+  `g-stop`, `cb-step`…) beside the utilities.
+- Styles go on the components, with the tokens: no new stylesheet. The only
+  hand-written CSS is in `src/index.css` (tokens, keyframes, and a few
+  page-level rules: the page background, search highlights, the logo masks,
+  `.story-sr`, the Reduce motion rule). `qa/test-v4scope.js` checks that no
+  V3 stylesheet or `--v3-` token comes back and that the reset and theme are
+  wired.
 - Install and add components with the shadcn CLI pinned to an exact version
   (`npx shadcn@<version> init --base base --preset vega` — the CLI's preset is
   `vega`, and `--base base` makes the style it records `base-vega`); commit
@@ -536,8 +585,8 @@ them from the Spatial layout).
 - **Phase 6, email/password accounts:** Deferred. It waits on a custom domain
   (for reliable transactional email) and on its own plan and explicit
   approval. Do not add forms, recovery handlers or SMTP settings before then.
-- The build step, the new look and feel and Dark/Light mode are V4 Backlog
-  tickets (Notion V4 Tasks). V5 tickets and unversioned ideas stay Deferred
+- V5's look and feel, UX/UI and branding work are Version = V5 tickets in
+  the Notion master backlog. V6 tickets and unversioned ideas stay Deferred
   there until the user moves them.
 - Other open decisions are listed in docs/HANDOFF.md.
 - Supabase free tier: accept pauses; no keep-alive automation.
@@ -557,7 +606,8 @@ them from the Spatial layout).
 
 ## Working with another agent
 
-Claude and Codex take turns in the same `version/4.0` worktree (`MCU-V4`).
+Claude and Codex take turns in the same `version/5.0` worktree
+(`red-thread-wip`).
 Uncommitted changes are the hand-off point; the Notion claim says who holds
 which ticket. When asked to review the other agent's work, read only
 (`git diff`) and report. Edit only if the user asks.

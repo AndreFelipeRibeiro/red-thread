@@ -1,11 +1,50 @@
 // @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
 // ticket "Convert the app to TypeScript": this file is renamed and inside the
-// type-checked project, but still has 106 errors under `strict`, almost all of
+// type-checked project, but still has 109 errors under `strict`, almost all of
 // them component props and callback parameters that need real types rather
 // than `any`. Delete this line and type the file; the shared surface it reads
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
+import { cn } from 'cn';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ScoreChip, EmptyState, XS, THUMB } from './list-parts';
+
+// On the design system since Notion "shadcn pass 4/5: List and Grid views"
+// (this file is listed with `@source` in src/index.css). The table keeps its own grid of <div role="row"> rather than
+// shadcn's <table>: its sticky meters and headers, its columns that drop by
+// the List's own width (container queries) and the reorder animation all need
+// the grid; the rows and heads take the Table component's recipe (muted
+// heads, a bottom border, the muted hover, the selected row). The checkboxes
+// stay native inputs drawn with the Checkbox recipe, so `checked`,
+// `indeterminate`, Shift-click ranges, row keyboard movement and forced-colours
+// mode keep working; the faces keep `Portrait` (failed-address memory and
+// initials) in the Avatar group's look. Class names the app and the QA checks
+// read are kept as hooks (`dlist`, `dl-*`, `c-*`, `bulk-*`, `on`, `dim`…).
+
+// The columns, in rem so they grow with the text, and the steps that drop
+// them by the List's own width (it narrows when the drawer opens): budget and
+// characters first, then type and in-story years, then phase. Ranked orders
+// (IMDb, RT) add a rank column.
+const COLS = {
+  plain: 'grid-cols-[1.75rem_44px_minmax(10.25rem,2.4fr)_3.5rem_4.25rem_6.5rem_minmax(7rem,1fr)_5.25rem_5.5rem_4.5rem_max(132px,7.5rem)_84px] @max-[77rem]:grid-cols-[1.75rem_44px_minmax(11rem,2.4fr)_3.5rem_4.25rem_6.5rem_minmax(7rem,1fr)_5.5rem_4.5rem_84px] @max-[62.75rem]:grid-cols-[1.75rem_44px_minmax(10rem,1fr)_4.25rem_6.5rem_5.5rem_4.5rem_84px] @max-[49.75rem]:grid-cols-[1.75rem_44px_minmax(8.75rem,1fr)_6.5rem_5.5rem_4.5rem_84px]',
+  ranked: 'grid-cols-[1.75rem_1.75rem_44px_minmax(10.25rem,2.4fr)_3.5rem_4.25rem_6.5rem_minmax(7rem,1fr)_5.25rem_5.5rem_4.5rem_max(132px,7.5rem)_84px] @max-[77rem]:grid-cols-[1.75rem_1.75rem_44px_minmax(11rem,2.4fr)_3.5rem_4.25rem_6.5rem_minmax(7rem,1fr)_5.5rem_4.5rem_84px] @max-[62.75rem]:grid-cols-[1.75rem_1.75rem_44px_minmax(10rem,1fr)_4.25rem_6.5rem_5.5rem_4.5rem_84px] @max-[49.75rem]:grid-cols-[1.75rem_1.75rem_44px_minmax(8.75rem,1fr)_6.5rem_5.5rem_4.5rem_84px]',
+};
+const rowGrid = (ranked) => cn('dl-row grid items-center gap-3 px-3 @max-[49.75rem]:gap-2.5', ranked ? COLS.ranked : COLS.plain);
+const HIDE = { budget: '@max-[77rem]:hidden', cast: '@max-[77rem]:hidden', type: '@max-[62.75rem]:hidden', story: '@max-[62.75rem]:hidden', phase: '@max-[49.75rem]:hidden' };
+const cell = (col, extra) => cn('c-' + col, HIDE[col], extra);
+// A native checkbox drawn with shadcn's Checkbox recipe: the input's border
+// and fill, a tick (or a dash when mixed) in the primary's ink.
+const CHECK = "dl-check relative inline-grid size-4 flex-[0_0_16px] cursor-pointer appearance-none place-content-center rounded-[4px] border border-input shadow-xs transition-[background-color,border-color,box-shadow] outline-none hover:border-ring focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 checked:border-primary checked:bg-primary indeterminate:border-primary indeterminate:bg-primary dark:checked:bg-primary dark:indeterminate:bg-primary before:size-2.5 before:scale-0 before:bg-primary-foreground before:transition-transform before:content-[''] before:[clip-path:polygon(12%_50%,0_64%,40%_100%,100%_22%,87%_8%,40%_72%)] checked:before:scale-100 indeterminate:before:h-0.5 indeterminate:before:w-2 indeterminate:before:scale-100 indeterminate:before:rounded-[1px] indeterminate:before:[clip-path:none] motion-reduce:transition-none motion-reduce:before:transition-none forced-colors:appearance-auto forced-colors:before:hidden";
+// The phase (or All titles) meter: the bar is the rule between phases and the
+// meter for the one starting below, drawn above its label; it pins at the top
+// of the List, above the column headers (which pin beneath it, --dl-lead-h),
+// and a later phase's meter slides up under the headers and takes the slot.
+const DIVIDER = 'dl-phase-divider mt-7 px-3 pb-[7px] text-sm font-semibold tracking-tight text-(--pm,var(--muted-foreground)) [&+.dl-glabel]:pt-[7px] [&_.pgh]:flex-col-reverse [&_.pgh]:gap-1.5 [&_.pgh-label]:text-(--pm) [&_.pgh-top]:items-center [&_.pgh-action]:h-[max(30px,1.875rem)]';
+const STICKY = 'sticky top-[-14px] z-4 -mx-3 block bg-background px-6 py-2';
+const OVERALL = 'overall text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))] [&_.pgh-label]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
 
 // Desktop List view: one row per title, in the current sort, as an alternative
 // to Spatial for scanning and comparing. Rows follow `visible` (every filter,
@@ -163,7 +202,8 @@ function DlFace({ id, matched }) {
   const initials = name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const url = path && (window.mediaURL ? window.mediaURL('a', id, media.profile_base + path) : media.profile_base + path);
   return (
-    <span className={`dl-face${matched ? ' matched' : ''}`} title={name} style={{ background: c.color || '#555', color: inkOn(c.color || '#555') }}>
+    <span className={cn('dl-face relative inline-flex size-6 flex-[0_0_24px] items-center justify-center overflow-hidden rounded-full font-bold ring-2 ring-background [&+&]:-ml-1.5 [&_img]:block [&_img]:size-full [&_img]:object-cover', XS, matched && 'matched z-1 ring-ring')}
+      title={name} style={{ background: c.color || '#555', color: inkOn(c.color || '#555') }}>
       <window.Portrait url={url} alt="" initials={initials}/>
     </span>
   );
@@ -172,38 +212,30 @@ function DlFace({ id, matched }) {
 function DlSortHeader({ col, label, sort, sortDir, setSort, setSortDir }) {
   const tr = window.MCU_I18N.tr;
   const mode = DL_SORT_FOR[col];
-  if (!mode) return <span className={`dl-h c-${col}`} role="columnheader">{label}</span>;
+  if (!mode) return <span className={cell(col, 'dl-h')} role="columnheader">{label}</span>;
   const active = sort === mode;
   const onClick = () => (active ? setSortDir(sortDir === 'asc' ? 'desc' : 'asc') : setSort(mode));
   return (
-    <span className={`dl-h c-${col}${active ? ' on' : ''}`} role="columnheader"
+    <span className={cell(col, cn('dl-h', active && 'on'))} role="columnheader"
       aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-      <button onClick={onClick} title={tr(active ? 'list.reverse' : 'list.sortBy', { label })}>
+      <button onClick={onClick} title={tr(active ? 'list.reverse' : 'list.sortBy', { label })}
+        className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), '-ml-1.5 h-[max(28px,1.75rem)] gap-[5px] px-1.5 text-xs font-medium', active ? 'text-foreground' : 'text-muted-foreground')}>
         {label}
-        <span className="dl-arrow" aria-hidden="true">{active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}</span>
+        <span className={cn('dl-arrow', XS, active ? 'text-foreground' : 'opacity-45')} aria-hidden="true">{active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}</span>
       </button>
     </span>
   );
 }
 
-// The bulk bar's "More" menu. Escape and a click outside close it; Escape is
-// stopped here so the same press does not also clear the selection or close
-// the details (one layer per press).
+// The bulk bar's "More" menu: shadcn's DropdownMenu, opening upwards. Its
+// Escape closes the menu only: the List's and the app's Escape handlers stand
+// down while `.bulk-more-pop` is open (one layer per press).
 function BulkMore({ open, setOpen, label, children }) {
-  const ref = React.useRef(null);
-  React.useEffect(() => {
-    if (!open) return undefined;
-    const down = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', down);
-    return () => document.removeEventListener('mousedown', down);
-  }, [open]);
   return (
-    <div className="bulk-more" ref={ref}
-      onKeyDown={e => { if (e.key === 'Escape' && open) { e.preventDefault(); e.stopPropagation(); setOpen(false); } }}>
-      <button className="bulk-btn icon" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label}
-        onClick={() => setOpen(!open)}>⋯</button>
-      {open && <div className="bulk-more-pop" role="menu">{children}</div>}
-    </div>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger className={cn(buttonVariants({ variant: 'outline', size: 'icon-sm' }), 'bulk-btn icon text-lg')} aria-label={label} title={label}>⋯</DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="end" sideOffset={8} className="bulk-more-pop min-w-[200px]">{children}</DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -216,12 +248,20 @@ function DlPhaseCheck({ ids, selected, onToggle, group, label }) {
   const some = !all && ids.some(id => selected.has(id));
   React.useEffect(() => { if (ref.current) ref.current.indeterminate = some; }, [some]);
   return (
-    <span className="dl-phase-label">
-      <input type="checkbox" ref={ref} className="dl-check" checked={all} onChange={() => onToggle(ids)}
+    <span className="dl-phase-label inline-flex items-center gap-3.5">
+      <input type="checkbox" ref={ref} className={CHECK} checked={all} onChange={() => onToggle(ids)}
         aria-label={window.MCU_I18N.tr('bulk.selectPhase', { group })} title={window.MCU_I18N.tr('bulk.selectPhase', { group })}/>
       <span>{label}</span>
     </span>
   );
+}
+
+// A section label (a year, a story era); in By Phase the meter.
+const GLABEL = 'dl-glabel px-3 pt-[18px] pb-2 text-sm font-semibold tracking-tight text-foreground [&_.pgh]:flex-col-reverse [&_.pgh]:gap-1.5';
+
+// How many titles a bulk action would change, beside its label.
+function BulkCount({ n, onFill = false }) {
+  return <Badge variant="secondary" className={cn('bulk-n rounded-md px-1.5 tabular-nums', XS, onFill && 'bg-black/22 text-inherit')}>{n}</Badge>;
 }
 
 function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, progress, upNext }) {
@@ -369,17 +409,13 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
         action={<window.BulkHeaderAction ids={shownIds} group={I.tr('progress.all')}/>}/>
     : leadPhase ? phaseMeter(leadPhase) : null;
   return (
-    <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
+    <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[402px] [&>.m-flip-layer]:z-4', ranked && 'ranked')} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
       {/* Up next: a strip above the table. The desktop List does not fold seen
           titles, so the suggestion can be far down; the strip brings it up. */}
       {upNext && <window.UpNextStrip info={upNext}/>}
       {!titles.length ? (
-        <div className="dl-empty">
-          <div className="dl-empty-t">{(empty && empty.title) || tr('empty.title')}</div>
-          <div className="dl-empty-s">{(empty && empty.sub) || tr('empty.sub')}</div>
-          {empty && empty.action && <button type="button" className="empty-action" onClick={empty.action.run}>{empty.action.label}</button>}
-        </div>
+        <EmptyState desktop title={empty && empty.title} sub={empty && empty.sub} action={empty && empty.action}/>
       ) : (
         <>
         {/* Always present, so the count is announced as it changes (a region
@@ -388,37 +424,38 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
         {/* Before the table in reading order, so Shift+Tab from the header
             checkbox reaches it; drawn fixed at the bottom of the List. */}
         {selIds.length > 0 && (
-          <div className="bulk-bar" role="region" aria-label={tr('bulk.selected', { n: selIds.length })}>
-            <span className="bulk-count" aria-hidden="true">{tr('bulk.selected', { n: selIds.length })}</span>
-            <button className="bulk-btn primary" disabled={!counts.seen} onClick={() => act('seen')}>
-              {tr('bulk.markSeen')}<span className="bulk-n">{counts.seen}</span>
-            </button>
-            <button className="bulk-btn" disabled={!counts.watchlist} onClick={() => act('watchlist')}>
-              {tr('bulk.addWatch')}<span className="bulk-n">{counts.watchlist}</span>
-            </button>
+          <div className="bulk-bar fixed bottom-[22px] left-1/2 z-70 flex animate-[toast-in_220ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-2 rounded-xl border bg-popover py-2 pr-2 pl-4 text-sm text-popover-foreground shadow-lg [transform:translateX(-50%)] min-[1280px]:in-[.app.drawer-open]:left-[calc((100%-402px)/2)]"
+            role="region" aria-label={tr('bulk.selected', { n: selIds.length })}>
+            <span className="bulk-count mr-1.5 text-xs whitespace-nowrap text-muted-foreground" aria-hidden="true">{tr('bulk.selected', { n: selIds.length })}</span>
+            <Button className="bulk-btn primary border-(--status-seen) bg-(--status-seen) font-semibold text-(--on-color) hover:bg-(--status-seen)/90" disabled={!counts.seen} onClick={() => act('seen')}>
+              {tr('bulk.markSeen')}<BulkCount n={counts.seen} onFill/>
+            </Button>
+            <Button variant="outline" className="bulk-btn" disabled={!counts.watchlist} onClick={() => act('watchlist')}>
+              {tr('bulk.addWatch')}<BulkCount n={counts.watchlist}/>
+            </Button>
             <BulkMore open={moreOpen} setOpen={setMoreOpen} label={tr('bulk.more')}>
-              <button role="menuitem" disabled={!counts.none} onClick={() => act('none')}>
-                {tr('bulk.markUnseen')}<span className="bulk-n">{counts.none}</span>
-              </button>
+              <DropdownMenuItem disabled={!counts.none} onClick={() => act('none')} className="justify-between gap-2.5">
+                {tr('bulk.markUnseen')}<BulkCount n={counts.none}/>
+              </DropdownMenuItem>
             </BulkMore>
-            <button className="bulk-btn ghost" onClick={clearSelection}>{tr('bulk.clear')}</button>
+            <Button variant="ghost" className="bulk-btn ghost text-muted-foreground" onClick={clearSelection}>{tr('bulk.clear')}</Button>
           </div>
         )}
-        <div className="dl-table" role="table" aria-label={tr('view.list')} style={{ '--dl-lead-h': leadH + 'px' }}
+        <div className="dl-table mx-auto max-w-[1480px] text-sm text-muted-foreground" role="table" aria-label={tr('view.list')} style={{ '--dl-lead-h': leadH + 'px' }}
           ref={tableRef} onKeyDown={onTableKey}>
           {/* A row owned directly by the table (a rowgroup holding no row is
               invalid ARIA), first so it reads and draws above the headers. */}
           {leadMeter && (
-            <div role="row" ref={setLeadEl} className={`dl-phase-divider sticky lead${leadPhase ? '' : ' overall'}`}>
-              <span role="cell" className="dl-overall-cell">{leadMeter}</span>
+            <div role="row" ref={setLeadEl} className={cn(DIVIDER, STICKY, 'lead mt-0', !leadPhase && OVERALL)}>
+              <span role="cell" className="dl-overall-cell block">{leadMeter}</span>
             </div>
           )}
-          <div className="dl-row dl-head" role="row">
-            <span className="dl-h c-check" role="columnheader">
-              <input type="checkbox" ref={headCheck} className="dl-check" checked={allOn} onChange={toggleAll}
+          <div className={cn(rowGrid(ranked), 'dl-head sticky top-[calc(-14px+var(--dl-lead-h,0px))] z-5 h-[38px] border-b bg-background text-xs font-medium text-muted-foreground')} role="row">
+            <span className="dl-h c-check flex items-center justify-center" role="columnheader">
+              <input type="checkbox" ref={headCheck} className={CHECK} checked={allOn} onChange={toggleAll}
                 aria-label={tr('bulk.selectAll')} title={tr('bulk.selectAll')}/>
             </span>
-            {ranked && <span className="dl-h c-rank" role="columnheader">#</span>}
+            {ranked && <span className="dl-h c-rank tabular-nums" role="columnheader">#</span>}
             {DL_COLUMNS.map(col => (
               <DlSortHeader key={col} col={col} label={labels[col]} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             ))}
@@ -430,17 +467,17 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                    with a transform, and a sticky element is already positioned
                    from the scroll offset — together they leave the bar hanging
                    below the header instead of under it. */
-                <div role="row" className="dl-phase-divider sticky">
-                  <span role="cell" className="dl-overall-cell">{phaseMeter(b.groups[0].phaseStart)}</span>
+                <div role="row" className={cn(DIVIDER, STICKY, bi === 0 && 'mt-2.5')}>
+                  <span role="cell" className="dl-overall-cell block">{phaseMeter(b.groups[0].phaseStart)}</span>
                 </div>
               )}
               {b.groups.map(g => (
                 <React.Fragment key={g.id}>
               {g.label && (g.phase && progress && progress.byPhase[g.phase]
-                ? <div className="dl-glabel" data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>
+                ? <div className={GLABEL} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>
                     <window.ProgressHeader label={g.label} color={g.color} {...progress.byPhase[g.phase]}/>
                   </div>
-                : <div className={`dl-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>)}
+                : <div className={cn(GLABEL, g.story && 'story')} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>)}
               {g.items.map(t => {
                 n += 1;
                 const seen = statusOf(t.id) === 'seen';
@@ -452,43 +489,44 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                 const dim = activeChars ? !activeChars.some(c => t.cast.includes(c)) : (activeChar && !t.cast.includes(activeChar));
                 return (
                   <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
-                    className={`dl-row${seen ? ' seen' : ''}${openId === t.id ? ' on' : ''}${dim ? ' dim' : ''}`}>
-                    <span className="c-check" role="cell" onClick={e => e.stopPropagation()}>
-                      <input type="checkbox" className="dl-check" checked={selected.has(t.id)}
+                    className={cn(rowGrid(ranked), 'min-h-[70px] cursor-pointer scroll-mt-[calc(var(--dl-lead-h,0px)+46px)] scroll-mb-3 border-b transition-[background-color,opacity] duration-150 hover:bg-muted/50 [.dlist:has(>.bulk-bar)_&]:scroll-mb-[84px]',
+                      seen && 'seen', openId === t.id && 'on bg-muted shadow-[inset_3px_0_0_var(--primary)] hover:bg-muted', dim && 'dim opacity-35')}>
+                    <span className="c-check flex items-center justify-center" role="cell" onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" className={CHECK} checked={selected.has(t.id)}
                         onClick={e => { e.stopPropagation(); toggleRow(t.id, e); }} onChange={() => {}}
                         aria-label={tr('bulk.selectRow', { title: I.titleName(t) })}/>
                     </span>
-                    {ranked && <span className="c-rank" role="cell">{n}</span>}
-                    <span className="c-poster" role="cell"><span className="dl-thumb"><PosterArt title={t}/></span></span>
-                    <span className="c-title" role="cell">
-                      <button className="dl-open" aria-expanded={openId === t.id}
+                    {ranked && <span className="c-rank text-xs tabular-nums text-muted-foreground" role="cell">{n}</span>}
+                    <span className="c-poster" role="cell"><span className={cn('dl-thumb block h-[58px] w-10 rounded-[5px]', THUMB, seen && 'opacity-55')}><PosterArt title={t}/></span></span>
+                    <span className="c-title flex min-w-0 flex-col items-start" role="cell">
+                      <button className="dl-open cursor-pointer text-left text-sm font-medium text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50" aria-expanded={openId === t.id}
                         onClick={e => { e.stopPropagation(); onOpen(t.id); }}>
                         <window.Highlight text={I.titleName(t)} query={search}/>
                       </button>
                       {/* Beside the title rather than in the narrow Released
                           column, where it wrapped under the year. */}
-                      <window.ReleaseBadge title={t} className="dl-release"/>
+                      <window.ReleaseBadge title={t} className="dl-release mt-[5px] flex w-max"/>
                       {/* Which character matched the search, at every width
                           (the characters column drops on narrower lists). */}
                       <window.MatchBadge matchedChars={matched} query={search} title={t}/>
                     </span>
-                    <span className="c-type" role="cell">{typeLabel(t)}</span>
-                    <span className="c-phase" role="cell"><span className="dl-dot" style={{ background: window.PHASE_COLORS[t.phase] }}/>{t.phase}</span>
-                    <span className="c-release" role="cell">{t.year}</span>
-                    <span className="c-story" role="cell">{t.story ? I.storyLabel(t.story) : '—'}</span>
-                    <span className="c-budget" role="cell">{t.budget != null ? I.budget(t.budget) : '—'}</span>
+                    <span className={cell('type')} role="cell">{typeLabel(t)}</span>
+                    <span className={cell('phase', 'inline-flex items-center gap-[7px] text-xs tabular-nums')} role="cell"><span className="dl-dot size-2 flex-[0_0_8px] rounded-full" style={{ background: window.PHASE_COLORS[t.phase] }}/>{t.phase}</span>
+                    <span className="c-release text-xs tabular-nums" role="cell">{t.year}</span>
+                    <span className={cell('story', 'text-xs tabular-nums')} role="cell">{t.story ? I.storyLabel(t.story) : '—'}</span>
+                    <span className={cell('budget', 'text-xs tabular-nums')} role="cell">{t.budget != null ? I.budget(t.budget) : '—'}</span>
                     <span className="c-imdb" role="cell">{t.imdb != null
-                      ? <span className="card-rating imdb" title={tr(t.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}><span className="imdb-tag">IMDb</span>{t.imdb.toFixed(1)}</span>
-                      : <span className="dl-none">—</span>}</span>
+                      ? <ScoreChip kind="imdb" title={t} className="card-rating w-max"/>
+                      : <span className="dl-none text-muted-foreground">—</span>}</span>
                     <span className="c-rt" role="cell">{t.rt != null
-                      ? <span className="card-rating rt" title={tr('score.rt')}><span className="rt-tag">RT</span>{t.rt}%</span>
-                      : <span className="dl-none">—</span>}</span>
-                    <span className="c-cast" role="cell">
+                      ? <ScoreChip kind="rt" title={t} className="card-rating w-max"/>
+                      : <span className="dl-none text-muted-foreground">—</span>}</span>
+                    <span className={cell('cast', 'flex items-center')} role="cell">
                       {cast.slice(0, 5).map(c => <DlFace key={c} id={c} matched={matched.includes(c)}/>)}
-                      {cast.length > 5 && <span className="dl-more">+{cast.length - 5}</span>}
+                      {cast.length > 5 && <span className={cn('dl-more ml-1.5 tabular-nums text-muted-foreground', XS)}>+{cast.length - 5}</span>}
                     </span>
-                    <span className="c-actions" role="cell" onClick={e => e.stopPropagation()}>
-                      <window.TitleStatusActions title={t} className="dl-tsa"/>
+                    <span className="c-actions flex justify-end" role="cell" onClick={e => e.stopPropagation()}>
+                      <window.TitleStatusActions title={t} className="dl-tsa static flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn_svg]:size-4 [&_.tsa-gap]:order-0"/>
                     </span>
                   </div>
                 );

@@ -13,6 +13,276 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — shadcn pass 6: guides, banners, Share and the app shell; the V3 stylesheets deleted
+
+Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The guides (`src/app/guides-ui.tsx`: the menu, now shadcn's Popover; the
+  meters, the desktop module, the phone dock, the guide List, Grid and table,
+  Skip / Unskip, "Part of", the promotion and "caught up"), the pinned
+  character's banner and pill, Share and the share-card dialog, Settings'
+  gear and panel, and the rest of the app shell are on the design system.
+  New recipe files `src/app/banners.tsx` and `src/app/shell.tsx` (listed with
+  `@source`) hold the classes for markup in `app.tsx` and `mobile.tsx`.
+- Deleted: `styles.css`, `styles-mobile.css`, `src/preflight-v4.css`, the
+  `--v3-` tokens and the `v4` opt-in class. Tailwind's preflight covers the
+  whole page; the only hand-written CSS left is in `src/index.css` (tokens,
+  keyframes, a few page-level rules). The startup screen's classes are in
+  `index.html`. No monospace in the UI.
+- Fixed in passing: the guide's "Next stop" tag (unstyled since 2/5); seen
+  Spatial cards now fade only their title, which fixes a 3.4:1 contrast on
+  the year and budget in the light theme.
+- From Andre's review: the Spatial cards' badge, Seen / Watchlist and rating
+  chips are aligned again; "On watchlist" is white on the guide module's
+  yellow; clicking a guide stop makes it the current one (the marker and
+  "Stop n of N" follow); the labelled Seen / Watchlist buttons get a smaller
+  pop and a tight halo; Share in the details is an icon-only square the
+  height of Seen and Watchlist, so the row stays on one line in English and
+  Portuguese.
+- QA: `test-v4scope` now checks that no V3 stylesheet or token returns;
+  `test-skip` and `test-share` read hook classes and names; `checks.json` maps
+  the new files. AGENTS.md and README.md describe the setup without V3 sheets.
+- Verified: typecheck and build; full `qa/regress.sh`, 59 check runs clean (a first run had one timing failure in `test-settings`, clean three times on its own and in the re-run); quick runs after
+  each review fix; desktop 1440×900 and phone captures of the guide, the
+  banner and pill, the details drawer and sheet, and the light Spatial canvas.
+- Limits: the phone's tapped-card popup and the startup screen were checked
+  by the QA runs, not by eye; signed-in state and a real iPhone not checked.
+  In development the startup screen is unstyled for a moment (its styles come
+  with the bundle); the built site loads them with the page.
+
+## V5 fix — Phone welcome: the pinned buttons no longer cut the list mid-sentence
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The welcome's pinned footer ("Seen some already?" and its two buttons) has
+  a fade above it, so text scrolling under it fades out instead of being cut
+  mid-line, and it reads as a list that carries on. The fade goes once the
+  content is scrolled to its end (`src/app/about.tsx`, `useScrolledToEnd`).
+  Same on the desktop welcome dialog. Content and copy unchanged.
+- Verified: reproduced at 390×844 first ("Watch your way" cut by the
+  footer), then checked the fade there and at 1440×900; test-welcome,
+  test-picker, test-about and test-settings clean; full regression below.
+- Limits: not checked on a real iPhone or in Portuguese.
+
+## V5 maintenance — shadcn pass 5/5: menus and dialogs
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- About and the welcome, the desktop dialog shell (`ModalDialog`, shadcn's
+  Dialog look, keeping its own focus trap, Escape and focus return), the
+  sign-in reminder and the bulk confirmation, toasts and confetti, "What have
+  you seen?", the Account menu (now shadcn's Popover), its phone sheet and
+  avatar button, the sync status, Where to watch and the search suggestions
+  are on the design system. Each file is listed with `@source`; its V3 rules
+  are deleted.
+- The toast keeps its own component in Sonner's look: its placement, one
+  toast at a time, Undo, Share and the pause on hover are the app's.
+- Fixed in passing: the `tsa-spin` keyframes had gone, so the Seen /
+  Watchlist saving spinner and the account loading dots stopped turning.
+- The guides, the pinned-character banner and pill, Share, the rest of the
+  shell and deleting both V3 stylesheets moved to a new ticket ("shadcn pass
+  6"). `styles.css` is now 1,081 lines and `styles-mobile.css` 292 (2,696 and
+  753 at the start of the epic).
+- The full regression's axe scan found the Account popover (a dialog) had no
+  name; it now carries the Account title.
+- Verified: typecheck and build; 22 targeted checks clean; desktop and phone
+  captures of the welcome and the Account menu and sheet; full regression
+  below.
+- Limits: light theme of these surfaces, Portuguese and signed-in state not
+  captured; not checked on a real iPhone.
+
+## V5 maintenance — shadcn pass 4/5: List and Grid views
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- New `src/app/list-parts.tsx` (typed): the progress meters, score chips,
+  the PH badge (a Badge), the search-match badge, the empty state, the phone
+  List row and Grid card (shadcn's Card), the seen-run header and fold, and
+  the layout recipes MobileGrid / MobileList use.
+- Desktop List (`desktop-list.tsx`): rows and heads take the Table recipe,
+  sort heads are ghost Buttons, the bulk bar uses Buttons and count Badges,
+  and its More menu is a DropdownMenu. Same columns and column drops. It
+  keeps its own grid rather than a `<table>` (sticky meters, container-query
+  column drops, the reorder animation); the checkboxes stay native inputs in
+  the Checkbox recipe, and the faces keep `Portrait` in the Avatar look.
+- Numbers lost their monospace (tabular figures instead). The search-match
+  text is 12px outside the Spatial canvas (was 9–10px). DropdownMenu sits on
+  z-80 like Popover.
+- QA: test-v4scope adds its own icon outside `.v4`; the guide's desktop view
+  keeps its scroll frame (`.dlist.g-desk`) until the guides convert.
+- Verified: typecheck and build; quick run clean after those two fixes;
+  desktop 1440×900 light and dark (Release and By Phase, selection, mixed
+  phase checkbox, bulk bar and More), phone 390×844 dark (List, Grid by
+  phase with a seen run, meters, Up next); full regression below.
+- Limits: Portuguese, phone light theme and signed-in state not captured;
+  not checked on a real iPhone.
+
+## V5 maintenance — shadcn pass 3/5: details drawer and phone sheet
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The details body moved to `src/app/title-details.tsx` with the same order,
+  content and actions: collapsible sections in the accordion look, "No scores
+  yet" and the release badge as Badges, "See more" a link Button, Buttons
+  elsewhere. "Set in" and the budget lost their monospace.
+- The desktop drawer has shadcn's Sheet look and keeps its behaviour in
+  `app.tsx` (modeless, no focus trap, the Escape ladder); every phone sheet's
+  frame has the Sheet look and keeps its focus trap, Back entry and swipe.
+- Verified: typecheck and build; quick run with the details checks, 39 check
+  runs clean; signed-in captures of the drawer and phone sheets, dark and
+  light; full regression below.
+- Limits: not checked on a real iPhone.
+
+## V5 maintenance — shadcn pass 2/5: Spatial canvas, cards and threads
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The Spatial card (`src/app/spatial-card.tsx`), Seen / Watchlist and the
+  seen marker (`status-actions.tsx`, outline Buttons used by every surface),
+  the canvas chrome (`spatial-chrome.tsx`: zoom, band labels, meter frame,
+  empty note, thread tooltip, the "64 titles" summary) and all five Up next
+  layouts (`upnext.tsx`) are on the design system. Same marks, sizes and
+  states; the canvas keeps its pixel sizes and performance rules; thread
+  drawing untouched. No monospace.
+- Verified: typecheck and build; three quick runs (39, 38, 38 check runs
+  clean) and the fixes they found; signed-in captures, dark and light;
+  full regression below.
+- Limits: not checked on a real iPhone.
+
+## V5 maintenance — shadcn pass 1/5: toolbar, header and filters
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The desktop toolbar (`src/app/toolbar.tsx`), the Order toggle, View menu
+  and collection switch (`header-controls.tsx`), and the phone app bar,
+  bottom sort bar and Filters sheet (`phone-header.tsx`) are on shadcn's
+  ToggleGroup, Popover and Button, in the same places with the same labels
+  and fitting steps. Popover sits on z-80. No monospace.
+- Behaviour from the library: each segmented group is one Tab stop with
+  arrow keys inside; Escape on Filters and the View menu returns focus to its
+  button.
+- QA: `qa/run.js` quotes its `--require` path (the folder name has a space);
+  test-release, test-fit, test-guidemode and four View-menu checks updated.
+- Verified: typecheck and build; a full regression run with two failures,
+  fixed and re-run clean; signed-in captures at 1440, 1240 and 1000px and on
+  a 390px phone, dark and light; full regression below.
+- Limits: not checked on a real iPhone.
+
+The six entries above share one commit. The tickets were
+built one after another in the same files (`styles.css`,
+`styles-mobile.css`, `src/index.css`, `src/main.ts`, `mobile.tsx`,
+`app.tsx`) without commits in between, so they could not be separated into
+one commit each. Full `qa/regress.sh` on the pushed tree: 59 check runs clean.
+
+## V5 maintenance — Working an epic: one leaf ticket at a time
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- `AGENTS.md` (Backlog workflow): when the user names an epic or a parent
+  task, its leaf tickets are worked in Backlog order, one at a time (claim,
+  build, verify, hand off to Awaiting review, then the next), stopping where
+  the user said, at a Blocked ticket or an unmet "Before you start", and
+  keeping to one epic or batch per session.
+- Verified: read back in the file. Limits: documentation only.
+
+## V5 maintenance — One master backlog in Notion
+
+Recorded: 2026-11-14 17:56 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The backlog is now one Notion database for every version, **Red Thread -
+  Backlog/Tasks (MASTER)**, under the top-level Red Thread page. It started
+  as a copy of V4 Tasks; **Version** says which release a ticket is for,
+  batches restart per version and Completion order runs on across versions.
+  V3 Tasks and V4 Tasks are history, and new versions get no board of their
+  own.
+- `AGENTS.md` (Start of every session, Backlog workflow, Deferred work),
+  `README.md`, `docs/V5-KICKOFF.md`, `docs/HANDOFF.md` and
+  `docs/decisions.md` point at it.
+- Verified: the master database's schema, views and rows read through the
+  Notion connector (56 completed V4 tickets, 3 V5 tickets in Backlog, 11
+  unversioned ideas in Deferred), matching V4 Tasks row for row.
+- Limits: documentation only. Nothing in Notion was changed; the database's
+  description still says "Shared V4 queue", and the New Major Version
+  Checklist still describes a board per version.
+
+## V5 maintenance — Two local folders, version tags and V5 sign-in
+
+Recorded: 2026-11-14 17:23 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- The local checkouts are now two folders named by role, inside
+  `Developer/Red Thread/`: `red-thread-live` (`main`: merges and hotfixes)
+  and `red-thread-wip` (the version in progress, `version/5.0` today). They
+  replace `MCU Connections`, `MCU-V3`, `MCU-V4` and `Red Thread (V5)`; moved
+  with `git worktree move`, `mv` and `git worktree repair`. Production
+  hotfixes are made on `main` and merged into `version/5.0`.
+- Shipped states are tagged on GitHub: `v2-import` (`f567dbf`), `v3-final`
+  (`a44891a`), `v4.0` (`553e0ac`) and `v4-final` (`d11d5b5`). Every version
+  branch and its Vercel preview is kept.
+- The V5 preview is allowed for Google sign-in: its origin was added to the
+  Google OAuth client and its address to Supabase's redirect URLs.
+- `AGENTS.md`, `docs/V5-KICKOFF.md`, `docs/HANDOFF.md` and
+  `docs/decisions.md` describe the two folders, the hotfix flow, the tags and
+  the old sign-in addresses to retire in early 2027.
+- Verified: `git worktree list` shows the two folders, both in step with
+  GitHub; `npm run typecheck` in `red-thread-wip`; every production and
+  preview address loaded (the V3 preview only at its `mcu-connections-…`
+  address); the Google and Supabase lists re-read after saving.
+- Limits: documentation only. Google sign-in on the V5 preview is untested
+  (Google can take up to a few hours to apply the change). The Notion
+  checklist still describes one folder per version.
+
+## V5 maintenance — V5 workspace setup
+
+Recorded: 2026-11-14 16:37 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
+
+- Opens V5 on branch `version/5.0`, branched from `d11d5b5` (V4 Batch 8, the
+  commit `main` and `version/4.0` shared), in the worktree `Red Thread (V5)`,
+  deployed as the preview
+  `https://red-thread-git-version-50-afr-bfcd.vercel.app/`. V5 is a
+  look-and-feel release: art direction from Figma, UX/UI and branding.
+- `AGENTS.md` retargeted to V5: `version/5.0` as staging, `version/4.0` as V4
+  maintenance merged forward, merges to `main` from `version/5.0`, Notion
+  **V5 Tasks** as the backlog (not created yet; until then, the Version = V5
+  tickets on V4 Tasks), the **V4 ticket** field, batches restarting at Batch 1,
+  the `V5` CHANGELOG prefix and recap title, and the Figma section no longer
+  tied to V4.
+- `docs/V5-KICKOFF.md` added: what V5 is (goals to be confirmed with Andre's
+  scope), where everything lives, the first-session checklist, the order of
+  work, Andre's to-do and the open decisions.
+- `README.md` carries the V5 preview link and its sign-in redirect row;
+  `docs/decisions.md` records the start of V5; `docs/HANDOFF.md` says where
+  things stand; `package.json` is 5.0.0.
+- Verified: `npm ci`, `npm run typecheck` and `npm run build` in the new
+  worktree; `qa/setup.sh`; `qa/smoke.js` against the local build
+  (`npm run preview` on port 8126: desktop and phone, no errors).
+- Limits: documentation and configuration only — no app code, so no
+  regression run. Google sign-in on the V5 preview waits on its Google and
+  Supabase entries (Andre's to-do), so it is untested. The Notion V5 page and
+  board and the V5 Figma file do not exist yet.
+
+
 ## V4 maintenance — test-segpill checks the slide frame by frame
 
 Recorded: 2026-11-08 10:14 EST (-0500). Pushed to `version/4.0` (V4 staging);

@@ -8,14 +8,30 @@ rulebook and [decisions.md](decisions.md) the running decision log. This file is
 the current handoff. `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` are
 the original V3 plan, kept as history (each says so at the top).
 
-**Updated 2026-10-31, when V4 opened.** V3 is finished and live; this checkout
-is V4. Read [V4-KICKOFF.md](V4-KICKOFF.md) for what V4 is and the order of
-work, and [V4-PLAN.md](V4-PLAN.md) for the build migration and its findings.
+**Updated 2026-11-14, when V5 opened.** V4 is finished and live; this checkout
+is V5 (branch `version/5.0`, folder `red-thread-wip`, preview
+https://red-thread-git-version-50-afr-bfcd.vercel.app/). Read
+[V5-KICKOFF.md](V5-KICKOFF.md) for what V5 is and the order of work. V4's
+[V4-KICKOFF.md](V4-KICKOFF.md) and [V4-PLAN.md](V4-PLAN.md) explain the build
+migration and the design system V5 builds on.
 Everything below describes the app as it now stands; the batch history is kept
 because it is how most of the behaviour got here.
 
 ## Where things stand
 
+- **V5 is open** since 2026-11-14 on `version/5.0` (folder
+  `red-thread-wip`), branched from `d11d5b5`: look and feel, UX/UI and
+  branding. Its scope and tickets are being written in the Notion master
+  backlog (**Red Thread - Backlog/Tasks (MASTER)**, one board for every
+  version, which replaced the per-version boards); see V5-KICKOFF.md.
+- **V4 is released**: its last batch (Batch 8) reached `main` on 2026-11-08
+  (`d11d5b5`, tag `v4-final`). Production hotfixes are made on `main` in
+  `red-thread-live` and merged into `version/5.0`. The V4 notes below are
+  history.
+- **Two local folders** since 2026-11-14, inside `Developer/Red Thread/`:
+  `red-thread-live` (`main`) and `red-thread-wip` (the version in progress), replacing `MCU Connections`,
+  `MCU-V3`, `MCU-V4` and `Red Thread (V5)`. Shipped states are tagged
+  (`v2-import`, `v3-final`, `v4.0`, `v4-final`).
 - **V3 is released.** Batch 10 merged to production on 2026-10-31
   (`a44891a`), and `main`, `version/3.0` and `version/4.0` all started from
   that commit. V3 stays on `version/3.0` as history.
@@ -202,11 +218,16 @@ work:
   build plugin names. Renaming the code names alone would leave the keys
   behind, a half-and-half nobody wants. Also kept: "MCU" meaning the Marvel
   Cinematic Universe, the Supabase project address and the Google Cloud
-  project ID (neither can change), and history files. **Still to do on the rename ticket:** move the local folders
-  (`MCU Connections` → `red-thread`, `MCU-V4` → `red-thread-v4`, then
-  `git worktree repair`), with every Claude, Codex, editor and dev server
-  closed first; and, after about three months, remove the old addresses from
-  Google and Supabase.
+  project ID (neither can change), and history files. The local folders were renamed on 2026-11-14, as
+  `red-thread-live` and `red-thread-wip` rather than the planned
+  `red-thread` / `red-thread-v4`. **Still to do on the rename ticket:** after
+  about three months (early February 2027), remove the old addresses from
+  Google and Supabase: `mcu-connections.vercel.app` (a redirect, so sign-in
+  never runs there), `mcu-connections-git-version-40-afr-bfcd.vercel.app` (a
+  frozen pre-rename V4 build) and `http://localhost:8123/` (Supabase only, the
+  old V3 port). Keep `mcu-connections-git-version-30-afr-bfcd.vercel.app`
+  while the V3 preview is kept; if `version/3.0` is ever pushed again, add
+  `red-thread-git-version-30-afr-bfcd.vercel.app` to both.
 - **The logo is two masks, not images** (the work-in-progress logo, Andre,
   2026-11-02). `src/assets/logo-mark.svg` (the push pin) and
   `src/assets/logo-wordmark.svg` (the lettering) carry only shapes; their own
@@ -285,9 +306,9 @@ work:
 - **Supabase free tier** pauses idle projects; restore from the dashboard (no
   keep-alive by policy).
 - **Notion.** Agents cannot reorder board cards; only the user sets priority.
-- **The local worktrees can look missing.** `MCU-V3` and `MCU-V4` are linked
-  worktrees of the `MCU Connections` checkout, and sandboxed shells may list
-  them as prunable. They are not; never prune them.
+- **The local worktree can look missing.** `red-thread-wip` is a linked
+  worktree of the `red-thread-live` checkout, and sandboxed shells may list
+  it as prunable. It is not; never prune it.
 - **`test-camera`'s flakiness is fixed** (the glide steps wait for the
   transition instead of guessing at 60 ms). Its one console warning, "Unable
   to preventDefault inside passive event listener", is React attaching wheel

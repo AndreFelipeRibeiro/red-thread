@@ -285,7 +285,7 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
       const row = document.querySelector('.dl-tsa');
       const rects = () => [...row.querySelectorAll('.tsa-btn')].map(b => { const x = b.getBoundingClientRect(); return [Math.round(x.left), Math.round(x.width)]; });
       const before = rects();
-      const spin = document.createElement('span'); spin.className = 'tsa-spin'; spin.setAttribute('aria-hidden', 'true');
+      const spin = document.createElement('span'); spin.className = window.TSA_SPIN || 'tsa-spin'; // status-actions.tsx's own classes spin.setAttribute('aria-hidden', 'true');
       row.querySelector('.tsa-btn.seen').appendChild(spin);
       const after = rects();
       const sr = spin.getBoundingClientRect(), br = row.querySelector('.tsa-btn.seen').getBoundingClientRect();

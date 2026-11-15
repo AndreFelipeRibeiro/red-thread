@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from 'cn';
 import { getChoice as getThemeChoice, setChoice as setThemeChoice, subscribe as subscribeTheme, type ThemeChoice } from '../theme';
 import { Radio as RadioPrimitive } from '@base-ui/react/radio';
 import { RadioGroup } from '@/components/ui/radio-group';
@@ -14,8 +15,7 @@ import type { Lang } from '../types/catalog';
 // the account, which is about you and your data. Desktop opens it as a panel
 // from the right, in the details drawer's place; phones as a sheet. It is the
 // first surface built from the V4 components rather than restyled V3 markup,
-// so its root carries `v4` and this file is listed with @source in
-// src/index.css.
+// and this file is listed with @source in src/index.css.
 //
 // The preferences themselves keep their own stores and storage keys, so
 // nobody loses a choice made before Settings existed: the theme (src/theme.ts,
@@ -563,7 +563,8 @@ function GearIcon() {
 function SettingsButton({ onOpen, open, className = '' }: { onOpen: () => void; open?: boolean; className?: string }) {
   const tr = window.MCU_I18N.tr;
   return (
-    <button type="button" className={`settings-btn${open ? ' open' : ''}${className ? ' ' + className : ''}`}
+    <button type="button" className={cn('settings-btn inline-flex size-[max(44px,2.75rem)] shrink-0 cursor-pointer items-center justify-center rounded-md border bg-background p-0 text-foreground shadow-xs outline-none transition-[scale,background-color,color,border-color,box-shadow] duration-150 hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-disabled:scale-92 motion-reduce:active:scale-100 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 [:root.reduce-motion_&]:active:scale-100',
+      open && 'open bg-muted dark:bg-input/50', className)}
       onClick={onOpen} aria-label={tr('settings.title')} title={tr('settings.title')} aria-expanded={!!open}>
       <GearIcon/>
     </button>
@@ -621,14 +622,21 @@ function SettingsPanel({ onClose, onAbout, onShowWelcome, leaving = false, onGon
   }, []);
   return (
     // A div, not an aside: role="dialog" is not allowed on <aside> (axe).
-    <div ref={panelRef} className={`v4 settings-panel${open && !leaving ? ' open' : ''}${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="false"
+    // The panel's frame matches the details drawer it replaces: below the
+    // toolbar, from the right, same width. Leaving (closed onto a title, or
+    // with ×) is a quicker slide out, so the drawer after it isn't kept waiting.
+    // It slides with `transform` (not Tailwind's translate utilities, which
+    // use the `translate` property): the close waits for that transition.
+    <div ref={panelRef} role="dialog"
+      className={cn('settings-panel fixed top-(--tb-h,0px) right-0 z-60 flex h-[calc(100vh-var(--tb-h,0px))] w-[380px] [transform:translateX(100%)] flex-col border-l bg-popover text-popover-foreground shadow-lg transition-transform duration-360 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
+        open && !leaving && 'open [transform:none]', leaving && 'leaving pointer-events-none duration-240 ease-[cubic-bezier(.4,0,1,1)]')} aria-modal="false"
       aria-labelledby="settings-title"
       onTransitionEnd={(e) => { if (leavingRef.current && e.target === e.currentTarget && e.propertyName === 'transform') goneRef.current?.(); }}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
         <h2 id="settings-title" ref={headingRef} tabIndex={-1} className="text-lg font-semibold tracking-tight outline-none">{tr('settings.title')}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</Button>
       </div>
-      <div className="settings-scroll px-5 py-5">
+      <div className="settings-scroll flex-auto overflow-y-auto overscroll-contain px-5 py-5">
         <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose} keyboard/>
       </div>
     </div>
@@ -644,10 +652,10 @@ function SettingsSheet({ onClose, onAbout, onShowWelcome }: {
   const tr = window.MCU_I18N.tr;
   return (
     <Sheet onClose={onClose} tall labelledBy="settings-sheet-title">
-      <div className="m-sh-head">
-        <div id="settings-sheet-title" className="m-sh-title">{tr('settings.title')}</div>
+      <div className="m-sh-head mb-4 flex items-center justify-between">
+        <div id="settings-sheet-title" className="m-sh-title text-lg font-semibold tracking-tight">{tr('settings.title')}</div>
       </div>
-      <div className="v4 settings-sheet-body pb-2">
+      <div className="settings-sheet-body pb-2">
         <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose}/>
       </div>
     </Sheet>

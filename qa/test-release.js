@@ -130,7 +130,9 @@ const statusOf = `(t, today) => {
     const f = [...document.querySelectorAll('.toolbar button')].find(b => /Filters/.test(b.textContent));
     f.click();
     await new Promise(r => setTimeout(r, 500));
-    const opt = [...document.querySelectorAll('.toolbar button')].find(b => b.textContent.trim() === 'Released only');
+    // The panel is a popover rendered at the page root (shadcn pass 1/5), not
+    // inside the toolbar.
+    const opt = [...document.querySelectorAll('.toolbar button, .filters-pop button')].find(b => b.textContent.trim() === 'Released only');
     if (!opt) return { error: 'no Released only option in the Filters panel' };
     opt.click();
     await new Promise(r => setTimeout(r, 1800));

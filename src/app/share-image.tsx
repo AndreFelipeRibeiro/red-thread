@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from 'cn';
 import type { SharePayload } from './share';
 
 // The share card (Notion V4 Tasks, "Share 2/3"). A link can't carry someone's
@@ -37,6 +38,10 @@ function close() { current = null; emit(); }
 /** The renderer, loaded the first time a card is opened. */
 export const cardRenderer = () => import('../share-card/render-browser');
 
+// The share card's actions: full-height buttons that share a row on desktop
+// and stack, primary first, on phones (a long label never wraps inside one).
+const ACTION = 'h-[max(44px,2.75rem)] flex-[1_1_160px]';
+
 function ShareImageBody({ req, touch }: { req: ShareImageRequest; touch: boolean }) {
   const tr = window.MCU_I18N.tr;
   const [blob, setBlob] = React.useState<Blob | null>(null);
@@ -63,27 +68,27 @@ function ShareImageBody({ req, touch }: { req: ShareImageRequest; touch: boolean
     }
   };
   return (
-    <div className="share-image">
-      <h2 id="share-image-title" className="share-image-title">{req.heading}</h2>
-      <div className="share-image-frame" aria-busy={!url && !failed}>
+    <div className="share-image flex flex-col gap-4 text-foreground">
+      <h2 id="share-image-title" className="share-image-title pr-9 text-lg font-semibold tracking-tight">{req.heading}</h2>
+      <div className="share-image-frame mx-auto flex aspect-[4/5] h-[min(52vh,500px)] max-w-full items-center justify-center overflow-hidden rounded-xl border bg-muted [&_img]:block [&_img]:size-full [&_img]:object-contain" aria-busy={!url && !failed}>
         {url ? <img src={url} alt={req.alt} width={1080} height={1350}/>
-          : <span className="share-image-wait" role="status">{tr(failed ? 'share.imageFailed' : 'share.imageLoading')}</span>}
+          : <span className="share-image-wait px-6 text-center text-sm text-muted-foreground" role="status">{tr(failed ? 'share.imageFailed' : 'share.imageLoading')}</span>}
       </div>
-      <div className="share-image-actions">
+      <div className="share-image-actions flex flex-wrap gap-2">
         {canShareFile && (
-          <button type="button" className="share-btn primary" onClick={shareImage}>
+          <button type="button" className={cn(window.MCU_SHARE.BTN, window.MCU_SHARE.PRIMARY, ACTION, touch && 'basis-full')} onClick={shareImage}>
             <window.ShareIcon/><span>{tr('share.shareImage')}</span>
           </button>
         )}
         {!canShareFile && url && (
-          <a className="share-btn primary" href={url} download={req.filename + '.png'}>
+          <a className={cn(window.MCU_SHARE.BTN, window.MCU_SHARE.PRIMARY, ACTION, touch && 'basis-full')} href={url} download={req.filename + '.png'}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>
             </svg>
             <span>{tr('share.downloadImage')}</span>
           </a>
         )}
-        <button type="button" className="share-btn" onClick={() => window.MCU_SHARE.copy(req.payload)}>
+        <button type="button" className={cn(window.MCU_SHARE.BTN, ACTION, touch && 'basis-full')} onClick={() => window.MCU_SHARE.copy(req.payload)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
           </svg>
@@ -102,13 +107,13 @@ export function ShareImageHost({ touch }: { touch: boolean }) {
     const Sheet = window.Sheet;
     return (
       <Sheet onClose={close} tall labelledBy="share-image-title">
-        <div className="share-image-sheet"><ShareImageBody key={req.key} req={req} touch/></div>
+        <div className="share-image-sheet pb-2"><ShareImageBody key={req.key} req={req} touch/></div>
       </Sheet>
     );
   }
   const ModalDialog = window.ModalDialog;
   return (
-    <ModalDialog onClose={close} labelledBy="share-image-title" className="share-image-dialog">
+    <ModalDialog onClose={close} labelledBy="share-image-title" className="share-image-dialog w-[min(440px,calc(100vw-32px))]">
       <ShareImageBody key={req.key} req={req} touch={false}/>
     </ModalDialog>
   );

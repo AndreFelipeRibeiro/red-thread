@@ -6,6 +6,19 @@
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
+import { cn } from 'cn';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+// The account menu, its phone sheet, the app bar's avatar button and the sync
+// status, on the design system since Notion "shadcn pass 5/5" (this file is
+// listed with `@source` in src/index.css). The desktop menu is shadcn's Popover (it
+// closes on Escape or a click outside and returns focus to Account), its
+// contents Buttons on the panel. Hook classes kept for the app and the QA
+// checks: `acct-*`, `sync-*`, `m-acct`, `coll-ic`, `signed-in`, `open`.
+const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const XS = 'text-(length:--fs-xs)';
+const SPIN = 'border-2 border-input border-t-muted-foreground animate-[tsa-spin_700ms_linear_infinite] motion-reduce:animate-none';
 
 // Auth state machine, session provider and account surfaces.
 //
@@ -248,9 +261,9 @@ function Avatar({ profile, size }) {
   const px = size || 28;
   const style = { width: px + 'px', height: px + 'px' };
   if (profile && profile.avatar) {
-    return <img className="acct-avatar" style={style} src={profile.avatar} alt="" referrerPolicy="no-referrer"/>;
+    return <img className="acct-avatar block shrink-0 rounded-full bg-muted object-cover" style={style} src={profile.avatar} alt="" referrerPolicy="no-referrer"/>;
   }
-  return <span className="acct-avatar fallback" style={style} aria-hidden="true">{profile ? profile.initials : '?'}</span>;
+  return <span className={cn('acct-avatar fallback flex shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold', DIM)} style={style} aria-hidden="true">{profile ? profile.initials : '?'}</span>;
 }
 
 function PersonIcon() {
@@ -283,6 +296,14 @@ function PickIcon() {
   );
 }
 
+const STAT = 'acct-stat flex-1 rounded-lg bg-muted px-2.5 py-[9px]';
+const STAT_N = 'block text-lg font-bold tabular-nums in-[.m-sheet]:text-xl';
+const STAT_L = 'mt-0.5 block text-xs leading-[1.3] text-muted-foreground';
+const LINK = 'h-8 px-2.5 text-sm font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(38px,2.375rem)] in-[.m-sheet]:px-3 in-[.m-sheet]:text-xs';
+const COLL_IC = 'coll-ic inline-flex size-[13px] flex-[0_0_13px] [&_svg]:size-full';
+const ACTION = 'acct-action h-9 w-full text-xs font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(46px,2.875rem)] in-[.m-sheet]:text-sm';
+const ERROR = cn('acct-error rounded-lg border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_8%,transparent)] px-[9px] py-2 leading-[1.4] text-destructive', XS);
+
 function AccountPanel({ onPickCollection, onClose, onAbout }) {
   const { tr } = window.useI18n();
   const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
@@ -292,91 +313,92 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
   const pick = (v) => () => { if (onPickCollection) onPickCollection(v); if (onClose) onClose(); };
 
   return (
-    <div className="acct-panel">
+    <div className="acct-panel flex flex-col gap-[13px] text-sm in-[.m-sheet]:gap-[15px]">
       {signedIn && profile ? (
-        <div className="acct-id">
+        <div className="acct-id flex items-center gap-[11px]">
           <Avatar profile={profile} size={40}/>
-          <div className="acct-id-text">
-            <div className="acct-name">{profile.name}</div>
-            {profile.email && <div className="acct-email">{profile.email}</div>}
+          <div className="acct-id-text min-w-0">
+            <div className="acct-name truncate text-sm font-medium">{profile.name}</div>
+            {profile.email && <div className="acct-email mt-0.5 truncate text-xs text-muted-foreground">{profile.email}</div>}
           </div>
         </div>
       ) : (
-        <div className="acct-id guest">
-          <div className="acct-id-text">
-            <div className="acct-name">{tr('account.notSignedIn')}</div>
-            <div className="acct-email">
+        <div className="acct-id guest flex items-center gap-[11px]">
+          <div className="acct-id-text min-w-0">
+            <div className="acct-name truncate text-sm font-medium">{tr('account.notSignedIn')}</div>
+            <div className="acct-email mt-0.5 text-xs text-muted-foreground">
               {tr(syncAvailable ? 'account.savedSync' : 'account.savedNoSync')}
             </div>
           </div>
         </div>
       )}
 
-      {collectionLoading ? <div className="acct-note" role="status">{tr(syncError ? 'account.collectionUnavailable' : 'account.loading')}</div> : (
-      <div className="acct-stats">
-        <div className="acct-stat">
-          <b>{progress.seenReleased}</b>
-          <span>{tr('account.seenStat', { total: progress.releasedTotal })}</span>
+      {collectionLoading ? <div className="acct-note text-xs leading-[1.45] text-muted-foreground" role="status">{tr(syncError ? 'account.collectionUnavailable' : 'account.loading')}</div> : (
+      <div className="acct-stats flex gap-2.5">
+        <div className={STAT}>
+          <b className={STAT_N}>{progress.seenReleased}</b>
+          <span className={STAT_L}>{tr('account.seenStat', { total: progress.releasedTotal })}</span>
         </div>
-        <div className="acct-stat">
-          <b>{progress.watchlist}</b>
-          <span>{tr('account.watchStat')}</span>
+        <div className={STAT}>
+          <b className={STAT_N}>{progress.watchlist}</b>
+          <span className={STAT_L}>{tr('account.watchStat')}</span>
         </div>
       </div>
       )}
       {/* Share my progress (Notion "Share 1/3"): only once there is some. */}
       {!collectionLoading && progress.seenReleased > 0 && (
-        <window.ShareButton className="acct-share" text={tr('share.progressLabel')} label={tr('share.progressLabel')}
+        <window.ShareButton className="acct-share -mt-0.5 h-auto min-h-[max(36px,2.25rem)] w-full py-1.5 leading-[1.25]" text={tr('share.progressLabel')} label={tr('share.progressLabel')}
           payload={() => ({ text: tr('share.progressText', { n: progress.seenReleased, total: progress.releasedTotal }) })}
           onShare={() => { if (onClose) onClose(); window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal); }}/>
       )}
 
-      <div className="acct-links">
+      <div className="acct-links flex flex-wrap gap-1.5">
         {window.MCU_openPicker && (
-          <button className="acct-pick" disabled={collectionLoading} onClick={() => { if (onClose) onClose(); window.MCU_openPicker(); }}>
-            <span className="coll-ic pick-ic"><PickIcon/></span>
-            <span className="acct-pick-text"><span>{tr('picker.open')}</span><small>{tr('picker.accountSub')}</small></span>
-          </button>
+          <Button variant="outline" className={cn(LINK, 'acct-pick h-auto min-h-[max(48px,3rem)] w-full basis-full justify-start py-2 text-left leading-[1.25] whitespace-normal in-[.m-sheet]:min-h-[max(52px,3.25rem)]')}
+            disabled={collectionLoading} onClick={() => { if (onClose) onClose(); window.MCU_openPicker(); }}>
+            <span className={cn(COLL_IC, 'pick-ic text-(--status-seen)')}><PickIcon/></span>
+            <span className="acct-pick-text"><span>{tr('picker.open')}</span><small className={cn('mt-0.5 block font-normal text-muted-foreground', XS)}>{tr('picker.accountSub')}</small></span>
+          </Button>
         )}
-        <button disabled={collectionLoading} onClick={pick('unseen')}><span className="coll-ic"><window.CollectionIcon kind="unseen"/></span>{tr('account.showUnseen')}</button>
-        <button disabled={collectionLoading} onClick={pick('seen')}><span className="coll-ic"><window.CollectionIcon kind="seen"/></span>{tr('account.showSeen')}</button>
-        <button disabled={collectionLoading} onClick={pick('watchlist')}><span className="coll-ic"><window.CollectionIcon kind="watchlist"/></span>{tr('account.showWatchlist')}</button>
+        <Button variant="outline" className={LINK} disabled={collectionLoading} onClick={pick('unseen')}><span className={COLL_IC}><window.CollectionIcon kind="unseen"/></span>{tr('account.showUnseen')}</Button>
+        <Button variant="outline" className={LINK} disabled={collectionLoading} onClick={pick('seen')}><span className={COLL_IC}><window.CollectionIcon kind="seen"/></span>{tr('account.showSeen')}</Button>
+        <Button variant="outline" className={LINK} disabled={collectionLoading} onClick={pick('watchlist')}><span className={COLL_IC}><window.CollectionIcon kind="watchlist"/></span>{tr('account.showWatchlist')}</Button>
       </div>
 
       {syncError && (
-        <div className="acct-error" role="status">
+        <div className={ERROR} role="status">
           {tr('account.syncError', { error: syncError })}
-          <button className="acct-action" onClick={retrySync}>{tr('account.retrySync')}</button>
+          <Button variant="outline" className={cn(ACTION, 'mt-2')} onClick={retrySync}>{tr('account.retrySync')}</Button>
         </div>
       )}
 
-      {error && <div className="acct-error" role="status">{error}</div>}
+      {error && <div className={ERROR} role="status">{error}</div>}
 
       {!syncAvailable && (
-        <div className="acct-note">
+        <div className="acct-note text-xs leading-[1.45] text-muted-foreground">
           {tr('account.unavailable', { reason: unavailableReason ? ` — ${unavailableReason}` : '' })}
-          {window.mcuSupabase && <button className="acct-action" onClick={() => window.location.reload()}>{tr('account.retryConnection')}</button>}
+          {window.mcuSupabase && <Button variant="outline" className={cn(ACTION, 'mt-2')} onClick={() => window.location.reload()}>{tr('account.retryConnection')}</Button>}
         </div>
       )}
 
       {syncAvailable && (
         signedIn
-          ? <button className="acct-action" onClick={signOut}>{tr('account.signOut')}</button>
+          ? <Button variant="outline" className={ACTION} onClick={signOut}>{tr('account.signOut')}</Button>
           : (
-            <button className="acct-action primary" onClick={signIn} disabled={status === 'initializing' || status === 'signing_in'}>
+            <Button className={cn(ACTION, 'primary')} onClick={signIn} disabled={status === 'initializing' || status === 'signing_in'}>
               <GoogleMark/>
               {tr(status === 'initializing' ? 'account.checking' : status === 'signing_in' ? 'account.opening' : 'account.signInGoogle')}
-            </button>
+            </Button>
           )
       )}
 
       {/* App-level links, for guests too. A future Settings entry joins About here. */}
       {onAbout && (
-        <div className="acct-foot">
-          <button className="acct-foot-link" onClick={() => { if (onClose) onClose(); onAbout(); }}>
+        <div className="acct-foot mt-0.5 flex gap-1.5 border-t pt-2.5">
+          <Button variant="ghost" className={cn('acct-foot-link h-auto gap-[7px] px-0.5 py-1 text-xs font-normal hover:bg-transparent hover:text-foreground in-[.m-sheet]:min-h-[max(40px,2.5rem)] in-[.m-sheet]:text-sm', DIM)} onClick={() => { if (onClose) onClose(); onAbout(); }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.2"/></svg>
             {tr('about.link')}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -406,11 +428,14 @@ function SyncStatus() {
     return <span className="story-sr" role="status">{tr('sync.' + state)}</span>;
   }
   return (
-    <div className={`sync-status ${state}`} role="status">
-      <span className="sync-dot" aria-hidden="true"/>
-      <span className="sync-text">{tr('sync.' + state)}</span>
+    <div role="status" className={cn('sync-status inline-flex shrink-0 items-center gap-[7px] rounded-md border border-transparent px-[9px] py-1.5 leading-none max-[899px]:gap-[5px] max-[899px]:px-[7px] max-[899px]:py-[5px]', XS, state,
+      state === 'failed' ? 'border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_8%,transparent)] text-destructive' : DIM)}>
+      <span className={cn('sync-dot size-[11px] shrink-0 rounded-full', state === 'failed' ? 'bg-destructive' : SPIN)} aria-hidden="true"/>
+      {/* On a phone "Syncing…" leaves its words to the spinner (clipped, so a
+          screen reader still reads them); a failure keeps its words. */}
+      <span className={cn('sync-text', state === 'loading' && 'max-[899px]:sr-only')}>{tr('sync.' + state)}</span>
       {state === 'failed' && (
-        <button className="sync-retry" onClick={retrySync}>{tr('account.retrySync')}</button>
+        <Button variant="outline" size="xs" className={cn('sync-retry h-auto border-[color-mix(in_oklab,var(--destructive)_45%,transparent)] bg-transparent px-2 py-[3px] whitespace-nowrap text-foreground hover:border-destructive', XS)} onClick={retrySync}>{tr('account.retrySync')}</Button>
       )}
     </div>
   );
@@ -423,18 +448,6 @@ function SyncStatus() {
 function AccountButton({ onPickCollection, onAbout }) {
   const { status, profile, syncAvailable } = useAccount();
   const [open, setOpen] = React.useState(false);
-  const ref = React.useRef(null);
-
-  // Click-outside + Escape, matching the filters popover exactly.
-  React.useEffect(() => {
-    if (!open) return;
-    const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    const esc = (e) => { if (e.key === 'Escape') { setOpen(false); ref.current?.querySelector('.acct-pill')?.focus(); } };
-    document.addEventListener('mousedown', away);
-    document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
-  }, [open]);
-
   const signedIn = status === 'signed_in';
   // Read the desktop label from the live profile. Keep email in the account
   // panel rather than using it as the compact navigation label.
@@ -448,27 +461,23 @@ function AccountButton({ onPickCollection, onAbout }) {
     : tr(syncAvailable ? 'account.signInGoogle' : 'account.noSync');
 
   return (
-    <div className="acct-wrap" ref={ref}>
-      <button
-        className={`acct-pill${open ? ' open' : ''}${signedIn ? ' signed-in' : ''}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-label={label}
-        title={label}
-      >
-        {status === 'initializing'
-          ? <span className="acct-dot loading" aria-hidden="true"/>
-          : signedIn
-            ? <Avatar profile={profile} size={26}/>
-            : <PersonIcon/>}
-        <span className="acct-nav-label">{visibleLabel}</span>
-        {!syncAvailable && status !== 'initializing' && <span className="acct-off" aria-hidden="true"/>}
-      </button>
-      {open && (
-        <div className="acct-pop">
+    <div className="acct-wrap relative ml-auto shrink-0">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger aria-label={label} title={label}
+          className={cn(buttonVariants({ variant: 'outline' }), 'acct-pill relative h-[max(44px,2.75rem)] max-w-44 min-w-24 gap-2 px-3 font-medium',
+            open && 'open bg-muted dark:bg-input/50', signedIn && 'signed-in')}>
+          {status === 'initializing'
+            ? <span className={cn('acct-dot loading block size-[13px] shrink-0 rounded-full', SPIN)} aria-hidden="true"/>
+            : signedIn
+              ? <Avatar profile={profile} size={26}/>
+              : <PersonIcon/>}
+          <span className="acct-nav-label min-w-0 truncate text-xs">{visibleLabel}</span>
+          {!syncAvailable && status !== 'initializing' && <span className="acct-off absolute right-[3px] bottom-[3px] size-2 rounded-full border-2 border-background bg-muted-foreground" aria-hidden="true"/>}
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={9} className="acct-pop w-[268px] gap-0 p-3.5" aria-label={tr('account.title')}>
           <AccountPanel onPickCollection={onPickCollection} onClose={() => setOpen(false)} onAbout={onAbout}/>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -481,18 +490,18 @@ function AccountAvatarButton({ onOpen }) {
   const { status, profile, syncAvailable } = useAccount();
   const signedIn = status === 'signed_in';
   return (
-    <button
-      className={`m-acct${signedIn ? ' signed-in' : ''}`}
+    <Button variant="outline" size="icon"
+      className={cn('m-acct relative size-[max(40px,2.5rem)] flex-none text-muted-foreground transition-[scale,background-color,color,border-color] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100', signedIn && 'signed-in border-input')}
       onClick={onOpen}
       aria-label={signedIn && profile ? window.MCU_I18N.tr('account.named', { name: profile.name }) : window.MCU_I18N.tr('account.title')}
     >
       {status === 'initializing'
-        ? <span className="acct-dot loading" aria-hidden="true"/>
+        ? <span className={cn('acct-dot loading block size-[13px] shrink-0 rounded-full', SPIN)} aria-hidden="true"/>
         : signedIn
           ? <Avatar profile={profile} size={30}/>
           : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>}
-      {!syncAvailable && <span className="m-acct-off" aria-hidden="true"/>}
-    </button>
+      {!syncAvailable && <span className="m-acct-off absolute right-px bottom-px size-[9px] rounded-full border-2 border-background bg-muted-foreground" aria-hidden="true"/>}
+    </Button>
   );
 }
 
@@ -500,8 +509,8 @@ function AccountSheet({ onClose, onPickCollection, onAbout }) {
   const Sheet = window.Sheet;
   return (
     <Sheet onClose={onClose} label={window.MCU_I18N.tr('account.title')}>
-      <div className="m-sh-head">
-        <div className="m-sh-title">{window.MCU_I18N.tr('account.title')}</div>
+      <div className="m-sh-head mb-4 flex items-center justify-between">
+        <div className="m-sh-title text-lg font-semibold tracking-tight">{window.MCU_I18N.tr('account.title')}</div>
       </div>
       <AccountPanel onPickCollection={onPickCollection} onClose={onClose} onAbout={onAbout}/>
     </Sheet>
