@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — A shorter card: connections in the corner
+
+Recorded: 2026-11-15 16:48 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The connections count is a small pill in the poster's top-left corner
+  (thread icon + number); the seen check or a guide stop's mark stays
+  top-right.
+- The white area holds the title and one meta line (phase dot · year ·
+  "Series") with tighter padding: the card is 170 × 330 (was 352). A
+  not-yet-released series drops the separator before "Series" so its badge
+  fits.
+- Verified: `test-cards` updated; 32 canvas and guide checks; the
+  accessibility scan in light and dark; full `qa/regress.sh` on the final
+  tree, 62 check runs clean.
+
 ## V5 maintenance — AGENTS.md: ticket placement, ✅ on completion, calendar events
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

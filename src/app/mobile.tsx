@@ -701,9 +701,9 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, guideBadge, onGui
       <button className={S.FP.open} onClick={onOpenCast} aria-label={MI18N.titleName(title)}>
         <div className={S.FP.poster}>
           <PosterArt title={title}/>
-          <window.CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} pop/>
+          <window.CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections} pop/>
         </div>
-        <window.CardText title={title} skipped={skipped} connections={connections} pop/>
+        <window.CardText title={title} skipped={skipped} pop/>
       </button>
       {guideSkip && (guideSkip.state === 'can' || skipped) && (
         <window.GuideSkipControl guide={guide} info={guideSkip} className="m-fp-skip px-3.5 pb-3" onDone={onGuideSkip}/>

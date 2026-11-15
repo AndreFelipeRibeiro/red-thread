@@ -1,13 +1,13 @@
 // One title card (Notion "Cards: one card design at rest, selected and on the
 // phone", after "Simplify the Spatial cards" and "Show posters uncropped at
 // their standard 2:3 ratio"):
-// - the poster is whole, at 2:3, its art untouched (no seen wash), with at
-//   most one mark in its top-right corner: a check in a circle once seen, or
-//   in a guide the stop's mark, never both (Andre, 2026-11-15);
+// - the poster is whole, at 2:3, its art untouched (no seen wash); its
+//   top-left corner says how many titles it connects to, and at most one mark
+//   sits in its top-right corner: a check in a circle once seen, or in a guide
+//   the stop's mark, never both (Andre, 2026-11-15);
 // - hovering only lifts the card (no band);
-// - under the poster: the title, then two meta lines (phase dot, year; how
-//   many titles it connects to, which is the size of its ring), no "Set in"
-//   or budget (Andre, 2026-11-15);
+// - under the poster: the title, then one meta line (phase dot, year), no
+//   "Set in" or budget; the connections count is the size of its ring;
 // - selected, it is the same card at the same size, with no action row;
 // - the phone's selected card is the same card, larger: the title at 15px or
 //   more and the meta at 13px or more; a tap opens the details.
@@ -28,7 +28,7 @@ const CARD = (sel) => {
   const poster = c.querySelector('.card-poster, .m-fp-poster');
   const pr = poster.getBoundingClientRect();
   // Anything painted over the art other than the art itself and the corner mark.
-  const over = [...poster.querySelectorAll('*')].filter(e => !e.closest('.card-poster > :first-child, .m-fp-poster > :first-child, .card-mark') && e.getClientRects().length
+  const over = [...poster.querySelectorAll('*')].filter(e => !e.closest('.card-poster > :first-child, .m-fp-poster > :first-child, .card-mark, .card-conn-pill') && e.getClientRects().length
     && getComputedStyle(e).opacity !== '0' && getComputedStyle(e).visibility !== 'hidden');
   const mark = c.querySelector('.card-mark');
   const art = poster.querySelector(':scope > :first-child');
@@ -36,7 +36,9 @@ const CARD = (sel) => {
   return {
     washed: (wash && wash !== 'none' && wash !== 'normal') || /saturate/.test(getComputedStyle(art).filter) || Number(getComputedStyle(art).opacity) < 1,
     markCorner: mark ? (() => { const m = mark.getBoundingClientRect(); return Math.round(pr.right - m.right) < 16 && Math.round(m.top - pr.top) < 16; })() : null,
-    lines: c.querySelectorAll('.card-line > span').length, w: Math.round(c.getBoundingClientRect().width),
+    conn: Number(((c.querySelector('.card-conn-pill .card-conn') || {}).textContent || '').replace(/\D+/g, '')) || 0,
+    connCorner: (() => { const p = c.querySelector('.card-conn-pill'); if (!p) return null; const m = p.getBoundingClientRect(); return Math.round(m.left - pr.left) < 16 && Math.round(m.top - pr.top) < 16; })(),
+    w: Math.round(c.getBoundingClientRect().width),
     ratio: Math.round((pr.width / pr.height) * 1000) / 1000,
     over: over.map(e => e.className && String(e.className).split(' ')[0]),
     band: !!c.querySelector('.card-hover'),
@@ -65,10 +67,10 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     const a = await page.evaluate(CARD, '.card[data-id="iron-man-2"]');
     out[scheme + ' rest'] = a;
     expect(a && Math.abs(a.ratio - 2 / 3) < 0.01 && !a.over.length && !a.band && !a.acts, `${scheme}: at rest: ${JSON.stringify(a)}`);
-    expect(a && a.phase && /2010/.test(a.line) && /\d+ connections?/.test(a.line) && !/Set in|\$/.test(a.line) && a.marks === 0, `${scheme}: the meta line: ${JSON.stringify(a)}`);
+    expect(a && a.phase && /2010/.test(a.line) && !/Set in|\$|connection/.test(a.line) && a.marks === 0 && a.conn > 0 && a.connCorner, `${scheme}: the meta line and corners: ${JSON.stringify(a)}`);
     const seen = await page.evaluate(CARD, '.card[data-id="iron-man"]');
     out[scheme + ' seen'] = seen;
-    expect(seen && seen.seenMark && seen.marks === 1 && seen.markCorner && !seen.washed && seen.lines === 2, `${scheme}: a seen card: ${JSON.stringify(seen)}`);
+    expect(seen && seen.seenMark && seen.marks === 1 && seen.markCorner && !seen.washed, `${scheme}: a seen card: ${JSON.stringify(seen)}`);
     // Hover: no band, nothing on the art.
     const box = await page.locator('.card[data-id="iron-man-2"] .card-poster').boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + 30); await page.waitForTimeout(400);

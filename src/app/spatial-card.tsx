@@ -2,9 +2,10 @@
 // canvas, cards and threads"; simplified in Notion "Simplify the Spatial
 // cards"; made one design in Notion "Cards: one card design at rest, selected
 // and on the phone"; Andre's review, 2026-11-15): the whole poster, its art
-// untouched, with one status mark in its top-right corner (a check in a
-// circle once seen, or in a guide the stop's mark); under it the title and two
-// meta lines (phase dot · year · "Series"; how many titles it connects to).
+// untouched, with how many titles it connects to in its top-left corner and
+// one status mark in its top-right corner (a check in a circle once seen, or
+// in a guide the stop's mark); under it the title and one meta line (phase
+// dot · year · "Series").
 // What else a card shows by sort and filter is its own ticket (Notion "Cards
 // show what the current sort and filters are about"). Selected, it is
 // the same card at the same size, outlined in its phase colour; Seen,
@@ -35,8 +36,8 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 
 /** The card's size on the canvas, in canvas pixels. The layout reads it.
  *  168px inside the border, so the 2:3 poster is 168 × 252 and the text
- *  block below gets 98px: two lines of title and two meta lines. */
-export const CARD_SIZE = { w: 170, h: 352 };
+ *  block below gets 76px: two lines of title and one meta line. */
+export const CARD_SIZE = { w: 170, h: 330 };
 
 // Layout moves (AGENTS.md, "Motion"), then the state fades.
 const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms,visibility_0s]';
@@ -171,9 +172,9 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         // mark (a backdrop filter here cost a GPU layer per card).
         skipped && '[&>:first-child]:opacity-30')}>
         <window.PosterArt title={title}/>
-        <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped}/>
+        <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections}/>
       </div>
-      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars} connections={connections}/>
+      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars}/>
     </div>
   );
 }
@@ -197,62 +198,66 @@ function gnumClass(cls: string) {
 
 type GuideBadge = { cls: string; label: string; text: string } | null | undefined;
 
-/** The status mark in the poster's corner; `pop` is the phone's larger card. */
-export function CardMark({ seen, guideBadge, skipped = false, pop = false }: { seen: boolean; guideBadge?: GuideBadge; skipped?: boolean; pop?: boolean }) {
-  const wrap = cn('card-mark absolute z-3', pop ? 'top-2.5 right-2.5' : 'top-2 right-2');
-  if (guideBadge) return <span className={wrap}><span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-80')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span></span>;
-  if (!seen) return null;
+/** The poster's corner marks; `pop` is the phone's larger card. Top left: how
+ *  many titles it connects to (the titles that share a character with it,
+ *  the same ones its ring shows). Top right: the seen check, or a guide
+ *  stop's mark in its place. */
+export function CardMark({ seen, guideBadge, skipped = false, connections = 0, pop = false }: { seen: boolean; guideBadge?: GuideBadge; skipped?: boolean; connections?: number; pop?: boolean }) {
+  const corner = pop ? 'top-2.5' : 'top-2';
+  const right = cn('card-mark absolute right-2 z-3', corner, pop && 'right-2.5');
+  const status = guideBadge
+    ? <span className={right}><span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-80')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span></span>
+    : seen ? (
+      <span className={right}>
+        <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+          pop ? 'size-[30px] [&_svg]:size-4' : 'size-[24px] [&_svg]:size-[13px]')} role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
+      </span>
+    ) : null;
+  const label = tr('card.connections', { n: connections });
   return (
-    <span className={wrap}>
-      <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_2px_8px_rgba(0,0,0,.45)]',
-        pop ? 'size-[30px] [&_svg]:size-4' : 'size-[24px] [&_svg]:size-[13px]')} role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
-    </span>
+    <>
+      {connections > 0 && (
+        <span className={cn('card-conn-pill absolute left-2 z-3', corner, pop && 'left-2.5')}>
+          <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-[rgba(10,12,20,.78)] font-semibold text-(--on-image) tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+            pop ? 'h-[30px] px-2.5 text-[max(13px,0.8125rem)] [&_svg]:size-[13px]' : 'h-[24px] px-2 text-[11px] [&_svg]:size-[11px]')}
+            role="img" aria-label={label} title={`${label} · ${tr('card.connectionsTip')}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
+            {connections}
+          </span>
+        </span>
+      )}
+      {status}
+    </>
   );
 }
 
 /** The card's text, on the canvas and in the phone's selected card (`pop`):
- *  the title, then two meta lines: phase dot · year · "Series", then how many
- *  titles it connects to (a not-yet-released title's badge leads that line).
- *  Set lines rather than one that wraps, so a separator never starts a line. */
-export function CardText({ title, skipped = false, query, matchedChars, connections = 0, pop = false }: {
-  title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; connections?: number; pop?: boolean;
+ *  the title, then one meta line: phase dot · year · "Series" (a title not out
+ *  yet adds its release badge). What else it shows by sort and filter is
+ *  Notion "Cards show what the current sort and filters are about". */
+export function CardText({ title, skipped = false, query, matchedChars, pop = false }: {
+  title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; pop?: boolean;
 }) {
   const I18N = window.MCU_I18N;
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   const dot = <span className="card-sep flex-none text-muted-foreground/60" aria-hidden="true">·</span>;
-  const first = [
-    <span key="y" className="flex-none whitespace-nowrap">{title.year}</span>,
-    title.type === 'series' && <span key="t" className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span>,
-  ].filter(Boolean) as React.ReactNode[];
-  const joined = (els: React.ReactNode[]) => els.flatMap((el, i) => (i ? [<React.Fragment key={'d' + i}>{dot}</React.Fragment>, el] : [el]));
-  // Not out yet: its release badge leads the second line, beside "Set in".
   const upcoming = !window.MCU_isReleased(title);
-  const line = cn('flex min-w-0 items-center gap-x-[5px]', skipped && 'opacity-40');
   return (
-    <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[6px] px-3.5 pt-3 pb-3.5' : 'gap-[5px] px-[12px] pt-[10px] pb-[10px]')}>
+    <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[5px] px-3.5 pt-2.5 pb-3' : 'gap-[4px] px-[12px] pt-[8px] pb-[8px]')}>
       {/* Size and line height in one class: a font size after a separate
           leading class makes cn() drop the leading, and descenders clip. */}
       <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-[max(17px,1.0625rem)]/[1.3]' : 'text-[15px]/[1.3]', skipped && 'opacity-40')}>
         <Highlight text={I18N.titleName(title)} query={query}/>
       </div>
-      <div className={cn('card-year card-line flex flex-col text-muted-foreground tabular-nums', pop ? 'gap-[2px] text-[max(13px,0.8125rem)] leading-[1.35]' : 'gap-px text-[11px] leading-[1.35]')}>
-        <span className={line}>
-          <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
-          {joined(first)}
-        </span>
-        {(connections > 0 || skipped || upcoming) && (
-          <span className={line}>
-            {upcoming && <window.ReleaseBadge title={title} className="card-release flex-none"/>}
-            {connections > 0 && (
-              <span className="card-conn inline-flex min-w-0 items-center gap-1 truncate [&_svg]:flex-none" title={tr('card.connectionsTip')}>
-                <svg className={pop ? 'size-[13px]' : 'size-[11px]'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
-                {tr('card.connections', { n: connections })}
-              </span>
-            )}
-            {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-[9.5px] font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
-          </span>
-        )}
+      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-[max(13px,0.8125rem)] leading-[1.35]' : 'text-[11px] leading-[1.35]', skipped && 'opacity-40')}>
+        <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
+        <span className="flex-none whitespace-nowrap">{title.year}</span>
+        {/* A title not out yet carries its badge too, so it drops the
+            separator to keep the line on one row. */}
+        {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
+        {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
+        {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-[9.5px] font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
       </div>
       <window.MatchBadge matchedChars={matchedChars} query={query} title={title}/>
     </div>
