@@ -159,6 +159,8 @@ export interface UpNextInfo {
   onOpen(id: string): void;
   onHide(): void;
   onShowAll(): void;
+  /** Opens the title on the Connections canvas; absent there. */
+  onConnections?: (id: string) => void;
 }
 
 /** The same bundle, narrowed to the case where there is a title to show. The

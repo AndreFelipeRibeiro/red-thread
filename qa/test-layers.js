@@ -36,7 +36,7 @@ const MENUS = {
     await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(600);
     await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(1300);
     for (const view of ['Spatial', 'List']) {
-      await page.locator('.nav-tabs button', { hasText: view === 'Spatial' ? 'Explore' : 'My list' }).click(); await page.waitForTimeout(900);
+      await page.locator('.nav-tabs button', { hasText: view === 'Spatial' ? 'Connections' : 'Titles' }).click(); await page.waitForTimeout(900);
       const r = {};
       for (const [k, [trig, pop]] of Object.entries(MENUS)) {
         await page.locator(trig).first().click(); await page.waitForTimeout(350);
@@ -63,7 +63,7 @@ const MENUS = {
   await page.locator('.m-lrow-open', { hasText: 'Iron Man' }).first().tap(); await page.waitForTimeout(700);
   await page.locator('.m-crow', { hasText: 'Tony Stark' }).tap(); await page.waitForTimeout(900);
   for (const view of ['list', 'spatial']) {
-    if (view === 'spatial') { await page.locator('.m-lrow-open', { hasText: 'Iron Man 2' }).first().tap(); await page.waitForTimeout(700); await page.locator('.m-apply.ghost', { hasText: 'Spatial' }).tap(); await page.waitForTimeout(1300); }
+    if (view === 'spatial') { await page.locator('.m-lrow-open', { hasText: 'Iron Man 2' }).first().tap(); await page.waitForTimeout(700); await page.locator('.m-apply.ghost', { hasText: 'See connections' }).tap(); await page.waitForTimeout(1300); }
     const r = {};
     // The phone's language menu moved into Settings, a sheet rather than a
     // popover, so only Sort is left in the bar.

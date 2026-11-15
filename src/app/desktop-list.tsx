@@ -264,6 +264,29 @@ function BulkCount({ n, onFill = false }) {
   return <Badge variant="secondary" className={cn('bulk-n rounded-md px-1.5 tabular-nums', XS, onFill && 'bg-black/22 text-inherit')}>{n}</Badge>;
 }
 
+// Titles' heading, with the whole catalogue's progress beside it (Notion
+// "Rename the top-level sections": "44 of 60 seen", its bar and the share).
+// Hooks: `ml-title`, `ml-progress`.
+function TitlesHeading() {
+  const { progress, loading } = window.useCollection() as unknown as { progress: { seenReleased: number; releasedTotal: number }; loading: boolean };
+  const seen = loading ? 0 : progress.seenReleased, total = progress.releasedTotal || 0;
+  const pct = total ? Math.round((seen / total) * 100) : 0;
+  return (
+    <div className="ml-head mt-1 mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      <h1 className="ml-title m-0 text-2xl font-semibold tracking-tight text-foreground">{tr('mylist.title')}</h1>
+      {!loading && total > 0 && (
+        <div className="ml-progress mb-1 flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+          <span className="font-medium text-foreground">{tr('nav.countSeen', { seen, n: total })}</span>
+          <span className="block h-1 w-[136px] overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={seen} aria-label={tr('nav.countSeen', { seen, n: total })}>
+            <span className="block h-full rounded-full bg-primary transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none" style={{ width: pct + '%' }}/>
+          </span>
+          <span>{pct}%</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, progress, upNext, myList }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
@@ -413,7 +436,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
       {/* My list (Notion "Desktop: navigation for Explore, My list and
           Guides"): its title first; the collection tabs, with the sort as a
           quiet note, sit under Up next, just above the table. */}
-      {myList && <h1 className="ml-title mt-1 mb-3 text-2xl font-semibold tracking-tight text-foreground">{tr('mylist.title')}</h1>}
+      {myList && <TitlesHeading/>}
       {header}
       {/* Up next: a strip above the table. The desktop List does not fold seen
           titles, so the suggestion can be far down; the strip brings it up. */}

@@ -32,16 +32,18 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   On phones the zoom control stays hidden and shows only while you zoom.
   Release/Chrono open closer and centred on the titles in view; closing a title's
   details glides the camera back to where you were.
-- Three sections: **Explore** (the Spatial canvas), **My list** (the List,
-  with the All / Unseen / Seen / Watchlist tabs) and **Guides** (a gallery of
+- Three sections: **Connections** (the Spatial canvas), **Titles** (the List,
+  with the All | Unseen, Watchlist, Seen tabs, each with its count; Unseen
+  counts released titles only, so it matches "44 of 60 seen") and **Guides** (a gallery of
   the guides, then the open guide). Explore and My list each keep their own
-  sort and filters. On desktop they are tabs in one header row: the wordmark,
+  sort and filters. Titles' heading carries the progress ("44 of 60 seen", a bar
+  and the share). On desktop they are tabs in one header row: the wordmark,
   the tabs, search ("/" focuses it), Sort and Filters (Type is inside Filters),
   then sync, Settings and Account; the row fits from 900px in English and
   Portuguese. On phones they are the bottom bar; the header holds the wordmark
   and the search, Settings and Account buttons, and one row below it holds
-  Sort, Filters and how many titles are seen ("2 of 60 seen"). "Show in Explore" in a
-  title's details selects it on the canvas.
+  Sort, Filters and how many titles are seen ("2 of 60 seen"). "See connections" in a
+  title's details, or on Up next, selects it on the canvas.
 - A context summary shows what the controls don't: how many titles match and
   which filters are on. On desktop it floats at the top-left of Spatial: the
   count, a removable chip per active filter (search, collection, type, phase,
@@ -67,9 +69,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   filter sheet play when the sheet closes (all off with reduced motion).
 - Menus in the desktop toolbar (language, order, filters, account, search
   suggestions) open over the details drawer; the zoom control moves left of it.
-- Phase, film/series, budget and release (Released only) filters. All /
-  Unseen / Seen / Watchlist are My list's tabs, with a dashed-ring, check and
-  bookmark icon for each state; Explore always shows every title.
+- Phase, film/series, budget and release (Released only) filters. All |
+  Unseen, Watchlist, Seen are Titles' tabs, with a dashed-ring, check and
+  bookmark icon for each state; Connections always shows every title.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
   language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without

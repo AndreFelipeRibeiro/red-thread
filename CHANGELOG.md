@@ -13,6 +13,19 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 feature — Connections / Titles / Guides
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The sections are Connections / Titles / Guides (pt: Conexões / Títulos /
+  Guias). Titles' tabs read All | Unseen, Watchlist, Seen, each with a soft
+  count pill (Watchlist and Seen tinted); Unseen counts released titles only,
+  so it matches "43 of 60 seen".
+- Titles' heading carries the progress (count, bar, share). "See connections"
+  replaces "Show in Explore" in the details and is new on Up next.
+- Verified: 24 checks the rename touches, the accessibility scan (English,
+  Portuguese, dark); full `qa/regress.sh` on the final tree, 62 check runs clean.
+
 ## V5 improvement — Theme lab: no button; T opens it
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

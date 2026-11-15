@@ -35,7 +35,7 @@ const off = page => page.evaluate(() => {
   out.mPill = await page.evaluate(() => { const p = document.querySelector('.char-pill'); return { text: p.innerText.replace(/\\n/g, ' | '), h: Math.round(p.getBoundingClientRect().height), switch: !!document.querySelector('.cb-mode'), rows: document.querySelectorAll('.m-lrow').length, overflow: p.scrollWidth > p.clientWidth + 1 }; });
   await page.screenshot({ path: path.join(S, 'shots', 'align-m-list.png') });
   await page.locator('.m-lrow-open', { hasText: 'Iron Man 2' }).first().tap(); await page.waitForTimeout(700);
-  await page.locator('.m-apply.ghost', { hasText: 'Spatial' }).tap(); await page.waitForTimeout(1400);
+  await page.locator('.m-apply.ghost', { hasText: 'See connections' }).tap(); await page.waitForTimeout(1400);
   for (let k = 0; k < 9; k++) { out.m.push(await off(page)); await page.locator('.char-pill .cb-step button').last().tap(); await page.waitForTimeout(900); }
   await page.screenshot({ path: path.join(S, 'shots', 'align-m-spatial.png') });
   out.mErrors = errors; await ctx.close();

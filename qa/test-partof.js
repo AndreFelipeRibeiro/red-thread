@@ -108,7 +108,7 @@ const PART = () => {
     // Close the guide: the other context's default (open) is back.
     // (Closing it leaves the Guides tab on its gallery; Endgame is in My list.)
     await page.locator('.guide-banner .cb-close').click(); await page.waitForTimeout(500);
-    await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(600);
+    await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
     await page.locator('.dl-row[data-row-id="endgame"] .dl-open').click(); await page.waitForTimeout(700);
     p = await page.evaluate(PART);
     expect(p.present && p.expanded === 'true', `outside the guide it should be open: ${JSON.stringify(p)}`);

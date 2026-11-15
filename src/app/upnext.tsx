@@ -63,6 +63,21 @@ function UpNextHide({ info, className = '' }: { info: UpNextInfo; className?: st
 
 // Seen (and Watchlist outside the Watchlist tab) through the usual controls,
 // laid out in the row rather than on a poster.
+// "See connections" (Notion "Rename the top-level sections"): the title,
+// selected on the Connections canvas. Only in the Titles lists; the phone's
+// label is the short "Connections".
+const CONNECT_ICON = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>;
+function UpNextConnections({ info, title, short = false, className = '' }: { info: UpNextInfo; title: Title; short?: boolean; className?: string }) {
+  if (!info.onConnections) return null;
+  const go = info.onConnections;
+  return (
+    <Button variant="outline" className={cn('un-connections h-[max(36px,2.25rem)] gap-1.5 px-2.5 text-xs [&_svg]:size-[14px]', short && 'max-[359px]:w-[max(36px,2.25rem)] max-[359px]:px-0', className)}
+      aria-label={short ? untr('upnext.connections') : undefined} onClick={() => go(title.id)}>
+      {CONNECT_ICON}<span className={cn(short && 'max-[359px]:sr-only')}>{untr(short ? 'upnext.connectionsShort' : 'upnext.connections')}</span>
+    </Button>
+  );
+}
+
 function UpNextStatus({ info, title, variant, className = '' }: { info: UpNextInfo; title: Title; variant?: 'overlay' | 'inline'; className?: string }) {
   return (
     <window.TitleStatusActions title={title} variant={variant}
@@ -191,6 +206,7 @@ function UpNextCard({ info }: { info: UpNextWithTitle }) {
         </button>
         <div className="un-actions mt-2.5 ml-[84px] flex items-center gap-1.5">
           <UpNextStatus info={info} title={t}/>
+          <UpNextConnections info={info} title={t} short/>
           <UpNextHide info={info} className="border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]"/>
         </div>
       </UpNextSlide>
@@ -221,6 +237,7 @@ function UpNextStrip({ info }: { info: UpNextInfo }) {
             </span>
           </button>
           <UpNextStatus info={info} title={t} variant="inline" className="mt-0 flex-nowrap"/>
+          <UpNextConnections info={info} title={t} className="flex-none"/>
           <UpNextHide info={info} className="size-[max(34px,2.125rem)] basis-[34px]"/>
         </UpNextSlide>
       </section>

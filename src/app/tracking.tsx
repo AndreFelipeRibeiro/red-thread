@@ -707,19 +707,24 @@ function nextUp(titles, statusOf, opts) {
 // Collection filter
 // ---------------------------------------------------------------------------
 
+// All, then broad to narrow: Watchlist is always part of Unseen (Notion
+// "Rename the top-level sections: Connections / Titles / Guides").
 const COLLECTION_OPTIONS = [
   ['all', 'All'],
   ['unseen', 'Unseen'],
-  ['seen', 'Seen'],
   ['watchlist', 'Watchlist'],
+  ['seen', 'Seen'],
 ];
 
-// 'unseen' means "not marked seen", so watchlisted titles are still unseen.
-function matchesCollection(status, filter) {
+// 'unseen' means "released and not marked seen", so watchlisted titles are
+// still unseen, and a title not out yet is never unseen: Unseen matches the
+// progress count ("44 of 60 seen" leaves 16). With no title, released is
+// assumed.
+function matchesCollection(status, filter, title?) {
   if (filter === 'all') return true;
   if (filter === 'seen') return status === 'seen';
   if (filter === 'watchlist') return status === 'watchlist';
-  if (filter === 'unseen') return status !== 'seen';
+  if (filter === 'unseen') return status !== 'seen' && (!title || isReleased(title));
   return true;
 }
 

@@ -115,7 +115,7 @@ const CANVAS = () => {
     expect(await page.evaluate(() => !document.querySelector('.search-wrap input').disabled), 'search is disabled in a guide');
 
     // Explore: Sort arranges the guide; Filters is dimmed and does nothing.
-    await page.locator('.nav-tabs button', { hasText: 'Explore' }).click(); await page.waitForTimeout(1200);
+    await page.locator('.nav-tabs button', { hasText: 'Connections' }).click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
     out.deskSpatial = s;
     expect(s.sort === 'on' && s.filters === 'off', `desktop Explore: ${JSON.stringify(s)}`);
@@ -137,7 +137,7 @@ const CANVAS = () => {
     await page.locator('.guide-banner .cb-close, .cb-close').first().click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
     const after = await page.evaluate(() => ({ title: document.querySelector('.filters-pop-wrap > .filters-pill').getAttribute('title') }));
-    await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(900);
+    await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(900);
     after.url = await page.evaluate(() => location.search);
     out.deskClosed = { s, after };
     expect(Object.values(s).every(v => v === 'on'), `after closing, controls still off: ${JSON.stringify(s)}`);

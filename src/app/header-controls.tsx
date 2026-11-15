@@ -113,14 +113,24 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
 // check pops in and the counters tick"): worked out afresh on every render,
 // it was gone with the next one (the toast, sync) about 20ms in, which cut
 // the bump and the roll short. The keyframes are in src/index.css.
-function CountBadge({ n, kind, appeared }: { n: number; kind: string; appeared: boolean }) {
+// A tab's count as a soft pill, on every tab so none looks singled out; only
+// Watchlist and Seen carry their status colour, as a tint (the quiet seen
+// mark's language), and the selected tab's pill is a step stronger.
+const PILL_TONE: Record<string, [string, string]> = {
+  all: ['bg-[color-mix(in_oklab,var(--muted-foreground)_14%,transparent)] text-[color-mix(in_oklab,var(--foreground)_72%,var(--background))]', 'bg-[color-mix(in_oklab,var(--foreground)_10%,transparent)] text-foreground'],
+  seen: ['bg-[color-mix(in_oklab,var(--status-seen)_14%,transparent)] text-(--status-seen-text)', 'bg-[color-mix(in_oklab,var(--status-seen)_24%,transparent)] text-(--status-seen-text)'],
+  watchlist: ['bg-[color-mix(in_oklab,var(--status-watch)_16%,transparent)] text-[color-mix(in_oklch,var(--status-watch)_70%,var(--foreground))]', 'bg-[color-mix(in_oklab,var(--status-watch)_28%,transparent)] text-[color-mix(in_oklch,var(--status-watch)_70%,var(--foreground))]'],
+};
+function CountBadge({ n, kind, appeared, on = false }: { n: number; kind: string; appeared: boolean; on?: boolean }) {
   const [tick, setTick] = React.useState({ n, dir: '' });
   if (tick.n !== n) setTick({ n, dir: n > tick.n ? 'up' : 'down' });
   const dir = tick.n === n ? tick.dir : '';
+  // It still bumps when the number changes.
+  const tone = PILL_TONE[kind] || PILL_TONE.all;
   return (
     <span key={n} aria-hidden="true"
-      className={cn('coll-count pointer-events-none absolute -top-[7px] -right-1.5 z-1 inline-flex h-[17px] min-w-[17px] items-center justify-center overflow-hidden rounded-[9px] px-1 text-xs leading-none font-bold tabular-nums text-(--on-color) shadow-[0_0_0_2px_var(--background)]',
-        kind, kind === 'seen' ? 'bg-(--status-seen)' : 'bg-(--status-watch)',
+      className={cn('coll-count pointer-events-none inline-flex h-[max(18px,1.125rem)] min-w-[max(18px,1.125rem)] items-center justify-center overflow-hidden rounded-full px-1.5 text-xs leading-none font-medium tabular-nums',
+        kind, on ? tone[1] : tone[0],
         appeared && 'new animate-[count-appear_460ms_cubic-bezier(.2,1.5,.4,1)]',
         dir && dir + ' animate-[count-bump_420ms_cubic-bezier(.2,1.5,.4,1)]',
         'motion-reduce:animate-none')}
@@ -130,8 +140,8 @@ function CountBadge({ n, kind, appeared }: { n: number; kind: string; appeared: 
   );
 }
 
-// All / Unseen / Seen / Watchlist, at the top of My list (desktop and
-// phone): shadcn's
+// All | Unseen, Watchlist, Seen, at the top of Titles (desktop and phone),
+// each with its count; a thin rule sets All apart. shadcn's
 // ToggleGroup in the segmented look, with the sliding selection. `variant`
 // only changes layout: 'toolbar' keeps every label where there is room;
 // 'compact' (phone) labels just All (it has no icon) and the active option at its compact
@@ -148,13 +158,18 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
 }) {
   // tracking.tsx is not typed yet (its context starts as null, so what
   // useCollection() returns reads as never): name the two fields used here.
-  const { progress, loading } = window.useCollection() as unknown as { progress: { seenTotal: number; watchlist: number }; loading: boolean };
-  const counts: Record<string, number> = { seen: loading ? 0 : progress.seenTotal, watchlist: loading ? 0 : progress.watchlist };
+  const { progress, loading } = window.useCollection() as unknown as { progress: { seenTotal: number; seenReleased: number; releasedTotal: number; watchlist: number }; loading: boolean };
+  // Catalogue-wide, whatever else is filtered: All is every title, Unseen the
+  // released ones not seen (it matches "44 of 60 seen").
+  const counts: Record<string, number> | null = loading ? null : {
+    all: window.TITLES.length, unseen: progress.releasedTotal - progress.seenReleased,
+    watchlist: progress.watchlist, seen: progress.seenTotal,
+  };
   // Counts from the previous render, so a badge that just appeared can pop in
   // (but not on first load).
   const last = React.useRef<Record<string, number> | null>(null);
   const before = last.current;
-  React.useEffect(() => { last.current = loading ? null : counts; });
+  React.useEffect(() => { last.current = counts; });
   const compact = variant === 'compact';
   const Icon = window.CollectionIcon;
   return (
@@ -167,8 +182,8 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
         const full = tr('collection.' + v);
         const shortL = v === 'watchlist' ? tr('collection.watchlistShort') : full;
         const l = short ? shortL : full;
-        const n = counts[v] || 0;
-        const label = n ? tr('collection.countAria', { label: l, n }) : l;
+        const n = counts ? counts[v] : null;
+        const label = n != null ? tr('collection.countAria', { label: l, n }) : l;
         const on = value === v, first = v === 'all';
         // Which compact steps drop this option's label (the row's data-fit).
         const labelSteps = compact
@@ -176,7 +191,7 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
           : first ? ''
             : on ? 'group-data-[fit=4]/sortrow:hidden group-data-[fit=5]/sortrow:hidden'
               : 'group-data-[fit=2]/sortrow:hidden group-data-[fit=3]/sortrow:hidden group-data-[fit=4]/sortrow:hidden group-data-[fit=5]/sortrow:hidden';
-        return (
+        const item = (
           <ToggleGroupItem key={v} value={v} data-coll={v} aria-label={label} title={label}
             className={cn('relative z-1 h-auto min-w-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-transparent aria-pressed:text-foreground [&_svg:not([class*=\'size-\'])]:size-[13px]',
               compact ? cn('flex-[1_1_auto] px-2', on && 'grow-2')
@@ -189,9 +204,10 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
                 <span className={cn('cl-short hidden', compact && 'group-data-[fit=3]/viewrow:inline')}>{shortL}</span>
               </>}
             </span>
-            {n > 0 && <CountBadge n={n} kind={v} appeared={!!before && !before[v]}/>}
+            {n != null && <CountBadge n={n} kind={v} on={on} appeared={!!before && !before[v] && n > 0}/>}
           </ToggleGroupItem>
         );
+        return first ? <React.Fragment key={v}>{item}<span className="coll-div my-2 w-px flex-none bg-[color-mix(in_oklab,var(--foreground)_18%,transparent)]" aria-hidden="true"/></React.Fragment> : item;
       })}
     </ToggleGroup>
   );

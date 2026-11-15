@@ -1,6 +1,8 @@
 // The desktop sections (Notion "Desktop: navigation for Explore, My list and
 // Guides"):
-// - My list's tabs read All / Unseen / Seen / Watchlist;
+// - the sections read Connections / Titles / Guides (Notion "Rename the
+//   top-level sections"); Titles' tabs read All | Unseen, Watchlist, Seen,
+//   each with its count, and Unseen leaves out titles not released yet;
 // - one header row: the wordmark, the Explore / My list / Guides tabs, search
 //   with a "/" hint, Sort and Filters, then sync, Settings and Account; no
 //   second row, view switch, type switch or Guides button;
@@ -10,7 +12,7 @@
 // - Explore and My list keep their own sort and filters;
 // - picking a guide in the gallery opens it in the Guides tab; closing it
 //   brings the gallery back; My list with a guide open closes the guide;
-// - "Show in Explore" in the details (My list) selects the title on the
+// - "See connections" in the details (Titles) selects the title on the
 //   canvas; ?view=guides opens the gallery; "/" puts the cursor in search;
 // - the header fits in one row from 900px, in English and Portuguese;
 // - the Account menu has no collection actions; "Mark what you've seen" is in
@@ -56,27 +58,43 @@ const STATE = () => ({
     await page.goto(URL); await settle(page);
     let s = await page.evaluate(STATE);
     out.explore = s;
-    expect(s.tab === 'Explore' && s.canvas && s.rows === 1 && !s.old.length, `Explore: ${JSON.stringify(s)}`);
+    expect(s.tab === 'Connections' && s.canvas && s.rows === 1 && !s.old.length, `Explore: ${JSON.stringify(s)}`);
     expect(s.coll === 0 && s.sortShown && s.filtersShown, `Explore: no collection switch, Sort and Filters shown: ${JSON.stringify(s)}`);
 
     // My list: its own sort and collection; Explore keeps its own.
-    await TAB(page, 'My list'); await page.waitForTimeout(800);
+    await TAB(page, 'Titles'); await page.waitForTimeout(800);
     s = await page.evaluate(STATE);
     out.myList = s;
-    expect(s.tab === 'My list' && s.myList && s.myColl && s.coll === 1 && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
+    expect(s.tab === 'Titles' && s.myList && s.myColl && s.coll === 1 && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
     // The status tabs, in their order (the designs' To watch rename was tried
     // and reverted, 2026-11-15; Notion "Rename the top-level sections").
     const tabs = await page.evaluate(() => [...document.querySelectorAll('.ml-status .coll-switch button')].map(b => b.dataset.coll + ':' + (b.querySelector('.cl-full, .coll-label') || b).textContent.trim()));
     out.tabs = tabs;
-    expect(tabs.join() === 'all:All,unseen:Unseen,seen:Seen,watchlist:Watchlist', `My list's tabs: ${tabs.join()}`);
+    expect(tabs.join() === 'all:All,unseen:Unseen,watchlist:Watchlist,seen:Seen', `My list's tabs: ${tabs.join()}`);
+    // Each tab's count, catalogue-wide; Unseen is released and not seen, and
+    // its list has nothing that is not out yet.
+    await page.locator('.ml-status .coll-switch button[data-coll="unseen"]').click(); await page.waitForTimeout(500);
+    const counts = await page.evaluate(() => {
+      const n = (k) => Number((document.querySelector(`.ml-status .coll-switch button[data-coll="${k}"] .coll-count`) || {}).textContent);
+      const released = window.TITLES.filter(t => window.MCU_isReleased(t)).length;
+      const rows = [...document.querySelectorAll('.dl-row[data-row-id]')].map(r => r.getAttribute('data-row-id'));
+      const byId = Object.fromEntries(window.TITLES.map(t => [t.id, t]));
+      return { all: n('all'), unseen: n('unseen'), seen: n('seen'), watchlist: n('watchlist'), total: window.TITLES.length, released,
+        unreleasedRows: rows.filter(id => byId[id] && !window.MCU_isReleased(byId[id])), divider: !!document.querySelector('.ml-status .coll-div') };
+    });
+    out.counts = counts;
+    expect(counts.all === counts.total && counts.seen === 2 && counts.unseen === counts.released - 2 && counts.watchlist === 0 && counts.divider,
+      `tab counts or divider: ${JSON.stringify(counts)}`);
+    expect(!counts.unreleasedRows.length, `Unseen lists titles not released yet: ${counts.unreleasedRows.join()}`);
+    await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
     await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
     await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); await page.waitForTimeout(400);
     await page.locator('.ml-status .coll-switch button[data-coll="seen"]').click(); await page.waitForTimeout(400);
-    await TAB(page, 'Explore'); await page.waitForTimeout(900);
+    await TAB(page, 'Connections'); await page.waitForTimeout(900);
     s = await page.evaluate(STATE);
     out.exploreAgain = s;
     expect(!/sort=/.test(s.url) && s.coll === 0, `Explore did not keep its own sort: ${JSON.stringify(s)}`);
-    await TAB(page, 'My list'); await page.waitForTimeout(800);
+    await TAB(page, 'Titles'); await page.waitForTimeout(800);
     s = await page.evaluate(STATE);
     const collOn = await page.evaluate(() => (document.querySelector('.ml-status .coll-switch button.on .coll-label') || document.querySelector('.ml-status .coll-switch button.on') || {}).textContent);
     out.myListAgain = { ...s, collOn };
@@ -88,14 +106,14 @@ const STATE = () => ({
     expect(await page.evaluate(() => !!document.activeElement.closest('.search-wrap')), '"/" did not focus search');
     await page.keyboard.press('Escape'); await page.locator('.ml-title').click();
 
-    // Show in Explore from the details.
+    // See connections from the details.
     await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
     await page.locator('.dl-row[data-row-id="thor"] .dl-open').click(); await page.waitForTimeout(800);
     await page.locator('.drawer.open .td-explore').click(); await page.waitForTimeout(1500);
     s = await page.evaluate(STATE);
     const sel = await page.evaluate(() => ({ drawer: (document.querySelector('.drawer.open #drawer-title') || {}).textContent, button: !!document.querySelector('.drawer.open .td-explore') }));
     out.showInExplore = { ...s, ...sel };
-    expect(s.tab === 'Explore' && s.canvas && /title=thor/.test(s.url) && sel.drawer === 'Thor' && !sel.button, `Show in Explore: ${JSON.stringify(out.showInExplore)}`);
+    expect(s.tab === 'Connections' && s.canvas && /title=thor/.test(s.url) && sel.drawer === 'Thor' && !sel.button, `Show in Explore: ${JSON.stringify(out.showInExplore)}`);
 
     // Guides: the gallery, a guide, back to the gallery.
     await TAB(page, 'Guides'); await page.waitForTimeout(800);
@@ -112,10 +130,10 @@ const STATE = () => ({
     expect(s.tab === 'Guides' && s.gallery >= 5 && !/guide=/.test(s.url), `closing a guide: ${JSON.stringify(s)}`);
     // My list with a guide open closes the guide.
     await page.locator('.g-page .g-row').first().click(); await page.waitForTimeout(900);
-    await TAB(page, 'My list'); await page.waitForTimeout(800);
+    await TAB(page, 'Titles'); await page.waitForTimeout(800);
     s = await page.evaluate(STATE);
     out.myListClosesGuide = s;
-    expect(s.tab === 'My list' && s.myList && !/guide=/.test(s.url), `My list with a guide open: ${JSON.stringify(s)}`);
+    expect(s.tab === 'Titles' && s.myList && !/guide=/.test(s.url), `My list with a guide open: ${JSON.stringify(s)}`);
     // The Account menu holds account things only (Notion "Take the collection
     // filters out of the Account menu"); "Mark what you've seen" is in My list.
     expect(await page.locator('.ml-status .ml-pick').count() === 1, 'My list has no "Mark what you\'ve seen"');

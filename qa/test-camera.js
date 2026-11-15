@@ -343,7 +343,7 @@ const pickView = (page, n) => phoneView(page, ['list', 'list', 'spatial'][n]);
   out.mobileReenterAfterList = null;
   await page.locator('.m-lrow-open').nth(10).click();
   await page.waitForTimeout(400);
-  await page.locator('.m-apply.ghost', { hasText: 'Spatial' }).click();
+  await page.locator('.m-apply.ghost', { hasText: 'See connections' }).click();
   await page.waitForTimeout(900);
   const bg2 = await emptyPoint(page, [30, 200, 360], [700, 650, 600, 250]);
   await page.touchscreen.tap(bg2.x, bg2.y);

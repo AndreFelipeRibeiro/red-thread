@@ -74,7 +74,7 @@ const deskSort = (page, key) => pickSort(page, key, 1800);
 // Spatial and List are the Explore and My list tabs (Notion "Desktop:
 // navigation for Explore, My list and Guides").
 const deskView = (page, name) => page.evaluate(async (n) => {
-  const label = n === 'Spatial' ? 'Explore' : n === 'List' ? 'My list' : n;
+  const label = n === 'Spatial' ? 'Connections' : n === 'List' ? 'Titles' : n;
   const b = [...document.querySelectorAll('.nav-tabs button')].find(x => x.textContent.trim() === label);
   if (b) b.click();
   await new Promise(r => setTimeout(r, 1800));

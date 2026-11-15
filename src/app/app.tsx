@@ -1360,7 +1360,7 @@ function App() {
   // or viewport to disturb. Derived from `ordered` so the canvas keeps every card.
   const visible = useMemo(() => {
     if (collectionFilter === 'all') return ordered;
-    return ordered.filter(t => window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter));
+    return ordered.filter(t => window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t));
   }, [ordered, collectionFilter, collectionStates]);
 
   // Only speak in collection terms when the collection filter is what emptied
@@ -1421,7 +1421,7 @@ function App() {
     if (collectionFilter !== 'all' && !guide) {
       const s = new Set();
       filtered.forEach(t => {
-        if (window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter)) s.add(t.id);
+        if (window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t)) s.add(t.id);
       });
       sets.push(s);
     }
@@ -2113,6 +2113,11 @@ function App() {
     onOpen: openUpNext,
     onHide: hideUpNext,
     onShowAll: () => setCollectionFilter('all'),
+    // "See connections", from Titles only (Connections already shows them).
+    onConnections: (isTouch ? viewMode === 'spatial' : desktopView === 'spatial') ? undefined : (id) => {
+      if (isTouch) { goSection('explore', { force: true }); setSelectedId(id); setDrawerId(null); }
+      else showInExplore(id);
+    },
   };
   // Announce a new suggestion politely once the previous one was marked seen
   // (the toast already announces the mark itself).
@@ -2973,7 +2978,7 @@ function App() {
           const isHighlighted = pair ? !!inPair : (charHL || (hoverFocusId === t.id) || !!onLine);
           // Visual only — the card stays in the layout so nothing reflows.
           const isCollDimmed = collectionFilter !== 'all' && !guide
-            && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter);
+            && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t);
           return (
             <Card
               key={t.id}
@@ -3137,7 +3142,8 @@ function App() {
             activeChar={activeChar}
             activeChars={activeChars}
             onGoSpatial={() => {
-              setViewMode('spatial');
+              // Into the Connections section, with its own sort and filters.
+              goSection('explore', { force: true });
               if (highlightedChar) {
                 if (pinnedCharIds && pinnedCharIds.has(drawerId)) { setStepId(drawerId); pendingStepRef.current = drawerId; }
               } else setSelectedId(drawerId);
