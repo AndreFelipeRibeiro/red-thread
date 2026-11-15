@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — AGENTS.md: ticket placement, ✅ on completion, calendar events
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- New tickets are placed under an epic, start a new epic, or stay standalone,
+  and the report says which and why (Andre's edit).
+- A Completed ticket gets the ✅ icon (Andre's edit).
+- Red Thread calendar events: purple, an HTML bullet list with bold labels,
+  real times, one event per session, set through the Google Calendar
+  connector.
+
 ## V5 design — Card review: one card everywhere, cleaner canvas
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
