@@ -13,6 +13,29 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Card review: one card everywhere, cleaner canvas
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The selected card (the ring's centre, the phone's pop-out) is the same card
+  as the rest, at the same size, with no action row; Seen, Watchlist and the
+  scores are in the details.
+- Seen titles keep their poster untouched and get a check in a circle in its
+  top-right corner (a guide stop's mark takes that place). "Set in" and the
+  budget are gone; the second line counts the titles that share a character
+  with it, the same titles its connections ring shows.
+  Titles are 15px medium and wrap a little sooner; a dropped line height that
+  clipped descenders is fixed. Cards, Up next and the phase labels have
+  softer (10px) corners.
+- The ring spaces its cards for the taller card and pushes apart any that
+  touch; grid-order rows are 110px apart with arcs kept in the gap; name
+  labels avoid every visible card.
+- QA: `test-cards` checks that a card's count matches its ring;
+  `test-recastname`, `test-picker` and `test-unreleased` follow the new
+  cards and tabs.
+- Verified: 31 card, canvas and guide checks; full `qa/regress.sh`
+  on the final tree, 62 check runs clean.
+
 ## V5 fix — Titles: the heading and tabs line up with the table
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

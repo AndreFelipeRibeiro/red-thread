@@ -231,7 +231,8 @@ const grid = page => page.evaluate(() => ({
   // The Seen tab's empty state offers the picker.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.lang.v1','pt-BR');"));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.getByRole('button', { name: /^Vistos?$/ }).first().click().catch(() => {});
+  // The tab's name carries its count ("Vistos, 0"), so pick it by its hook.
+  await page.locator('.coll-switch button[data-coll="seen"]').first().click().catch(() => {});
   await page.waitForTimeout(500);
   const empty = page.locator('.m-empty .empty-action');
   if ((await empty.count()) !== 1) err('phone Seen empty state: no picker button');

@@ -154,7 +154,7 @@ declare global {
     Toolbar: ToolbarModule['Toolbar'];
     SpatialCard: SpatialCardModule['SpatialCard'];
     CardText: SpatialCardModule['CardText'];
-    CardActions: SpatialCardModule['CardActions'];
+    CardMark: SpatialCardModule['CardMark'];
     ZoomControl: SpatialChrome['ZoomControl'];
     BandLabel: SpatialChrome['BandLabel'];
     SpatialOverall: SpatialChrome['SpatialOverall'];

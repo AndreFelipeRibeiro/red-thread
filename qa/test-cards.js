@@ -1,16 +1,16 @@
 // One title card (Notion "Cards: one card design at rest, selected and on the
 // phone", after "Simplify the Spatial cards" and "Show posters uncropped at
 // their standard 2:3 ratio"):
-// - the poster is whole, at 2:3, with nothing laid over the art, at rest, on
-//   hover and when selected; hovering only lifts the card (no band);
-// - under it: the title, then one meta line (phase dot, year, "Set in",
-//   budget) and one status mark at its end: the quiet seen check, or in a
-//   guide the stop's mark, never both;
-// - selected (at a zoom where buttons are usable) the same card gains an
-//   action row: Seen and Watchlist, IMDb and RT; Seen on is a tint;
-// - the phone's selected card is the same card: nothing on the poster, the
-//   title at 15px or more and the meta line at 13px or more, an action row
-//   with Cast, which opens the details.
+// - the poster is whole, at 2:3, its art untouched (no seen wash), with at
+//   most one mark in its top-right corner: a check in a circle once seen, or
+//   in a guide the stop's mark, never both (Andre, 2026-11-15);
+// - hovering only lifts the card (no band);
+// - under the poster: the title, then two meta lines (phase dot, year; how
+//   many titles it connects to, which is the size of its ring), no "Set in"
+//   or budget (Andre, 2026-11-15);
+// - selected, it is the same card at the same size, with no action row;
+// - the phone's selected card is the same card, larger: the title at 15px or
+//   more and the meta at 13px or more; a tap opens the details.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 process.env.PORT = process.env.PORT || '8312';
 {
@@ -27,12 +27,16 @@ const CARD = (sel) => {
   if (!c) return null;
   const poster = c.querySelector('.card-poster, .m-fp-poster');
   const pr = poster.getBoundingClientRect();
-  // Anything painted over the art: visible elements inside the poster other
-  // than the art itself.
-  const over = [...poster.querySelectorAll('*')].filter(e => !e.closest('.card-poster > :first-child, .m-fp-poster > :first-child') && e.getClientRects().length
+  // Anything painted over the art other than the art itself and the corner mark.
+  const over = [...poster.querySelectorAll('*')].filter(e => !e.closest('.card-poster > :first-child, .m-fp-poster > :first-child, .card-mark') && e.getClientRects().length
     && getComputedStyle(e).opacity !== '0' && getComputedStyle(e).visibility !== 'hidden');
   const mark = c.querySelector('.card-mark');
+  const art = poster.querySelector(':scope > :first-child');
+  const wash = getComputedStyle(poster, '::after').content;
   return {
+    washed: (wash && wash !== 'none' && wash !== 'normal') || /saturate/.test(getComputedStyle(art).filter) || Number(getComputedStyle(art).opacity) < 1,
+    markCorner: mark ? (() => { const m = mark.getBoundingClientRect(); return Math.round(pr.right - m.right) < 16 && Math.round(m.top - pr.top) < 16; })() : null,
+    lines: c.querySelectorAll('.card-line > span').length, w: Math.round(c.getBoundingClientRect().width),
     ratio: Math.round((pr.width / pr.height) * 1000) / 1000,
     over: over.map(e => e.className && String(e.className).split(' ')[0]),
     band: !!c.querySelector('.card-hover'),
@@ -61,10 +65,10 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     const a = await page.evaluate(CARD, '.card[data-id="iron-man-2"]');
     out[scheme + ' rest'] = a;
     expect(a && Math.abs(a.ratio - 2 / 3) < 0.01 && !a.over.length && !a.band && !a.acts, `${scheme}: at rest: ${JSON.stringify(a)}`);
-    expect(a && a.phase && /2010/.test(a.line) && /Set in/.test(a.line) && /\$/.test(a.line) && a.marks === 0, `${scheme}: the meta line: ${JSON.stringify(a)}`);
+    expect(a && a.phase && /2010/.test(a.line) && /\d+ connections?/.test(a.line) && !/Set in|\$/.test(a.line) && a.marks === 0, `${scheme}: the meta line: ${JSON.stringify(a)}`);
     const seen = await page.evaluate(CARD, '.card[data-id="iron-man"]');
     out[scheme + ' seen'] = seen;
-    expect(seen && seen.seenMark && seen.marks === 1, `${scheme}: a seen card's mark: ${JSON.stringify(seen)}`);
+    expect(seen && seen.seenMark && seen.marks === 1 && seen.markCorner && !seen.washed && seen.lines === 2, `${scheme}: a seen card: ${JSON.stringify(seen)}`);
     // Hover: no band, nothing on the art.
     const box = await page.locator('.card[data-id="iron-man-2"] .card-poster').boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + 30); await page.waitForTimeout(400);
@@ -72,17 +76,32 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     out[scheme + ' hover'] = h;
     expect(!h.band && !h.over.length && !h.acts, `${scheme}: hover shows something: ${JSON.stringify(h)}`);
     await page.mouse.move(5, 500);
-    // Selected, zoomed to where buttons are usable: the action row.
+    // Selected (the ring's centre): the same card, same size, nothing added.
+    const restW = await page.evaluate(() => Math.round(document.querySelector('.card[data-id="thor"]').getBoundingClientRect().width));
+    const restScale = await page.evaluate(SCALE);
     await page.locator('.card[data-id="thor"]').click(); await page.waitForTimeout(1500);
-    for (let i = 0; i < 8 && (await page.evaluate(SCALE)) < 0.55; i++) { await page.locator('.zoom-ctl button[aria-label="Zoom in"]').click(); await page.waitForTimeout(300); }
-    await page.waitForTimeout(400);
     const sel = await page.evaluate(CARD, '.card[data-id="thor"]');
-    out[scheme + ' selected'] = sel;
-    expect(sel.acts && sel.tsa === 2 && sel.scores === 2 && !sel.over.length && Math.abs(sel.ratio - 2 / 3) < 0.01, `${scheme}: the selected card: ${JSON.stringify(sel)}`);
-    await page.locator('.card[data-id="thor"] .card-acts .tsa-btn.seen').click(); await page.waitForTimeout(700);
-    const m = await page.evaluate(CARD, '.card[data-id="thor"]');
-    out[scheme + ' marked'] = m;
-    expect(m.seenMark && m.seenBg && !/rgb\(95, 168, 86\)/.test(m.seenBg), `${scheme}: Seen on: ${JSON.stringify(m)}`);
+    const selScale = await page.evaluate(SCALE);
+    out[scheme + ' selected'] = { ...sel, restW, restScale, selScale };
+    expect(!sel.acts && !sel.over.length && Math.abs(sel.ratio - 2 / 3) < 0.01 && Math.abs(sel.w / selScale - restW / restScale) < 2,
+      `${scheme}: the selected card: ${JSON.stringify(out[scheme + ' selected'])}`);
+    errors.push(...e);
+    await ctx.close();
+  }
+  // The connections count is the ring's size: selecting a title shows exactly
+  // as many other titles as its card says (Andre, 2026-11-15).
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, prefs, {});
+    await page.goto(URL); await settle(page);
+    out.count = {};
+    for (const id of ['thor', 'iron-man', 'avengers', 'gotg']) {
+      await page.goto(URL); await settle(page);
+      const said = await page.evaluate((id) => Number(((document.querySelector(`.card[data-id="${id}"] .card-conn`) || {}).textContent || '').replace(/\D+/g, '')), id);
+      await page.goto(URL + '?title=' + id); await settle(page); await page.waitForTimeout(900);
+      const ring = await page.evaluate(() => document.querySelectorAll('.card:not(.ring-hidden)').length - 1);
+      out.count[id] = { said, ring };
+      expect(said > 0 && said === ring, `${id}: the card says ${said} connections, its ring shows ${ring}`);
+    }
     errors.push(...e);
     await ctx.close();
   }
@@ -111,10 +130,10 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     await page.touchscreen.tap(pt.x, pt.y); await page.waitForTimeout(900);
     const p = await page.evaluate(CARD, '.m-focuspop');
     out.phone = p;
-    expect(p && !p.over.length && Math.abs(p.ratio - 2 / 3) < 0.01 && p.titlePx >= 15 && p.linePx >= 13 && p.acts && p.cast && p.scores === 2 && p.tsa === 2,
+    expect(p && !p.over.length && !p.washed && Math.abs(p.ratio - 2 / 3) < 0.01 && p.titlePx >= 15 && p.linePx >= 13 && !p.acts,
       `phone: the selected card: ${JSON.stringify(p)}`);
-    await page.locator('.m-focuspop .card-cast').tap(); await page.waitForTimeout(900);
-    expect(await page.locator('.m-sheet .td-title').count() >= 1, 'phone: Cast did not open the details');
+    await page.locator('.m-focuspop .m-fp-open').tap(); await page.waitForTimeout(900);
+    expect(await page.locator('.m-sheet .td-title').count() >= 1, 'phone: a tap on the selected card did not open the details');
     errors.push(...e);
     await ctx.close();
   }

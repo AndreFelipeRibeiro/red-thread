@@ -217,16 +217,16 @@ const STATE = () => {
       card: !!document.querySelector('.card.g-skipped[data-id="cap-brave"]') }));
     out.detailsSkip = r;
     expect(r.note === 'Skipped in this guide' && /g-unskip/.test(r.focus || '') && (r.stored || '').includes('cap-brave') && r.card, `details Skip: ${JSON.stringify(r)}`);
-    // Zoomed in, the selected card's action row offers Unskip (it was skipped);
-    // other cards offer nothing until selected (Notion "Cards: one card design
-    // at rest, selected and on the phone": no hover band).
+    // Cards on the canvas carry no Skip or Unskip (Notion "Cards: one card
+    // design at rest, selected and on the phone"): the details and the
+    // guide's list hold them.
     for (let i = 0; i < 4; i++) { await page.locator('.zoom-ctl button, .zoom button').last().click().catch(() => {}); await page.waitForTimeout(300); }
     await page.waitForTimeout(700);
     r = await page.evaluate(() => ({ unskip: !!document.querySelector('.card[data-id="cap-brave"] .g-skipctl .g-unskip'),
       skip: !!document.querySelector('.card[data-id="thunderbolts"] .g-skipctl .g-skip, .card[data-id="fantastic-four"] .g-skipctl .g-skip') }));
     out.cardSkip = r;
-    expect(r.unskip && !r.skip, `zoomed-in cards: ${JSON.stringify(r)}`);
-    await page.locator('.card[data-id="cap-brave"] .g-skipctl .g-unskip').click(); await page.waitForTimeout(500);
+    expect(!r.unskip && !r.skip, `zoomed-in cards: ${JSON.stringify(r)}`);
+    await page.locator('.drawer.open .g-unskip').click(); await page.waitForTimeout(500);
     r = await page.evaluate(() => ({ stored: localStorage.getItem('mcu.guideSkips.v1'), card: !!document.querySelector('.card.g-skipped[data-id="cap-brave"]'),
       drawer: !!document.querySelector('.drawer.open .g-dskip-btn') }));
     expect(!(r.stored || '').includes('cap-brave') && !r.card && r.drawer, `card Unskip: ${JSON.stringify(r)}`);

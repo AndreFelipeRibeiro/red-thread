@@ -180,7 +180,12 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   const positions = {};
   let layoutBands = [];
   const colW = CARD_W + 60;
-  const rowH = CARD_H + 70;
+  // Rows in the grid orders leave room under each card for the arcs that join
+  // neighbours on a row and their name labels (ARC_MAX + a label), so neither
+  // reaches the next row (Notion "Show posters uncropped": the cards grew).
+  const rowH = CARD_H + 110;
+  // The timelines' staircase keeps the spacing it had.
+  const bandH = (CARD_H + 70) * 1.25;
 
   if (sort === 'phase') {
     // Group by phase into vertical lanes
@@ -228,7 +233,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
     ordered.forEach((t, i) => {
       const x = 80 + i * (CARD_W * 1.15);
       const row = chrono ? eraOf[t.id] : t.phase - 1;
-      const y = 80 + row * (rowH * 1.25);
+      const y = 80 + row * bandH;
       positions[t.id] = { x, y };
       const b = bands[row] || (bands[row] = { row, x, y, years: [] });
       if (x < b.x) b.x = x;
@@ -345,7 +350,29 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route, drawChar }) {
+// How many titles each title is connected to: the titles that share at least
+// one character with it (matched on the character's core identity), which is
+// exactly the set its connections ring shows when it is selected (relatedIds),
+// so the card's number and the ring always agree (Andre, 2026-11-15).
+function connectionCounts(titles) {
+  const byPrime = {};
+  titles.forEach(t => t.cast.forEach(c => {
+    const p = primeOf(c);
+    (byPrime[p] || (byPrime[p] = new Set())).add(t.id);
+  }));
+  const out = {};
+  titles.forEach(t => {
+    const near = new Set();
+    t.cast.forEach(c => byPrime[primeOf(c)].forEach(id => { if (id !== t.id) near.add(id); }));
+    out[t.id] = near.size;
+  });
+  return out;
+}
+
+// How far below a row the arc joining two of its cards may dip (see control()).
+const ARC_MAX = 80;
+
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination, in place of the character threads. A single path in the
   // existing layer, so the canvas performance rules hold.
@@ -420,7 +447,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     const x2 = p2.x + CARD_W/2, y2 = p2.y + CARD_H/2;
     const dx = x2 - x1, dy = y2 - y1;
     if (!straight && Math.abs(dy) < CARD_H * 0.5) {
-      const depth = CARD_H / 2 + 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04);
+      // The arc's lowest point sits this far below the cards, at most ARC_MAX,
+      // so it stays in the gap above the next row.
+      const depth = CARD_H / 2 + Math.min(ARC_MAX, 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04));
       return { x1, y1, x2, y2, cx: (x1 + x2) / 2, cy: Math.max(y1, y2) + depth * 2 };
     }
     const dist = Math.hypot(dx, dy) || 1;
@@ -444,8 +473,10 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     };
   }
 
-  // Card rectangles, so labels can avoid sitting on a card.
-  const cardRects = visibleTitles.filter(t => !avoidIds || avoidIds.has(t.id)).map(t => positions[t.id]).filter(Boolean)
+  // Card rectangles, so labels can avoid sitting on a card: every card on
+  // screen, dimmed ones included (a name over a faded card's text still reads
+  // as clutter); a connections ring hides the rest, so only its cards count.
+  const cardRects = visibleTitles.filter(t => !shownIds || shownIds.has(t.id)).map(t => positions[t.id]).filter(Boolean)
     .map(p => ({ x0: p.x - 6, y0: p.y - 6, x1: p.x + CARD_W + 6, y1: p.y + CARD_H + 6 }));
   const coveredBy = (x, y, w, h) => cardRects.find(r => x + w / 2 > r.x0 && x - w / 2 < r.x1 && y + h / 2 > r.y0 && y - h / 2 < r.y1);
   // Best spot for a label near point(t0) on its curve: the closest point along
@@ -603,6 +634,15 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     }
     if (!moved) break;
   }
+  // Pushing labels apart can move one onto a card: step it just above or
+  // below that card, whichever is nearer and free.
+  labels.forEach(l => {
+    const r = coveredBy(l.x, l.y, l.w, l.h);
+    if (!r) return;
+    const spots = [r.y1 + l.h / 2 + 2, r.y0 - l.h / 2 - 2].filter(y => !coveredBy(l.x, y, l.w, l.h))
+      .sort((a, b) => Math.abs(a - l.y) - Math.abs(b - l.y));
+    if (spots.length) l.y = spots[0];
+  });
 
   const labelEls = labels.map(l => (
     <g key={'lbl_' + l.key} style={{pointerEvents:'none'}}>
@@ -1283,6 +1323,9 @@ function App() {
   // under the rings), and the lines are drawn among the ring's titles alone.
   const ringIds = !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
   const lineTitles = useMemo(() => ringIds ? filtered.filter(t => ringIds.has(t.id)) : filtered, [filtered, ringIds]);
+  // Counted over what the filters show (not the ring), so a card's number
+  // holds while you move around a selection.
+  const connCounts = useMemo(() => connectionCounts(filtered), [filtered]);
 
   // Hover-focus is separate: used only for dimming/labels, not reflow.
   const hoverFocusId = hoveredTitle || selectedId;
@@ -1325,6 +1368,10 @@ function App() {
       const ringCaps = compact ? [5, 9, 14, 20] : [6, 10, 16, 22];
       const ringRadii = compact ? [340, 600, 860, 1120] : [480, 800, 1120, 1440];
       const placed = { [focusId]: { x: cx, y: cy } };
+      // The rings are ellipses, flatter than circles; they were tuned for a
+      // 270px card, so their height grows with the card's (Notion "Show
+      // posters uncropped": cards are taller), or neighbours overlap.
+      const squash = 0.7 * CARD_H / 270;
       let idx = 0;
       for (let ring = 0; ring < ringCaps.length && idx < scored.length; ring++) {
         const cap = Math.min(ringCaps[ring], scored.length - idx);
@@ -1333,10 +1380,32 @@ function App() {
           const angle = (k / cap) * Math.PI * 2 + (ring % 2) * (Math.PI / cap);
           placed[scored[idx].id] = {
             x: cx + Math.cos(angle) * r,
-            y: cy + Math.sin(angle) * r * 0.7,
+            y: cy + Math.sin(angle) * r * squash,
           };
           idx++;
         }
+      }
+      // Neighbouring rings can still bring two cards together where one's
+      // angle meets the other's: push the outer one away from the centre
+      // until they clear (a few passes settle every ring).
+      // The centre card counts as an obstacle but never moves.
+      const ids = Object.keys(placed);
+      const gapX = CARD_W + 28, gapY = CARD_H + 28;
+      for (let pass = 0; pass < 12; pass++) {
+        let moved = false;
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = placed[ids[i]], b = placed[ids[j]];
+            if (Math.abs(a.x - b.x) >= gapX || Math.abs(a.y - b.y) >= gapY) continue;
+            const da = Math.hypot(a.x - cx, a.y - cy), db = Math.hypot(b.x - cx, b.y - cy);
+            const o = da > db ? a : b, d = Math.max(da, db) || 1;
+            if (o === placed[focusId]) continue;
+            const need = Math.min(gapX - Math.abs(a.x - b.x), gapY - Math.abs(a.y - b.y)) + 4;
+            o.x += (o.x - cx) / d * need; o.y += (o.y - cy) / d * need;
+            moved = true;
+          }
+        }
+        if (!moved) break;
       }
       focusLayout = placed;
     }
@@ -2874,7 +2943,8 @@ function App() {
         x={view.x + (p.x + CARD_W/2) * view.scale}
         y={view.y + (p.y + CARD_H/2) * view.scale}
         onOpenCast={() => setDrawerId(selectedId)}
-        guide={guide} guideSkip={guideSkipInfo ? guideSkipInfo[t.id] : null} onGuideSkip={onCanvasSkip}
+        guide={guide} guideSkip={guideSkipInfo ? guideSkipInfo[t.id] : null} guideBadge={guideBadges ? guideBadges[t.id] : null} onGuideSkip={onCanvasSkip}
+        connections={connCounts[t.id] || 0}
       />
     );
   })();
@@ -2961,7 +3031,7 @@ function App() {
           focusId={pair ? null : hoverFocusId}
           pair={pair}
           onPickConnection={pickConnection}
-          avoidIds={labelAvoidIds}
+          shownIds={ringIds}
           route={guide ? { ids: guideStepTitles.map(t => t.id), target: guide.target } : null}
         />
         {filtered.map(t => {
@@ -2984,6 +3054,7 @@ function App() {
               key={t.id}
               entering={cardsShownRef.current}
               title={t}
+              connections={connCounts[t.id] || 0}
               pos={positions[t.id] || {x:0,y:0}}
               onClick={() => onCardTap(t.id)}
               onHover={isTouch ? (() => {}) : setHoveredTitle}

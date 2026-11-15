@@ -685,11 +685,12 @@ function Sheet({ children, onClose, tall, label, labelledBy, describedBy, classN
 // title-details.tsx (Notion "shadcn pass 3/5").
 
 // Unscaled overlay that "pops" the focused card out of the zoomed canvas so it
-// stays legible: the same card as on the canvas (Notion "Cards: one card
-// design at rest, selected and on the phone"), poster whole with nothing on it,
-// the text at phone sizes (CardText `pop`), then the action row with Cast,
-// which opens the details sheet like a tap on the card.
-function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
+// stays legible: the same card as on the canvas, larger (Notion "Cards: one
+// card design at rest, selected and on the phone"; Andre, 2026-11-15): the
+// whole poster with its corner mark, the title and the two meta lines. A tap
+// opens the details sheet, which holds Seen, Watchlist, the scores and the
+// cast; in a guide, Skip / Unskip stay under the card.
+function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, guideBadge, onGuideSkip, connections = 0 }) {
   const { statusOf } = window.useCollection();
   if (!title) return null;
   const PosterArt = window.PosterArt;
@@ -698,13 +699,15 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
   return (
     <div className={cn(S.FP.root, seen && 'seen')} style={{left:x+'px', top:y+'px'}}>
       <button className={S.FP.open} onClick={onOpenCast} aria-label={MI18N.titleName(title)}>
-        <div className={cn(S.FP.poster, seen && S.FP.seenWash)}>
+        <div className={S.FP.poster}>
           <PosterArt title={title}/>
+          <window.CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} pop/>
         </div>
+        <window.CardText title={title} skipped={skipped} connections={connections} pop/>
       </button>
-      <window.CardText title={title} seen={seen} skipped={skipped} pop/>
-      <window.CardActions title={title} skipped={skipped} guide={guide} guideSkip={guideSkip} onGuideSkip={onGuideSkip}
-        onCast={onOpenCast} pop className="px-3 pb-3"/>
+      {guideSkip && (guideSkip.state === 'can' || skipped) && (
+        <window.GuideSkipControl guide={guide} info={guideSkip} className="m-fp-skip px-3.5 pb-3" onDone={onGuideSkip}/>
+      )}
     </div>
   );
 }

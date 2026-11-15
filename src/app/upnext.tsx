@@ -29,7 +29,7 @@ import type { Title, UpNextInfo, UpNextWithTitle } from '../types/catalog';
 // (Only the first child: the phone card puts its phase badge on the poster too.)
 const THUMB = 'block overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_svg]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover';
 // The card around the phone and List layouts.
-const CARD = 'rounded-xl border border-border bg-card text-card-foreground shadow-sm';
+const CARD = 'rounded-lg border border-border bg-card text-card-foreground shadow-sm';
 // The title opens the details; the whole row is the button.
 const OPEN = 'un-open flex min-w-0 cursor-pointer items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 

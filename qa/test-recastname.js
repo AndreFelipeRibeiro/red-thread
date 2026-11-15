@@ -126,9 +126,9 @@ const go = async page => { await page.goto(URL); await settle(page); };
     // The previous case left a character pinned, which narrows the catalog.
     const close = document.querySelector('.char-banner .cb-close');
     if (close) await click(close, 600);
-    // Rows carry data-row-id only in the desktop List, and Spatial is the
-    // default view, so switch before looking for the title.
-    const toList = [...document.querySelectorAll('button')].find(b => /(^|[^a-z])List$/i.test(b.textContent.trim()));
+    // Rows carry data-row-id only in the desktop List (the Titles section),
+    // and Connections is the default, so switch before looking for the title.
+    const toList = [...document.querySelectorAll('.nav-tabs button')].find(b => /^(Titles|My list)$/i.test(b.textContent.trim()));
     if (toList) await click(toList, 1200);
     const row = document.querySelector('[data-row-id="incredible-hulk"]');
     if (!row) return { error: 'no Incredible Hulk row in the List view' };

@@ -62,7 +62,7 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
   x: number; y: number; phase?: number | null; color?: string; plain: boolean; touch: boolean; children: React.ReactNode;
 }) {
   return (
-    <div className={cn('band-label pointer-events-none absolute top-0 left-0 z-1 rounded-xl text-sm font-semibold tracking-tight whitespace-nowrap', FLOAT,
+    <div className={cn('band-label pointer-events-none absolute top-0 left-0 z-1 rounded-lg text-sm font-semibold tracking-tight whitespace-nowrap', FLOAT,
       touch ? 'w-[240px] px-[11px] pt-[7px] pb-[8px]' : 'w-[420px] px-[13px] pt-[8px] pb-[9px]', plain && 'plain w-auto',
       phase ? 'phase text-(--band)' : 'text-muted-foreground',
       '[transition:opacity_320ms_ease_60ms,top_420ms_cubic-bezier(.2,.8,.2,1)_60ms] motion-reduce:[transition:opacity_200ms_ease]',
