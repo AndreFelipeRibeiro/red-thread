@@ -94,7 +94,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
   if ('order' in R.follow.sorted) errors.push('the default order for IMDb was written to the address; defaults stay out');
   await page.reload(); await require('./ready').appReady(page);
   R.follow.reloaded = await page.evaluate(() => ({
-    imdbOn: (document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent === 'IMDb rating, highest first',
+    imdbOn: /^IMDb rating, highest first/.test((document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || ''),
     chips: [...document.querySelectorAll('.ctx-chip')].map(c => c.textContent.replace('×', '').trim()),
   }));
   if (!R.follow.reloaded.imdbOn || !R.follow.reloaded.chips.some(c => /Phase 3/.test(c))) errors.push(`a reload lost the state: ${JSON.stringify(R.follow.reloaded)}`);

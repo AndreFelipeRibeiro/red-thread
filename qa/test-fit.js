@@ -79,7 +79,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
     // A row overflows when one of its controls runs past it (measured by box,
     // so count badges overhanging a button's corner don't count).
     const past = (inner, outer) => Math.max(inner.right - outer.right, outer.left - inner.left);
-    const rows = [...document.querySelectorAll('.tb-top-row, .ml-status, .ctx-float, .ctx-line, .ctx-pill, .m-searchrow, .m-viewrow')]
+    const rows = [...document.querySelectorAll('.tb-top-row, .ml-status, .ctx-float, .ctx-line, .ctx-pill, .m-searchrow, .m-toolrow, .m-listbar')]
       .filter(r => r.offsetParent).map(r => { const box = r.getBoundingClientRect(); return Math.max(0, ...[...r.children].filter(c => c.getClientRects().length).map(c => past(c.getBoundingClientRect(), box))); })
       .filter(d => d > 1).map(d => Math.round(d));
     const search = document.querySelector('.search-wrap, .m-searchbar');

@@ -34,6 +34,8 @@ window.MCU_LOCALES.en = {
     'search.slash': 'Press / to search',
     'mylist.title': 'My list',
     'explore.show': 'Show in Explore',
+    'search.done': 'Done',
+    'nav.countSeen': '{seen} of {n} seen',
     'sortmenu.title': 'Sort',
     'sortmenu.aria': 'Sort: {label}',
     'sortmenu.release.asc': 'Release date, oldest first',

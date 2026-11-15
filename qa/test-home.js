@@ -192,6 +192,7 @@ const STATE = () => {
   for (const [view, prefsView] of [['list', 'list'], ['grid', 'grid']]) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: prefsView, desktopView: 'spatial', sort: 'title', sortDir: 'asc' });
     await page.goto(URL + (view === 'grid' ? '?view=grid&sort=title&phase=2' : '?sort=title&phase=2')); await settle(page);
+    await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
     await page.locator('.m-search-input input').fill('iron'); await page.waitForTimeout(300);
     await page.locator('.m-search-input input').blur();
     await page.locator('.coll-switch button').nth(3).tap(); await page.waitForTimeout(500);

@@ -226,6 +226,7 @@ const SCAN = () => {
     for (const size of ['', 'large', 'small']) {
       const { ctx, page } = await open(PHONE, size ? `localStorage.setItem('mcu.textSize.v1', '${size}');` : '');
       await go(page, '?view=list');
+      await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
       const m = await page.evaluate(() => {
         const f = s => parseFloat(getComputedStyle(document.querySelector(s)).fontSize);
         const inp = document.querySelector('.m-searchbar input');

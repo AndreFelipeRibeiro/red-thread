@@ -185,7 +185,14 @@ async function openCentreCard(page, tally) {
   tally.push('failed');
   return null;
 }
-const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.sort-order-pop button').nth(n).click(); };
+// Phones (Notion "Phone: bottom bar becomes Explore, My list and Guides"):
+// Spatial is the Explore tab; List and Grid are My list's layout buttons.
+const phoneView = async (page, v) => {
+  if (v === 'spatial') { await page.locator('.m-tab[data-section="explore"]').click(); return; }
+  if (!(await page.locator('.m-listbar').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
+  await page.locator('.m-layout button').nth(v === 'grid' ? 1 : 0).click();
+};
+const pickView = (page, n) => phoneView(page, ['list', 'grid', 'spatial'][n]);
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();

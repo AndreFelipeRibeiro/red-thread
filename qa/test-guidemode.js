@@ -9,13 +9,13 @@
 //   summary is hidden;
 // - closing the guide brings every control on again, and My list kept the
 //   link's Series filter;
-// - phones: the bar shortens (Filters and the collection row fold away, the
-//   view menu sits beside search; Sort dimmed outside Spatial), the List's
-//   last card scrolls clear of the dock, the dock's
-//   arrows reach the destination, and closing brings it all back; in Spatial the dock shows the
-//   next stop with Seen (no meter or Up next card), the next stop is framed at
-//   a readable size, and the zoom control rests hidden until a double-tap;
-//   Portuguese hint.
+// - phones: a guide in the list is the Guides tab, with no toolbar row; the
+//   last card scrolls clear of the dock, the dock's arrows reach the
+//   destination, and closing brings the gallery back (My list has its row);
+//   on the Explore canvas Sort is on and Filters dimmed with the hint, the dock
+//   shows the next stop with Seen (no meter or Up next card), the next stop is
+//   framed at a readable size, and the zoom control rests hidden until a
+//   double-tap.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8236; // regress/quick give each check its own port
 const { chromium } = require('playwright');
@@ -86,8 +86,9 @@ const OFF = (sels) => {
 // guide's list is the Guides tab, which has no Sort or Filters; on the Explore
 // canvas Sort still arranges the guide and Filters is dimmed.
 const DESK_SELS = { sort: '.tb-sort-control .sort-menu-trigger', filters: '.filters-pop-wrap > .filters-pill', tabs: '.nav-tabs button' };
-// The phone's Sort menu (it replaced the Order toggle and the sort tabs).
-const PHONE_SELS = { sort: '.m-searchrow .sort-menu-trigger', filters: '.m-fpill', collection: '.m-viewrow .coll-switch button' };
+// The phone's toolbar row (Notion "Phone: bottom bar becomes Explore, My list
+// and Guides"): Sort and Filters, under the header.
+const PHONE_SELS = { sort: '.m-toolrow .sort-menu-trigger', filters: '.m-toolrow .m-fpill' };
 const CANVAS = () => {
   const cards = [...document.querySelectorAll('.card')].filter(c => c.querySelector('.card-gnum'));
   return { stops: cards.length, dimmed: cards.filter(c => c.classList.contains('dimmed') || c.classList.contains('coll-dim')).length,
@@ -145,25 +146,18 @@ const CANVAS = () => {
     await ctx.close();
   }
 
-  // ---- Phone: List, then Spatial; Portuguese ---------------------------------
-  // A guide shortens the phone bar: Filters and the collection row fold away
-  // (inert), and the view menu sits beside search; Order stays, dimmed outside
-  // Spatial. The guide's dock replaces the meter, Up next and the old pill.
-  const BAR = () => {
-    const ok = (sel) => { const el = document.querySelector(sel); return !!el && el.hasAttribute('inert') && el.getAttribute('aria-hidden') === 'true'; };
-    return { short: !!document.querySelector('.m-appbar.guide'), filtersAway: ok('.m-fslot'), rowAway: ok('.m-row3'),
-      viewBeside: !!document.querySelector('.m-searchrow .m-vslot .view-menu'), row3H: Math.round(document.querySelector('.m-row3').getBoundingClientRect().height) };
-  };
+  // ---- Phone: the Guides tab, then Explore; Portuguese ----------------------
+  // A guide in the list is the Guides tab: no toolbar row. On the canvas
+  // (Explore) Sort stays on and Filters is dimmed. The guide's dock replaces
+  // the meter, Up next and the old pill.
+  const BAR = () => ({ toolrow: !!document.querySelector('.m-toolrow'), tab: (document.querySelector('.m-tab.on') || { dataset: {} }).dataset.section || null,
+    gallery: document.querySelectorAll('.g-page .g-row').length });
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'pt-BR' });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(700);
-    let s = await page.evaluate(OFF, { sort: PHONE_SELS.sort });
     let b = await page.evaluate(BAR);
-    out.phoneList = { s, b };
-    expect(s.sort === 'off', `phone List, Sort: ${JSON.stringify(s)}`);
-    expect(b.short && b.filtersAway && b.rowAway && b.viewBeside && b.row3H === 0, `phone List, short bar: ${JSON.stringify(b)}`);
-    const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
-    expect(hint === 'Não se aplica a um guia. Feche o guia para usar.', `pt-BR hint: ${hint}`);
+    out.phoneList = { b };
+    expect(!b.toolrow && b.tab === 'guides', `phone guide list: ${JSON.stringify(b)}`);
     // Scrolled to the end, the destination card sits wholly above the dock.
     const clear = await page.evaluate(async () => {
       const sa = document.querySelector('.m-scrollarea'); sa.scrollTop = 1e6;
@@ -182,24 +176,26 @@ const CANVAS = () => {
     expect(atDest.cur && /Aonde leva/.test(atDest.pos), `phone List: the arrows did not reach the destination: ${JSON.stringify(atDest)}`);
     await page.locator('.g-dock .cb-step button').last().tap(); await page.waitForTimeout(150);
     expect(!(await page.locator('.g-stop.dest.current').count()), 'phone List: the arrows did not wrap past the destination');
-    await page.locator('.m-fpill').tap({ force: true }).catch(() => {}); await page.waitForTimeout(400);
-    expect(!(await page.locator('.m-sheet').count()), 'the folded-away Filters button opened its sheet');
-    // Closing the guide brings the full bar back.
+    // Closing the guide brings the Guides gallery back.
     await page.locator('.guide-pill .cb-close').tap(); await page.waitForTimeout(900);
     b = await page.evaluate(BAR);
-    const back = await page.evaluate(() => ({ views: document.querySelectorAll('.view-menu').length }));
-    out.phoneClosed = { b, back };
-    expect(!b.short && !b.filtersAway && !b.rowAway && !b.viewBeside && b.row3H > 30 && back.views === 1, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);
+    out.phoneClosed = { b };
+    expect(b.tab === 'guides' && b.gallery >= 5 && !b.toolrow, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);
+    // My list: the toolbar row is back, with Portuguese labels.
+    await page.locator('.m-tab[data-section="mylist"]').tap(); await page.waitForTimeout(700);
+    b = await page.evaluate(BAR);
+    expect(b.toolrow && b.tab === 'mylist', `phone My list: ${JSON.stringify(b)}`);
     errors.push(...e);
     await ctx.close();
   }
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'en' });
     await page.goto(URL + '?view=spatial&type=series&guide=infinity-saga'); await appReady(page); await page.waitForTimeout(900);
-    const s = await page.evaluate(OFF, { sort: PHONE_SELS.sort });
+    const s = await page.evaluate(OFF, PHONE_SELS);
     const b = await page.evaluate(BAR);
-    out.phoneSpatial = { s, b };
-    expect(s.sort === 'on' && b.short && b.filtersAway && b.rowAway, `phone Spatial: ${JSON.stringify(out.phoneSpatial)}`);
+    const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
+    out.phoneSpatial = { s, b, hint };
+    expect(s.sort === 'on' && s.filters === 'off' && b.tab === 'explore' && hint === HINT, `phone Explore: ${JSON.stringify(out.phoneSpatial)}`);
     const c = await page.evaluate(CANVAS);
     out.phoneCanvas = c;
     expect(c.stops === 10 && c.dimmed === 0 && !c.summary, `phone Spatial with Series set: ${JSON.stringify(c)}`);

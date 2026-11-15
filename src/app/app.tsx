@@ -782,7 +782,7 @@ function App() {
   useEffect(() => {
     if (!prefsLoaded.current) { prefsLoaded.current = true; return; }
     const st = sectionStore.current;
-    const here = desktopView === 'spatial' ? 'explore' : 'list';
+    const here = (isTouch ? viewMode === 'spatial' : desktopView === 'spatial') ? 'explore' : 'list';
     const sections = {
       explore: here === 'explore' ? { sort, sortDir } : { sort: st.explore.sort, sortDir: st.explore.sortDir },
       list: here === 'list' ? { sort, sortDir } : { sort: st.list.sort, sortDir: st.list.sortDir },
@@ -2165,8 +2165,14 @@ function App() {
     setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
     setDesktopView(v);
   };
-  // The desktop section shown, and moving between them (see sectionStore).
-  const section = desktopView === 'spatial' ? 'explore' : (guide || guidesPage) ? 'guides' : 'mylist';
+  // The section shown, and moving between them (see sectionStore). Phones
+  // use the same three (Notion "Phone: bottom bar becomes Explore, My list
+  // and Guides"): Explore is Spatial; My list is the List or the Grid, the
+  // last one used (listModeRef).
+  const spatialNow = isTouch ? viewMode === 'spatial' : desktopView === 'spatial';
+  const section = spatialNow ? 'explore' : (guide || guidesPage) ? 'guides' : 'mylist';
+  const listModeRef = useRef(viewMode === 'grid' ? 'grid' : 'list');
+  if (viewMode === 'list' || viewMode === 'grid') listModeRef.current = viewMode;
   const slotOf = (s) => (s === 'explore' ? 'explore' : 'list');
   const goSection = (next, opts) => {
     if (next === section && !(opts && opts.force)) return;
@@ -2183,6 +2189,12 @@ function App() {
     // click away in Guides).
     if (next === 'mylist' && guideId) closeGuide();
     setGuidesPage(next === 'guides');
+    if (isTouch) {
+      // Phones: Spatial, or the List / Grid last used.
+      if (next === 'explore') setViewMode('spatial');
+      else { setViewMode(listModeRef.current); setSelectedId(null); }
+      return;
+    }
     if (opts && opts.select) {
       // "Show in Explore": that title, selected on the canvas.
       setDrawerId(opts.select);
@@ -2191,6 +2203,11 @@ function App() {
     } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
   };
   const showInExplore = (id) => goSection('explore', { select: id, force: true });
+  // Phones: My list's collection tabs and List / Grid, at the top of the list.
+  const myListBar = isTouch ? (
+    <window.MyListBar collection={collectionFilter} setCollection={setCollectionFilter} layout={viewMode === 'grid' ? 'grid' : 'list'}
+      setLayout={(v) => { if (v !== viewMode) { window.captureViewFlip(); setViewMode(v); } }}/>
+  ) : null;
   // `showing` is overridable because the Spatial canvas counts what is actually
   // on it: selecting a card fades every unconnected title out, so the pill has
   // to follow the ring rather than keep reporting the whole filtered set.
@@ -2295,9 +2312,9 @@ function App() {
     if (guideId && !(opts && opts.fromURL)) window.MCU_GUIDE.forget(guideId);
     setGuideId(null);
     setStepId(null);
-    // Desktop: a guide closed from its list stays in the Guides tab, on the
-    // gallery of guides.
-    if (!isTouch && desktopView === 'list' && guideId) setGuidesPage(true);
+    // A guide closed from its list stays in the Guides tab, on the gallery of
+    // guides (desktop and phones).
+    if (guideId && (isTouch ? viewMode !== 'spatial' : desktopView === 'list')) setGuidesPage(true);
   };
   // Opening a guide (or showing its optional stops) in Spatial frames its
   // titles once the dimming has applied; nothing on the canvas moves. It waits
@@ -2392,7 +2409,7 @@ function App() {
   const urlTitle = urlChar ? (stepId || drawerId) : drawerId;
   const urlParams = () => {
     const p = {};
-    const view = isTouch ? viewMode : (section === 'guides' && !guideId ? 'guides' : desktopView);
+    const view = section === 'guides' && !guideId ? 'guides' : isTouch ? viewMode : desktopView;
     if (view !== (isTouch ? 'list' : 'spatial')) p.view = view;
     if (sort !== 'release') p.sort = sort;
     if (sortDir !== DEFAULT_SORT_DIR[sort]) p.order = sortDir;
@@ -3036,20 +3053,15 @@ function App() {
         {themeAnnouncer}
         <window.MobileTopBar
           onHome={onHomeClick}
-          device={device}
-          viewMode={viewMode} setViewMode={(v) => {
-            if (v !== viewMode && v !== 'spatial' && viewMode !== 'spatial') window.captureViewFlip();
-            setViewMode(v);
-            if (v !== 'spatial') setSelectedId(null);
-          }}
+          section={section}
           search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson}
           onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
           onOpenSettings={() => setSheet('settings')}
-          onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
-          collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
+          guideActive={!!guide}
+          count={groupProgress && groupProgress.all ? tr('nav.countSeen', { seen: groupProgress.all.seen, n: groupProgress.all.released }) : null}
         />
         <div role="main" className={`${S.M_MAIN}${charPill || guide ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
@@ -3057,8 +3069,9 @@ function App() {
             <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
               currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
           )}
-          {!guide && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {!guide && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage onPick={(id) => openGuide(id)}/>}
+          {!guide && !guidesPage && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={<>{myListBar}{contextSummary('line')}</>} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={<>{myListBar}{contextSummary('line')}</>} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className={S.M_SPATIAL_WRAP}>
               {canvasEl}
@@ -3075,6 +3088,7 @@ function App() {
               onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
           ) : charPill}
         </div>
+        <window.MobileNavBar section={section} onSection={(v) => goSection(v)}/>
         {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}

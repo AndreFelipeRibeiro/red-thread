@@ -360,13 +360,12 @@ const DATA = () => {
   // ---- Phone ----
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs(seed1)));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.m-gbtn').click(); await page.waitForTimeout(500);
-  const sheet = await page.evaluate(() => ({ rows: document.querySelectorAll('.m-sheet .g-row').length }));
-  if (sheet.rows !== data.guides.length) err(`phone sheet lists ${sheet.rows} guides, expected ${data.guides.length}`);
-  await page.goBack(); await page.waitForTimeout(500);
-  if (await page.locator('.m-sheet').count()) err('phone: Back did not close the Guides sheet');
-  await page.locator('.m-gbtn').click(); await page.waitForTimeout(500);
-  await page.locator('.m-sheet .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
+  // The Guides tab in the bottom bar (Notion "Phone: bottom bar becomes
+  // Explore, My list and Guides") shows the gallery.
+  await page.locator('.m-tab[data-section="guides"]').click(); await page.waitForTimeout(500);
+  const sheet = await page.evaluate(() => ({ rows: document.querySelectorAll('.g-page .g-row').length }));
+  if (sheet.rows !== data.guides.length) err(`phone Guides lists ${sheet.rows} guides, expected ${data.guides.length}`);
+  await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
   const ph = await page.evaluate(() => ({
     sheet: !!document.querySelector('.m-sheet'),
     head: !!document.querySelector('.g-head'),
@@ -387,10 +386,11 @@ const DATA = () => {
     const n = await page.evaluate(() => ({ rows: document.querySelectorAll('.g-stops .g-stop[data-row-id]:not(.dest)').length, sw: document.querySelector('.g-switch').getAttribute('aria-checked') }));
     if (n.rows !== plan.all.length || n.sw !== 'true') err(`phone: with optional on, ${n.rows} rows (expected ${plan.all.length}), switch ${n.sw}`);
   }
-  // The pill's ×: closes the guide and the normal List comes back.
+  // The pill's ×: closes the guide and the Guides gallery comes back (Notion
+  // "Phone: bottom bar becomes Explore, My list and Guides").
   await page.locator('.guide-pill .cb-close').click(); await page.waitForTimeout(500);
-  const closed = await page.evaluate(() => ({ g: !!document.querySelector('.g-head'), pill: !!document.querySelector('.guide-pill'), list: !!document.querySelector('.m-scrollarea') }));
-  if (closed.g || closed.pill || !closed.list) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
+  const closed = await page.evaluate(() => ({ g: !!document.querySelector('.g-head'), pill: !!document.querySelector('.guide-pill'), gallery: document.querySelectorAll('.g-page .g-row').length }));
+  if (closed.g || closed.pill || !closed.gallery) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
   await finish('phone', ctx, errors);
 
   // Phone Grid and Spatial: cards, and the guide's dock carrying the next stop

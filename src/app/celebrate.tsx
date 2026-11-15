@@ -152,7 +152,7 @@ function toastPlacement(touch) {
   if (touch) {
     if (document.querySelector('.m-sheet')) return { top: 'calc(12px + env(safe-area-inset-top, 0px))' };
     let edge = window.innerHeight;
-    ['.m-sort-footer', '.char-pill'].forEach(sel => {
+    ['.m-navbar', '.char-pill'].forEach(sel => {
       const el = document.querySelector(sel);
       if (el && el.getClientRects().length) edge = Math.min(edge, el.getBoundingClientRect().top);
     });

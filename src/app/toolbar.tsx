@@ -120,7 +120,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
           <span className="brand-mark logo-mark h-7 w-[15px] flex-[0_0_15px] group-hover/brand:brightness-115" aria-hidden="true"/>
           {/* The wordmark is drawn (.logo-word); the name stays as text for
               screen readers and the page outline. */}
-          <h1 className="brand-title m-0 text-base font-semibold whitespace-nowrap max-[1180px]:sr-only"><span className="logo-word block h-[21px] w-[111px]" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span></h1>
+          <h1 className="brand-title m-0 text-base font-semibold whitespace-nowrap max-[1280px]:sr-only"><span className="logo-word block h-[21px] w-[111px]" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span></h1>
         </a>
         {/* The sections. A tab list in the segmented look; each tab says
             which section is shown (aria-current), like a site's navigation. */}
@@ -147,7 +147,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
             <PopoverTrigger className={cn(buttonVariants({ variant: 'outline' }), 'filters-pill h-10 gap-2 px-3.5 text-xs max-[1000px]:px-[11px]', activeFilters && 'active')}
               aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              <span className="filters-label max-[1180px]:hidden">{tr('filters.title')}</span>
+              <span className="filters-label max-[1280px]:hidden">{tr('filters.title')}</span>
               {activeFilters ? <span className="fcount inline-flex tabular-nums h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground">{activeFilters}</span> : null}
             </PopoverTrigger>
             <PopoverContent align="end" sideOffset={9} className="filters-pop w-max max-w-[min(88vw,760px)] items-start gap-3 px-4 py-3.5">

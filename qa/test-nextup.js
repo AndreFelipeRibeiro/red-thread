@@ -150,6 +150,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
 
   // 5. Search and the Seen tab hide it.
   await page.goto(URL + '?view=list'); await settle(page);
+  await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   await page.locator('.m-search-input input').fill('iron'); await page.waitForTimeout(800);
   if (await page.evaluate(() => !!document.querySelector('.un-card'))) err('Up next shows during a search');
   errors.forEach(e => err('phone console: ' + e));

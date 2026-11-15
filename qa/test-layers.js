@@ -73,9 +73,11 @@ const MENUS = {
       r[k] = await covered(page, pop);
       await page.keyboard.press('Escape'); await page.waitForTimeout(250);
     }
+    if (!(await page.locator('.m-searchrow input').count())) { await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150); }
     await page.locator('.m-search input, .m-searchrow input').first().fill('to'); await page.waitForTimeout(400);
     r.suggest = await covered(page, '.ss-pop');
     await page.locator('.m-search input, .m-searchrow input').first().fill(''); await page.locator('.m-search input, .m-searchrow input').first().evaluate(el => el.blur()); await page.waitForTimeout(300);
+    await page.locator('.m-clear').click().catch(() => {}); await page.waitForTimeout(200);
     r.pill = await covered(page, '.char-pill');
     r.ctx = await covered(page, view === 'list' ? '.ctx-line' : '.ctx-pill');
     if (view === 'spatial') r.zoom = await covered(page, '.zoom-ctl');

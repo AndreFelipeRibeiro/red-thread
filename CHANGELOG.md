@@ -13,6 +13,23 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 feature — Phone: bottom bar for Explore, My list and Guides
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The phone's bottom bar is Explore / My list / Guides; tapping the active
+  tab scrolls back to the top. The header is the wordmark with search,
+  Settings and Account buttons; search opens from its button and takes the
+  keyboard at once.
+- One row under the header holds Sort, Filters and a "2 of 60 seen" count.
+  My list adds the collection tabs and a List / Grid switch; Guides shows
+  the gallery.
+- QA: `test-retap` rewritten for the bottom bar; the phone checks open search
+  from its button and switch sections from the bar.
+- Verified: typecheck and build; full `qa/regress.sh` with the desktop
+  ticket, 60 check runs clean; 390×844 in English and Portuguese.
+- Limits: real iPhone Safari not checked.
+
 ## V5 feature — Desktop: Explore, My list and Guides
 
 Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).

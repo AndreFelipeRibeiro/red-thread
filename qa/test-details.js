@@ -204,6 +204,7 @@ const inspect = () => {
     const word = pick.released.name.split(/\s+/)[0];
     if (phone) {
       await page.goto(URL); await settle(page);
+      await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
       await page.locator('.m-search-input input').fill(word); await page.waitForTimeout(900);
       // Escape closes the suggestions first (one layer per press), uncovering the list.
       await page.keyboard.press('Escape'); await page.waitForTimeout(300);

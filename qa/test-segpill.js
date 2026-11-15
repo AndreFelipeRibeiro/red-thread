@@ -107,7 +107,7 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, prefs, {});
     await page.goto(URL); await settle(page);
-    const g = '.m-appbar .coll-switch';
+    const g = '.m-listbar .coll-switch';
     out.phone = await page.evaluate(PILL, g);
     expect(aligned(out.phone), 'phone: the pill is not on the selected collection: ' + JSON.stringify(out.phone));
     await page.locator(g + ' button').nth(2).tap(); await page.waitForTimeout(600);

@@ -83,15 +83,15 @@ const scan = (list) => (() => {
       await page.locator('.m-fpill').click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape'); await page.waitForTimeout(250);
       await page.locator('.m-lrow-open').first().click(); await page.waitForTimeout(350); texts.push(...await page.evaluate(scan())); out[name].sheetTitle = await page.locator('.m-dtitle').textContent(); await page.keyboard.press('Escape'); await page.waitForTimeout(250);
       await page.locator('.m-appbar-top .m-acct').click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape'); await page.waitForTimeout(250);
-      await page.locator('.view-menu .sort-order-trigger').click(); await page.waitForTimeout(200); texts.push(...await page.evaluate(scan()));
-      await page.locator('.sort-order-pop button').nth(1).click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
+      // My list's Grid button (the View menu is gone; Notion "Phone: bottom bar…").
+      await page.locator('.m-layout button').nth(1).click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
       await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan()));
       await page.locator('.sort-menu-pop [data-sort="title"][data-dir="asc"]').click(); await page.waitForTimeout(400);
       out[name].azFirst = await page.evaluate(() => [...document.querySelectorAll('.m-ctitle')].slice(0, 4).map(e => e.textContent));
       await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
       await page.screenshot({ path: path.join(S, 'shots', 'pt-mobile-grid.png') });
       await page.locator('.coll-switch button').nth(0).click();
-      await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.sort-order-pop button').nth(2).click(); await page.waitForTimeout(700); texts.push(...await page.evaluate(scan()));
+      await page.locator('.m-tab[data-section="explore"]').click(); await page.waitForTimeout(700); texts.push(...await page.evaluate(scan()));
     } else {
       await page.locator('.filters-pill:not(.g-btn)').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape');
       const c = await page.evaluate(() => { const r = document.querySelector('.card').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8 }; });
@@ -109,7 +109,8 @@ const scan = (list) => (() => {
   {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'en-US' }, SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
-    out.en = { htmlLang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.sort-menu-trigger').textContent() };
+    out.en = { htmlLang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.m-tab[data-section="mylist"]').textContent() };
+    await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
     await page.fill('.m-search-input input', 'Vingadores'); await page.waitForTimeout(300);
     out.en.searchPtInEn = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].map(e => e.textContent));
     await page.fill('.m-search-input input', 'Visão'); await page.waitForTimeout(300);
@@ -120,7 +121,7 @@ const scan = (list) => (() => {
     out.en.menuOptions = await page.evaluate(() => [...document.querySelectorAll('.m-sheet [role="radiogroup"]')].map(g => g.getAttribute('aria-label') === 'Language' ? [...g.querySelectorAll('[role="radio"]')].map(l => l.textContent) : null).filter(Boolean)[0] || []);
     await page.locator('.m-sheet [role="radio"]', { hasText: 'Português' }).click(); await page.waitForTimeout(400);
     await page.keyboard.press('Escape'); await page.waitForTimeout(400);
-    out.en.afterSwitch = { lang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.sort-menu-trigger').textContent(), stored: await page.evaluate(() => localStorage.getItem('mcu.lang.v1')) };
+    out.en.afterSwitch = { lang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.m-tab[data-section="mylist"]').textContent(), stored: await page.evaluate(() => localStorage.getItem('mcu.lang.v1')) };
     await page.fill('.m-search-input input', 'Avengers'); await page.waitForTimeout(300);
     out.en.searchEnInPt = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].map(e => e.textContent));
     await page.reload(); await require('./ready').appReady(page);

@@ -29,7 +29,14 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.mRows = await page.locator('.m-lrow').count();
   out.mWatch = await coll(3); await page.waitForTimeout(900);
   out.mAll = await coll(0); await page.waitForTimeout(900);
-  const view = async (label) => { await page.locator('.view-menu .sort-order-trigger').tap(); await page.waitForTimeout(250); await page.locator('.sort-order-pop button', { hasText: label }).tap(); return probe(page); };
+  // Phones (Notion "Phone: bottom bar becomes Explore, My list and Guides"):
+  // Spatial is the Explore tab; List and Grid are My list's layout buttons.
+  const phoneView = async (page, v) => {
+    if (v === 'spatial') { await page.locator('.m-tab[data-section="explore"]').click(); return; }
+    if (!(await page.locator('.m-listbar').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
+    await page.locator('.m-layout button').nth(v === 'grid' ? 1 : 0).click();
+  };
+  const view = async (label) => { await phoneView(page, label.toLowerCase()); return probe(page); };
   out.mToGrid = await view('Grid'); await page.waitForTimeout(250);
   await page.screenshot({ path: path.join(S, 'shots', 'anim-m-mid.png') });
   await page.waitForTimeout(700); out.mGridAfter = await settled(page); out.mCards = await page.locator('.m-card').count();

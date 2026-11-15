@@ -72,7 +72,7 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
           {mobile ? <span className="sort-menu-label truncate">{shown}</span> : <>
             {/* Desktop: the whole phrase from 1280px, the sort's short name
                 below, so the one header row fits. */}
-            <span className="sort-menu-label truncate max-[1279px]:hidden">{current}</span>
+            <span className="sort-menu-label truncate max-[1280px]:hidden">{current}</span>
             <span className="sort-menu-label truncate min-[1280px]:hidden">{tr('sortmenu.short.' + sort)}</span>
           </>}
           <svg className="block size-3 flex-[0_0_12px]" width="12" height="12" viewBox="0 0 24 24" fill="none"

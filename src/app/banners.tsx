@@ -54,10 +54,10 @@ export const BANNER_WHO = 'cb-who mr-auto flex min-w-0 flex-col [&_b]:truncate [
 export const BANNER_SUB = 'cb-sub truncate text-(length:--fs-xs) text-muted-foreground';
 export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-[7px] px-3 text-sm whitespace-nowrap');
 
-// The pinned character on phones: a pill floating at the foot of the screen,
-// clear of the home indicator. With Share in it, the name gets back what
+// The pinned character on phones: a pill floating above the bottom bar. With
+// Share in it, the name gets back what
 // Share costs: more width, a smaller photo, tighter gaps.
-export const PILL = 'char-pill absolute bottom-[calc(12px+env(safe-area-inset-bottom,0px))] left-1/2 z-45 flex w-[min(420px,calc(100%-24px))] -translate-x-1/2 animate-[mrise_220ms_cubic-bezier(.2,.8,.2,1)] flex-col gap-2 motion-reduce:animate-none has-[.cb-share]:w-[min(420px,calc(100%-16px))]';
+export const PILL = 'char-pill absolute bottom-3 left-1/2 z-45 flex w-[min(420px,calc(100%-24px))] -translate-x-1/2 animate-[mrise_220ms_cubic-bezier(.2,.8,.2,1)] flex-col gap-2 motion-reduce:animate-none has-[.cb-share]:w-[min(420px,calc(100%-16px))]';
 export const PILL_BAR = 'cp-bar flex items-center gap-1 rounded-full border bg-popover p-1 text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,.5),inset_0_0_0_1px_color-mix(in_oklab,var(--char-color)_30%,transparent)] backdrop-blur-md';
 export const PILL_WHO = 'cp-who flex min-w-0 flex-auto items-center gap-[9px] pr-1 in-[.char-pill:has(.cb-share)]:gap-[7px] in-[.char-pill:has(.cb-share)]:pr-0';
 export const PILL_PHOTO = cn(PHOTO, 'size-[38px] in-[.char-pill:has(.cb-share)]:size-[34px]');

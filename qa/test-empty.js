@@ -81,6 +81,7 @@ const reload = async page => { await page.reload(); await settle(page); };
   {
     const { ctx, page, errors } = await ctxPage(browser, { ...MOBILE, locale: 'pt-BR' }, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.prefs.v1', JSON.stringify({version:1, viewMode:'spatial'}));");
     await go(page);
+    await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
     const mb = page.locator('.m-searchbar input');
     await mb.fill('zzzz'); await page.mouse.click(10, 500); await page.waitForTimeout(500);
     R.mSearch = await panel(page);

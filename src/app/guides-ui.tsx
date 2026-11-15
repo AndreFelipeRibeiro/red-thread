@@ -394,7 +394,7 @@ function GuidesPage({ onPick }) {
   window.useI18n();
   const all = MCU_GUIDE.all();
   return (
-    <div className="g-page min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-12 max-[1100px]:px-6" role="main" aria-labelledby="g-page-title">
+    <div className="g-page min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-12 max-[1100px]:px-6 in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role="main" aria-labelledby="g-page-title">
       <div className="mx-auto max-w-[1120px]">
         <h1 id="g-page-title" className="m-0 text-2xl font-semibold tracking-tight text-foreground">{gtr('guide.menuTitle')}</h1>
         <p className="mt-1 mb-0 text-sm text-muted-foreground">{gtr('guide.menuSub')}</p>
@@ -404,13 +404,13 @@ function GuidesPage({ onPick }) {
           return (
             <section key={grp} className="g-group mt-7" aria-labelledby={'g-page-' + grp}>
               <h2 id={'g-page-' + grp} className="g-group-h mt-0 mb-2.5 text-xs font-medium text-muted-foreground">{gtr('guide.group.' + grp)}</h2>
-              <div className="grid grid-cols-3 gap-4 max-[1200px]:grid-cols-2">
+              <div className="grid grid-cols-3 gap-4 max-[1200px]:grid-cols-2 in-[.app.touch]:grid-cols-1 in-[.app.touch]:gap-2">
                 {list.map(g => {
                   const date = MCU_GUIDE.targetDate(g);
                   const who = g.character && window.CHARACTERS[g.character] ? window.CHARACTERS[g.character].actor : null;
                   return (
                     <button key={g.id} type="button" onClick={() => onPick(g.id)}
-                      className={cn('g-row g-card flex w-full cursor-pointer items-center gap-4 rounded-xl border bg-card p-4 text-left text-card-foreground shadow-xs transition-colors hover:bg-muted/50', FOCUS)}>
+                      className={cn('g-row g-card flex w-full cursor-pointer items-center gap-4 rounded-xl border bg-card p-4 text-left text-card-foreground shadow-xs transition-colors hover:bg-muted/50 in-[.app.touch]:gap-3 in-[.app.touch]:p-3', FOCUS)}>
                       <GuideArt guide={g} size={64}/>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="g-row-name text-[15px] leading-[1.3] font-semibold text-foreground">{MCU_GUIDE.name(g)}{date && <span className="g-ev ml-1.5 rounded-full border px-1.5 py-px align-[1px] text-xs font-medium text-foreground tabular-nums">{date}</span>}</span>

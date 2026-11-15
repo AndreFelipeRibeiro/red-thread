@@ -204,6 +204,8 @@ declare global {
     SearchInput: Suggest['SearchInput'];
 
     MobileTopBar: PhoneHeader['MobileTopBar'];
+    MobileNavBar: PhoneHeader['MobileNavBar'];
+    MyListBar: PhoneHeader['MyListBar'];
     MobileGrid: Mobile['MobileGrid'];
     MobileList: Mobile['MobileList'];
     FilterSheet: PhoneHeader['FilterSheet'];

@@ -71,24 +71,26 @@ const pickSort = (page, key, wait) => page.evaluate(async ([k, d, w]) => {
   return !!b;
 }, [key, USUAL_DIR[key], wait]);
 const deskSort = (page, key) => pickSort(page, key, 1800);
+// Spatial and List are the Explore and My list tabs (Notion "Desktop:
+// navigation for Explore, My list and Guides").
 const deskView = (page, name) => page.evaluate(async (n) => {
-  const b = [...document.querySelectorAll('button')].find(x => new RegExp('(^|[^a-z])' + n + '$', 'i').test(x.textContent.trim()));
+  const label = n === 'Spatial' ? 'Explore' : n === 'List' ? 'My list' : n;
+  const b = [...document.querySelectorAll('.nav-tabs button')].find(x => x.textContent.trim() === label);
   if (b) b.click();
   await new Promise(r => setTimeout(r, 1800));
   return !!b;
 }, name);
 const phoneSort = (page, key) => pickSort(page, key, 2200);
+// Phones: Spatial is the Explore tab; List and Grid are My list's layout
+// buttons (Notion "Phone: bottom bar becomes Explore, My list and Guides").
 const phoneView = (page, name) => page.evaluate(async (n) => {
-  const chip = [...document.querySelectorAll('button')]
-    .find(b => /^[☰▦◈]\s*(List|Lista|Grid|Grade|Spatial|Espacial)$/.test(b.textContent.trim()));
-  if (!chip) return 'no view chip';
-  if (chip.textContent.trim().endsWith(n)) return 'ok';
-  chip.click();
-  await new Promise(r => setTimeout(r, 700));
-  const opt = [...document.querySelectorAll('button, [role="option"], li')]
-    .find(e => e !== chip && e.textContent.trim().endsWith(n));
-  if (!opt) return 'no ' + n + ' option';
-  opt.click();
+  const tab = (v) => document.querySelector(`.m-tab[data-section="${v}"]`);
+  if (!tab('explore')) return 'no bottom bar';
+  if (/Spatial|Espacial/.test(n)) { tab('explore').click(); await new Promise(r => setTimeout(r, 2200)); return 'ok'; }
+  if (!document.querySelector('.m-listbar')) { tab('mylist').click(); await new Promise(r => setTimeout(r, 700)); }
+  const b = document.querySelectorAll('.m-layout button')[/Grid|Grade/.test(n) ? 1 : 0];
+  if (!b) return 'no layout button';
+  b.click();
   await new Promise(r => setTimeout(r, 2200));
   return 'ok';
 }, name);
@@ -225,7 +227,9 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     const dl = document.querySelector('.dlist');
     const c = dl.getBoundingClientRect();
     const head = document.querySelector('.dl-head');
-    dl.scrollTop = 260;
+    // Far enough that the first meter has pinned under My list's title and
+    // collection tabs.
+    dl.scrollTop = 600;
     await new Promise((r) => setTimeout(r, 500));
     const d = document.querySelector('.dl-phase-divider');
     const cs = getComputedStyle(d);
@@ -436,8 +440,9 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
       labelSize: lab && getComputedStyle(lab).fontSize,
     };
   });
-  await phoneSort(m, PHONE_SORT.phase);
+  // My list keeps its own sort (Notion navigation), so By Phase is picked there.
   await phoneView(m, 'Grid');
+  await phoneSort(m, PHONE_SORT.phase);
   R.gridPhase = await readDividers(m);
   // The sticky divider pins flush to the top of the scroll area, and stays out
   // of the reorder animation: a transform on a sticky element left it hanging.

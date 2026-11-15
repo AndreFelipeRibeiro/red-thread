@@ -22,7 +22,7 @@ const scan = async (page, name, out) => {
   const open = async (opts, prefs, q = '') => { const x = await ctxPage(browser, opts, NOWELCOME + ART + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');"); await x.page.goto('http://127.0.0.1:' + PORT + '/' + q); await require('./ready').appReady(x.page, 1200); return x; };
   let x = await open(D, {version:1, viewMode:'list', desktopView:'spatial', sort:'release'});
   await scan(x.page, 'desktop spatial', out);
-  const c = await x.page.evaluate(() => { const r = [...document.querySelectorAll('.card')].map(c => c.getBoundingClientRect()).find(r => r.left > 50 && r.top > 200 && r.right < 1000 && r.bottom < 850); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8 }; });
+  const c = await x.page.evaluate(() => { const r = [...document.querySelectorAll('.card')].map(c => c.getBoundingClientRect()).find(r => r.left > 50 && r.top > 100 && r.right < 1000 && r.bottom < 870); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8 }; });
   await x.page.mouse.click(c.x, c.y); await x.page.waitForTimeout(1500);
   await scan(x.page, 'desktop spatial + details drawer', out);
   await x.ctx.close();
@@ -39,7 +39,7 @@ const scan = async (page, name, out) => {
   // Guides: the desktop Guides tab with a guide open, then its gallery.
   x = await open(D, {version:1, viewMode:'list', desktopView:'list', sort:'release'}, '?guide=before-doomsday');
   await scan(x.page, 'desktop guide', out);
-  await x.page.goto(x.page.url().replace(/\?.*$/, '') + '?view=guides'); await x.page.waitForTimeout(1200);
+  await x.page.goto(x.page.url().split('?')[0] + '?view=guides'); await x.page.waitForTimeout(1200);
   await scan(x.page, 'desktop guides gallery', out);
   await x.ctx.close();
   // The guide's module floating over desktop Spatial.

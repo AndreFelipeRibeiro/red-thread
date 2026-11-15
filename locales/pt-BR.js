@@ -33,6 +33,8 @@ window.MCU_LOCALES['pt-BR'] = {
     'search.slash': 'Aperte / para buscar',
     'mylist.title': 'Minha lista',
     'explore.show': 'Mostrar em Explorar',
+    'search.done': 'OK',
+    'nav.countSeen': '{seen} de {n} vistos',
     'sortmenu.title': 'Ordenar',
     'sortmenu.aria': 'Ordenar: {label}',
     'sortmenu.release.asc': 'Lançamento, mais antigos primeiro',
