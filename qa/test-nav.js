@@ -11,7 +11,9 @@
 //   brings the gallery back; My list with a guide open closes the guide;
 // - "Show in Explore" in the details (My list) selects the title on the
 //   canvas; ?view=guides opens the gallery; "/" puts the cursor in search;
-// - the header fits in one row from 900px, in English and Portuguese.
+// - the header fits in one row from 900px, in English and Portuguese;
+// - the Account menu has no collection actions; "Mark what you've seen" is in
+//   My list (Notion "Take the collection filters out of the Account menu").
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 process.env.PORT = process.env.PORT || '8311';
 {
@@ -108,6 +110,14 @@ const STATE = () => ({
     s = await page.evaluate(STATE);
     out.myListClosesGuide = s;
     expect(s.tab === 'My list' && s.myList && !/guide=/.test(s.url), `My list with a guide open: ${JSON.stringify(s)}`);
+    // The Account menu holds account things only (Notion "Take the collection
+    // filters out of the Account menu"); "Mark what you've seen" is in My list.
+    expect(await page.locator('.ml-status .ml-pick').count() === 1, 'My list has no "Mark what you\'ve seen"');
+    await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
+    const acct = await page.evaluate(() => { const p = document.querySelector('.acct-panel'); return p && { links: !!p.querySelector('.acct-links, .acct-pick'), text: p.innerText }; });
+    out.account = acct;
+    expect(acct && !acct.links && !/Show unseen|Show seen|Show watchlist|Mark what you/.test(acct.text), `Account menu: ${JSON.stringify(acct)}`);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     errors.push(...e);
     await ctx.close();
   }

@@ -47,15 +47,13 @@ const scan = async (page, name, out) => {
   await scan(x.page, 'desktop guide spatial', out);
   await x.ctx.close();
   // "What have you seen?": the desktop dialog and the phone sheet, opened
-  // from the account menu with some titles already seen.
+  // from My list with some titles already seen.
   x = await open(D, {version:1, viewMode:'list', desktopView:'list', sort:'release'});
-  await x.page.locator('.acct-pill').click(); await x.page.waitForTimeout(400);
-  await x.page.locator('.acct-pick').click(); await x.page.waitForTimeout(700);
+  await x.page.locator('.ml-pick').click(); await x.page.waitForTimeout(700);
   await scan(x.page, 'desktop picker', out);
   await x.ctx.close();
   x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'});
-  await x.page.locator('.m-acct').click(); await x.page.waitForTimeout(500);
-  await x.page.locator('.acct-pick').click(); await x.page.waitForTimeout(700);
+  await x.page.locator('.m-pick').click(); await x.page.waitForTimeout(700);
   await scan(x.page, 'phone picker', out);
   await x.ctx.close();
   x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'}, '?guide=before-doomsday');

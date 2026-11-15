@@ -39,7 +39,7 @@
     "src/app/watch.tsx": ["test-watch", "test-details"],
     "watch-data.js": ["test-watch"],
     "src/app/about.tsx": ["test-share", "test-settings", "test-logo", "test-about", "test-welcome", "test-picker", "test-promo"],
-    "src/app/account.tsx": ["test-share", "test-settings", "test-picker", "test-about"],
+    "src/app/account.tsx": ["test-nav", "test-share", "test-settings", "test-picker", "test-about"],
     "src/app/celebrate.tsx": ["test-share", "test-settings", "test-cel", "test-nudgeundo"],
     "src/app/search-suggest.tsx": ["test-threads", "test-suggest", "test-pickperson"],
     "src/app/poster.tsx": ["test-portrait", "test-recastname"],

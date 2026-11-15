@@ -180,7 +180,8 @@ export function MyListBar({ collection, setCollection, layout, setLayout }: {
   const row = React.useRef<HTMLDivElement | null>(null);
   const fit = window.useFitSteps(row, 3, [lang, collection, layout]);
   return (
-    <div ref={row} className="m-listbar group/viewrow mb-3 flex min-w-0 items-center gap-2" data-fit={fit}>
+    <>
+    <div ref={row} className="m-listbar group/viewrow mb-1.5 flex min-w-0 items-center gap-2" data-fit={fit}>
       <CollectionSwitch value={collection} onChange={setCollection} variant="compact" short={fit >= 3}/>
       <div className="m-layout ml-auto flex flex-none items-center rounded-lg bg-muted p-[3px]" role="group" aria-label={tr('view.label')}>
         {[['list', 'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01'], ['grid', 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z']].map(([v, d]) => (
@@ -192,6 +193,14 @@ export function MyListBar({ collection, setCollection, layout, setLayout }: {
         ))}
       </div>
     </div>
+    {/* "Mark what you've seen" moved here from the Account sheet (Notion
+        "Take the collection filters out of the Account menu"). */}
+    {window.MCU_openPicker && (
+      <Button variant="ghost" className="m-pick mb-2 h-9 gap-1.5 self-start px-1.5 text-xs text-(--status-seen) hover:text-(--status-seen)" onClick={() => window.MCU_openPicker()}>
+        <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>{tr('picker.open')}
+      </Button>
+    )}
+    </>
   );
 }
 

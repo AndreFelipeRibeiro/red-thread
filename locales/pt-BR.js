@@ -319,6 +319,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'account.showSeen': 'Mostrar vistos',
     'account.showWatchlist': 'Mostrar lista para assistir',
     'account.syncError': 'Não foi possível sincronizar — {error}. O que você marcou antes de entrar continua salvo neste dispositivo. A edição da coleção fica pausada até a sincronização funcionar.',
+    'account.syncErrorPlain': "Não foi possível sincronizar sua coleção. O que você marcou continua salvo neste aparelho; a edição fica pausada até a sincronização voltar.",
     'account.retrySync': 'Tentar sincronizar de novo',
     'sync.loading': 'Sincronizando…',
     'sync.failed': 'A coleção não sincronizou',

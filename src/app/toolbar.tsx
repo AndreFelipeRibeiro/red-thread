@@ -64,7 +64,6 @@ export interface ToolbarProps {
   onPickTitle: (id: string) => void;
   onPickPerson: (person: unknown) => void;
   section: Section; onSection: (s: Section) => void;
-  onPickCollection: Setter;
   sort: string; setSort: Setter;
   sortDir: string; setSortDir: Setter;
   phaseFilter: string; setPhaseFilter: Setter;
@@ -97,7 +96,7 @@ function useSlashToSearch(input: () => HTMLInputElement | null) {
   }, []);
 }
 
-export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, section, onSection, onPickCollection, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, search, setSearch }: ToolbarProps) {
+export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, section, onSection, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, search, setSearch }: ToolbarProps) {
   window.useI18n();
   const searchRef = useRef<HTMLDivElement | null>(null);
   useSlashToSearch(() => searchRef.current && searchRef.current.querySelector('input'));
@@ -188,7 +187,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
           <window.SyncStatus/>
           {/* Theme and language live in Settings (Notion "Settings menu"). */}
           <window.SettingsButton onOpen={onSettings} open={settingsOpen}/>
-          <window.AccountButton onPickCollection={onPickCollection} onAbout={onAbout}/>
+          <window.AccountButton onAbout={onAbout}/>
         </div>
       </div>
     </div>

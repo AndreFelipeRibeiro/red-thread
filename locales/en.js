@@ -322,6 +322,7 @@ window.MCU_LOCALES.en = {
     'account.showSeen': 'Show seen',
     'account.showWatchlist': 'Show watchlist',
     'account.syncError': "Couldn't sync — {error}. Anything you marked before signing in is still saved on this device. Collection editing is paused until sync succeeds.",
+    'account.syncErrorPlain': "Couldn't sync your collection. Anything you marked is still saved on this device; editing is paused until sync works again.",
     'account.retrySync': 'Retry sync',
     // Shown outside Account. 'synced' and 'guest' are read by screen readers
     // only; the other two take space on screen because they need action.

@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 improvement — The Account menu holds account things only
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Show unseen / seen / watchlist and "Mark what you've seen" left the Account
+  menu; the collection lives in My list, and "Mark what you've seen" sits in
+  My list's status row.
+- Sync and sign-in errors read in plain language; the technical details go
+  to the console.
+- QA: `test-nav` checks the menu; `test-picker` opens the picker from My
+  list.
+- Verified: typecheck and build; full `qa/regress.sh` with the cards ticket,
+  61 check runs clean.
+- Limits: the signed-in menu and a real sync error were not seen by eye.
+
 ## V5 design — Simpler Spatial cards
 
 Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).

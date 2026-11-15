@@ -204,7 +204,7 @@ const pickView = (page, n) => phoneView(page, ['list', 'grid', 'spatial'][n]);
   out.desktopStart = parse(await T(page));
   for (let i = 0; i < 20; i++) {
     const d = await page.evaluate(() => {
-      const card = [...document.querySelectorAll('.card')].filter(c => c.textContent.includes('PHASE 6'))[2];
+      const card = [...document.querySelectorAll('.card')].filter(c => (window.TITLES.find(t => t.id === c.dataset.id) || {}).phase === 6)[2];
       const r = card.getBoundingClientRect();
       return { dx: innerWidth / 2 - (r.left + r.width / 2), dy: (innerHeight + 100) / 2 - (r.top + r.height / 2) };
     });

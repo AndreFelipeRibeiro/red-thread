@@ -3103,7 +3103,6 @@ function App() {
         {sheet === 'account' && (
           <window.AccountSheet
             onClose={() => setSheet(null)}
-            onPickCollection={setCollectionFilter}
             onAbout={() => setSheet('about')}
           />
         )}
@@ -3164,8 +3163,6 @@ function App() {
         onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
         onPickTitle={pickTitle} onPickPerson={pickPerson}
         section={section} onSection={(s) => goSection(s)}
-        // The Account menu's collection choices show My list with that filter.
-        onPickCollection={(v) => { goSection('mylist'); setCollectionFilter(v); }}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}

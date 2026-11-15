@@ -421,7 +421,16 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
       {myList && (
         <div className="ml-status mt-1 mb-3 flex flex-wrap items-center justify-between gap-3">
           <window.CollectionSwitch value={myList.collection} onChange={myList.setCollection}/>
-          <span className="ml-sort text-xs text-muted-foreground">{window.sortPhrase(sort, sortDir)}</span>
+          <span className="ml-end ml-auto flex items-center gap-3">
+            {/* "Mark what you've seen" moved here from the Account menu (Notion
+                "Take the collection filters out of the Account menu"). */}
+            {window.MCU_openPicker && (
+              <Button variant="ghost" size="sm" className="ml-pick h-8 gap-1.5 px-2 text-xs text-(--status-seen) hover:text-(--status-seen)" onClick={() => window.MCU_openPicker()}>
+                <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>{tr('picker.open')}
+              </Button>
+            )}
+            <span className="ml-sort text-xs text-muted-foreground">{window.sortPhrase(sort, sortDir)}</span>
+          </span>
         </div>
       )}
       {!titles.length ? (
