@@ -15,7 +15,9 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 maintenance — shadcn pass 6: guides, banners, Share and the app shell; the V3 stylesheets deleted
 
-Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The guides (`src/app/guides-ui.tsx`: the menu, now shadcn's Popover; the
   meters, the desktop module, the phone dock, the guide List, Grid and table,
@@ -52,7 +54,9 @@ Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 fix — Phone welcome: the pinned buttons no longer cut the list mid-sentence
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The welcome's pinned footer ("Seen some already?" and its two buttons) has
   a fade above it, so text scrolling under it fades out instead of being cut
@@ -66,7 +70,9 @@ Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — shadcn pass 5/5: menus and dialogs
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - About and the welcome, the desktop dialog shell (`ModalDialog`, shadcn's
   Dialog look, keeping its own focus trap, Escape and focus return), the
@@ -93,7 +99,9 @@ Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — shadcn pass 4/5: List and Grid views
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - New `src/app/list-parts.tsx` (typed): the progress meters, score chips,
   the PH badge (a Badge), the search-match badge, the empty state, the phone
@@ -119,7 +127,9 @@ Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — shadcn pass 3/5: details drawer and phone sheet
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The details body moved to `src/app/title-details.tsx` with the same order,
   content and actions: collapsible sections in the accordion look, "No scores
@@ -135,7 +145,9 @@ Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — shadcn pass 2/5: Spatial canvas, cards and threads
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The Spatial card (`src/app/spatial-card.tsx`), Seen / Watchlist and the
   seen marker (`status-actions.tsx`, outline Buttons used by every surface),
@@ -151,7 +163,9 @@ Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — shadcn pass 1/5: toolbar, header and filters
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The desktop toolbar (`src/app/toolbar.tsx`), the Order toggle, View menu
   and collection switch (`header-controls.tsx`), and the phone app bar,
@@ -176,7 +190,9 @@ one commit each. Full `qa/regress.sh` on the pushed tree: 59 check runs clean.
 
 ## V5 maintenance — Working an epic: one leaf ticket at a time
 
-Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - `AGENTS.md` (Backlog workflow): when the user names an epic or a parent
   task, its leaf tickets are worked in Backlog order, one at a time (claim,
@@ -187,7 +203,9 @@ Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — One master backlog in Notion
 
-Recorded: 2026-11-14 17:56 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 17:56 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The backlog is now one Notion database for every version, **Red Thread -
   Backlog/Tasks (MASTER)**, under the top-level Red Thread page. It started
@@ -207,7 +225,9 @@ Recorded: 2026-11-14 17:56 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — Two local folders, version tags and V5 sign-in
 
-Recorded: 2026-11-14 17:23 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 17:23 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - The local checkouts are now two folders named by role, inside
   `Developer/Red Thread/`: `red-thread-live` (`main`: merges and hotfixes)
@@ -233,7 +253,9 @@ Recorded: 2026-11-14 17:23 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — V5 workspace setup
 
-Recorded: 2026-11-14 16:37 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-14 16:37 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval, in V5's
+first release.
 
 - Opens V5 on branch `version/5.0`, branched from `d11d5b5` (V4 Batch 8, the
   commit `main` and `version/4.0` shared), in the worktree `Red Thread (V5)`,
