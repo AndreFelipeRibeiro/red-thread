@@ -13,6 +13,16 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 fix — Titles: the heading and tabs line up with the table
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- On wide screens the Titles heading, its progress, the summary pill, the
+  tabs and the sort note share the table's width cap instead of floating at
+  the window's edges.
+- Verified: `test-nav`, `test-dlist`, `test-fit`, `test-textsize`,
+  `test-progress`; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
 ## V5 design — One card design at rest, selected and on the phone
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

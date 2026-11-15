@@ -436,13 +436,15 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
       {/* My list (Notion "Desktop: navigation for Explore, My list and
           Guides"): its title first; the collection tabs, with the sort as a
           quiet note, sit under Up next, just above the table. */}
-      {myList && <TitlesHeading/>}
-      {header}
+      {/* The heading, the summary and the tabs share the table's width cap
+          (and the Up next strip's), so on a wide screen they line up with it
+          instead of floating at the window's edges. */}
+      {myList ? <div className="ml-top mx-auto w-full max-w-[1480px]"><TitlesHeading/>{header}</div> : header}
       {/* Up next: a strip above the table. The desktop List does not fold seen
           titles, so the suggestion can be far down; the strip brings it up. */}
       {upNext && <window.UpNextStrip info={upNext}/>}
       {myList && (
-        <div className="ml-status mt-1 mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="ml-status mx-auto mt-1 mb-3 flex w-full max-w-[1480px] flex-wrap items-center justify-between gap-3">
           <window.CollectionSwitch value={myList.collection} onChange={myList.setCollection}/>
           <span className="ml-end ml-auto flex items-center gap-3">
             {/* "Mark what you've seen" moved here from the Account menu (Notion
