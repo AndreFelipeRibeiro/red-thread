@@ -124,7 +124,7 @@ function SsLabel({ text, query }) {
 function SsThumb({ item }) {
   const media = window.MEDIA;
   const [failed, setFailed] = React.useState(false);
-  if (item.kind === 'title') return <span className="ss-thumb inline-flex flex-none items-center justify-center overflow-hidden text-(length:--fs-xs) font-bold text-(--on-color) [&_img]:block [&_img]:size-full [&_img]:object-cover poster h-[34px] w-6 rounded-[4px] bg-muted"><window.PosterArt title={item.title}/></span>;
+  if (item.kind === 'title') return <span className="ss-thumb inline-flex flex-none items-center justify-center overflow-hidden text-(length:--fs-xs) font-bold text-(--on-color) [&_img]:block [&_img]:size-full [&_img]:object-cover poster h-9 w-6 rounded-[4px] bg-muted"><window.PosterArt title={item.title}/></span>;
   if (item.kind === 'guide') return <span className="ss-thumb inline-flex flex-none items-center justify-center overflow-hidden text-(length:--fs-xs) font-bold text-(--on-color) [&_img]:block [&_img]:size-full [&_img]:object-cover guide size-8 rounded-full"><window.GuideArt guide={item.guide} size={32} round/></span>;
   const id = item.kind === 'actor' ? item.chars[0] : item.id;
   const c = window.CHARACTERS[id] || {};

@@ -5,9 +5,10 @@
 // a band over the poster on hover or keyboard focus).
 //
 // Moved out of app.tsx so it can be built on the design system: this file is
-// listed with `@source` in src/index.css. Same marks, same places, same size:
-// the canvas lays cards out from CARD_SIZE, so nothing here changes the card's
-// width, height, padding or the poster's ratio.
+// listed with `@source` in src/index.css. The canvas lays cards out from
+// CARD_SIZE (rows, threads, hit areas, zoom-to-fit), so the card's height is
+// set here once: the poster is shown whole at 2:3 (Notion "Show posters
+// uncropped at their standard 2:3 ratio"), the text block below it.
 //
 // Rules the canvas keeps (AGENTS.md, "Spatial canvas performance"): no
 // will-change, no 3D transform and no backdrop-filter on a card or anything in
@@ -24,8 +25,10 @@ import type { Title } from '../types/catalog';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
-/** The card's size on the canvas, in canvas pixels. The layout reads it. */
-export const CARD_SIZE = { w: 170, h: 270 };
+/** The card's size on the canvas, in canvas pixels. The layout reads it.
+ *  168px inside the border, so the 2:3 poster is 168 × 252 and the text
+ *  block below gets 76px (two lines of title and the year line). */
+export const CARD_SIZE = { w: 170, h: 330 };
 
 // Layout moves (AGENTS.md, "Motion"), then the state fades.
 const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms,visibility_0s]';
@@ -156,7 +159,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
           onFocus={() => onFocusCard && onFocusCard(title.id)}
           onClick={(e) => { e.stopPropagation(); onClick(); }}/>
       )}
-      <div className={cn('card-poster relative min-h-0 w-full flex-[1_1_auto] overflow-hidden bg-muted',
+      <div className={cn('card-poster relative aspect-[2/3] w-full flex-none overflow-hidden bg-muted',
         // Seen: the art dimmed and desaturated, the quiet half of the seen
         // mark (a backdrop filter here cost a GPU layer per card).
         seen && 'after:pointer-events-none after:absolute after:inset-0 after:z-1 after:bg-[rgba(10,12,20,0.34)] after:content-[\'\'] [&>:first-child]:saturate-35',
@@ -203,7 +206,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
       {/* Under the poster: the title, then the phase (its colour only), the
           year and a quiet check once seen. An open guide's stop number leads
           that line; a skipped stop says so. */}
-      <div className={cn('card-meta min-h-[74px] flex-none px-[14px] pt-[11px] pb-[12px]', seen && '[&_.card-title]:opacity-82')}>
+      <div className={cn('card-meta min-h-0 flex-1 px-[14px] pt-[11px] pb-[12px]', seen && '[&_.card-title]:opacity-82')}>
         <div className={cn('card-title line-clamp-2 text-[13px] leading-[1.25] font-semibold tracking-tight text-pretty', skipped && 'opacity-40')}><Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
         <div className="card-year mt-[5px] flex items-center gap-[6px] text-[11px] text-muted-foreground tabular-nums">
           {guideBadge && <span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-40')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>}

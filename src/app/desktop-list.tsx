@@ -539,7 +539,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                         aria-label={tr('bulk.selectRow', { title: I.titleName(t) })}/>
                     </span>
                     {ranked && <span className="c-rank text-xs tabular-nums text-muted-foreground" role="cell">{n}</span>}
-                    <span className="c-poster" role="cell"><span className={cn('dl-thumb block h-[58px] w-10 rounded-[5px]', THUMB, seen && 'opacity-55')}><PosterArt title={t}/></span></span>
+                    <span className="c-poster" role="cell"><span className={cn('dl-thumb block h-[60px] w-10 rounded-[5px]', THUMB, seen && 'opacity-55')}><PosterArt title={t}/></span></span>
                     <span className="c-title flex min-w-0 flex-col items-start" role="cell">
                       <button className="dl-open cursor-pointer text-left text-sm font-medium text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50" aria-expanded={openId === t.id}
                         onClick={e => { e.stopPropagation(); onOpen(t.id); }}>

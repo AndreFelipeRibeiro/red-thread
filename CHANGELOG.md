@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Posters shown whole at 2:3
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Spatial cards show the whole poster at 2:3 (168 × 252); every other poster
+  box was checked, and the desktop List and search thumbnails, which cropped
+  slightly, are now 2:3. The generated fallback art is drawn at 2:3 too.
+- `CARD_SIZE` is the one number the canvas reads, so rows, threads, hit areas
+  and zoom-to-fit follow it.
+- Verified: 28 canvas and poster checks; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
 ## V5 feature — Connections / Titles / Guides
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
