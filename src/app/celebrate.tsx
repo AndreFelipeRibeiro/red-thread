@@ -7,6 +7,19 @@
 // real ones.
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { cn } from 'cn';
+import { Button } from '@/components/ui/button';
+import { DIALOG } from './about';
+
+// On the design system since Notion "shadcn pass 5/5" (this file is listed
+// with `@source` in src/index.css). The toast takes Sonner's look (the popover
+// surface, a border, the large shadow) but keeps its own component: its place
+// (clear of the details drawer, above the phone's sort bar or pinned pill),
+// one toast at a time, Undo, Share and the pause on hover are the app's, and
+// the QA checks read them. The dialogs are ModalDialog / Sheet with the
+// shared recipes from about.tsx. Hook classes kept: `mcu-toast`, `mt-*`,
+// `milestone`, `touch`, `about`, `nudge`, `about-cta`, `nudge-later`…
+const TOAST_DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
 
 // Feedback when someone marks a title seen or adds it to the watchlist (and,
 // further down, the guest sign-in reminder):
@@ -71,7 +84,7 @@ function burstConfetti(palette) {
   // Off in Settings, or motion reduced.
   if (!window.MCU_PREFS.celebrations() || reducedMotion()) return;
   const canvas = document.createElement('canvas');
-  canvas.className = 'mcu-confetti';
+  canvas.className = 'mcu-confetti pointer-events-none fixed top-0 left-0 z-125 h-screen w-screen';
   canvas.setAttribute('aria-hidden', 'true');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = celebrationArea().width || window.innerWidth, H = window.innerHeight;
@@ -191,20 +204,22 @@ function StatusToast({ touch }) {
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
-      <div key={toast.key} className={`mcu-toast ${toast.to}${m ? ' milestone' : ''}${touch ? ' touch' : ''}`}
+      <div key={toast.key} className={cn('mcu-toast v4 fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-sm text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
+        toast.to, m && 'milestone border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
-        <span className="mt-ic" aria-hidden="true">
+        <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-[9px] text-lg text-(--on-color) [&_svg]:size-4',
+          m ? 'bg-linear-to-br from-[#f0c34a] to-[#e84a3a] text-white' : toast.to === 'watchlist' ? 'bg-(--status-watch)' : toast.to === 'none' ? 'bg-border text-foreground' : 'bg-(--status-seen)')}>
           {m ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>
-        <span className="mt-text"><b>{head}</b><span>{sub}</span></span>
-        <button className="mt-undo" onClick={undo}>{tr('toast.undo')}</button>
+        <span className="mt-text flex min-w-0 flex-auto flex-col"><b className="truncate text-sm font-semibold">{head}</b><span className={cn('text-(length:--fs-xs)', TOAST_DIM)}>{sub}</span></span>
+        <Button variant="outline" size="sm" className="mt-undo h-auto min-h-[max(32px,2rem)] flex-none px-3 text-xs font-semibold" onClick={undo}>{tr('toast.undo')}</Button>
         {/* A milestone can be shared (Notion "Share 1/3"); Undo stays first. */}
-        {m && <window.ShareButton iconOnly size={15} className="mt-share" label={tr('share.toastLabel', { what: head })}
+        {m && <window.ShareButton iconOnly size={15} className="mt-share size-[max(32px,2rem)]" label={tr('share.toastLabel', { what: head })}
           payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}
           onShare={() => window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal,
             tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }))}/>}
-        <button className="mt-x" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</button>
+        <Button variant="ghost" size="icon-sm" className="mt-x size-[max(30px,1.875rem)] flex-none rounded-full text-lg text-muted-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</Button>
       </div>
     );
   }
@@ -294,21 +309,21 @@ function SignInNudge({ touch }) {
   const signIn = () => { setOpen(null); accountRef.current.signIn(); };
   const titleId = touch ? 'nudge-sheet-title' : 'nudge-title';
   const body = (
-    <div className="about nudge">
-      <div className="about-head">
-        <span className="about-ic nudge-ic"><NudgeIcon/></span>
-        <h2 id={titleId} className="about-title">{tr('nudge.title')}</h2>
+    <div className={cn(DIALOG.body, 'nudge')}>
+      <div className={cn(DIALOG.head, 'gap-3')}>
+        <span className={cn(DIALOG.ic, 'nudge-ic size-10 basis-10 text-foreground')}><NudgeIcon/></span>
+        <h2 id={titleId} className={DIALOG.title}>{tr('nudge.title')}</h2>
       </div>
-      <p className="about-lead">{tr('nudge.text', { n: open.n })}</p>
-      <p className="nudge-note">{tr('nudge.merge')}</p>
-      <div className="about-cta-row">
-        <button className="about-cta" onClick={signIn}><window.GoogleMark/>{tr('account.signInGoogle')}</button>
-        <button className="nudge-later" onClick={close}>{tr('nudge.later')}</button>
+      <p className={DIALOG.lead}>{tr('nudge.text', { n: open.n })}</p>
+      <p className="nudge-note mt-2.5 text-xs leading-normal text-muted-foreground">{tr('nudge.merge')}</p>
+      <div className={DIALOG.actions}>
+        <Button className={cn(DIALOG.primary, 'gap-2.5 [&_svg]:size-[17px] [&_svg]:flex-none')} onClick={signIn}><window.GoogleMark/>{tr('account.signInGoogle')}</Button>
+        <Button variant="outline" className={DIALOG.secondary} onClick={close}>{tr('nudge.later')}</Button>
       </div>
     </div>
   );
   if (touch) return <window.Sheet onClose={close} label={tr('nudge.title')}>{body}</window.Sheet>;
-  return <window.ModalDialog onClose={close} labelledBy={titleId} className="nudge-dialog">{body}</window.ModalDialog>;
+  return <window.ModalDialog onClose={close} labelledBy={titleId} className="nudge-dialog w-[min(440px,calc(100vw-48px))]">{body}</window.ModalDialog>;
 }
 
 // Asks before a bulk action that changes more than 20 titles, or any "Mark as
@@ -322,12 +337,12 @@ function BulkConfirm({ touch }) {
   const go = () => { const run = ask.run; setAsk(null); run(); };
   const titleId = touch ? 'bulk-sheet-title' : 'bulk-title';
   const body = (
-    <div className="about bulk-confirm">
-      <h2 id={titleId} className="about-title">{tr('bulk.confirm.' + ask.to, { n: ask.n })}</h2>
-      <p className="about-lead">{tr(ask.to === 'none' ? 'bulk.confirm.unseenNote' : 'bulk.confirm.note')}</p>
-      <div className="about-cta-row">
-        <button className="about-cta" onClick={go}>{tr('bulk.confirm.go.' + ask.to, { n: ask.n })}</button>
-        <button className="nudge-later" onClick={close}>{tr('bulk.confirm.cancel')}</button>
+    <div className={cn(DIALOG.body, 'bulk-confirm')}>
+      <h2 id={titleId} className={cn(DIALOG.title, 'pr-10')}>{tr('bulk.confirm.' + ask.to, { n: ask.n })}</h2>
+      <p className={DIALOG.lead}>{tr(ask.to === 'none' ? 'bulk.confirm.unseenNote' : 'bulk.confirm.note')}</p>
+      <div className={DIALOG.actions}>
+        <Button className={DIALOG.primary} onClick={go}>{tr('bulk.confirm.go.' + ask.to, { n: ask.n })}</Button>
+        <Button variant="outline" className={DIALOG.secondary} onClick={close}>{tr('bulk.confirm.cancel')}</Button>
       </div>
     </div>
   );

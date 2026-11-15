@@ -1,4 +1,7 @@
 import React from 'react';
+import { cn } from 'cn';
+import { XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // About Red Thread: what the app is, ways to explore it, and credits
 // (TMDB requires its logo and notice in an About or Credits section).
@@ -55,6 +58,42 @@ function AboutIcon({ kind }: { kind: string }) {
   );
 }
 
+// The welcome's pinned footer covers the end of whatever scrolls behind it.
+// A fade above it says the list carries on (Notion "Phone welcome: the pinned
+// buttons cut the list mid-sentence"); it goes once the content has scrolled
+// to its end, so it never dims the last lines for good.
+function useScrolledToEnd(ref: React.RefObject<HTMLElement | null>) {
+  const [end, setEnd] = React.useState(false);
+  React.useEffect(() => {
+    const box = ref.current && ref.current.closest<HTMLElement>('.m-sheet-body, .about-dialog');
+    if (!box) return undefined;
+    const check = () => setEnd(box.scrollTop + box.clientHeight >= box.scrollHeight - 2);
+    check();
+    box.addEventListener('scroll', check, { passive: true });
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    if (ro) ro.observe(box);
+    return () => { box.removeEventListener('scroll', check); if (ro) ro.disconnect(); };
+  }, [ref]);
+  return end;
+}
+
+// A step between foreground and muted text (V3's "dim"); AA on every surface.
+const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+
+/** The recipes the small dialogs share (About, the sign-in reminder, the
+ *  bulk confirmation, the picker's leave prompt): body, heading row, title,
+ *  lead paragraph, the stacked actions and their two buttons. */
+export const DIALOG = {
+  body: 'about v4 text-sm text-foreground',
+  head: 'about-head flex items-center gap-3.5 pr-10',
+  title: 'about-title text-lg leading-tight font-semibold tracking-tight',
+  lead: 'about-lead mt-[18px] text-sm leading-[1.6] text-pretty text-muted-foreground',
+  ic: 'about-ic inline-flex size-[34px] flex-[0_0_34px] items-center justify-center rounded-md bg-muted text-foreground',
+  actions: 'about-cta-row mt-5 flex flex-col items-stretch gap-2',
+  primary: 'about-cta h-auto min-h-10',
+  secondary: 'nudge-later h-auto min-h-10',
+};
+
 function AboutContent({ titleId, welcome, onClose, onPick }: {
   titleId?: string; welcome?: boolean; onClose: () => void; onPick?: () => void;
 }) {
@@ -62,71 +101,83 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
   const { tr, lang, setLang, languages } = window.useI18n();
   const langs = languages();
   const ways = [['connect', 'about.connect'], ['follow', 'about.follow'], ['order', 'about.order'], ['track', 'about.track']];
+  const pickRef = React.useRef<HTMLDivElement>(null);
+  const atEnd = useScrolledToEnd(pickRef);
   return (
-    <div className="about">
-      <div className="about-head">
-        <div className="brand-mark logo-mark" aria-hidden="true"/>
+    <div className={DIALOG.body}>
+      <div className={DIALOG.head}>
+        <div className="brand-mark logo-mark size-8 flex-[0_0_32px]" aria-hidden="true"/>
         <div>
-          <h2 id={titleId} className="about-title">{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
-          <div className="about-tag">{tr('about.tagline')}</div>
+          <h2 id={titleId} className={DIALOG.title}>{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
+          <div className="about-tag mt-[3px] text-sm text-muted-foreground">{tr('about.tagline')}</div>
         </div>
       </div>
       {/* The language menu lives in Settings now, so a first visit that can't
           read the guessed language can still switch here. Each option is
           written in its own language. */}
       {welcome && langs.length > 1 && (
-        <div className="welcome-lang" role="group" aria-labelledby="welcome-lang-label">
-          <span id="welcome-lang-label" className="welcome-lang-label">{tr('lang.label')}</span>
-          <div className="segmented">
+        <div className="welcome-lang mt-3.5 flex flex-wrap items-center gap-2.5" role="group" aria-labelledby="welcome-lang-label">
+          <span id="welcome-lang-label" className="welcome-lang-label text-sm font-medium text-muted-foreground">{tr('lang.label')}</span>
+          <div className="segmented inline-flex rounded-lg bg-muted p-[3px]">
             {langs.map((l) => (
-              <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code}
-                className={lang === l.code ? 'on' : ''} onClick={() => setLang(l.code)}>{l.name}</button>
+              <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code} onClick={() => setLang(l.code)}
+                className={cn('min-h-[max(36px,2.25rem)] rounded-md px-3.5 text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50',
+                  lang === l.code && 'on bg-background text-foreground shadow-sm dark:bg-input/30')}>{l.name}</button>
             ))}
           </div>
         </div>
       )}
-      <p className="about-lead">{tr('about.lead')}</p>
-      <h3 className="about-h">{tr('about.waysTitle')}</h3>
-      <ul className="about-ways">
+      <p className={DIALOG.lead}>{tr('about.lead')}</p>
+      <h3 className="about-h mt-[22px] mb-2.5 text-xs font-medium text-muted-foreground">{tr('about.waysTitle')}</h3>
+      <ul className="about-ways grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
         {ways.map(([icon, key]) => (
-          <li key={key}>
-            <span className="about-ic"><AboutIcon kind={icon}/></span>
-            <span><b>{tr(key + '.title')}</b><span>{tr(key + '.text')}</span></span>
+          <li key={key} className="flex flex-col items-start gap-2.5 rounded-lg border bg-card p-3.5 text-card-foreground max-[520px]:flex-row max-[520px]:gap-3 max-[520px]:border-0 max-[520px]:bg-transparent max-[520px]:p-0">
+            <span className={DIALOG.ic}><AboutIcon kind={icon}/></span>
+            <span><b className="block text-sm font-medium">{tr(key + '.title')}</b><span className="mt-0.5 block text-sm leading-normal text-muted-foreground">{tr(key + '.text')}</span></span>
           </li>
         ))}
       </ul>
-      <h3 className="about-h">{tr('about.creditsTitle')}</h3>
-      <div className="about-credits">
+      <h3 className="about-h mt-[22px] mb-2.5 text-xs font-medium text-muted-foreground">{tr('about.creditsTitle')}</h3>
+      <div className="about-credits text-xs leading-[1.55] text-muted-foreground [&_p]:mb-2">
         <p>{tr('about.tmdb')} {tr('about.tmdbNotice')}</p>
         <p>{tr('about.justwatch')}</p>
         <p>{tr('about.ratings')}</p>
         <p>{tr('about.fan')}</p>
       </div>
       {/* Share the app (Notion "Share 1/3"). */}
-      <div className="about-share-row">
+      <div className="about-share-row mt-[18px] flex">
         <window.ShareButton text={tr('share.appLabel')} label={tr('share.appLabel')} payload={() => ({ text: tr('share.appText') })}/>
       </div>
       {welcome && (onPick ? (
-        // First visit: offer the "What have you seen?" picker (picker.jsx).
-        <div className="welcome-pick">
-          <div className="welcome-q">{tr('picker.welcomeQ')}</div>
-          <p className="welcome-qs">{tr('picker.welcomeText')}</p>
-          <div className="about-cta-row">
-            <button className="picker-go" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</button>
-            <button className="nudge-later welcome-start" onClick={onClose}>{tr('about.start')}</button>
+        // First visit: offer the "What have you seen?" picker (picker.tsx),
+        // pinned to the bottom of the dialog or sheet.
+        <div ref={pickRef}
+          className={cn("welcome-pick sticky bottom-[-26px] -mx-[30px] mt-[22px] -mb-[26px] border-t bg-popover px-[30px] pt-4 pb-[22px]",
+            'in-[.m-sheet]:bottom-[calc(-24px-env(safe-area-inset-bottom,0px))] in-[.m-sheet]:-mx-[18px] in-[.m-sheet]:-mb-[calc(24px+env(safe-area-inset-bottom,0px))] in-[.m-sheet]:px-[18px] in-[.m-sheet]:pt-3.5 in-[.m-sheet]:pb-[calc(20px+env(safe-area-inset-bottom,0px))]',
+            "before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-12 before:bg-linear-to-b before:from-transparent before:to-popover before:transition-opacity before:duration-200 before:content-['']",
+            atEnd && 'before:opacity-0')}>
+          <div className="welcome-q text-base font-semibold">{tr('picker.welcomeQ')}</div>
+          <p className={cn('welcome-qs mt-1 text-xs leading-normal', DIM)}>{tr('picker.welcomeText')}</p>
+          <div className="about-cta-row mt-3 flex flex-col items-stretch gap-2">
+            <Button className="picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>
+            <Button variant="outline" className="nudge-later welcome-start h-auto min-h-10" onClick={onClose}>{tr('about.start')}</Button>
           </div>
         </div>
       ) : (
-        <div className="about-cta-row">
-          <button className="about-cta" onClick={onClose}>{tr('about.start')}</button>
+        <div className={DIALOG.actions}>
+          <Button className={DIALOG.primary} onClick={onClose}>{tr('about.start')}</Button>
         </div>
       ))}
     </div>
   );
 }
 
-// Desktop dialog shell, shared by About and the sign-in reminder: scrim,
-// focus kept inside, Escape or × closes, focus returns to whatever opened it.
+// Desktop dialog shell, shared by About, the sign-in reminder, the picker and
+// the share card: scrim, focus kept inside, Escape or × closes, focus returns
+// to whatever opened it. shadcn's Dialog look (the popover surface, a ring,
+// the dimmed and blurred overlay); not Base UI's Dialog, because the shell's
+// own focus handling and Escape (one layer per press) are what AGENTS.md's
+// interaction rules ask for.
 function ModalDialog({ onClose, labelledBy, describedBy, className = '', children }: {
   onClose: () => void; labelledBy?: string; describedBy?: string;
   className?: string; children: React.ReactNode;
@@ -164,9 +215,10 @@ function ModalDialog({ onClose, labelledBy, describedBy, className = '', childre
   }, []);
   return (
     <>
-      <div className="about-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className={`about-dialog${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}>
-        <button className="about-x" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</button>
+      <div className="about-scrim fixed inset-0 z-110 animate-[about-fade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none" onClick={onClose} aria-hidden="true"/>
+      <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}
+        className={cn('about-dialog fixed top-1/2 left-1/2 z-111 max-h-[calc(100vh-64px)] w-[min(560px,calc(100vw-48px))] overflow-y-auto rounded-xl bg-popover px-[30px] pt-7 pb-[26px] text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none [transform:translate(-50%,-50%)] animate-[about-rise_220ms_cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none', className)}>
+        <Button variant="ghost" size="icon-sm" className="about-x v4 absolute top-3.5 right-3.5 z-2 text-muted-foreground" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}><XIcon/></Button>
         {children}
       </div>
     </>

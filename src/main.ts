@@ -66,6 +66,13 @@ import './app/picker';
 // Settings (V4): the first surface built from the shadcn components. After
 // watch and guides-ui, whose region and guide stores it drives.
 import './app/settings';
+import './app/header-controls'; // Order, View and the collection switch (shadcn pass 1/5)
+import './app/phone-header';    // the phone header, sort bar and Filters sheet (shadcn pass 1/5)
+import './app/status-actions'; // Seen / Watchlist, on the design system (shadcn pass 2/5)
+import './app/spatial-card';
+import './app/spatial-chrome';
+import './app/title-details'; // the details drawer and phone sheet, on the design system (shadcn pass 3/5) // zoom, band labels, meter, empty note, thread tooltip (shadcn pass 2/5) // the Spatial card, on the design system (shadcn pass 2/5)
+import './app/toolbar';  // the desktop toolbar, on the design system (shadcn pass 1/5)
 // Last, and it must stay last: this one mounts the app, so everything it
 // renders has to be on `window` by the time it runs.
 import './app/app';

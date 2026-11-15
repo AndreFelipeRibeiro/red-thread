@@ -17,6 +17,22 @@
 @source "./components";
 @source "./design";
 @source "./app/settings.tsx";
+@source "./app/toolbar.tsx";
+@source "./app/header-controls.tsx";
+@source "./app/phone-header.tsx";
+@source "./app/spatial-card.tsx";
+@source "./app/status-actions.tsx";
+@source "./app/spatial-chrome.tsx";
+@source "./app/upnext.tsx";
+@source "./app/title-details.tsx";
+@source "./app/list-parts.tsx";
+@source "./app/desktop-list.tsx";
+@source "./app/about.tsx";
+@source "./app/celebrate.tsx";
+@source "./app/picker.tsx";
+@source "./app/account.tsx";
+@source "./app/watch.tsx";
+@source "./app/search-suggest.tsx";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -267,3 +283,33 @@
     html[data-text-size="large"] { --fs-chrome-scale: calc(17 / 18); }
   }
 }
+/* Keyframes the converted header controls name in their animate-[…] classes
+   (shadcn pass 1/5): the collection switch's count badges
+   (src/app/header-controls.tsx) and the view menu growing in beside search
+   while a guide is open (src/app/phone-header.tsx). */
+@keyframes count-appear { from { transform: scale(0); } 60% { transform: scale(1.3); } }
+@keyframes count-bump { 40% { transform: scale(1.35); } }
+@keyframes count-num-up { from { transform: translateY(80%); opacity: 0; } }
+@keyframes count-num-down { from { transform: translateY(-80%); opacity: 0; } }
+@keyframes tsa-pop { 35% { transform: scale(1.22); } }
+@keyframes tsa-ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(2); } }
+@keyframes un-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@keyframes un-out { to { opacity: 0; transform: translateX(-24px); } }
+@keyframes un-slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes mfade { from { opacity: 0 } }
+@keyframes mrise { from { transform: translateY(100%) } }
+@keyframes card-enter { from { opacity: 0; } }
+@keyframes m-vslot-in { from { max-width: 0; margin-left: -8px; opacity: 0; clip-path: inset(0 100% 0 0); } }
+/* The phase meters' segments lighting up (src/app/list-parts.tsx
+   ProgressHeader, shadcn pass 4/5). */
+@keyframes pgh-seg-in {
+  from { background: var(--border); transform: scaleY(.35); }
+  to { background: var(--pm, var(--brand)); transform: scaleY(1); }
+}
+/* The dialog shell (src/app/about.tsx ModalDialog, shadcn pass 5/5). */
+@keyframes about-fade { from { opacity: 0; } }
+@keyframes about-rise { from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } }
+/* Toasts and the List's bulk bar rising in (celebrate.tsx, desktop-list.tsx). */
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px) scale(.97); } }
+/* Saving and loading spinners (status-actions.tsx, account.tsx). */
+@keyframes tsa-spin { to { transform: rotate(360deg); } }

@@ -153,7 +153,10 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await go(page, '?title=' + last);
     await page.locator('.drawer .tsa-btn.seen').click();
     await page.waitForSelector('.mcu-toast.milestone', { timeout: 3000 }).catch(() => {});
-    const order = await page.evaluate(() => [...document.querySelectorAll('.mcu-toast.milestone button')].map(b => b.className.split(' ')[0]));
+    // Each button by its hook class (shadcn's Buttons list the library's
+    // classes first, so the first class is not the hook any more).
+    const order = await page.evaluate(() => [...document.querySelectorAll('.mcu-toast.milestone button')]
+      .map(b => ['mt-undo', 'share-btn', 'mt-x'].find(c => b.classList.contains(c)) || b.className.split(' ')[0]));
     out.toastButtons = order;
     expect(order.indexOf('mt-undo') === 0 && order.indexOf('share-btn') === 1, 'milestone toast: expected Undo then Share, got ' + JSON.stringify(order));
     await page.locator('.mcu-toast .mt-share').click();

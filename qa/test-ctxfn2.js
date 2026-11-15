@@ -43,7 +43,7 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   await page.fill('.m-searchbar input', 'zzzz'); await page.waitForTimeout(500);
   out.mEmpty = { ...(await line('.ctx-line')), emptyShown: await page.locator('.m-empty').count() };
   await page.fill('.m-searchbar input', 'man'); await page.locator('.m-searchbar input').evaluate(el => el.blur()); await page.waitForTimeout(400);
-  await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.view-menu .sort-order-pop button').nth(2).click(); await page.waitForTimeout(900);
+  await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.sort-order-pop button').nth(2).click(); await page.waitForTimeout(900);
   out.mPill = { ...(await line('.ctx-pill')), overlapZoom: await page.evaluate(() => { const a = document.querySelector('.ctx-pill').getBoundingClientRect(), b = document.querySelector('.zoom-ctl').getBoundingClientRect(); return a.right > b.left && a.bottom > b.top && a.top < b.bottom; }) };
   const sel0 = await page.locator('.card.selected').count();
   await page.locator('.ctx-pill .ctx-clear').tap(); await page.waitForTimeout(700);

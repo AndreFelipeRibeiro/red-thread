@@ -109,7 +109,10 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
       // count badges and screen-reader text, excluded).
       clipped: [...document.querySelectorAll('.toolbar button, .m-appbar button')].filter(b => b.offsetParent).filter(b => {
         const box = b.getBoundingClientRect();
-        return [...b.querySelectorAll('*')].some(e => e.getClientRects().length && getComputedStyle(e).position !== 'absolute' && !e.closest('[style*="position: absolute"]') && past(e.getBoundingClientRect(), box) > 1);
+        // Anything inside an absolutely placed element is that element's: the
+        // count badge's number sits in the badge (shadcn pass 1/5).
+        const placed = (e) => { for (let a = e; a && a !== b; a = a.parentElement) if (getComputedStyle(a).position === 'absolute') return true; return false; };
+        return [...b.querySelectorAll('*')].some(e => e.getClientRects().length && !placed(e) && !e.closest('[style*="position: absolute"]') && past(e.getBoundingClientRect(), box) > 1);
       }).map(b => (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30)),
       // Both a full and a short label showing at once (the short one is only
       // for the phone row's last step).

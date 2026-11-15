@@ -1,6 +1,6 @@
 // @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
 // ticket "Convert the app to TypeScript": this file is renamed and inside the
-// type-checked project, but still has 178 errors under `strict`, almost all of
+// type-checked project, but still has 170 errors under `strict`, almost all of
 // them component props and callback parameters that need real types rather
 // than `any`. Delete this line and type the file; the shared surface it reads
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
@@ -766,185 +766,19 @@ function CollectionIcon({ kind }) {
   return null;
 }
 
-// All / Unseen / Seen / Watchlist, always visible in the toolbar (desktop) and
-// the second header row (mobile) rather than inside Filters. `variant` only
-// changes layout: 'toolbar' keeps every label where there is room; 'compact'
-// labels just All and the active option, leaving the others as icons.
-// Count badge on Seen and Watchlist. Hidden at zero; pops in when it first
-// appears and rolls up or down when the number changes. The direction is
-// kept until the bump ends (Notion V4 Tasks, "Micro-interaction: the Seen
-// check pops in and the counters tick"): worked out afresh on every render,
-// it was gone with the next one (the toast, sync) about 20ms in, which cut
-// the bump and the roll short.
-function CountBadge({ n, kind, appeared }) {
-  const [tick, setTick] = React.useState({ n, dir: '' });
-  if (tick.n !== n) setTick({ n, dir: n > tick.n ? 'up' : 'down' });
-  const dir = tick.n === n ? tick.dir : '';
-  return (
-    <span key={n} className={`coll-count ${kind}${appeared ? ' new' : ''}${dir ? ' ' + dir : ''}`} aria-hidden="true"
-      onAnimationEnd={(e) => { if (e.animationName === 'count-bump') setTick((t) => (t.dir ? { n: t.n, dir: '' } : t)); }}>
-      <span className="coll-num">{n}</span>
-    </span>
-  );
-}
+// The collection switch (All / Unseen / Seen / Watchlist) and its count
+// badges moved to header-controls.tsx (Notion "shadcn pass 1/5").
 
-/** `short`: the phone row ran out of room, so options with a shorter label
- *  ("Para ver" for "Para assistir") use it, accessible name included. Both
- *  labels are rendered, so the row can measure either before it decides. */
-function CollectionSwitch({ value, onChange, variant = 'toolbar', short = false }) {
-  const { tr } = window.useI18n();
-  const { progress, loading } = useCollection();
-  const counts = { seen: loading ? 0 : progress.seenTotal, watchlist: loading ? 0 : progress.watchlist };
-  // Counts from the previous render, so a badge that just appeared can pop in
-  // (but not on first load).
-  const last = React.useRef(null);
-  const before = last.current;
-  React.useEffect(() => { last.current = loading ? null : counts; });
-  return (
-    <div className={`coll-switch coll-${variant}`} role="group" aria-label={tr('collection.groupAria')}>
-      <window.SegPill value={value}/>
-      {COLLECTION_OPTIONS.map(([v]) => {
-        const full = tr('collection.' + v);
-        const shortL = v === 'watchlist' ? tr('collection.watchlistShort') : full;
-        const l = short ? shortL : full;
-        const n = counts[v] || 0;
-        const label = n ? tr('collection.countAria', { label: l, n }) : l;
-        return (
-        <button key={v} className={value === v ? 'on' : ''} aria-pressed={value === v}
-          aria-label={label} title={label} onClick={() => onChange(v)}>
-          {v !== 'all' && <span className="coll-ic"><CollectionIcon kind={v}/></span>}
-          <span className="coll-label">
-            {shortL === full ? full : <><span className="cl-full">{full}</span><span className="cl-short">{shortL}</span></>}
-          </span>
-          {n > 0 && <CountBadge n={n} kind={v} appeared={!!before && !before[v]}/>}
-        </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// Toggles, not checkboxes — so <button aria-pressed> rather than <input>.
-//
-// `variant` is 'overlay' (icon-only, sits on a poster) or 'inline' (icon plus
-// text label, for drawers and sheets where there is room).
-function TitleStatusActions({ title, variant, className }) {
-  const { states, statusOf, pendingOf, errorOf, toggleSeen, toggleWatchlist, loading } = useCollection();
-  // The button just switched on pops (CSS), until its animation ends.
-  const [pop, setPop] = React.useState(null);
-  const status = statusOf(title.id);
-  const seen = status === 'seen';
-  const listed = status === 'watchlist';
-  // `busy` is a write in flight — deliberately NOT disabling, because the write
-  // queue exists precisely so that toggling faster than the network settles on
-  // the right value. `loading` is the initial load, where the state genuinely
-  // isn't known yet, so the controls are inert until it resolves.
-  const busy = pendingOf(title.id);
-  const error = errorOf(title.id);
-  const inline = variant === 'inline';
-  // Not out yet (and not within a week of release): no Seen button, only the
-  // Watchlist one. A title already marked seen keeps it, so it can be
-  // unmarked. Overlays keep the empty slot so rows and cards don't shift.
-  const offerSeen = seen || canMarkSeen(title);
-
-  // The desktop Card starts a drag on mousedown and then decides "was that a
-  // click?" by comparing mousedown/click coordinates. Stopping only the click
-  // would still leave the card being dragged out from under the pointer, so
-  // both have to be swallowed. Touch is stopped too, because the spatial
-  // viewport begins a pan from touchstart.
-  const swallow = (e) => { e.stopPropagation(); };
-  // The saving spinner sits on the corner of the button just pressed (or the
-  // first button while the collection loads) instead of after the buttons,
-  // where it took room and pushed them aside while a signed-in mark was being
-  // saved (Notion V4 Tasks, "Signed in: marking a title briefly pushes the
-  // Seen / Watchlist buttons left").
-  const [lastKind, setLastKind] = React.useState(null);
-  const act = (fn, kind) => (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (loading) return;
-    const from = statusOf(title.id);
-    const on = kind === 'seen' ? 'seen' : 'watchlist';
-    const to = from === on ? 'none' : on;
-    fn(title.id);
-    setPop(to === 'none' ? null : kind);
-    setLastKind(kind);
-    emitStatusChange({ title, from, to, states });
-  };
-
-  const firstKind = offerSeen ? 'seen' : 'watch';
-  const pressed = lastKind === 'watch' || (lastKind === 'seen' && offerSeen) ? lastKind : firstKind;
-  const spinOn = busy ? pressed : loading ? firstKind : null;
-  const cls = [
-    'tsa',
-    inline ? 'inline' : 'overlay',
-    loading ? 'loading' : '',
-    busy ? 'busy' : '',
-    error ? 'has-error' : '',
-    className || '',
-  ].filter(Boolean).join(' ');
-
-  return (
-    <div className={cls} onMouseDown={swallow} onClick={swallow} onTouchStart={swallow}
-         title={error ? window.MCU_I18N.tr('status.notSaved', { error }) : undefined}>
-      {!offerSeen && !inline && <span className="tsa-btn seen tsa-gap" aria-hidden="true"/>}
-      {offerSeen && <button
-        type="button"
-        className={`tsa-btn seen${seen ? ' on' : ''}${pop === 'seen' ? ' pop' : ''}`}
-        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
-        disabled={loading}
-        aria-busy={loading || busy}
-        aria-pressed={loading ? undefined : seen}
-        aria-label={window.MCU_I18N.tr(loading ? 'status.loadingSeen' : seen ? 'status.unmarkSeenAria' : 'status.markSeenAria', { title: window.MCU_I18N.titleName(title) })}
-        title={window.MCU_I18N.tr(seen ? 'status.markedSeen' : 'status.markSeenTip')}
-        onMouseDown={swallow}
-        onClick={act(toggleSeen, 'seen')}
-      >
-        <CheckIcon/>
-        {spinOn === 'seen' && <span className="tsa-spin" aria-hidden="true"/>}
-        {inline && <span className="tsa-lab">{window.MCU_I18N.tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
-      </button>}
-      <button
-        type="button"
-        className={`tsa-btn watch${listed ? ' on' : ''}${pop === 'watch' ? ' pop' : ''}`}
-        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
-        disabled={loading}
-        aria-busy={loading || busy}
-        aria-pressed={loading ? undefined : listed}
-        aria-label={window.MCU_I18N.tr(loading ? 'status.loadingWatch' : listed ? 'status.removeWatchAria' : 'status.addWatchAria', { title: window.MCU_I18N.titleName(title) })}
-        title={window.MCU_I18N.tr(listed ? 'status.onWatchTip' : 'status.addWatchTip')}
-        onMouseDown={swallow}
-        onClick={act(toggleWatchlist, 'watch')}
-      >
-        <BookmarkIcon filled={listed}/>
-        {spinOn === 'watch' && <span className="tsa-spin" aria-hidden="true"/>}
-        {inline && <span className="tsa-lab">{window.MCU_I18N.tr(listed ? 'status.onWatch' : 'status.watchlist')}</span>}
-      </button>
-      {/* The overlay variant has no room for a message; it carries the red
-          treatment plus a tooltip, and the drawer/sheet spells it out. */}
-      {error && inline && <span className="tsa-err" role="status">{window.MCU_I18N.tr('status.notSaved', { error })}</span>}
-      {error && !inline && <span className="tsa-bang" role="status" aria-label={window.MCU_I18N.tr('status.notSaved', { error })}>!</span>}
-    </div>
-  );
-}
-
-// Non-interactive marker. Used where the controls themselves are too small to
-// hit (deep zoom on the spatial canvas) but the state still needs to read.
-function SeenMarker({ seen }) {
-  if (!seen) return null;
-  return <span className="seen-marker" title={window.MCU_I18N.tr('status.seen')} aria-hidden="true"><CheckIcon/></span>;
-}
+// TitleStatusActions (Seen / Watchlist) and SeenMarker moved to
+// status-actions.tsx (Notion "shadcn pass 2/5"), on the design system.
 
 Object.assign(window, {
   CollectionProvider,
   useCollection,
-  TitleStatusActions,
-  SeenMarker,
   matchesCollection,
   collectionEmptyCopy,
   COLLECTION_OPTIONS,
   CollectionIcon,
-  CollectionSwitch,
   releasedCount,
   todayISO,
   onStatusChange,
@@ -956,14 +790,16 @@ Object.assign(window, {
   MCU_nextUp: nextUp,
   onBulkConfirm,
   TSA_MIN_SCALE,
+  // status-actions.tsx reports each toggle through it.
+  MCU_emitStatusChange: emitStatusChange,
 });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { CollectionProvider, useCollection, TitleStatusActions, SeenMarker,
+export { CollectionProvider, useCollection,
   matchesCollection, collectionEmptyCopy, COLLECTION_OPTIONS, CollectionIcon,
-  CollectionSwitch, releasedCount, todayISO, onStatusChange, CheckIcon,
+  releasedCount, todayISO, onStatusChange, CheckIcon,
   BookmarkIcon, bulkTargets as MCU_bulkTargets, nextUp as MCU_nextUp,
-  onBulkConfirm, TSA_MIN_SCALE };
+  onBulkConfirm, TSA_MIN_SCALE, emitStatusChange as MCU_emitStatusChange };

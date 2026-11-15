@@ -202,7 +202,7 @@ async function openCentreCard(page, tally) {
   tally.push('failed');
   return null;
 }
-const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.view-menu .sort-order-pop button').nth(n).click(); };
+const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.sort-order-pop button').nth(n).click(); };
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();

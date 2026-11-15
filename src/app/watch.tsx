@@ -7,6 +7,12 @@
 // real ones.
 import React from 'react';
 
+// Where to watch, inside the details (Notion "shadcn pass 5/5"; this file is
+// listed with `@source` in src/index.css and renders inside the details' v4
+// root): a collapsible DetailSection, the provider logos, and the region
+// picker as a native select dressed as shadcn's Input. Hook classes kept:
+// `wtw`, `wtw-*`.
+
 // Where to watch: the details section that lists the services offering a title
 // in the visitor's country (stream, free, rent or buy). It reads the dated
 // snapshot in watch-data.js (window.WATCH, written by tools/refresh-watch.js
@@ -88,10 +94,10 @@ function Provider({ p }) {
   const W = window.WATCH || {};
   const [failed, setFailed] = React.useState(false);
   return (
-    <li className="wtw-provider">
+    <li className="wtw-provider inline-flex items-center gap-2 text-xs text-foreground">
       {p.logo && !failed
-        ? <img className="wtw-logo" src={(W.logoBase || 'https://image.tmdb.org/t/p/w92') + p.logo} alt="" width="28" height="28" loading="lazy" onError={() => setFailed(true)}/>
-        : <span className="wtw-logo none" aria-hidden="true">{p.name.slice(0, 1)}</span>}
+        ? <img className="wtw-logo size-7 flex-[0_0_28px] rounded-md bg-muted object-cover" src={(W.logoBase || 'https://image.tmdb.org/t/p/w92') + p.logo} alt="" width="28" height="28" loading="lazy" onError={() => setFailed(true)}/>
+        : <span className="wtw-logo none inline-flex size-7 flex-[0_0_28px] items-center justify-center rounded-md border border-input bg-muted text-xs font-bold text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]" aria-hidden="true">{p.name.slice(0, 1)}</span>}
       <span className="wtw-name">{p.name}</span>
     </li>
   );
@@ -115,7 +121,7 @@ function RegionPicker({ region, setRegion, onDone }) {
   return (
     <label className="wtw-picker">
       <span className="story-sr">{wtr('watch.regionLabel')}</span>
-      <select ref={ref} value={region} onChange={(e) => { setRegion(e.target.value); onDone(); }} onBlur={onDone}
+      <select ref={ref} value={region} className="h-8 max-w-[190px] rounded-md border border-input bg-transparent px-2 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30" onChange={(e) => { setRegion(e.target.value); onDone(); }} onBlur={onDone}
         onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); onDone(); } }}>
         {choices.map((c) => <option key={c} value={c}>{countryName(c)}</option>)}
       </select>
@@ -140,35 +146,35 @@ function WhereToWatch({ title }) {
 
   let body;
   if (!supported) {
-    body = <p className="wtw-note">{wtr('watch.unsupported', { country })}</p>;
+    body = <p className="wtw-note mt-2 text-xs leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.unsupported', { country })}</p>;
   } else if (!entry) {
-    body = <p className="wtw-note">{wtr('watch.notChecked')}</p>;
+    body = <p className="wtw-note mt-2 text-xs leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.notChecked')}</p>;
   } else {
     const stream = offers.stream || [], free = offers.free || [];
     const others = [];
     [...(offers.rent || []), ...(offers.buy || [])].forEach((p) => { if (!others.some((q) => q.id === p.id)) others.push(p); });
     if (!stream.length && !free.length && !others.length) {
-      body = <p className="wtw-note">{wtr('watch.none', { country, date: longDate(W.checkedAt) })}</p>;
+      body = <p className="wtw-note mt-2 text-xs leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.none', { country, date: longDate(W.checkedAt) })}</p>;
     } else {
       const shown = others.slice(0, 2).map((p) => p.name);
       const more = others.length - shown.length;
       body = (
         <>
-          {!stream.length && !free.length && <p className="wtw-note">{wtr('watch.noSubscription', { country })}</p>}
+          {!stream.length && !free.length && <p className="wtw-note mt-2 text-xs leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.noSubscription', { country })}</p>}
           {stream.length > 0 && (
-            <div className="wtw-group">
-              <div className="wtw-kind">{wtr('watch.stream')}</div>
-              <ul className="wtw-list">{stream.map((p) => <Provider key={p.id} p={p}/>)}</ul>
+            <div className="wtw-group mt-2.5">
+              <div className="wtw-kind text-xs font-medium text-muted-foreground">{wtr('watch.stream')}</div>
+              <ul className="wtw-list mt-1.5 flex flex-wrap gap-x-3.5 gap-y-2">{stream.map((p) => <Provider key={p.id} p={p}/>)}</ul>
             </div>
           )}
           {free.length > 0 && (
-            <div className="wtw-group">
-              <div className="wtw-kind">{wtr('watch.free')}</div>
-              <ul className="wtw-list">{free.map((p) => <Provider key={p.id} p={p}/>)}</ul>
+            <div className="wtw-group mt-2.5">
+              <div className="wtw-kind text-xs font-medium text-muted-foreground">{wtr('watch.free')}</div>
+              <ul className="wtw-list mt-1.5 flex flex-wrap gap-x-3.5 gap-y-2">{free.map((p) => <Provider key={p.id} p={p}/>)}</ul>
             </div>
           )}
           {others.length > 0 && (
-            <p className="wtw-also">{more > 0
+            <p className="wtw-also mt-2 text-xs leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{more > 0
               ? wtr('watch.alsoMore', { names: shown.join(', '), n: more })
               : wtr('watch.also', { names: shown.join(wtr('watch.and')) })}</p>
           )}
@@ -180,15 +186,15 @@ function WhereToWatch({ title }) {
   // A collapsible section (DetailSection in mobile.jsx), closed by default so
   // the details stay short; Change sits beside the heading while it is open.
   return (
-    <window.DetailSection id="watch" className="wtw" labelClass="wtw-title" label={wtr('watch.title', { country })}
+    <window.DetailSection id="watch" className="wtw border-t pt-3" labelClass="wtw-title p-0 text-xs font-medium text-muted-foreground" label={wtr('watch.title', { country })}
       extra={picking
         ? <RegionPicker region={region} setRegion={setRegion} onDone={() => setPicking(false)}/>
-        : <button type="button" className="wtw-change" onClick={() => setPicking(true)}
+        : <button type="button" className="wtw-change min-h-[max(32px,2rem)] cursor-pointer rounded-sm px-1 text-xs font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => setPicking(true)}
             aria-label={wtr('watch.changeAria', { country })}>{wtr('watch.change')}</button>}>
-      {title.type === 'series' && entry && supported && <p className="wtw-series">{wtr('watch.wholeSeries')}</p>}
+      {title.type === 'series' && entry && supported && <p className="wtw-series mt-0.5 text-(length:--fs-xs) text-muted-foreground">{wtr('watch.wholeSeries')}</p>}
       {body}
       {link && (
-        <a className="wtw-link" href={link} target="_blank" rel="noopener noreferrer"
+        <a className="wtw-link mt-1.5 inline-flex min-h-[max(32px,2rem)] items-center gap-1.5 rounded-sm text-xs font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50" href={link} target="_blank" rel="noopener noreferrer"
           aria-label={wtr('watch.linkAria', { title: name, country })}>
           {wtr('watch.link')}<ExternalIcon/>
         </a>
@@ -196,7 +202,7 @@ function WhereToWatch({ title }) {
       {/* Only when this title was in the snapshot: "not checked yet" must
           not sit next to a "Checked" date. */}
       {W.checkedAt && supported && entry && (
-        <p className="wtw-credit">
+        <p className="wtw-credit mt-0.5 text-(length:--fs-xs) text-muted-foreground">
           {stale ? wtr('watch.checkedStale', { date: longDate(W.checkedAt) }) : wtr('watch.checked', { date: longDate(W.checkedAt) })}
           {' · '}{wtr('watch.credit')}
         </p>

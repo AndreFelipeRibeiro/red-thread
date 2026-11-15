@@ -57,7 +57,16 @@ const SNAPSHOT = () => {
   const outside = el => !el.closest('.v4');
   // V3 icons the reset would move: V3 makes them block itself but leaves their
   // vertical-align at the browser's baseline, which the reset sets to middle.
-  const svgs = [...document.querySelectorAll('svg.lang-globe, svg.sort-order-flip, svg.sort-order-chevron')].filter(outside);
+  // The toolbar's icons moved inside .v4 with shadcn pass 1/5, and the cards,
+  // Seen / Watchlist and Up next with 2/5, and the phone List rows with 4/5,
+  // which left no V3 icon on the phone page. So the sample is the canvas's
+  // thread layer where there is one (desktop) plus an icon of the check's
+  // own, placed outside .v4 the way any V3 icon sits: it says whether the
+  // reset reaches V3 whatever the page still holds.
+  const own = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  own.setAttribute('class', 'v3-probe');
+  document.body.appendChild(own);
+  const svgs = [...document.querySelectorAll('svg.connection-layer, svg.v3-probe')].filter(outside);
   const probe = document.createElement('div');
   probe.className = 'v4';
   probe.innerHTML = '<button type="button">probe</button><svg width="10" height="10"></svg><ul><li>x</li></ul>';
@@ -86,7 +95,7 @@ const SNAPSHOT = () => {
   // The probe's colour should be --foreground, resolved by the same engine.
   const ref = document.createElement('div'); ref.style.color = 'var(--foreground)'; document.body.appendChild(ref);
   out.foregroundResolved = getComputedStyle(ref).color;
-  ref.remove(); probe.remove();
+  ref.remove(); probe.remove(); own.remove();
   return out;
 };
 

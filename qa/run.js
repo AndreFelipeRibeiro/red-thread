@@ -102,7 +102,9 @@ function pick(args) {
 function runOne(c, port) {
   return new Promise(resolve => {
     const t0 = Date.now();
-    const env = { ...process.env, ...c.env, PORT: String(port), NODE_OPTIONS: ((process.env.NODE_OPTIONS || '') + ' --require ' + path.join(QA, 'serve-site.js')).trim() };
+    // The path is quoted: the checkout lives under "Developer/Red Thread/", and
+    // NODE_OPTIONS splits an unquoted path at its space, so node would not start.
+    const env = { ...process.env, ...c.env, PORT: String(port), NODE_OPTIONS: ((process.env.NODE_OPTIONS || '') + ' --require "' + path.join(QA, 'serve-site.js') + '"').trim() };
     const child = spawn(process.execPath, [path.join(QA, c.check + '.js')], { cwd: QA, env });
     let out = '';
     child.stdout.on('data', d => { out += d; });

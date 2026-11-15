@@ -68,15 +68,18 @@ const inspect = () => {
   if (!root) return { open: false };
   const head = root.querySelector('.td-head');
   if (!head) return { open: true, shared: false };
+  // The app's own class, wherever it sits: a shadcn Button lists the
+  // library's classes before the app's (shadcn pass 3/5).
+  const hook = (el) => (el.dataset.slot && [...el.classList].find(c => /^(td|m|un|drawer|cast)-/.test(c))) || el.classList[0];
   const after = [];
-  for (let n = head.nextElementSibling; n; n = n.nextElementSibling) after.push(n.className.split(' ')[0]);
+  for (let n = head.nextElementSibling; n; n = n.nextElementSibling) after.push(hook(n));
   const thumb = root.querySelector('.td-hero .td-thumb').getBoundingClientRect();
   const hero = [...root.querySelectorAll('.td-hero-text > *')];
   const close = root.querySelector('.drawer-close, .m-sheet-x').getBoundingClientRect();
   const box = root.getBoundingClientRect();
   return {
     open: true,
-    head: [...head.children].map(e => e.className.split(' ')[0]),
+    head: [...head.children].map(hook),
     after,
     heroText: hero.map(e => e.className.split(' ')[0]),
     thumb: [Math.round(thumb.width), Math.round(thumb.height)],

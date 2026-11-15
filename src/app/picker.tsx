@@ -6,6 +6,14 @@
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
+import { cn } from 'cn';
+import { Button } from '@/components/ui/button';
+import { DIALOG } from './about';
+
+// On the design system since Notion "shadcn pass 5/5" (listed with `@source`
+// in src/index.css): ModalDialog / Sheet with the shared dialog recipes,
+// shadcn's Buttons, posters as before. Hook classes kept for the app and the
+// QA checks: `pk`, `pk-*`, `picker-go`, `nudge-later`, `on`, `un`.
 
 // "What have you seen?" (V3 Tasks, First-visit picker): a poster grid of every
 // released title, grouped by phase in release order, to mark many as seen in
@@ -97,13 +105,13 @@ function SeenPicker({ touch, onClose }) {
   ) : <span><b>{toSeen.length}</b> {pktr('picker.pickedWord', { n: toSeen.length })}</span>;
 
   const body = (
-    <div className={`pk${touch ? ' touch' : ''}`}>
-      <div className="pk-head">
-        <h2 id="pk-title" className="pk-title">{pktr('picker.title')}</h2>
-        <p className="pk-sub">{later ? pktr('picker.subLater') : pktr(touch ? 'picker.subTouch' : 'picker.sub')}</p>
-        {hasWatch && <p className="pk-note"><window.BookmarkIcon filled/><span>{pktr('picker.watchNote')}</span></p>}
+    <div className={cn('pk v4 relative text-sm text-foreground', touch ? 'touch' : 'flex min-h-0 flex-1 flex-col')}>
+      <div className={cn('pk-head', touch ? 'pt-1 pr-11' : 'border-b pt-[22px] pr-16 pb-4 pl-[26px]')}>
+        <h2 id="pk-title" className={cn('pk-title font-semibold tracking-tight', touch ? 'text-xl' : 'text-lg')}>{pktr('picker.title')}</h2>
+        <p className="pk-sub mt-1 text-sm leading-normal text-muted-foreground">{later ? pktr('picker.subLater') : pktr(touch ? 'picker.subTouch' : 'picker.sub')}</p>
+        {hasWatch && <p className="pk-note mt-3 flex items-start gap-[9px] rounded-lg border bg-muted/50 px-3 py-2.5 text-sm leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))] [&_svg]:mt-0.5 [&_svg]:size-[13px] [&_svg]:flex-none [&_svg]:text-(--status-watch)"><window.BookmarkIcon filled/><span>{pktr('picker.watchNote')}</span></p>}
       </div>
-      <div className="pk-body" ref={gridRef}>
+      <div className={cn('pk-body', touch ? 'pb-4' : 'min-h-0 flex-1 overflow-y-auto px-[26px] pb-5')} ref={gridRef}>
         {groups.map(g => {
           const ids = g.titles.map(t => t.id);
           const n = ids.filter(id => picks.has(id)).length;
@@ -112,14 +120,14 @@ function SeenPicker({ touch, onClose }) {
           const action = all ? 'clear' : n > 0 && later ? 'rest' : 'all';
           return (
             <section key={g.phase} className="pk-phase" aria-labelledby={`pk-ph-${g.phase}`}>
-              <div className="pk-ph">
-                <h3 id={`pk-ph-${g.phase}`} className="pk-pl">{PkI18N.upper(name)}<span>{n}/{ids.length}</span></h3>
-                <button type="button" className={`pk-pa${all ? ' clr' : ''}`} onClick={() => setPhase(ids, !all)}
+              <div className="pk-ph flex items-center gap-3 pt-4 pb-[9px]">
+                <h3 id={`pk-ph-${g.phase}`} className="pk-pl flex-1 text-xs font-medium text-muted-foreground">{PkI18N.upper(name)}<span className="ml-2 text-(length:--fs-xs) tabular-nums">{n}/{ids.length}</span></h3>
+                <Button type="button" variant={all ? 'ghost' : 'outline'} size="sm" className={cn('pk-pa', all && 'clr text-muted-foreground')} onClick={() => setPhase(ids, !all)}
                   aria-label={pktr(action === 'clear' ? 'picker.clearAria' : action === 'rest' ? 'picker.restAria' : 'picker.allAria', { group: name })}>
                   {pktr(action === 'clear' ? 'picker.clear' : action === 'rest' ? 'picker.rest' : 'picker.all')}
-                </button>
+                </Button>
               </div>
-              <div className="pk-grid">
+              <div className={cn('pk-grid grid', touch ? 'grid-cols-4 gap-2' : 'grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2.5')}>
                 {g.titles.map(t => {
                   const on = picks.has(t.id);
                   const had = initial.has(t.id);
@@ -130,12 +138,13 @@ function SeenPicker({ touch, onClose }) {
                     : watch ? pktr('picker.ariaWatch', { title: name }) : name;
                   return (
                     <button key={t.id} type="button" data-pick={t.id} aria-pressed={on} aria-label={label}
-                      className={`pk-p${on ? ' on' : ''}${had && !on ? ' un' : ''}`} onClick={() => toggle(t.id)}>
-                      <span className="pk-art" aria-hidden="true"><PickPoster title={t}/></span>
-                      <span className="pk-name" aria-hidden="true">{name}</span>
-                      <span className="pk-tick" aria-hidden="true">{on && <window.CheckIcon/>}</span>
-                      {had && <span className={`pk-tag${on ? '' : ' ul'}`} aria-hidden="true">{pktr(on ? 'picker.seenTag' : 'picker.unmarkTag')}</span>}
-                      {!had && watch && !on && <span className="pk-wl" aria-hidden="true"><window.BookmarkIcon filled/></span>}
+                      className={cn('pk-p relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg bg-muted text-left text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring',
+                        on && 'on shadow-[0_0_0_2.5px_var(--status-seen)]', had && !on && 'un shadow-[0_0_0_2px_var(--status-watch)]')} onClick={() => toggle(t.id)}>
+                      <span className={cn('pk-art absolute inset-0 *:block *:size-full [&_img]:object-cover [&_svg]:size-full', had && !on && '[filter:saturate(.4)_brightness(.6)]')} aria-hidden="true"><PickPoster title={t}/></span>
+                      <span className="pk-name absolute inset-x-0 bottom-0 line-clamp-3 bg-linear-to-b from-transparent to-[rgba(5,6,10,.92)] to-55% px-[7px] pt-[22px] pb-1.5 text-(length:--fs-xs) leading-[1.2] font-bold [text-shadow:0_1px_2px_rgba(0,0,0,.6)]" aria-hidden="true">{name}</span>
+                      <span className={cn('pk-tick absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full border-[1.5px] border-white/75 bg-[rgba(10,12,20,.5)] text-[#0a0c14] [&_svg]:size-3', on && 'border-[#5fa856] bg-[#5fa856]')} aria-hidden="true">{on && <window.CheckIcon/>}</span>
+                      {had && <span className={cn('pk-tag absolute top-1.5 left-1.5 rounded-[3px] bg-[rgba(10,12,20,.85)] px-1 py-0.5 text-(length:--fs-xs) font-bold tracking-[.08em] uppercase', on ? 'text-(--on-image)' : 'ul text-[#f0c890]')} aria-hidden="true">{pktr(on ? 'picker.seenTag' : 'picker.unmarkTag')}</span>}
+                      {!had && watch && !on && <span className="pk-wl absolute top-1.5 left-1.5 flex size-5 items-center justify-center rounded-[5px] bg-[rgba(10,12,20,.8)] text-[#d4a05a] [&_svg]:size-[11px]" aria-hidden="true"><window.BookmarkIcon filled/></span>}
                     </button>
                   );
                 })}
@@ -144,28 +153,28 @@ function SeenPicker({ touch, onClose }) {
           );
         })}
       </div>
-      <div className="pk-foot" ref={footRef}>
-        <div className="pk-count" role="status" aria-live="polite">{countLine}</div>
-        {!touch && <button type="button" className="nudge-later pk-skip" onClick={onShellClose}>{pktr(later ? 'picker.cancel' : 'picker.skip')}</button>}
-        <button type="button" className="picker-go pk-go" disabled={!dirty} onClick={save}>{goLabel}</button>
+      <div ref={footRef} className={cn('pk-foot flex items-center gap-3 border-t bg-popover', touch ? 'sticky bottom-0 -mx-[18px] px-[18px] pt-3 pb-[calc(14px+env(safe-area-inset-bottom,0px))]' : 'py-3.5 pr-5 pl-[26px]')}>
+        <div className="pk-count min-w-0 flex-1 text-sm leading-[1.35] text-muted-foreground [&_b]:text-base [&_b]:text-foreground [&>span]:block" role="status" aria-live="polite">{countLine}</div>
+        {!touch && <Button type="button" variant="outline" className={cn(DIALOG.secondary, 'pk-skip px-4')} onClick={onShellClose}>{pktr(later ? 'picker.cancel' : 'picker.skip')}</Button>}
+        <Button type="button" className={cn('picker-go pk-go h-auto px-[18px]', touch ? 'min-h-[max(48px,3rem)]' : 'min-h-[max(42px,2.625rem)]')} disabled={!dirty} onClick={save}>{goLabel}</Button>
       </div>
       {asking && (
-        <div className="pk-ask-wrap">
-          <div className="pk-ask" role="alertdialog" aria-modal="true" aria-labelledby="pk-ask-t" aria-describedby="pk-ask-d" tabIndex={-1} ref={askRef}>
-            <h3 id="pk-ask-t" className="pk-ask-t">{later ? pktr('picker.leaveTitleLater') : pktr('picker.leaveTitle', { n: toSeen.length })}</h3>
-            <p id="pk-ask-d" className="pk-ask-d">{pktr('picker.leaveText')}</p>
-            <div className="about-cta-row">
-              <button type="button" className="picker-go" onClick={save}>{goLabel}</button>
-              <button type="button" className="nudge-later" onClick={() => { setAsking(false); onClose(); }}>{pktr('picker.leave')}</button>
-              <button type="button" className="pk-keep" onClick={() => setAsking(false)}>{pktr('picker.keep')}</button>
+        <div className={cn('pk-ask-wrap fixed inset-0 z-130 flex justify-center bg-black/10 backdrop-blur-xs', touch ? 'items-end' : 'items-center')}>
+          <div className={cn('pk-ask bg-popover px-[22px] pt-[22px] text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none', touch ? 'w-full rounded-t-xl pb-[calc(22px+env(safe-area-inset-bottom,0px))]' : 'w-[min(440px,calc(100%-40px))] rounded-xl pb-5')} role="alertdialog" aria-modal="true" aria-labelledby="pk-ask-t" aria-describedby="pk-ask-d" tabIndex={-1} ref={askRef}>
+            <h3 id="pk-ask-t" className="pk-ask-t text-base font-semibold">{later ? pktr('picker.leaveTitleLater') : pktr('picker.leaveTitle', { n: toSeen.length })}</h3>
+            <p id="pk-ask-d" className="pk-ask-d mt-2 text-sm leading-normal text-muted-foreground">{pktr('picker.leaveText')}</p>
+            <div className={cn(DIALOG.actions, 'mt-[18px]')}>
+              <Button type="button" className="picker-go h-auto min-h-10" onClick={save}>{goLabel}</Button>
+              <Button type="button" variant="outline" className={DIALOG.secondary} onClick={() => { setAsking(false); onClose(); }}>{pktr('picker.leave')}</Button>
+              <Button type="button" variant="ghost" className="pk-keep h-auto min-h-[max(42px,2.625rem)] text-muted-foreground" onClick={() => setAsking(false)}>{pktr('picker.keep')}</Button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-  if (touch) return <window.Sheet onClose={onShellClose} tall className="pk-sheet" label={pktr('picker.title')}>{body}</window.Sheet>;
-  return <window.ModalDialog onClose={onShellClose} labelledBy="pk-title" className="pk-dialog">{body}</window.ModalDialog>;
+  if (touch) return <window.Sheet onClose={onShellClose} tall className="pk-sheet h-[calc(100dvh-24px)] max-h-none [&_.m-sheet-body]:flex-1 [&_.m-sheet-body]:pb-0" label={pktr('picker.title')}>{body}</window.Sheet>;
+  return <window.ModalDialog onClose={onShellClose} labelledBy="pk-title" className="pk-dialog flex h-[calc(100vh-64px)] w-[min(1000px,calc(100vw-48px))] flex-col overflow-hidden p-0">{body}</window.ModalDialog>;
 }
 
 window.SeenPicker = SeenPicker;
