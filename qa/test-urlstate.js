@@ -70,7 +70,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
     drawerOpen: !!document.querySelector('.drawer.open'),
     drawerTitle: (document.querySelector('.drawer.open #drawer-title') || {}).textContent || null,
     selected: (document.querySelector('.card.selected .card-title') || {}).textContent || null,
-    sortOn: !!([...document.querySelectorAll('.toolbar button')].find(b => b.textContent.includes('Chronological') && (b.classList.contains('on') || b.getAttribute('aria-pressed') === 'true'))),
+    sortOn: /^Story order/.test((document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || ''),
     chips: [...document.querySelectorAll('.ctx-chip')].map(c => c.textContent.replace('×', '').trim()),
     cards: document.querySelectorAll('.card').length,
     phase3: window.TITLES.filter(t => t.phase === 3).length,
@@ -86,15 +86,15 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
   R.follow.closed = await params(page);
   if (R.follow.closed.title) errors.push('closing the details left title= in the address');
   await page.evaluate(async () => {
-    const b = [...document.querySelectorAll('.toolbar button')].find(x => x.textContent.includes('IMDb Rating'));
-    b.click(); await new Promise(r => setTimeout(r, 1500));
+    document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(r => setTimeout(r, 300));
+    document.querySelector('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); await new Promise(r => setTimeout(r, 1500));
   });
   R.follow.sorted = await params(page);
   if (R.follow.sorted.sort !== 'imdb') errors.push(`changing the sort wrote ${JSON.stringify(R.follow.sorted)}`);
   if ('order' in R.follow.sorted) errors.push('the default order for IMDb was written to the address; defaults stay out');
   await page.reload(); await require('./ready').appReady(page);
   R.follow.reloaded = await page.evaluate(() => ({
-    imdbOn: !!([...document.querySelectorAll('.toolbar button')].find(b => b.textContent.includes('IMDb Rating') && (b.classList.contains('on') || b.getAttribute('aria-pressed') === 'true'))),
+    imdbOn: (document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent === 'IMDb rating, highest first',
     chips: [...document.querySelectorAll('.ctx-chip')].map(c => c.textContent.replace('×', '').trim()),
   }));
   if (!R.follow.reloaded.imdbOn || !R.follow.reloaded.chips.some(c => /Phase 3/.test(c))) errors.push(`a reload lost the state: ${JSON.stringify(R.follow.reloaded)}`);

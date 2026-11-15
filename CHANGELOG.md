@@ -13,6 +13,22 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 improvement — One Sort menu for sort and order
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- One Sort menu replaces the six sort tabs, the Oldest / Newest button and
+  the Order rows in Filters, on desktop and phone. Each choice reads as a
+  plain phrase ("Release date, oldest first"); the trigger shows the full
+  phrase from 1280px and the sort's short name below that
+  (`SortMenu` and `sortPhrase` in `src/app/header-controls.tsx`).
+- QA: the checks that picked a sort from the tabs or the Order rows go
+  through the menu; `test-camera`, `test-fit` and the `test-jit2` pair lose
+  their sort-tab cases.
+- Verified: typecheck and build; full `qa/regress.sh` on this ticket's tree,
+  58 check runs clean; desktop and phone in English and Portuguese.
+- Limits: real iPhone Safari not checked.
+
 ## V5 maintenance — shadcn pass 6: guides, banners, Share and the app shell; the V3 stylesheets deleted
 
 Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging);

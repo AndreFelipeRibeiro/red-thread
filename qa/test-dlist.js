@@ -15,8 +15,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   const st = () => page.evaluate(() => ({
     rows: document.querySelectorAll('.dl-row:not(.dl-head)').length,
     activeHead: [...document.querySelectorAll('.dl-h.on')].map(h => h.textContent + ':' + h.getAttribute('aria-sort')).join(','),
-    sortRow: (document.querySelector('.tb-sort-controls button[aria-pressed="true"]') || {}).title,
-    order: (document.querySelector('.tb-order-control .sort-order-trigger') || {}).textContent,
+    sortMenu: (document.querySelector('.sort-menu-trigger') || {}).textContent,
     first: (document.querySelector('.dl-row:not(.dl-head) .dl-open') || {}).textContent,
     rank1: (document.querySelector('.dl-row:not(.dl-head) .c-rank') || {}).textContent || null,
     groups: document.querySelectorAll('.dl-glabel').length,
@@ -31,7 +30,8 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   await page.locator('.dl-h.c-imdb button').click(); await page.waitForTimeout(400); out.imdbRev = await st();
   await page.locator('.dl-h.c-title button').click(); await page.waitForTimeout(400); out.title = await st();
   await page.locator('.dl-h.c-story button').click(); await page.waitForTimeout(400); out.chrono = await st();
-  await page.locator('.tb-sort-controls button').first().click(); await page.waitForTimeout(400); out.backRelease = await st();
+  await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
+  await page.locator('.sort-menu-pop [data-sort="release"][data-dir="asc"]').click(); await page.waitForTimeout(400); out.backRelease = await st();
   // open a row, toggle seen from a row without opening
   await page.locator('.dl-row:not(.dl-head)', { hasText: 'The Avengers' }).first().locator('.c-release').click(); await page.waitForTimeout(500);
   out.opened = await st();

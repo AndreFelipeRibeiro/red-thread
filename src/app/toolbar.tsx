@@ -16,8 +16,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
-export const SORT_OPTIONS: [string, string][] = [['release', '▤'], ['chrono', '⇄'], ['phase', '◫'], ['title', '⇅'], ['imdb', '★'], ['rt', '◉']];
-
 // One segmented group: shadcn's ToggleGroup in the tab list's look, with the
 // sliding selection (SegPill) as its first child. Single choice: pressing the
 // selected item again keeps it selected. The selected item keeps `on`, which
@@ -78,14 +76,15 @@ export interface ToolbarProps {
 
 export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }: ToolbarProps) {
   const I18N = window.MCU_I18N;
-  // The sort row fits by measuring (window.useFitSteps; Notion "Font size
-  // increase"), so it holds in Portuguese and at every Text size. The steps
-  // are read from the row's data-fit by the group-data variants below:
-  //   1  short sort labels;  2  the collection switch labels only All and the
-  //   selected option;  3  the view switch shows icons only;  4  the switch
-  //   labels only All;  5  unselected sort tabs show their icon only.
+  // The second row (collection switch and view switch) fits by measuring
+  // (window.useFitSteps; Notion "Font size increase"), so it holds in
+  // Portuguese and at every Text size. The steps are read from the row's
+  // data-fit by the group-data variants: 2  the collection switch labels only
+  // All and the selected option;  3  the view switch shows icons only;
+  // 4  the switch labels only All. (Step 1 and 5 were the sort tabs', which
+  // moved into the Sort menu; they change nothing now.)
   const sortRow = useRef<HTMLDivElement | null>(null);
-  const sortFit = window.useFitSteps(sortRow, 5, [I18N.lang, sort, collectionFilter, desktopView]);
+  const sortFit = window.useFitSteps(sortRow, 4, [I18N.lang, collectionFilter, desktopView]);
   // Collection has its own always-visible switch, so it is not counted here.
   const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
   // An open guide shows only its own stops: in the List it ignores the layout
@@ -95,7 +94,6 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
   const guideOn = !!guideId;
   const listOff = guideOn && desktopView === 'list';
   const Off = window.GuideOff;
-  const sortLabels = window.sortDirectionLabels(sort);
   const PHASE_COLORS = window.PHASE_COLORS as Record<string, string>;
   return (
     <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col gap-3 border-b border-border bg-background/95 px-[22px] py-3.5 backdrop-blur-md max-[1560px]:px-4 max-[1560px]:py-2.5" role="banner">
@@ -108,7 +106,7 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
               screen readers and the page outline. */}
           <h1 className="brand-title m-0 text-base font-semibold whitespace-nowrap"><span className="logo-word block h-[21px] w-[111px]" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span></h1>
         </a>
-        {/* The search group: search takes the spare width, then Order, Filters
+        {/* The search group: search takes the spare width, then Sort, Filters
             and All/Films/Series. Below 1280px it wraps onto its own line
             between the two rows. */}
         <div className="tb-filter-row order-3 flex min-w-0 flex-[1_0_100%] items-center gap-3 min-[1280px]:order-none min-[1280px]:flex-[1_1_0]">
@@ -117,9 +115,8 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
             <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
               ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={null}/>
           </div>
-          <Off off={listOff}><div className="tb-order-control flex items-center gap-2">
-            <span className="tb-order-label text-xs whitespace-nowrap text-muted-foreground max-[1150px]:hidden">{tr('order.label')}</span>
-            <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
+          <Off off={listOff}><div className="tb-sort-control flex min-w-0 items-center">
+            <window.SortMenu sort={sort} sortDir={sortDir} onChange={(k: string, d: string) => { setSort(k); setSortDir(d); }}/>
           </div></Off>
           <Off off={guideOn}><div className="filters-pop-wrap relative shrink-0">
             <Popover>
@@ -152,10 +149,6 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
                   <Segmented value={releaseFilter} onChange={setReleaseFilter}
                     items={[['all', 'filter.release.all'], ['released', 'filter.release.released']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
                 </FilterGroup>
-                <FilterGroup label={tr('order.label')}>
-                  <Segmented value={sortDir} onChange={setSortDir}
-                    items={sortLabels.map((label: string, i: number) => ({ value: i === 0 ? 'asc' : 'desc', content: label }))}/>
-                </FilterGroup>
                 {activeFilters > 0 && (
                   <Button variant="link" size="sm" className="pop-clear h-auto px-0 text-sm text-muted-foreground hover:text-foreground"
                     onClick={() => { setPhaseFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}>{tr('filters.clear')}</Button>
@@ -177,20 +170,9 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
       </div>
-      <div className="tb-row tb-sort-row group/sortrow flex min-w-0 items-center gap-3 max-[1000px]:gap-[9px]" ref={sortRow} data-fit={sortFit}>
-        <Off off={listOff}><div className="control-group tb-sort-controls flex min-w-0 flex-1 items-center">
-          <Segmented value={sort} onChange={setSort} className="flex-1"
-            items={SORT_OPTIONS.map(([v, ic]) => ({
-              value: v,
-              title: tr('sort.' + v),
-              className: 'flex-1 justify-center whitespace-nowrap',
-              content: (<>
-                <span className={cn('si me-1.5 text-xs', sort === v ? 'opacity-100' : 'opacity-75 group-data-[fit=5]/sortrow:me-0')}>{ic}</span>
-                <span className="lg hidden group-data-[fit=0]/sortrow:inline">{tr('sort.' + v)}</span>
-                <span className={cn('sm inline group-data-[fit=0]/sortrow:hidden', sort !== v && 'group-data-[fit=5]/sortrow:hidden')}>{tr('sort.short.' + v)}</span>
-              </>),
-            }))}/>
-        </div></Off>
+      {/* The second row: the collection switch, then the view switch at the
+          end. (The six sort tabs that led it are in the Sort menu now.) */}
+      <div className="tb-row tb-sort-row group/sortrow flex min-w-0 items-center justify-between gap-3 max-[1000px]:gap-[9px]" ref={sortRow} data-fit={sortFit}>
         <Off off={guideOn}><window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/></Off>
         <Segmented value={desktopView} onChange={setDesktopView} label={tr('view.label')} className="tb-view-switch flex-[0_0_auto]"
           items={[['spatial', '◈'], ['list', '☰']].map(([v, ic]) => ({
@@ -208,4 +190,4 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
   );
 }
 
-Object.assign(window, { Toolbar, Segmented, SORT_OPTIONS });
+Object.assign(window, { Toolbar, Segmented });

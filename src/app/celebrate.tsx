@@ -145,8 +145,9 @@ function burstConfetti(palette) {
   requestAnimationFrame(frame);
 }
 
-// Where the toast goes: clear of the desktop details drawer, above the phone
-// sort bar and the character pill, or at the top while a phone sheet is open.
+// Where the toast goes: clear of the desktop details drawer, above the phone's
+// bottom bar (when there is one) and the character pill, or at the top while
+// a phone sheet is open.
 function toastPlacement(touch) {
   if (touch) {
     if (document.querySelector('.m-sheet')) return { top: 'calc(12px + env(safe-area-inset-top, 0px))' };
@@ -155,6 +156,8 @@ function toastPlacement(touch) {
       const el = document.querySelector(sel);
       if (el && el.getClientRects().length) edge = Math.min(edge, el.getBoundingClientRect().top);
     });
+    // Nothing below it: clear of the home indicator.
+    if (edge === window.innerHeight) return { bottom: 'calc(10px + env(safe-area-inset-bottom, 0px))' };
     return { bottom: (window.innerHeight - edge + 10) + 'px' };
   }
   return { bottom: '24px', left: (celebrationArea().width / 2) + 'px' };

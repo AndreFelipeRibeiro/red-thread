@@ -19,7 +19,7 @@ const covered = (page, sel) => page.evaluate((sel) => {
 }, sel);
 const MENUS = {
   settings: ['.settings-btn', '.settings-panel.open'],
-  order: ['.sort-order .sort-order-trigger', '.sort-order .sort-order-pop'],
+  sort: ['.sort-menu-trigger', '.sort-menu-pop'],
   filters: ['.filters-pill:not(.g-btn)', '.filters-pop'],
   account: ['.acct-pill', '.acct-pop'],
 };
@@ -66,8 +66,8 @@ const MENUS = {
     if (view === 'spatial') { await page.locator('.m-lrow-open', { hasText: 'Iron Man 2' }).first().tap(); await page.waitForTimeout(700); await page.locator('.m-apply.ghost', { hasText: 'Spatial' }).tap(); await page.waitForTimeout(1300); }
     const r = {};
     // The phone's language menu moved into Settings, a sheet rather than a
-    // popover, so only Order is left in the bar.
-    for (const k of ['order']) {
+    // popover, so only Sort is left in the bar.
+    for (const k of ['sort']) {
       const [trig, pop] = MENUS[k];
       await page.locator(trig).first().tap(); await page.waitForTimeout(350);
       r[k] = await covered(page, pop);

@@ -55,31 +55,29 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // two tabs used to repeat each other; now they do different jobs.
 const SORTS = ['release', 'chrono', 'phase', 'title', 'imdb', 'rt'];
 const expectFor = (sort) => (sort === 'phase' ? { phaseMeters: 6, overall: false } : { phaseMeters: 0, overall: true });
-// Desktop sort buttons carry a long and a short label ("▤ReleaseRelease"), so
-// match the long one as a substring, inside the toolbar (the List's column
-// headers include "Released").
-const DESK_SORT = { release: 'Release', chrono: 'Chronological', phase: 'By Phase', title: 'A–Z', imdb: 'IMDb Rating', rt: 'Tomatometer' };
-// Phone sort tabs read "◫Phase" and so on: match the end of their text.
-const PHONE_SORT = { release: 'Release', chrono: 'Chrono', phase: 'Phase', title: 'A–Z', imdb: 'IMDb', rt: 'RT' };
-
-const deskSort = (page, label) => page.evaluate(async (l) => {
-  const b = [...document.querySelectorAll('.toolbar button')].find(x => x.textContent.replace(/\s+/g, ' ').includes(l));
+// Sorts are picked from the Sort menu by key, each in its usual direction
+// (Notion "Merge sort and order into one Sort menu").
+const DESK_SORT = { release: 'release', chrono: 'chrono', phase: 'phase', title: 'title', imdb: 'imdb', rt: 'rt' };
+const PHONE_SORT = DESK_SORT;
+const USUAL_DIR = { release: 'asc', chrono: 'asc', phase: 'asc', title: 'asc', imdb: 'desc', rt: 'desc' };
+const pickSort = (page, key, wait) => page.evaluate(async ([k, d, w]) => {
+  const t = document.querySelector('.sort-menu-trigger');
+  if (!t) return false;
+  t.click();
+  await new Promise(r => setTimeout(r, 300));
+  const b = document.querySelector(`.sort-menu-pop [data-sort="${k}"][data-dir="${d}"]`);
   if (b) b.click();
-  await new Promise(r => setTimeout(r, 1800));
+  await new Promise(r => setTimeout(r, w));
   return !!b;
-}, label);
+}, [key, USUAL_DIR[key], wait]);
+const deskSort = (page, key) => pickSort(page, key, 1800);
 const deskView = (page, name) => page.evaluate(async (n) => {
   const b = [...document.querySelectorAll('button')].find(x => new RegExp('(^|[^a-z])' + n + '$', 'i').test(x.textContent.trim()));
   if (b) b.click();
   await new Promise(r => setTimeout(r, 1800));
   return !!b;
 }, name);
-const phoneSort = (page, label) => page.evaluate(async (l) => {
-  const b = [...document.querySelectorAll('.m-tab')].find(x => x.textContent.replace(/\s+/g, '').endsWith(l));
-  if (b) b.click();
-  await new Promise(r => setTimeout(r, 2200));
-  return !!b;
-}, label);
+const phoneSort = (page, key) => pickSort(page, key, 2200);
 const phoneView = (page, name) => page.evaluate(async (n) => {
   const chip = [...document.querySelectorAll('button')]
     .find(b => /^[☰▦◈]\s*(List|Lista|Grid|Grade|Spatial|Espacial)$/.test(b.textContent.trim()));

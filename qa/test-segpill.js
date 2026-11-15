@@ -30,7 +30,10 @@ const PILL = (sel) => {
     x: Math.round(r.left), op: getComputedStyle(pl).opacity, onClear: bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent' };
 };
 const aligned = (p) => p && p.dx !== undefined && Math.abs(p.dx) <= 1 && Math.abs(p.dy) <= 1 && Math.abs(p.dw) <= 1 && Math.abs(p.dh) <= 1 && p.op === '1' && p.onClear;
-const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.tb-view-switch'];
+// The six sort tabs that led this list moved into the Sort menu (Notion
+// "Merge sort and order into one Sort menu"); the type switch carries the
+// slide checks now.
+const GROUPS = ['.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.tb-view-switch'];
 
 (async () => {
   await new Promise(r => server.listen(PORT, r));
@@ -67,7 +70,7 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
       const tick = () => { const p = document.querySelector(g + ' > .seg-pill'); window.__x.push(Math.round(p.getBoundingClientRect().left)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, g);
-    await page.locator(g + ' button').nth(4).click();
+    await page.locator(g + ' button').nth(2).click();
     await page.waitForTimeout(1000);
     const xs = await page.evaluate(() => window.__x);
     const end = await page.evaluate(PILL, g);
@@ -81,7 +84,7 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
     await page.locator('.tb-sort-row .coll-switch button').nth(2).click();
     await page.locator('.tb-view-switch button').nth(1).click();
     await page.waitForTimeout(600);
-    for (const s of [GROUPS[2], GROUPS[3]]) expect(aligned(await page.evaluate(PILL, s)), `after a change the pill in ${s} is not on the new button`);
+    for (const s of [GROUPS[1], GROUPS[2]]) expect(aligned(await page.evaluate(PILL, s)), `after a change the pill in ${s} is not on the new button`);
     errors.push(...e);
     await ctx.close();
   }
@@ -91,7 +94,7 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
     const { ctx, page, errors: e } = await ctxPage(browser, opts, prefs, {}, extra);
     await page.goto(URL); await settle(page);
     const g = GROUPS[0];
-    await page.locator(g + ' button').nth(4).click();
+    await page.locator(g + ' button').nth(2).click();
     await page.waitForTimeout(40);
     const p = await page.evaluate(PILL, g);
     out['reduced ' + label] = p;

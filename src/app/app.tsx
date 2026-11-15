@@ -2976,7 +2976,7 @@ function App() {
           search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson}
           onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
-          sort={sort} sortDir={sortDir} setSortDir={setSortDir}
+          sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
           onOpenSettings={() => setSheet('settings')}
           onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
@@ -3006,15 +3006,12 @@ function App() {
               onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
           ) : charPill}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort} away={!!guide}/>}
         {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
             releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
-            sort={sort}
-            sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}
             onClose={() => { setSheet(null); requestAnimationFrame(() => window.playPendingFlip()); }}

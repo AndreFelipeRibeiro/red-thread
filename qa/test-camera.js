@@ -50,23 +50,6 @@ const settle = page => page.waitForTimeout(2200);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
-const state = page => page.evaluate(() => {
-  const pressed = sel => [...document.querySelectorAll(sel)].map(b => (b.getAttribute('aria-label') || b.textContent).trim());
-  let stored = null;
-  try { stored = localStorage.getItem('mcu.prefs.v1'); } catch (e) { stored = 'THROWS'; }
-  return {
-    view: pressed('.m-viewswitch button[aria-pressed="true"]')[0] || null,
-    mobileTab: pressed('.m-tabs button[aria-pressed="true"]')[0] || null,
-    deskSort: [...document.querySelectorAll('.tb-sort-controls .segmented button[aria-pressed="true"]')].map(b => b.title)[0] || null,
-    order: (document.querySelector('.sort-order-trigger') || {}).getAttribute ? document.querySelector('.sort-order-trigger').getAttribute('aria-label') : null,
-    filterCount: (document.querySelector('.m-fcount') || {}).textContent || null,
-    stored,
-  };
-});
-const pickOrder = async (page, nth) => {
-  await page.locator('.sort-order-trigger').first().click();
-  await page.locator('.sort-order-pop button').nth(nth).click();
-};
 
 
 const T = page => page.evaluate(() => document.querySelector('.canvas').style.transform);
@@ -286,7 +269,8 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   // Sort change while selected clears the memory (no jump back into an old layout)
   await openCentreCard(page, cardOpens); await page.waitForTimeout(400);
   out.cardOpenAttempts = cardOpens;
-  await page.locator('.tb-sort-controls .segmented button', { hasText: 'IMDb' }).first().click();
+  await page.locator('.sort-menu-trigger').first().click(); await page.waitForTimeout(250);
+  await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click();
   await page.waitForTimeout(400);
   const afterSort = parse(await T(page));
   await page.locator('.drawer-close').click(); await page.waitForTimeout(900);

@@ -1,5 +1,5 @@
 // The controls the desktop toolbar and the phone header share (Notion "shadcn
-// pass 1/5: toolbar, header and filters"): the Order toggle, the View menu and
+// pass 1/5: toolbar, header and filters"): the Sort menu, the View menu and
 // the collection switch (All / Unseen / Seen / Watchlist).
 //
 // Moved out of mobile.tsx and tracking.tsx so they can be built on the design
@@ -8,7 +8,8 @@
 // changed.
 //
 // Class names the QA checks and the Escape ladder read are kept as hooks
-// (`sort-order`, `sort-order-trigger`, `sort-order-pop`, `view-menu`,
+// (`sort-menu*`; `sort-order`, `sort-order-trigger`, `sort-order-pop` on the
+// View menu; `view-menu`,
 // `coll-switch`, `coll-label`, `coll-count`, `on` on the selected option);
 // they carry no V3 styling any more.
 //
@@ -27,35 +28,79 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 // [value, icon]; labels come from view.* in the active language.
 export const VIEW_MODES: [string, string][] = [['list', '☰'], ['grid', '▦'], ['spatial', '◈']];
 
-// Order: every sort has exactly two directions, so the control is a toggle
-// (desktop toolbar and phone search row): a tap flips the order. It shows the
-// current direction; its accessible name also says what a tap switches to.
-// The icon is a down arrow (reading order) beside bars that grow down the list
-// for the first direction (Oldest, Lowest, A–Z…) and shrink for the second;
-// the bars flip over as the order changes.
-export function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }: {
+// Sort: one menu holds every sort and both of its directions (Notion "Merge
+// sort and order into one Sort menu"). It replaces the six sort tabs (the
+// desktop strip, the phone's bottom bar), the Order toggle and the Order row
+// in Filters. Each choice reads as a plain phrase ("Release date, oldest
+// first"); a sort's usual direction comes first. Desktop shows the whole
+// phrase on the trigger; phones show the sort's short name. shadcn's Popover,
+// its choices ghost buttons that say which one is current (like ViewMenu):
+// Escape, a tap outside and a choice all close it, and focus goes back to the
+// trigger. Hooks: `sort-menu`, `sort-menu-trigger`, `sort-menu-pop`, and
+// `data-sort` / `data-dir` on each choice.
+export const SORT_KEYS = ['release', 'chrono', 'phase', 'title', 'imdb', 'rt'] as const;
+const DEFAULT_DIR: Record<string, 'asc' | 'desc'> = { release: 'asc', chrono: 'asc', phase: 'asc', title: 'asc', imdb: 'desc', rt: 'desc' };
+
+/** The phrase for one sort and direction, in the active language. */
+export function sortPhrase(sort: string, dir: string): string {
+  if (sort === 'phase') {
+    const phases = (window.TITLES as { phase: number }[]).map((t) => t.phase);
+    const low = Math.min(...phases), high = Math.max(...phases);
+    return dir === 'desc' ? tr('sortmenu.phase', { from: high, to: low }) : tr('sortmenu.phase', { from: low, to: high });
+  }
+  return tr('sortmenu.' + sort + '.' + dir);
+}
+
+export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
   sort: string;
   sortDir: string;
-  setSortDir: (dir: 'asc' | 'desc') => void;
+  onChange: (sort: string, dir: 'asc' | 'desc') => void;
   mobile?: boolean;
 }) {
-  const labels = window.sortDirectionLabels(sort);
-  const index = sortDir === 'desc' ? 1 : 0;
-  const compact = window.sortDirectionLabels(sort, true)[index];
-  const label = tr('order.toggleAria', { label: labels[index], next: labels[1 - index] });
+  const [open, setOpen] = React.useState(false);
+  const current = sortPhrase(sort, sortDir);
+  const shown = mobile ? tr('sortmenu.short.' + sort) : current;
   return (
-    <div className={cn('sort-order relative shrink-0', mobile && 'mobile-order')}>
-      <Button variant="outline" className="sort-order-trigger sort-order-toggle h-11 min-w-[86px] gap-2 px-3 text-xs active:scale-[.97]"
-        aria-label={label} title={label} onClick={() => setSortDir(index === 0 ? 'desc' : 'asc')}>
-        {compact}
-        <svg className={cn('sort-order-flip block size-3.5 flex-[0_0_14px] text-muted-foreground group-hover/button:text-foreground',
-          '[&_.bars]:origin-center [&_.bars]:transition-transform [&_.bars]:duration-320 [&_.bars]:ease-[cubic-bezier(.2,.8,.2,1)] [&_.bars]:[transform-box:fill-box] motion-reduce:[&_.bars]:transition-none',
-          index && 'desc [&_.bars]:-scale-y-100')}
-          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-          <path d="M5 4v16M2 17l3 3 3-3" strokeLinejoin="round"/>
-          <g className="bars"><path d="M11 6h4M11 12h7M11 18h10"/></g>
-        </svg>
-      </Button>
+    <div className={cn('sort-menu relative shrink-0', mobile && 'mobile-sort')}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger className={cn(buttonVariants({ variant: 'outline' }), 'sort-menu-trigger h-11 min-w-0 gap-2 px-3 text-xs')}
+          aria-label={tr('sortmenu.aria', { label: current })} title={tr('sortmenu.aria', { label: current })}>
+          <svg className="block size-3.5 flex-[0_0_14px] text-muted-foreground" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M7 4v16M3 16l4 4 4-4M14 6h7M14 12h5M14 18h3"/>
+          </svg>
+          <span className="sort-menu-label truncate">{shown}</span>
+          <svg className="block size-3 flex-[0_0_12px]" width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </PopoverTrigger>
+        {/* Opening puts focus on the current choice. Long lists scroll inside
+            the popover on short screens. */}
+        <PopoverContent align={mobile ? 'end' : 'start'} sideOffset={8}
+          initialFocus={() => document.querySelector<HTMLElement>('.sort-menu-pop [aria-pressed="true"]')}
+          className={cn('sort-menu-pop w-auto max-w-[calc(100vw-24px)] min-w-[240px] gap-0 overflow-y-auto p-1', mobile ? 'max-h-[calc(100dvh-140px)]' : 'max-h-[min(70vh,560px)]')} role="group" aria-label={tr('sortmenu.title')}>
+          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{tr('sortmenu.title')}</div>
+          {SORT_KEYS.map((key, gi) => {
+            const first = DEFAULT_DIR[key], second: 'asc' | 'desc' = first === 'asc' ? 'desc' : 'asc';
+            return (
+              <div key={key} className={cn(gi > 0 && 'mt-1 border-t border-border pt-1')}>
+                {[first, second].map((dir) => {
+                  const on = sort === key && sortDir === dir;
+                  return (
+                    <Button key={dir} variant="ghost" aria-pressed={on} data-sort={key} data-dir={dir}
+                      className={cn('w-full justify-between gap-[18px] px-2.5 text-sm font-normal aria-pressed:bg-accent aria-pressed:text-accent-foreground', mobile ? 'h-11' : 'h-9')}
+                      onClick={() => { onChange(key, dir); setOpen(false); }}>
+                      <span>{sortPhrase(key, dir)}</span>
+                      <span aria-hidden="true">{on ? '✓' : ''}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -198,4 +243,4 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
   );
 }
 
-Object.assign(window, { SortOrderMenu, ViewMenu, CollectionSwitch });
+Object.assign(window, { SortMenu, sortPhrase, ViewMenu, CollectionSwitch });

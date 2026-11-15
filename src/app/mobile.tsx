@@ -83,8 +83,8 @@ function useFitSteps(ref, max, deps) {
   return fit;
 }
 
-// MobileTopBar, SortTabs, the Order toggle and the View menu moved to
-// phone-header.tsx and header-controls.tsx (Notion "shadcn pass 1/5"), where
+// MobileTopBar, the Sort menu and the View menu are in phone-header.tsx and
+// header-controls.tsx (Notion "shadcn pass 1/5"), where
 // they are built on the design system.
 
 // Wraps the substring(s) of `text` matching `query` in a <mark> so the UI can

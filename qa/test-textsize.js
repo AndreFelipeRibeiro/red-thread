@@ -230,11 +230,13 @@ const SCAN = () => {
         const f = s => parseFloat(getComputedStyle(document.querySelector(s)).fontSize);
         const inp = document.querySelector('.m-searchbar input');
         const scale = inp.getBoundingClientRect().height / inp.offsetHeight;
-        return { root: f('html'), body: f('.m-ltitle'), nav: f('.m-tab'), font: f('.m-searchbar input'), shown: +(f('.m-searchbar input') * scale).toFixed(2) };
+        // nav: the bottom bar's labels, when the phone has one (the sort tabs
+        // went into the Sort menu; the next bottom bar is the navigation's).
+        return { root: f('html'), body: f('.m-ltitle'), nav: document.querySelector('.m-tab') ? f('.m-tab') : null, font: f('.m-searchbar input'), shown: +(f('.m-searchbar input') * scale).toFixed(2) };
       });
       const w = want[size];
       out['phone ' + (size || 'default')] = m;
-      expect(m.root === w.root && m.body === w.body && m.nav === w.nav && Math.abs(m.shown - w.shown) < 0.05, `phone ${size || 'default'}: ${JSON.stringify(m)}, expected ${JSON.stringify(w)}`);
+      expect(m.root === w.root && m.body === w.body && (m.nav === null || m.nav === w.nav) && Math.abs(m.shown - w.shown) < 0.05, `phone ${size || 'default'}: ${JSON.stringify(m)}, expected ${JSON.stringify(w)}`);
       expect(m.font >= 16, `phone ${size || 'default'}: the search field's font is ${m.font}px; under 16px iPhones zoom in on focus`);
       await ctx.close();
     }

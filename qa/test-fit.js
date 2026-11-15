@@ -66,23 +66,6 @@ const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
-const state = page => page.evaluate(() => {
-  const pressed = sel => [...document.querySelectorAll(sel)].map(b => (b.getAttribute('aria-label') || b.textContent).trim());
-  let stored = null;
-  try { stored = localStorage.getItem('mcu.prefs.v1'); } catch (e) { stored = 'THROWS'; }
-  return {
-    view: pressed('.m-viewswitch button[aria-pressed="true"]')[0] || null,
-    mobileTab: pressed('.m-tabs button[aria-pressed="true"]')[0] || null,
-    deskSort: [...document.querySelectorAll('.tb-sort-controls .segmented button[aria-pressed="true"]')].map(b => b.title)[0] || null,
-    order: (document.querySelector('.sort-order-trigger') || {}).getAttribute ? document.querySelector('.sort-order-trigger').getAttribute('aria-label') : null,
-    filterCount: (document.querySelector('.m-fcount') || {}).textContent || null,
-    stored,
-  };
-});
-const pickOrder = async (page, nth) => {
-  await page.locator('.sort-order-trigger').first().click();
-  await page.locator('.sort-order-pop button').nth(nth).click();
-};
 
 
 const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'iron-man':'seen','incredible-hulk':'seen','iron-man-2':'seen','thor':'seen','cap-first-avenger':'seen','avengers':'seen','iron-man-3':'seen','thor-dark-world':'seen','cap-winter-soldier':'seen','gotg':'seen','aou':'seen','civil-war':'seen','loki-s1':'watchlist','shang-chi':'watchlist','thunderbolts':'watchlist','agatha':'watchlist'}}));";

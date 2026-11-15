@@ -161,7 +161,6 @@ declare global {
     ContextSummary: SpatialChrome['ContextSummary'];
     CARD_SIZE: SpatialCardModule['CARD_SIZE'];
     Segmented: ToolbarModule['Segmented'];
-    SORT_OPTIONS: ToolbarModule['SORT_OPTIONS'];
     SyncStatus: Tracking['SyncStatus'];
     SeenMarker: StatusActions['SeenMarker'];
     TSA_SPIN: StatusActions['TSA_SPIN'];
@@ -204,7 +203,6 @@ declare global {
     SearchInput: Suggest['SearchInput'];
 
     MobileTopBar: PhoneHeader['MobileTopBar'];
-    SortTabs: PhoneHeader['SortTabs'];
     MobileGrid: Mobile['MobileGrid'];
     MobileList: Mobile['MobileList'];
     FilterSheet: PhoneHeader['FilterSheet'];
@@ -230,7 +228,8 @@ declare global {
     ReleaseLine: TitleDetails['ReleaseLine'];
     ReleaseBadge: TitleDetails['ReleaseBadge'];
     Synopsis: TitleDetails['Synopsis'];
-    SortOrderMenu: HeaderControls['SortOrderMenu'];
+    SortMenu: HeaderControls['SortMenu'];
+    sortPhrase: HeaderControls['sortPhrase'];
     ViewMenu: HeaderControls['ViewMenu'];
     SettingsPanel: SettingsModule['SettingsPanel'];
     SettingsSheet: SettingsModule['SettingsSheet'];

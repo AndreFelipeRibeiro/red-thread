@@ -36,7 +36,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.mToList = await view('List'); await page.waitForTimeout(900); out.mListAfter = await settled(page);
   out.mToSpatial = await view('Spatial'); await page.waitForTimeout(900);
   out.mFromSpatial = await view('List'); await page.waitForTimeout(900);
-  out.mSort = await (async () => { await page.locator('.m-tab').nth(4).tap(); return probe(page); })(); await page.waitForTimeout(900);
+  out.mSort = await (async () => { await page.locator('.sort-menu-trigger').tap(); await page.waitForTimeout(250); await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').tap(); return probe(page); })(); await page.waitForTimeout(900);
   out.mErrors = errors; await ctx.close();
   // desktop list
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED));
@@ -47,7 +47,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.screenshot({ path: path.join(S, 'shots', 'anim-d-mid.png') });
   await page.waitForTimeout(800); out.dUnseenAfter = await settled(page);
   out.dAll = await dcoll(0); await page.waitForTimeout(900);
-  out.dSortImdb = await (async () => { await page.locator('.tb-sort button, .segmented button', { hasText: 'IMDb' }).first().click(); return probe(page); })(); await page.waitForTimeout(900);
+  out.dSortImdb = await (async () => { await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250); await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); return probe(page); })(); await page.waitForTimeout(900);
   out.dHeader = await (async () => { await page.locator('.dl-head button', { hasText: 'Title' }).first().click(); return probe(page); })(); await page.waitForTimeout(900);
   // scrolled list: ghosts must sit where rows were
   await page.locator('.dlist').evaluate(el => el.scrollTop = 1500); await page.waitForTimeout(300);

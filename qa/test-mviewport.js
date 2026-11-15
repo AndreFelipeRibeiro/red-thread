@@ -115,7 +115,9 @@ const SIZES = {
     if (row.overscrollY !== 'none') errors.push(name + ': body overscroll-behavior-y is ' + row.overscrollY + ', expected none');
     if (row.docScrollable) errors.push(name + ': the document is scrollable');
     if (row.docMovedBy !== 0) errors.push(name + ': the document scrolled to ' + row.docMovedBy);
-    if (row.navBottomGap !== 0) errors.push(name + ': the sort bar sits ' + row.navBottomGap + 'px off the bottom edge');
+    // The bottom bar, when the phone has one (the sort tabs moved into the
+    // Sort menu; the navigation ticket brings a bar back).
+    if (row.navBottomGap != null && row.navBottomGap !== 0) errors.push(name + ': the bottom bar sits ' + row.navBottomGap + 'px off the bottom edge');
     if (row.listScrolls !== true) errors.push(name + ': the list no longer scrolls internally');
     R[name] = row;
     await ctx.close();

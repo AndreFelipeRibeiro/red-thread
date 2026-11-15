@@ -1,5 +1,7 @@
-// The phone header, the bottom sort bar and the Filters sheet's contents
-// (Notion "shadcn pass 1/5: toolbar, header and filters").
+// The phone header and the Filters sheet's contents (Notion "shadcn pass 1/5:
+// toolbar, header and filters"). The bottom sort bar is gone: sorting is one
+// Sort menu in the search row (Notion "Merge sort and order into one Sort
+// menu").
 //
 // Moved out of mobile.tsx so they can be built on the design system: this file
 // is listed with `@source` in src/index.css. Same controls, same places, same labels
@@ -11,18 +13,15 @@
 // sheet: 3/5).
 //
 // Class names the QA checks read are kept as hooks (`m-appbar`, `m-searchrow`,
-// `m-searchbar`, `m-fpill`, `m-fcount`, `m-row3`, `m-viewrow`, `m-tabs`,
-// `m-tab`, `on`, `m-chip`, `m-flab`, `m-apply`…); they carry no V3 styling.
+// `m-searchbar`, `m-fpill`, `m-fcount`, `m-row3`, `m-viewrow`, `on`,
+// `m-chip`, `m-flab`, `m-apply`…); they carry no V3 styling.
 import React from 'react';
 import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { SortOrderMenu, ViewMenu, CollectionSwitch } from './header-controls';
+import { SortMenu, ViewMenu, CollectionSwitch } from './header-controls';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
-
-// [value, icon]; labels come from sort.short.* in the active language.
-const SORT_TABS: [string, string][] = [['release', '▤'], ['chrono', '⇄'], ['phase', '◫'], ['title', '⇅'], ['imdb', '★'], ['rt', '◉']];
 
 // Layout moves (AGENTS.md, "Motion").
 const EASE = 'cubic-bezier(.2,.8,.2,1)';
@@ -41,6 +40,7 @@ export interface MobileTopBarProps {
   filterCount: number;
   sort: string;
   sortDir: string;
+  setSort: (sort: string) => void;
   setSortDir: (dir: 'asc' | 'desc') => void;
   onOpenAccount: () => void;
   onOpenSettings?: () => void;
@@ -51,13 +51,13 @@ export interface MobileTopBarProps {
   setCollectionFilter: (v: string) => void;
 }
 
-export function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenSettings, onOpenGuides, guideActive, guideName, collectionFilter, setCollectionFilter }: MobileTopBarProps) {
+export function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, onOpenGuides, guideActive, guideName, collectionFilter, setCollectionFilter }: MobileTopBarProps) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState<HTMLDivElement | null>(null);
   // An open guide shortens the bar (V3 Tasks, "Phone guide: one bar…"):
   // Filters folds away, the view menu slides up beside search and the
   // collection row folds up, all animated; what is hidden leaves the tab order.
-  // Order stays, dimmed outside Spatial (see GuideOff).
+  // Sort stays, dimmed outside Spatial (see GuideOff).
   const Off = window.GuideOff;
   const orderOff = guideActive && viewMode !== 'spatial';
   const fslot = React.useRef<HTMLSpanElement | null>(null), row3 = React.useRef<HTMLDivElement | null>(null);
@@ -122,7 +122,7 @@ export function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch,
           {search && <Button variant="secondary" size="icon-xs" className="m-clear shrink-0 rounded-full text-base leading-none text-muted-foreground"
             onClick={() => setSearch('')} aria-label={tr('search.clear')}>×</Button>}
         </div>
-        <Off off={orderOff}><SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/></Off>
+        <Off off={orderOff}><SortMenu sort={sort} sortDir={sortDir} onChange={(k, d) => { setSort(k); setSortDir(d); }} mobile/></Off>
         <span ref={fslot} className={cn('m-fslot flex max-w-11 flex-[0_0_auto] [clip-path:inset(-40px)] motion-reduce:transition-none',
           `[transition:max-width_600ms_${EASE},margin-left_600ms_${EASE},opacity_300ms_ease,clip-path_600ms_${EASE}]`,
           guideActive && '-ml-2 max-w-0 opacity-0 [clip-path:inset(0_0_0_100%)]')}>
@@ -149,44 +149,6 @@ export function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch,
           <ViewMenu viewMode={viewMode} setViewMode={setViewMode}/>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Tapping the sort tab that is already selected takes the List or Grid back to
-// the top, the tab-bar habit from iOS (Notion V4 Tasks, "Mobile: Press twice
-// resets the list"). It only scrolls: sort, order, filters and search stay, the
-// direction does not flip and nothing re-sorts, so no flip animation plays.
-// Spatial has no scroll area, so a second tap there does nothing.
-function scrollListToTop() {
-  const area = document.querySelector('.m-main .m-scrollarea');
-  if (!area || area.scrollTop === 0) return;
-  const still = window.MCU_MOTION.reduced();
-  area.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
-}
-
-// The bottom sort bar: shadcn's ToggleGroup, one choice, as a tab bar. While a
-// guide is open the bar slides down out of view (the guide has its own order)
-// and comes back when it closes; hidden, it is out of the tab order.
-export function SortTabs({ sort, setSort, away = false }: { sort: string; setSort: (s: string) => void; away?: boolean }) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
-  React.useEffect(() => { if (ref.current) { if (away) ref.current.setAttribute('inert', ''); else ref.current.removeAttribute('inert'); } }, [away]);
-  return (
-    <div ref={ref} aria-hidden={away || undefined}
-      className={cn('m-sort-footer relative z-30 flex-[0_0_auto] bg-background transition-transform duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
-        away && 'away absolute inset-x-0 bottom-0 translate-y-full')}>
-      <nav className="m-tabs relative z-30 flex flex-[0_0_auto] items-stretch border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,8px)] backdrop-blur-md" aria-label={tr('sort.navAria')}>
-        <ToggleGroup value={[sort]} className="flex w-full items-stretch gap-0"
-          onValueChange={(v: unknown[]) => { if (v.length) setSort(String(v[v.length - 1])); else scrollListToTop(); }}>
-          {SORT_TABS.map(([v, ic]) => (
-            <ToggleGroupItem key={v} value={v}
-              className={cn('m-tab h-auto min-h-[68px] flex-1 flex-col gap-[5px] rounded-none px-0.5 py-3 text-[length:max(12px,calc(var(--fs-xs)*var(--fs-chrome-scale,1)))] leading-[1.4] font-medium text-muted-foreground hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-foreground',
-                sort === v && 'on')}>
-              <span className="ti text-base leading-none">{ic}</span>{tr('sort.short.' + v)}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </nav>
     </div>
   );
 }
@@ -219,7 +181,6 @@ export interface FilterSheetProps {
   typeFilter: string; setTypeFilter: (v: string) => void;
   budgetFilter: string; setBudgetFilter: (v: string) => void;
   releaseFilter: string; setReleaseFilter: (v: string) => void;
-  sort: string; sortDir: string; setSortDir: (dir: 'asc' | 'desc') => void;
   onClose: () => void;
   showing: number;
   onClear: () => void;
@@ -228,7 +189,7 @@ export interface FilterSheetProps {
 // The Filters sheet: the phone's Filters panel. The sheet frame (handle,
 // swipe, Back, focus trap) is the shared `Sheet` in mobile.tsx; the contents
 // are on the design system.
-export function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, sort, sortDir, setSortDir, onClose, showing, onClear }: FilterSheetProps) {
+export function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, onClose, showing, onClear }: FilterSheetProps) {
   const Sheet = window.Sheet;
   const MPHASE_COLORS = window.MPHASE_COLORS as Record<string, string>;
   return (
@@ -251,12 +212,10 @@ export function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFi
           items={[['all', 'filters.all'], ['low', 'budget.low'], ['mid', 'budget.mid'], ['high', 'budget.high'], ['mega', 'budget.mega']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
         <ChipGroup label={tr('filter.release')} value={releaseFilter} onChange={setReleaseFilter}
           items={[['all', 'filter.release.all'], ['released', 'filter.release.released']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-        <ChipGroup label={tr('order.label')} value={sortDir} onChange={(v) => setSortDir(v as 'asc' | 'desc')}
-          items={window.sortDirectionLabels(sort).map((label: string, i: number) => ({ value: i === 0 ? 'asc' : 'desc', content: label }))}/>
         <Button className="m-apply mt-1 h-auto min-h-10 w-full" onClick={onClose}>{tr('filters.show', { n: showing })}</Button>
       </div>
     </Sheet>
   );
 }
 
-Object.assign(window, { MobileTopBar, SortTabs, FilterSheet });
+Object.assign(window, { MobileTopBar, FilterSheet });

@@ -104,7 +104,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.mUnmark = await st(page);
   await page.waitForTimeout(200);
   await mrow('Guardians of the Galaxy').locator('.tsa-btn.seen').tap(); await page.waitForTimeout(150);
-  out.mList = await st(page); out.mTabsTop = await page.evaluate(() => Math.round(innerHeight - document.querySelector('.m-sort-footer').getBoundingClientRect().top));
+  out.mList = await st(page);
   await page.screenshot({ path: path.join(S, 'shots', 'cel-m-list.png') });
   // inside the details sheet: toast at the top and its Undo still works
   await page.locator('.m-lrow-open', { hasText: 'Ant-Man' }).first().tap(); await page.waitForTimeout(700);

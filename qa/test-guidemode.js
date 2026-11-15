@@ -9,8 +9,8 @@
 //   laid out and lit, and the count summary is hidden;
 // - closing the guide brings Series back and every control on again;
 // - phones: the bar shortens (Filters and the collection row fold away, the
-//   view menu sits beside search; Order dimmed outside Spatial), the sort tabs
-//   slide away, the List's last card scrolls clear of the dock, the dock's
+//   view menu sits beside search; Sort dimmed outside Spatial), the List's
+//   last card scrolls clear of the dock, the dock's
 //   arrows reach the destination, and closing brings it all back; in Spatial the dock shows the
 //   next stop with Seen (no meter or Up next card), the next stop is framed at
 //   a readable size, and the zoom control rests hidden until a double-tap;
@@ -82,12 +82,11 @@ const OFF = (sels) => {
   return r;
 };
 const DESK_SELS = {
-  sort: '.tb-sort-controls button', order: '.tb-order-control button', filters: '.filters-pop-wrap > .filters-pill',
+  sort: '.tb-sort-control .sort-menu-trigger', filters: '.filters-pop-wrap > .filters-pill',
   type: '.tb-type-controls button', collection: '.tb-sort-row .coll-switch button', view: '.tb-view-switch button',
 };
-const PHONE_SELS = { order: '.m-searchrow .sort-order:not(.view-menu) button', filters: '.m-fpill', collection: '.m-viewrow .coll-switch button' };
-// The phone sort tabs slide out of view during a guide (inert, aria-hidden).
-const TABS_AWAY = () => { const f = document.querySelector('.m-sort-footer'); return !!f && f.classList.contains('away') && f.hasAttribute('inert') && f.getBoundingClientRect().top >= innerHeight - 1; };
+// The phone's Sort menu (it replaced the Order toggle and the sort tabs).
+const PHONE_SELS = { sort: '.m-searchrow .sort-menu-trigger', filters: '.m-fpill', collection: '.m-viewrow .coll-switch button' };
 const CANVAS = () => {
   const cards = [...document.querySelectorAll('.card')].filter(c => c.querySelector('.card-gnum'));
   return { stops: cards.length, dimmed: cards.filter(c => c.classList.contains('dimmed') || c.classList.contains('coll-dim')).length,
@@ -108,7 +107,7 @@ const CANVAS = () => {
     await page.goto(URL + '?view=list&type=series&guide=infinity-saga'); await appReady(page);
     let s = await page.evaluate(OFF, DESK_SELS);
     out.deskList = s;
-    expect(s.sort === 'off' && s.order === 'off' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop List: ${JSON.stringify(s)}`);
+    expect(s.sort === 'off' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop List: ${JSON.stringify(s)}`);
     expect(s.view === 'on', 'desktop List: the view switch is off');
     const b = await page.evaluate(() => { const g = document.querySelector('.g-btn'); const h = document.getElementById('guide-off-hint');
       return { on: g.classList.contains('on'), name: g.getAttribute('aria-label'), hint: h && h.textContent,
@@ -120,25 +119,26 @@ const CANVAS = () => {
     expect(b.search, 'search is disabled in a guide');
     // A click on a dimmed control changes nothing, by mouse or keyboard.
     await page.locator('.tb-type-controls button', { hasText: 'Films' }).click({ force: true });
-    await page.locator('.tb-sort-controls button').nth(1).focus(); await page.keyboard.press('Enter');
+    await page.locator('.tb-sort-control .sort-menu-trigger').focus(); await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
     const kept = await page.evaluate(() => ({ type: (document.querySelector('.tb-type-controls button.on') || {}).textContent,
-      sort: (document.querySelector('.tb-sort-controls button.on .lg') || {}).textContent, url: location.search }));
+      sortOpen: !!document.querySelector('.sort-menu-pop'), url: location.search }));
     out.deskKept = kept;
-    expect(kept.type === 'Series' && kept.sort === 'Release' && /type=series/.test(kept.url), `a dimmed control acted: ${JSON.stringify(kept)}`);
+    expect(kept.type === 'Series' && !kept.sortOpen && /type=series/.test(kept.url), `a dimmed control acted: ${JSON.stringify(kept)}`);
 
-    // Spatial: the layout tabs and Order come back; the whole guide is laid out.
+    // Spatial: Sort comes back; the whole guide is laid out.
     await page.locator('.tb-view-switch button').first().click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
     out.deskSpatial = s;
-    expect(s.sort === 'on' && s.order === 'on' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop Spatial: ${JSON.stringify(s)}`);
+    expect(s.sort === 'on' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop Spatial: ${JSON.stringify(s)}`);
     let c = await page.evaluate(CANVAS);
     out.deskCanvas = c;
     expect(c.stops === 10 && c.dimmed === 0 && c.films >= 9, `Spatial with Series set: ${JSON.stringify(c)}`);
     expect(!c.summary, 'the count summary shows during a guide');
-    await page.locator('.tb-sort-controls button').nth(1).click(); await page.waitForTimeout(400);
-    const sortNow = await page.evaluate(() => (document.querySelector('.tb-sort-controls button.on .lg') || {}).textContent);
-    expect(sortNow === 'Chronological', `a layout tab did not work in Spatial: ${sortNow}`);
+    await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
+    await page.locator('.sort-menu-pop [data-sort="chrono"][data-dir="asc"]').click(); await page.waitForTimeout(400);
+    const sortNow = await page.evaluate(() => (document.querySelector('.sort-menu-trigger') || {}).textContent);
+    expect(sortNow === 'Story order', `Sort did not work in Spatial: ${sortNow}`);
 
     // Closing the guide: Series is back and every control is on.
     await page.locator('.guide-banner .cb-close, .cb-close').first().click(); await page.waitForTimeout(1200);
@@ -166,12 +166,11 @@ const CANVAS = () => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'pt-BR' });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(700);
-    let s = await page.evaluate(OFF, { order: PHONE_SELS.order });
+    let s = await page.evaluate(OFF, { sort: PHONE_SELS.sort });
     let b = await page.evaluate(BAR);
     out.phoneList = { s, b };
-    expect(s.order === 'off', `phone List, Order: ${JSON.stringify(s)}`);
+    expect(s.sort === 'off', `phone List, Sort: ${JSON.stringify(s)}`);
     expect(b.short && b.filtersAway && b.rowAway && b.viewBeside && b.row3H === 0, `phone List, short bar: ${JSON.stringify(b)}`);
-    expect(await page.evaluate(TABS_AWAY), 'phone List: the sort tabs did not slide away during the guide');
     const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
     expect(hint === 'Não se aplica a um guia. Feche o guia para usar.', `pt-BR hint: ${hint}`);
     // Scrolled to the end, the destination card sits wholly above the dock.
@@ -194,23 +193,22 @@ const CANVAS = () => {
     expect(!(await page.locator('.g-stop.dest.current').count()), 'phone List: the arrows did not wrap past the destination');
     await page.locator('.m-fpill').tap({ force: true }).catch(() => {}); await page.waitForTimeout(400);
     expect(!(await page.locator('.m-sheet').count()), 'the folded-away Filters button opened its sheet');
-    // Closing the guide brings the full bar and the sort tabs back.
+    // Closing the guide brings the full bar back.
     await page.locator('.guide-pill .cb-close').tap(); await page.waitForTimeout(900);
     b = await page.evaluate(BAR);
-    const back = await page.evaluate(() => { const f = document.querySelector('.m-sort-footer'); return { tabs: !!f && !f.classList.contains('away') && !f.hasAttribute('inert'), views: document.querySelectorAll('.view-menu').length }; });
+    const back = await page.evaluate(() => ({ views: document.querySelectorAll('.view-menu').length }));
     out.phoneClosed = { b, back };
-    expect(!b.short && !b.filtersAway && !b.rowAway && !b.viewBeside && b.row3H > 30 && back.tabs && back.views === 1, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);
+    expect(!b.short && !b.filtersAway && !b.rowAway && !b.viewBeside && b.row3H > 30 && back.views === 1, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);
     errors.push(...e);
     await ctx.close();
   }
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'en' });
     await page.goto(URL + '?view=spatial&type=series&guide=infinity-saga'); await appReady(page); await page.waitForTimeout(900);
-    const s = await page.evaluate(OFF, { order: PHONE_SELS.order });
+    const s = await page.evaluate(OFF, { sort: PHONE_SELS.sort });
     const b = await page.evaluate(BAR);
     out.phoneSpatial = { s, b };
-    expect(s.order === 'on' && b.short && b.filtersAway && b.rowAway, `phone Spatial: ${JSON.stringify(out.phoneSpatial)}`);
-    expect(await page.evaluate(TABS_AWAY), 'phone Spatial: the sort tabs did not slide away during the guide');
+    expect(s.sort === 'on' && b.short && b.filtersAway && b.rowAway, `phone Spatial: ${JSON.stringify(out.phoneSpatial)}`);
     const c = await page.evaluate(CANVAS);
     out.phoneCanvas = c;
     expect(c.stops === 10 && c.dimmed === 0 && !c.summary, `phone Spatial with Series set: ${JSON.stringify(c)}`);
