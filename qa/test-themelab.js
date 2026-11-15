@@ -2,8 +2,10 @@
 // directions on the real app"):
 // - a production-like host (here 127.0.0.1, a built site) shows no lab and no
 //   lab styles;
-// - forced on (window.__THEME_LAB, as development and Vercel previews are),
-//   the button opens the panel; Editorial and Studio change the theme's
+// - no button (Notion "Theme lab: hide the button; open it with T"): T
+//   opens and closes it, Esc closes it, a T typed in search does nothing, and
+//   on a phone a long press on the wordmark or `?lab` opens it;
+// - forced on (window.__THEME_LAB, as development and Vercel previews are), Editorial and Studio change the theme's
 //   variables in both themes, the display face reaches My list's title, the
 //   radius and density knobs set --radius and --spacing;
 // - the choice survives a reload; "Back to the app's own look" removes every
@@ -23,7 +25,7 @@ return;
 const VARS = () => {
   const cs = getComputedStyle(document.documentElement);
   return { bg: cs.getPropertyValue('--background').trim(), primary: cs.getPropertyValue('--primary').trim(), radius: cs.getPropertyValue('--radius').trim(),
-    spacing: cs.getPropertyValue('--spacing').trim(), style: !!document.getElementById('theme-lab-style'), btn: !!document.querySelector('.theme-lab-btn'),
+    spacing: cs.getPropertyValue('--spacing').trim(), style: !!document.getElementById('theme-lab-style'), btn: !!document.querySelector('.theme-lab-btn'), panel: !!document.querySelector('.theme-lab'),
     title: (() => { const t = document.querySelector('.ml-title'); return t ? getComputedStyle(t).fontFamily : null; })() };
 };
 const pick = (page, sel, value) => page.evaluate(([s, v]) => {
@@ -48,6 +50,8 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     const v = await page.evaluate(VARS);
     out.production = v;
     expect(!v.btn && !v.style, `the lab shows outside development and previews: ${JSON.stringify(v)}`);
+    await page.locator('body').press('t'); await page.waitForTimeout(200);
+    expect(!(await page.locator('.theme-lab').count()), 'T opened the lab in production');
     errors.push(...e);
     await ctx.close();
   }
@@ -56,9 +60,17 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     await page.goto(URL); await settle(page);
     const base = await page.evaluate(VARS);
     out[scheme + ' default'] = base;
-    expect(base.btn && !base.style, `${scheme}: default look: ${JSON.stringify(base)}`);
-    await page.locator('.theme-lab-btn').click(); await page.waitForTimeout(200);
-    expect(await page.locator('.theme-lab').count() === 1, `${scheme}: the panel did not open`);
+    expect(!base.btn && !base.panel && !base.style, `${scheme}: default look, no button, closed: ${JSON.stringify(base)}`);
+    // A T typed in search is a T.
+    await page.locator('.search-wrap input').first().click(); await page.keyboard.press('t'); await page.waitForTimeout(200);
+    expect(!(await page.locator('.theme-lab').count()), `${scheme}: a T typed in search opened the lab`);
+    await page.locator('.search-wrap input').first().fill(''); await page.keyboard.press('Escape'); await page.locator('body').click({ position: { x: 5, y: 300 } }).catch(() => {});
+    await page.locator('body').press('t'); await page.waitForTimeout(200);
+    expect(await page.locator('.theme-lab').count() === 1, `${scheme}: T did not open the panel`);
+    expect(await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-tl')) === 'preset', `${scheme}: T did not put focus in the panel`);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+    expect(!(await page.locator('.theme-lab').count()), `${scheme}: Esc did not close the panel`);
+    await page.locator('body').press('t'); await page.waitForTimeout(200);
     await pick(page, 'preset', 'editorial'); await page.waitForTimeout(300);
     const ed = await page.evaluate(VARS);
     out[scheme + ' editorial'] = ed;
@@ -76,8 +88,9 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     const again = await page.evaluate(VARS);
     out[scheme + ' reload'] = again;
     expect(again.bg === st.bg && again.radius === '1rem', `${scheme}: the choice did not survive a reload: ${JSON.stringify(again)}`);
-    // A pasted export.
-    await page.locator('.theme-lab-btn').click(); await page.waitForTimeout(200);
+    // Closed again on every load; T opens it. A pasted export.
+    expect(!(await page.locator('.theme-lab').count()), `${scheme}: the panel reopened on its own after a reload`);
+    await page.locator('body').press('t'); await page.waitForTimeout(200);
     await page.locator('.theme-lab details summary').click();
     await page.fill('[data-tl="paste"]', ':root { --background: #fafaf0; --primary: #8a2be2; }\n.dark { --background: #101010; --primary: #b388ff; }');
     await page.locator('[data-tl="paste-apply"]').click(); await page.waitForTimeout(300);
@@ -92,13 +105,28 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     errors.push(...e);
     await ctx.close();
   }
-  // Phones: the button sits above the bottom bar.
+  // Phones: no button; a long press on the wordmark opens the panel (above the
+  // bottom bar) without following the home link; a short tap does not; ?lab
+  // opens it too.
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }, prefs, {}, 'window.__THEME_LAB = true;');
-    await page.goto(URL); await settle(page);
-    const p = await page.evaluate(() => { const b = document.querySelector('.theme-lab-btn').getBoundingClientRect(), n = document.querySelector('.m-tabs').getBoundingClientRect(); return { btnBottom: Math.round(b.bottom), barTop: Math.round(n.top) }; });
+    const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, prefs, {}, 'window.__THEME_LAB = true;');
+    await page.goto(URL + '?view=list&sort=title'); await settle(page);
+    const press = async (ms) => {
+      const b = await page.locator('.m-brandrow').boundingBox();
+      await page.mouse.move(b.x + 30, b.y + b.height / 2); await page.mouse.down(); await page.waitForTimeout(ms); await page.mouse.up(); await page.waitForTimeout(400);
+    };
+    expect(!(await page.locator('.theme-lab-btn, .theme-lab').count()), 'phone: a lab button or panel shows on load');
+    await press(150);
+    expect(!(await page.locator('.theme-lab').count()), 'phone: a short tap on the wordmark opened the lab');
+    await page.goto(URL + '?view=list&sort=title'); await settle(page);
+    await press(1200);
+    const p = await page.evaluate(() => { const l = document.querySelector('.theme-lab'), n = document.querySelector('.m-tabs'); return { open: !!l, url: location.search, labBottom: l && Math.round(l.getBoundingClientRect().bottom), barTop: n && Math.round(n.getBoundingClientRect().top) }; });
     out.phone = p;
-    expect(p.btnBottom <= p.barTop, `phone: the lab button sits on the bottom bar: ${JSON.stringify(p)}`);
+    expect(p.open && /sort=title/.test(p.url), `phone: the long press did not open the lab, or went home: ${JSON.stringify(p)}`);
+    expect(!p.open || p.labBottom <= p.barTop, `phone: the lab sits on the bottom bar: ${JSON.stringify(p)}`);
+    await page.goto(URL + '?lab'); await settle(page);
+    expect(await page.locator('.theme-lab').count() === 1, 'phone: ?lab did not open the lab');
     errors.push(...e);
     await ctx.close();
   }

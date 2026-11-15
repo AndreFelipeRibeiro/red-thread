@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 improvement — Theme lab: no button; T opens it
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The floating Theme lab button is gone. T opens and closes it (never while
+  typing), Esc closes it first; on a phone, a long press on the wordmark or
+  `?lab` opens it. It starts closed on every load; production ignores all of
+  it.
+- Verified: `test-themelab` rewritten; full `qa/regress.sh` on the final tree, 62 check runs clean.
+- Limits: a real iPhone long press not checked.
+
 ## V5 design — One quiet seen mark: the picker and guide stops
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

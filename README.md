@@ -412,8 +412,10 @@ a service worker.
 
 ### Theme lab (development and previews only)
 
-In development (`npm run dev`) and on Vercel previews (`*.vercel.app`), a
-"Theme lab" button sits in the bottom-left corner. It swaps theme presets live
+In development (`npm run dev`) and on Vercel previews (`*.vercel.app`), press
+**T** to open or close the Theme lab (Esc closes it too); on a phone, press and
+hold the Red Thread wordmark for about a second, or add `?lab` to the address.
+It starts closed on every load, with no button on screen. It swaps theme presets live
 on the real app: Default, Editorial (from the V5 navigation hi-fi screens) and
 Studio, plus the body and display typefaces, the corner radius, the density
 and any pasted tweakcn / shadcn export. The choice is kept per device. It never
