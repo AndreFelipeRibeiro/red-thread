@@ -92,7 +92,7 @@ const PHONE_SELS = { sort: '.m-toolrow .sort-menu-trigger', filters: '.m-toolrow
 const CANVAS = () => {
   const cards = [...document.querySelectorAll('.card')].filter(c => c.querySelector('.card-gnum'));
   return { stops: cards.length, dimmed: cards.filter(c => c.classList.contains('dimmed') || c.classList.contains('coll-dim')).length,
-    films: cards.filter(c => /FILM/.test((c.querySelector('.type-badge') || {}).textContent || '')).length,
+    films: cards.filter(c => (window.TITLES.find(t => t.id === c.dataset.id) || {}).type === 'film').length,
     summary: !!document.querySelector('.ctx-float, .ctx-pill') };
 };
 

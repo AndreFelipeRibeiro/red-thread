@@ -21,9 +21,15 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 const ON_POSTER = /\b(card-tsa|m-card-tsa|m-fp-tsa|g-card-tsa)\b/;
 const GLASS = 'border-[#ffffff26] bg-[rgba(10,12,20,0.78)] text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-[rgba(10,12,20,0.92)] hover:text-(--on-image) dark:border-[#ffffff26] dark:bg-[rgba(10,12,20,0.78)] dark:hover:bg-[rgba(10,12,20,0.92)]';
 const ON = {
-  seen: 'border-(--status-seen) bg-(--status-seen) text-(--on-color) hover:bg-(--status-seen) hover:text-(--on-color) dark:border-(--status-seen) dark:bg-(--status-seen) dark:hover:bg-(--status-seen)',
+  // Seen is quiet (Notion "Simplify the Spatial cards": with real progress a
+  // solid green button on most titles was the loudest colour on screen): a
+  // soft tint, a tinted border and the check in the seen colour.
+  seen: 'border-[color-mix(in_oklab,var(--status-seen)_55%,var(--border))] bg-[color-mix(in_oklab,var(--status-seen)_14%,transparent)] text-(--status-seen) hover:bg-[color-mix(in_oklab,var(--status-seen)_22%,transparent)] hover:text-(--status-seen) dark:border-[color-mix(in_oklab,var(--status-seen)_55%,var(--border))] dark:bg-[color-mix(in_oklab,var(--status-seen)_16%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--status-seen)_24%,transparent)]',
   watch: 'border-(--status-watch) bg-(--status-watch) text-(--on-color) hover:bg-(--status-watch) hover:text-(--on-color) dark:border-(--status-watch) dark:bg-(--status-watch) dark:hover:bg-(--status-watch)',
 };
+// Seen on a poster: the dark glass stays (a tint would let the art through),
+// with the check and border in a light seen green.
+const ON_GLASS_SEEN = 'border-[#5fa856] bg-[rgba(10,12,20,0.85)] text-[#7cc472] hover:bg-[rgba(10,12,20,0.95)] hover:text-[#8fd384] dark:border-[#5fa856] dark:bg-[rgba(10,12,20,0.85)] dark:hover:bg-[rgba(10,12,20,0.95)]';
 // The button just switched on pops, and a ring in its colour spreads from it
 // (Notion V4 Tasks, "Micro-interaction: the Seen check pops in…"); lifted
 // above its neighbour so the ring is never hidden. Keyframes: src/index.css.
@@ -99,7 +105,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
     ? 'h-auto min-h-[max(40px,2.5rem)] gap-[7px] px-2.5 text-xs [&_svg]:size-[14px] [&_svg]:flex-[0_0_14px]'
     : 'size-8 p-0 text-muted-foreground [&_svg]:size-[15px]';
   const btn = (kind: 'seen' | 'watch', on: boolean) => cn('tsa-btn relative transition-[color,border-color,background-color,scale] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100',
-    size, onPoster && GLASS, on && ON[kind], busy && 'opacity-75', error && 'border-destructive dark:border-destructive',
+    size, onPoster && GLASS, on && (onPoster && kind === 'seen' ? ON_GLASS_SEEN : ON[kind]), busy && 'opacity-75', error && 'border-destructive dark:border-destructive',
     kind === 'seen' ? '[--pop:var(--status-seen)]' : '[--pop:var(--status-watch)]', kind, on && 'on', pop === kind && cn('pop', inline ? POP_INLINE : POP));
   const spinner = <span className={TSA_SPIN} aria-hidden="true"/>;
 

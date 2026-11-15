@@ -13,6 +13,22 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Simpler Spatial cards
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Nothing sits on the posters any more. Under each card: the title, a dot in
+  its phase colour, the year, and a small check once seen.
+- Hovering a card, or tabbing to its buttons, shows a band with the scores,
+  the budget and Seen / Watchlist; touch screens and small zooms leave it
+  out.
+- Seen, when on, is a soft green tint everywhere instead of a solid fill.
+- QA: new `test-cards`.
+- Verified: typecheck and build; full `qa/regress.sh` with the Account
+  ticket, 61 check runs clean; light and dark themes.
+- Limits: the "What have you seen?" picker and guide stops keep their own
+  seen marks (a follow-up ticket).
+
 ## V5 feature — Phone: bottom bar for Explore, My list and Guides
 
 Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
