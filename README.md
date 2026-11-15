@@ -601,9 +601,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/desktop-list.tsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `src/app/search-suggest.tsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `src/app/poster.tsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
-| `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
-| `src/index.css` | The V4 design tokens: shadcn's CSS variables with a light `:root` block and a `.dark` block, the phase colours as `--phase-1`…`--phase-6` in both, and the Tailwind entry, with the reset scoped to `.v4` and classes generated only from the files listed with `@source`. The app and `design.html` both load it |
-| `src/preflight-v4.css` | Tailwind's preflight reset, scoped to `.v4` while V3 and the design system share the page. Generated, and temporary |
+| `src/index.css` | The design tokens: shadcn's CSS variables with a light `:root` block and a `.dark` block, the phase colours as `--phase-1`…`--phase-6` in both, and the Tailwind entry, with classes generated only from the files listed with `@source`; plus the keyframes and the few page-level rules (page background, search highlights, logo masks, Reduce motion). The app and `design.html` both load it. Every surface is styled on its components; V3's `styles.css` and `styles-mobile.css` are gone (shadcn pass, 2026-11-14) |
+| `src/app/shell.tsx`, `src/app/banners.tsx`, `src/app/list-parts.tsx` | Class recipes for markup in `app.tsx` and `mobile.tsx` (the app frame, Spatial's viewport and threads, the phone frame and focus card; the pinned character's banner and pill and the guide's stepper; the List and Grid rows, meters and score chips) |
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
 | `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
 | `src/app/share-image.tsx` | The share card dialog (desktop) and sheet (phone): the progress or finished-guide image, Share image, Download image, Copy link |

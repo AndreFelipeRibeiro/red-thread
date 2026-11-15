@@ -2,8 +2,7 @@
 // (Notion "shadcn pass 1/5: toolbar, header and filters").
 //
 // Moved out of mobile.tsx so they can be built on the design system: this file
-// is listed with `@source` in src/index.css, and each root carries `v4` (the
-// scoped reset, src/preflight-v4.css). Same controls, same places, same labels
+// is listed with `@source` in src/index.css. Same controls, same places, same labels
 // as before; only the building blocks changed.
 //
 // Still V3 inside the app bar, for later passes of the same epic: the sync
@@ -84,7 +83,7 @@ export function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch,
   const viewRow = React.useRef<HTMLDivElement | null>(null);
   const fit = window.useFitSteps(viewRow, 3, [lang, collectionFilter, viewMode]);
   return (
-    <div role="banner" className={cn('m-appbar v4 z-50 flex flex-[0_0_auto] flex-col gap-2.5 border-b border-border bg-background/94 px-3.5 pt-2.5 pb-[11px] backdrop-blur-md min-[600px]:px-5 min-[600px]:pt-3 min-[600px]:pb-[13px]',
+    <div role="banner" className={cn('m-appbar z-50 flex flex-[0_0_auto] flex-col gap-2.5 border-b border-border bg-background/94 px-3.5 pt-2.5 pb-[11px] backdrop-blur-md min-[600px]:px-5 min-[600px]:pt-3 min-[600px]:pb-[13px]',
       guideActive && 'guide')}>
       {guideActive && <window.GuideOffHint/>}
       <div className="m-appbar-top flex items-center justify-between gap-2">
@@ -97,12 +96,17 @@ export function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch,
         </a>
         <window.SyncStatus/>
         {onOpenGuides && (
-          <button type="button" className={`m-gbtn${guideActive ? ' on' : ''}`} onClick={onOpenGuides}
-            aria-label={guideActive && guideName ? tr('guide.buttonOpen', { name: guideName }) : tr('guide.button')} title={tr('guide.button')}><window.GuideIcon size={18}/><span className="m-gbtn-label" aria-hidden="true">{tr('guide.button')}</span></button>
+          // Icon only on narrow phones; "Guides" joins it once the full app
+          // name still fits beside it (measured 2026-10-30: from 430px in
+          // English and 420px in Portuguese; 460px leaves room for the sync dot).
+          <Button type="button" variant="outline" onClick={onOpenGuides}
+            className={cn('m-gbtn size-[max(38px,2.375rem)] flex-[0_0_38px] gap-[7px] p-0 transition-[scale,background-color,color,border-color,box-shadow] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 min-[460px]:w-auto min-[460px]:flex-none min-[460px]:pr-3 min-[460px]:pl-2.5 [:root.reduce-motion_&]:active:scale-100',
+              guideActive && 'on border-primary bg-muted dark:border-primary')}
+            aria-label={guideActive && guideName ? tr('guide.buttonOpen', { name: guideName }) : tr('guide.button')} title={tr('guide.button')}><window.GuideIcon size={18}/><span className="m-gbtn-label hidden text-sm font-semibold whitespace-nowrap min-[460px]:inline" aria-hidden="true">{tr('guide.button')}</span></Button>
         )}
         {/* The language menu moved into Settings; the gear takes its place, so
             the bar keeps the same number of buttons. */}
-        {onOpenSettings && <window.SettingsButton onOpen={onOpenSettings} className="m-settings-btn"/>}
+        {onOpenSettings && <window.SettingsButton onOpen={onOpenSettings} className="m-settings-btn size-[max(38px,2.375rem)] flex-[0_0_38px]"/>}
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
       <div className="m-searchrow relative flex items-center gap-2" ref={setSearchRow}>
@@ -169,7 +173,7 @@ export function SortTabs({ sort, setSort, away = false }: { sort: string; setSor
   React.useEffect(() => { if (ref.current) { if (away) ref.current.setAttribute('inert', ''); else ref.current.removeAttribute('inert'); } }, [away]);
   return (
     <div ref={ref} aria-hidden={away || undefined}
-      className={cn('m-sort-footer v4 relative z-30 flex-[0_0_auto] bg-background transition-transform duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
+      className={cn('m-sort-footer relative z-30 flex-[0_0_auto] bg-background transition-transform duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
         away && 'away absolute inset-x-0 bottom-0 translate-y-full')}>
       <nav className="m-tabs relative z-30 flex flex-[0_0_auto] items-stretch border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,8px)] backdrop-blur-md" aria-label={tr('sort.navAria')}>
         <ToggleGroup value={[sort]} className="flex w-full items-stretch gap-0"
@@ -229,7 +233,7 @@ export function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFi
   const MPHASE_COLORS = window.MPHASE_COLORS as Record<string, string>;
   return (
     <Sheet onClose={onClose} tall label={tr('filters.title')}>
-      <div className="v4">
+      <div>
         <div className="mb-4 flex items-center justify-between">
           <div className="text-lg font-semibold tracking-tight">{tr('filters.title')}</div>
           <Button variant="ghost" className="-m-2 h-auto p-2 text-sm" onClick={onClear}>{tr('filters.clearAll')}</Button>

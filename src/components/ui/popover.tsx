@@ -31,10 +31,9 @@ function PopoverContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        // v4: portaled to <body>, outside any surface (src/preflight-v4.css).
         // z-80: above the sticky toolbar (z-70), which opens popovers over its
         // own second row, and above the details drawer (60).
-        className="v4 isolate z-80"
+        className="isolate z-80"
       >
         <PopoverPrimitive.Popup
           data-slot="popover-content"

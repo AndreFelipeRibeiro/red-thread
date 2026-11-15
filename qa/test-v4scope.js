@@ -1,16 +1,13 @@
-// The design system's seam with V3 (Notion V4 Tasks, "Phase 4 — wire the
-// design system into the app"). Through Phase 4 the app is part V3 and part
-// design system, and this check holds the line between them:
-//   1. The reset stays out of V3. Tailwind's preflight is scoped to .v4
-//      (src/preflight-v4.css); applied to the whole page it changed 166
-//      computed properties on V3 elements. Outside .v4 the page must keep the
-//      browser defaults V3 was written against.
-//   2. The reset works inside .v4, which is how every surface ticket opts in.
-//   3. The two token sets don't collide, and V3's follow the design system's.
-//      V3's colour tokens are --v3-*, so shadcn's --border and --accent keep
-//      their own values; since the first re-skin pass each --v3-* token is
-//      defined from its design-system counterpart, so V3's rules follow the
-//      theme, and so do native controls (color-scheme).
+// The design system owns the whole page (Notion "shadcn pass 6", which
+// deleted V3's stylesheets; before it this check held the seam between V3 and
+// the design system). It checks:
+//   1. No V3 stylesheet is loaded (styles.css, styles-mobile.css, the scoped
+//      reset), and no V3 colour token (--v3-*) is defined any more.
+//   2. Tailwind's reset applies everywhere, not only inside .v4: a probe
+//      added anywhere gets it, and native controls follow the theme
+//      (color-scheme).
+//   3. shadcn's tokens hold their own values (V3's old --border and --accent
+//      never come back).
 //   4. The theme is wired: the class follows the system before the bundle
 //      arrives, an override survives a reload, and clearing it goes back to
 //      following the system.
@@ -50,25 +47,13 @@ async function open(browser, opts, errors, label) {
   return { ctx, page };
 }
 
-// What the page looks like from inside: V3's elements, a probe opted into
-// .v4, the tokens and the theme.
+// What the page looks like from inside: its stylesheets, a probe added with
+// no class at all, the tokens and the theme.
 const SNAPSHOT = () => {
   const root = document.documentElement, cs = getComputedStyle(root);
-  const outside = el => !el.closest('.v4');
-  // V3 icons the reset would move: V3 makes them block itself but leaves their
-  // vertical-align at the browser's baseline, which the reset sets to middle.
-  // The toolbar's icons moved inside .v4 with shadcn pass 1/5, and the cards,
-  // Seen / Watchlist and Up next with 2/5, and the phone List rows with 4/5,
-  // which left no V3 icon on the phone page. So the sample is the canvas's
-  // thread layer where there is one (desktop) plus an icon of the check's
-  // own, placed outside .v4 the way any V3 icon sits: it says whether the
-  // reset reaches V3 whatever the page still holds.
-  const own = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  own.setAttribute('class', 'v3-probe');
-  document.body.appendChild(own);
-  const svgs = [...document.querySelectorAll('svg.connection-layer, svg.v3-probe')].filter(outside);
+  const v3Sheets = [...document.querySelectorAll('link[rel="stylesheet"]')].map(l => l.getAttribute('href') || '')
+    .filter(h => /(^|\/)(styles|styles-mobile|preflight-v4)(\.[a-z0-9]+)?\.css/i.test(h));
   const probe = document.createElement('div');
-  probe.className = 'v4';
   probe.innerHTML = '<button type="button">probe</button><svg width="10" height="10"></svg><ul><li>x</li></ul>';
   document.body.appendChild(probe);
   const p = getComputedStyle(probe), pb = getComputedStyle(probe.querySelector('button'));
@@ -76,12 +61,9 @@ const SNAPSHOT = () => {
     dark: root.classList.contains('dark'),
     choice: window.MCU_THEME ? window.MCU_THEME.getChoice() : null,
     stored: localStorage.getItem('mcu.theme'),
-    htmlLineHeight: cs.lineHeight,
     htmlColorScheme: cs.colorScheme,
-    v3Svgs: svgs.map(el => el.getAttribute('class') + ':' + getComputedStyle(el).verticalAlign),
-    v3Border: cs.getPropertyValue('--v3-border').trim(),
-    v3Accent: cs.getPropertyValue('--v3-accent').trim(),
-    v3Text: cs.getPropertyValue('--v3-text').trim(),
+    v3Sheets,
+    v3Tokens: ['--v3-bg', '--v3-border', '--v3-accent', '--v3-text', '--v3-text-dim'].filter(t => cs.getPropertyValue(t).trim()),
     primary: cs.getPropertyValue('--primary').trim(),
     border: cs.getPropertyValue('--border').trim(),
     accent: cs.getPropertyValue('--accent').trim(),
@@ -95,7 +77,7 @@ const SNAPSHOT = () => {
   // The probe's colour should be --foreground, resolved by the same engine.
   const ref = document.createElement('div'); ref.style.color = 'var(--foreground)'; document.body.appendChild(ref);
   out.foregroundResolved = getComputedStyle(ref).color;
-  ref.remove(); probe.remove(); own.remove();
+  ref.remove(); probe.remove();
   return out;
 };
 
@@ -126,24 +108,20 @@ const SNAPSHOT = () => {
     const s = await page.evaluate(SNAPSHOT);
     seen[tag] = s;
 
-    // 1. V3 keeps the browser's defaults.
-    if (s.htmlLineHeight !== 'normal') errors.push(tag + ': <html> line-height is ' + s.htmlLineHeight + ', not normal — the reset reached V3');
-    if (s.htmlColorScheme !== scheme) errors.push(tag + ': <html> color-scheme is ' + s.htmlColorScheme + ', not ' + scheme + ' — native controls do not follow the theme');
-    if (!s.v3Svgs.length) errors.push(tag + ': none of the V3 icons this check reads is on the page');
-    for (const v of s.v3Svgs) if (!v.endsWith(':baseline')) errors.push(tag + ': V3 icon vertical-align ' + v + ', not baseline');
-    // 2. Inside .v4 the reset applies.
+    // 1. Nothing of V3's styling is left.
+    if (s.v3Sheets.length) errors.push(tag + ': V3 stylesheets still loaded: ' + s.v3Sheets.join(', '));
+    if (s.v3Tokens.length) errors.push(tag + ': V3 colour tokens still defined: ' + s.v3Tokens.join(', '));
+    // 2. The reset applies everywhere, and native controls follow the theme.
     const lh = parseFloat(s.probeLineHeight) / parseFloat(s.probeFontSize);
-    if (Math.abs(lh - 1.5) > 0.01) errors.push(tag + ': .v4 line-height ratio is ' + lh.toFixed(2) + ', not 1.5');
-    if (s.probeButtonBg !== 'rgba(0, 0, 0, 0)') errors.push(tag + ': a .v4 button background is ' + s.probeButtonBg + ', not transparent');
-    if (s.probeSvg !== 'block') errors.push(tag + ': a .v4 svg is display ' + s.probeSvg + ', not block');
-    if (s.probeList !== 'none') errors.push(tag + ': a .v4 list keeps its bullets');
-    if (s.probeColor !== s.foregroundResolved) errors.push(tag + ': a .v4 root inherits ' + s.probeColor + ' instead of --foreground ' + s.foregroundResolved);
-    // 3. No collision.
+    if (Math.abs(lh - 1.5) > 0.01) errors.push(tag + ': the page line-height ratio is ' + lh.toFixed(2) + ', not 1.5 — the reset is missing');
+    if (s.probeButtonBg !== 'rgba(0, 0, 0, 0)') errors.push(tag + ': a button background is ' + s.probeButtonBg + ', not transparent');
+    if (s.probeSvg !== 'block') errors.push(tag + ': an svg is display ' + s.probeSvg + ', not block');
+    if (s.probeList !== 'none') errors.push(tag + ': a list keeps its bullets');
+    if (s.probeColor !== s.foregroundResolved) errors.push(tag + ': text is ' + s.probeColor + ' instead of --foreground ' + s.foregroundResolved);
+    if (s.htmlColorScheme !== scheme) errors.push(tag + ': <html> color-scheme is ' + s.htmlColorScheme + ', not ' + scheme + ' — native controls do not follow the theme');
+    // 3. shadcn's tokens keep their own values.
     if (!s.border || s.border.toLowerCase() === V3_BORDER) errors.push(tag + ': --border is ' + (s.border || 'missing') + ' — V3\'s value, or none');
     if (!s.accent || s.accent.toLowerCase() === V3_ACCENT) errors.push(tag + ': --accent is ' + (s.accent || 'missing') + ' — V3\'s value, or none');
-    if (s.v3Border !== s.border) errors.push(tag + ': --v3-border is ' + s.v3Border + ', not the design system\'s --border ' + s.border);
-    if (s.v3Accent !== s.primary) errors.push(tag + ': --v3-accent is ' + s.v3Accent + ', not --primary ' + s.primary);
-    if (s.v3Text !== s.foreground) errors.push(tag + ': --v3-text is ' + s.v3Text + ', not --foreground ' + s.foreground);
     // 4. The theme follows the system, with no override stored.
     if (s.dark !== (scheme === 'dark')) errors.push(tag + ': <html> dark class is ' + s.dark + ' under a ' + scheme + ' system');
     if (s.choice !== 'system' || s.stored !== null) errors.push(tag + ': starts with choice ' + s.choice + ' / stored ' + s.stored + ', not system / none');

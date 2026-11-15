@@ -84,7 +84,7 @@ const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foregrou
  *  bulk confirmation, the picker's leave prompt): body, heading row, title,
  *  lead paragraph, the stacked actions and their two buttons. */
 export const DIALOG = {
-  body: 'about v4 text-sm text-foreground',
+  body: 'about text-sm text-foreground',
   head: 'about-head flex items-center gap-3.5 pr-10',
   title: 'about-title text-lg leading-tight font-semibold tracking-tight',
   lead: 'about-lead mt-[18px] text-sm leading-[1.6] text-pretty text-muted-foreground',
@@ -218,7 +218,7 @@ function ModalDialog({ onClose, labelledBy, describedBy, className = '', childre
       <div className="about-scrim fixed inset-0 z-110 animate-[about-fade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none" onClick={onClose} aria-hidden="true"/>
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}
         className={cn('about-dialog fixed top-1/2 left-1/2 z-111 max-h-[calc(100vh-64px)] w-[min(560px,calc(100vw-48px))] overflow-y-auto rounded-xl bg-popover px-[30px] pt-7 pb-[26px] text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none [transform:translate(-50%,-50%)] animate-[about-rise_220ms_cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none', className)}>
-        <Button variant="ghost" size="icon-sm" className="about-x v4 absolute top-3.5 right-3.5 z-2 text-muted-foreground" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}><XIcon/></Button>
+        <Button variant="ghost" size="icon-sm" className="about-x absolute top-3.5 right-3.5 z-2 text-muted-foreground" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}><XIcon/></Button>
         {children}
       </div>
     </>

@@ -3,8 +3,7 @@
 // the collection switch (All / Unseen / Seen / Watchlist).
 //
 // Moved out of mobile.tsx and tracking.tsx so they can be built on the design
-// system: this file is listed with `@source` in src/index.css, and the roots
-// these controls sit in (the toolbar, the phone app bar) carry `v4`. Same
+// system: this file is listed with `@source` in src/index.css. Same
 // controls, same places, same labels as before; only the building blocks
 // changed.
 //

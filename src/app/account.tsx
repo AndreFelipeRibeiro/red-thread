@@ -12,8 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 // The account menu, its phone sheet, the app bar's avatar button and the sync
 // status, on the design system since Notion "shadcn pass 5/5" (this file is
-// listed with `@source` in src/index.css; the toolbar and phone header that
-// hold these controls carry `v4`). The desktop menu is shadcn's Popover (it
+// listed with `@source` in src/index.css). The desktop menu is shadcn's Popover (it
 // closes on Escape or a click outside and returns focus to Account), its
 // contents Buttons on the panel. Hook classes kept for the app and the QA
 // checks: `acct-*`, `sync-*`, `m-acct`, `coll-ic`, `signed-in`, `open`.
@@ -348,7 +347,7 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
       )}
       {/* Share my progress (Notion "Share 1/3"): only once there is some. */}
       {!collectionLoading && progress.seenReleased > 0 && (
-        <window.ShareButton className="acct-share" text={tr('share.progressLabel')} label={tr('share.progressLabel')}
+        <window.ShareButton className="acct-share -mt-0.5 h-auto min-h-[max(36px,2.25rem)] w-full py-1.5 leading-[1.25]" text={tr('share.progressLabel')} label={tr('share.progressLabel')}
           payload={() => ({ text: tr('share.progressText', { n: progress.seenReleased, total: progress.releasedTotal }) })}
           onShare={() => { if (onClose) onClose(); window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal); }}/>
       )}

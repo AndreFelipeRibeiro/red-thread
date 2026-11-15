@@ -77,10 +77,9 @@ function SelectContent({
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
-        // v4: portaled to <body>, outside any surface (src/preflight-v4.css).
         // z-70, not shadcn's z-50: it opens from the Settings panel, which sits
         // with the details drawer at z-index 60 (styles.css).
-        className="v4 isolate z-70"
+        className="isolate z-70"
       >
         <SelectPrimitive.Popup
           data-slot="select-content"

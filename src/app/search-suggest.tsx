@@ -218,7 +218,7 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
 
   let lastKind = null;
   const pop = open ? (
-    <ul className="ss-pop v4 absolute top-[calc(100%+6px)] left-0 z-80 m-0 max-h-[min(60vh,520px)] w-full max-w-[520px] min-w-80 list-none overflow-y-auto rounded-md bg-popover p-1.5 text-popover-foreground shadow-md ring-1 ring-foreground/10 in-[.m-searchrow]:max-w-none in-[.m-searchrow]:min-w-0" id={listId} role="listbox" aria-label={tr('suggest.label')}>
+    <ul className="ss-pop absolute top-[calc(100%+6px)] left-0 z-80 m-0 max-h-[min(60vh,520px)] w-full max-w-[520px] min-w-80 list-none overflow-y-auto rounded-md bg-popover p-1.5 text-popover-foreground shadow-md ring-1 ring-foreground/10 in-[.m-searchrow]:max-w-none in-[.m-searchrow]:min-w-0" id={listId} role="listbox" aria-label={tr('suggest.label')}>
       {items.map((item, i) => {
         const head = item.kind !== lastKind ? tr('suggest.' + item.kind + 's') : null;
         lastKind = item.kind;

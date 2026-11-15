@@ -13,8 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScoreChip, EmptyState, XS, THUMB } from './list-parts';
 
 // On the design system since Notion "shadcn pass 4/5: List and Grid views"
-// (this file is listed with `@source` in src/index.css, and the List's root
-// carries `v4`). The table keeps its own grid of <div role="row"> rather than
+// (this file is listed with `@source` in src/index.css). The table keeps its own grid of <div role="row"> rather than
 // shadcn's <table>: its sticky meters and headers, its columns that drop by
 // the List's own width (container queries) and the reorder animation all need
 // the grid; the rows and heads take the Table component's recipe (muted
@@ -410,7 +409,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
         action={<window.BulkHeaderAction ids={shownIds} group={I.tr('progress.all')}/>}/>
     : leadPhase ? phaseMeter(leadPhase) : null;
   return (
-    <div className={cn('dlist v4 @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[402px] [&>.m-flip-layer]:z-4', ranked && 'ranked')} ref={flipRef} role="main" aria-label={tr('view.list')}>
+    <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[402px] [&>.m-flip-layer]:z-4', ranked && 'ranked')} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
       {/* Up next: a strip above the table. The desktop List does not fold seen
           titles, so the suggestion can be far down; the strip brings it up. */}

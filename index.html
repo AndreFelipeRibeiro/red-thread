@@ -46,17 +46,15 @@
      the UI's Inter is the design system's, served with the bundle, and
      numbers use the system monospace. -->
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="styles.css"/>
-<link rel="stylesheet" href="styles-mobile.css"/>
 <script src="boot.js"></script>
 </head>
 <body>
 <div id="root">
-  <div id="mcu-boot" class="boot" data-state="loading" role="status" aria-live="polite">
-    <div class="boot-mark logo-mark" aria-hidden="true"></div>
-    <div class="boot-spinner" aria-hidden="true"></div>
-    <p class="boot-msg"></p>
-    <button class="boot-reload" type="button" hidden></button>
+  <div id="mcu-boot" class="boot group flex min-h-screen min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center" data-state="loading" role="status" aria-live="polite">
+    <div class="boot-mark logo-mark size-12" aria-hidden="true"></div>
+    <div class="boot-spinner size-[22px] animate-[boot-spin_0.9s_linear_infinite] rounded-full border-2 border-muted border-t-foreground group-data-[state=failed]:hidden motion-reduce:[animation-duration:2.4s]" aria-hidden="true"></div>
+    <p class="boot-msg m-0 min-h-[1.4em] max-w-80 text-sm leading-[1.45] text-muted-foreground"></p>
+    <button class="boot-reload h-9 min-h-9 cursor-pointer rounded-md border bg-background px-[18px] text-sm font-medium text-foreground shadow-xs outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50" type="button" hidden></button>
   </div>
 </div>
 

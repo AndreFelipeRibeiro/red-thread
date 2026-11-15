@@ -8,6 +8,7 @@
 import React from 'react';
 import type { Title } from '../types/catalog';
 import { cn } from 'cn';
+import * as S from './shell';
 import {
   ScoreBadges, PhaseBadge, ProgressHeader, BulkHeaderAction, MatchBadge, EmptyState, PhoneCard, PhoneRow,
   seenRuns, useSeenFolds, useSettled, Fx, SeenRunHead,
@@ -196,7 +197,10 @@ function playFlip(root, prev, opts = {}) {
   const leaving = [...prev.ghosts].filter(([id]) => opts.morph || !shown.has(id));
   if (!leaving.length) return;
   const layer = document.createElement('div');
+  // Clipped to the scroll area, never in the way; inside the desktop List it
+  // sits above the rows.
   layer.className = 'm-flip-layer';
+  Object.assign(layer.style, { position: 'fixed', overflow: 'hidden', pointerEvents: 'none', zIndex: opts.inside ? '4' : '1' });
   layer.setAttribute('aria-hidden', 'true');
   layer.inert = true;
   // `inside`: the layer lives in the scrolling root (so the copies keep styles
@@ -293,7 +297,7 @@ function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchChar
   const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
   // The lifted title's row, for a step that scrolls to it (a pinned character
   // or guide stepping onto the suggestion).
-  const top = place.topNode && <div className="un-inline top" data-row-id={place.hideId || undefined}>{place.topNode}</div>;
+  const top = place.topNode && <div className={`${S.UN_INLINE} top`} data-row-id={place.hideId || undefined}>{place.topNode}</div>;
   // The caller decides which of these it hands over: phase headings belong to
   // the By Phase tab, and every other order gets one meter over the whole
   // catalogue instead.
@@ -319,7 +323,7 @@ function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchChar
   const runKey = blockRuns.map(rs => rs.map(r => r[0].id + ':' + r.length).join(',')).join('|');
   const blockKey = blocks.map(b => (b.phase || 'x') + ':' + b.items.length).join(',');
   const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey + '|' + (place.hideId || ''), { paused: flipPaused });
-  if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
+  if (!allTitles.length) return <div className={S.SCROLL} ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
   const card = (t) => (
     <PhoneCard key={t.id} t={t} matchedChars={searchCharMatches ? searchCharMatches[t.id] : null} search={search} onSelect={onSelect}
       seen={statusOf(t.id) === 'seen'} watch={!!markWatch && statusOf(t.id) === 'watchlist'} current={currentId === t.id}/>
@@ -327,7 +331,7 @@ function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchChar
   const anyRuns = blockRuns.some(rs => rs.length);
   if (!phased && !overall && !anyRuns) {
     return (
-      <div className="m-scrollarea" ref={flipRef}>
+      <div className={S.SCROLL} ref={flipRef}>
         {header}
         {top}
         <div className={GRID}>{titles.map(card)}</div>
@@ -357,7 +361,7 @@ function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchChar
     ));
   };
   return (
-    <div className="m-scrollarea" ref={flipRef}>
+    <div className={S.SCROLL} ref={flipRef}>
       {header}
       {top}
       <div className={flatClass(true, settled)}>
@@ -417,8 +421,8 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
   const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
   // The lifted title's row, for a step that scrolls to it (a pinned character
   // or guide stepping onto the suggestion).
-  const top = place.topNode && <div className="un-inline top" data-row-id={place.hideId || undefined}>{place.topNode}</div>;
-  if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
+  const top = place.topNode && <div className={`${S.UN_INLINE} top`} data-row-id={place.hideId || undefined}>{place.topNode}</div>;
+  if (!allTitles.length) return <div className={S.SCROLL} ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
   // Ranks count the whole list, the suggestion lifted to the top included.
   const rankOf = (t) => allTitles.indexOf(t) + 1;
   const ranked = sort === 'imdb' || sort === 'rt';
@@ -567,7 +571,7 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
       );
     };
     return (
-      <div className="m-scrollarea" ref={flipRef}>
+      <div className={S.SCROLL} ref={flipRef}>
         {header}
         {top}
         {overallHead}
@@ -589,7 +593,7 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
     blocks[blocks.length - 1].groups.push(g);
   });
   return (
-    <div className="m-scrollarea" ref={flipRef}>
+    <div className={S.SCROLL} ref={flipRef}>
       {header}
       {top}
       {overallHead}
@@ -802,22 +806,22 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
   const PosterArt = window.PosterArt;
   const seen = statusOf(title.id) === 'seen';
   return (
-    <div className={`m-focuspop${seen ? ' seen' : ''}`} style={{left:x+'px', top:y+'px'}}>
-      <button className="m-fp-open" onClick={onOpenCast}>
-        <div className="m-fp-poster">
+    <div className={cn(S.FP.root, seen && 'seen')} style={{left:x+'px', top:y+'px'}}>
+      <button className={S.FP.open} onClick={onOpenCast}>
+        <div className={cn(S.FP.poster, seen && S.FP.seenWash)}>
           <PosterArt title={title}/>
           <PhaseBadge phase={title.phase}/>
         </div>
-        <div className="m-fp-meta">
-          <div className="m-fp-title">{MI18N.titleName(title)}</div>
-          <StoryYear title={title} className="m-fp-story"/>
+        <div className={cn(S.FP.meta, seen && 'opacity-82')}>
+          <div className={S.FP.title}>{MI18N.titleName(title)}</div>
+          <StoryYear title={title} className={S.FP.story}/>
           <ScoreBadges title={title}/>
-          <div className="m-fp-cta">{mtr('details.tapForCast')}</div>
+          <div className={S.FP.cta}>{mtr('details.tapForCast')}</div>
         </div>
       </button>
       {/* In a guide, Skip sits beside Seen and Watchlist; a skipped stop shows
           Unskip in their place. */}
-      {!(guideSkip && guideSkip.state === 'skipped') && <window.TitleStatusActions title={title} className="m-fp-tsa"/>}
+      {!(guideSkip && guideSkip.state === 'skipped') && <window.TitleStatusActions title={title} className={S.FP.tsa}/>}
       {guideSkip && <window.GuideSkipControl guide={guide} info={guideSkip} className="m-fp-skip" onDone={onGuideSkip}/>}
     </div>
   );

@@ -54,7 +54,8 @@ export function SegPill({ value }: { value: unknown }) {
     return () => ro.disconnect();
   }, []);
 
-  return <span ref={ref} className="seg-pill instant" aria-hidden="true"/>;
+  return <span ref={ref} aria-hidden="true"
+    className="seg-pill instant pointer-events-none absolute top-0 left-0 z-0 rounded-md border border-transparent bg-background opacity-0 shadow-sm transition-[transform,width,height] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none dark:border-input dark:bg-input/30 [&.instant]:transition-none"/>;
 }
 
 Object.assign(window, { SegPill });

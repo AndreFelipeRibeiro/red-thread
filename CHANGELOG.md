@@ -13,6 +13,43 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — shadcn pass 6: guides, banners, Share and the app shell; the V3 stylesheets deleted
+
+Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The guides (`src/app/guides-ui.tsx`: the menu, now shadcn's Popover; the
+  meters, the desktop module, the phone dock, the guide List, Grid and table,
+  Skip / Unskip, "Part of", the promotion and "caught up"), the pinned
+  character's banner and pill, Share and the share-card dialog, Settings'
+  gear and panel, and the rest of the app shell are on the design system.
+  New recipe files `src/app/banners.tsx` and `src/app/shell.tsx` (listed with
+  `@source`) hold the classes for markup in `app.tsx` and `mobile.tsx`.
+- Deleted: `styles.css`, `styles-mobile.css`, `src/preflight-v4.css`, the
+  `--v3-` tokens and the `v4` opt-in class. Tailwind's preflight covers the
+  whole page; the only hand-written CSS left is in `src/index.css` (tokens,
+  keyframes, a few page-level rules). The startup screen's classes are in
+  `index.html`. No monospace in the UI.
+- Fixed in passing: the guide's "Next stop" tag (unstyled since 2/5); seen
+  Spatial cards now fade only their title, which fixes a 3.4:1 contrast on
+  the year and budget in the light theme.
+- From Andre's review: the Spatial cards' badge, Seen / Watchlist and rating
+  chips are aligned again; "On watchlist" is white on the guide module's
+  yellow; clicking a guide stop makes it the current one (the marker and
+  "Stop n of N" follow); the labelled Seen / Watchlist buttons get a smaller
+  pop and a tight halo; Share in the details is an icon-only square the
+  height of Seen and Watchlist, so the row stays on one line in English and
+  Portuguese.
+- QA: `test-v4scope` now checks that no V3 stylesheet or token returns;
+  `test-skip` and `test-share` read hook classes and names; `checks.json` maps
+  the new files. AGENTS.md and README.md describe the setup without V3 sheets.
+- Verified: typecheck and build; full `qa/regress.sh`, 59 check runs clean (a first run had one timing failure in `test-settings`, clean three times on its own and in the re-run); quick runs after
+  each review fix; desktop 1440×900 and phone captures of the guide, the
+  banner and pill, the details drawer and sheet, and the light Spatial canvas.
+- Limits: the phone's tapped-card popup and the startup screen were checked
+  by the QA runs, not by eye; signed-in state and a real iPhone not checked.
+  In development the startup screen is unstyled for a moment (its styles come
+  with the bundle); the built site loads them with the page.
+
 ## V5 fix — Phone welcome: the pinned buttons no longer cut the list mid-sentence
 
 Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).

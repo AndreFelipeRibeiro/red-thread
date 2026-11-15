@@ -204,7 +204,7 @@ function StatusToast({ touch }) {
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
-      <div key={toast.key} className={cn('mcu-toast v4 fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-sm text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
+      <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-sm text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
         toast.to, m && 'milestone border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>

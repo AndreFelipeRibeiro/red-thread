@@ -1,9 +1,12 @@
-/* Tailwind in its three parts rather than `@import "tailwindcss"`, because
-   the middle one, the preflight reset, is scoped to .v4 for as long as V3
-   still paints part of the app (src/preflight-v4.css says why). */
+/* Tailwind in its three parts rather than `@import "tailwindcss"`, only so
+   the utilities can be told which files to read (source(none), then the
+   @source list below). The preflight reset is Tailwind's own and applies to
+   the whole page: since the shadcn pass (Notion "shadcn pass 6") no V3 markup
+   is left for it to disturb, and the scoped copy and V3's stylesheets are
+   gone. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
-@import "./preflight-v4.css" layer(base);
+@import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -14,6 +17,7 @@
    class names in src/app — "hidden", "grid", "border" and the like are
    Tailwind utilities too — and give those V3 elements styles nobody wrote for
    them. Each Phase 4 surface ticket adds its file here as it converts. */
+@source "../index.html";
 @source "./components";
 @source "./design";
 @source "./app/settings.tsx";
@@ -33,6 +37,12 @@
 @source "./app/account.tsx";
 @source "./app/watch.tsx";
 @source "./app/search-suggest.tsx";
+@source "./app/share.tsx";
+@source "./app/share-image.tsx";
+@source "./app/banners.tsx";
+@source "./app/shell.tsx";
+@source "./app/seg-pill.tsx";
+@source "./app/guides-ui.tsx";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -110,6 +120,13 @@
          behind the page — follows the theme the `dark` class sets, instead of
          the system's idea of it. */
       color-scheme: light;
+      /* Text on the dark overlays that sit on posters (ratings, guide
+         numbers, the Seen and Watchlist buttons on a card): the overlay stays
+         dark in both themes because it sits on an image, so its text stays
+         light. */
+      --on-image: #e6e8f0;
+      --on-image-dim: #9ea4b8;
+      --on-image-muted: #8389a1;
       /* MCU phase colours as tokens (AGENTS.md, "Design system (V4)").
          Darkened from V3 so they keep WCAG AA on a light background; the
          .dark block holds V3's own values, authored for the dark canvas. */
@@ -226,20 +243,52 @@
 }
 
 @layer base {
-  /* shadcn's template sets these on every element; scoped like the reset. */
-  :where(.v4, .v4 *) {
+  /* shadcn's template sets these on every element. */
+  * {
     @apply border-border outline-ring/50;
     }
-  /* A converted surface sits inside V3's page and would inherit V3's text
-     colour and font, so its root takes them from the tokens instead. */
-  :where(.v4) {
-    @apply text-foreground font-sans;
-    }
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    @apply m-0 min-h-screen min-h-dvh bg-background p-0 text-foreground;
     }
   html {
     @apply font-sans;
+    }
+  /* Phones and narrow windows: the page itself never scrolls or bounces; the
+     app's own areas scroll inside it (src/app/shell.tsx). */
+  @media (max-width: 899px) {
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  }
+  /* Search matches (Highlight in src/app/mobile.tsx): underlined in place,
+     in the primary colour unless a surface sets the character's. */
+  mark.hl {
+    @apply rounded-[2px] bg-transparent p-0 text-inherit underline decoration-primary decoration-2 underline-offset-2;
+    font: inherit;
+    }
+  /* Visually hidden text, still read by screen readers (used app-wide). */
+  .story-sr {
+    @apply sr-only;
+    }
+  /* The logo: two SVG files, each a mask painted with a token, so the next
+     version is a file swap. The mark (the push pin) takes --logo, the
+     designer's red in both themes (with a fallback for the startup screen in
+     development, where this stylesheet arrives with the bundle); the
+     wordmark's lettering takes the text colour. */
+  .logo-mark {
+    display: block;
+    background-color: var(--logo, #c41e3a);
+    -webkit-mask: url('./assets/logo-mark.svg') center / contain no-repeat;
+    mask: url('./assets/logo-mark.svg') center / contain no-repeat;
+    }
+  .logo-word {
+    display: block;
+    background-color: var(--foreground, currentColor);
+    -webkit-mask: url('./assets/logo-wordmark.svg') center / contain no-repeat;
+    mask: url('./assets/logo-wordmark.svg') center / contain no-repeat;
+    }
+  /* A row the view just returned to (its details closed): a brief highlight
+     so the eye finds it (app.tsx adds the class; never with reduced motion). */
+  .refocus-flash {
+    animation: refocus-flash 1.1s ease-out;
     }
 
   /* THE TYPE SCALE (Notion "Font size increase"). Every font size in
@@ -293,6 +342,8 @@
 @keyframes count-num-down { from { transform: translateY(-80%); opacity: 0; } }
 @keyframes tsa-pop { 35% { transform: scale(1.22); } }
 @keyframes tsa-ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(2); } }
+@keyframes tsa-pop-sm { 35% { transform: scale(1.05); } }
+@keyframes tsa-halo { from { box-shadow: 0 0 0 0 color-mix(in oklab, var(--pop) 55%, transparent); } to { box-shadow: 0 0 0 6px transparent; } }
 @keyframes un-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 @keyframes un-out { to { opacity: 0; transform: translateX(-24px); } }
 @keyframes un-slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
@@ -313,3 +364,19 @@
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px) scale(.97); } }
 /* Saving and loading spinners (status-actions.tsx, account.tsx). */
 @keyframes tsa-spin { to { transform: rotate(360deg); } }
+/* Motion set to Reduced in Settings (src/app/settings.tsx): every transition and animation is cut to
+   nothing, whatever the system says. (Auto leaves it to the system, through
+   each rule's own prefers-reduced-motion block.) The durations stay above zero
+   so transitionend still fires for the code that waits for it. */
+:root.reduce-motion *, :root.reduce-motion *::before, :root.reduce-motion *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important; transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+/* The startup screen's spinner (index.html), the refocus flash and a pinned
+   character's thread drawing itself (src/app/shell.tsx). */
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+@keyframes refocus-flash { 0%, 35% { box-shadow: inset 0 0 0 2px var(--primary); background: color-mix(in oklab, var(--primary) 12%, transparent); } 100% { box-shadow: inset 0 0 0 2px transparent; } }
+@keyframes thread-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* The phone's tapped card popping out of the canvas (src/app/shell.tsx). */
+@keyframes mpop { from { opacity: 0; transform: translate(-50%,-50%) scale(.82) } }

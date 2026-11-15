@@ -239,7 +239,8 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     const { ctx, page } = await open(PHONE, SEEN + SHEET + "localStorage.setItem('mcu.lang.v1','pt-BR');");
     await go(page, '?title=iron-man');
     const btn = page.locator('.m-sheet .td-share');
-    expect((await btn.textContent()).trim() === 'Compartilhar', 'pt-BR: the button does not read Compartilhar');
+    // Icon-only in the details: its name (label and tooltip) carries the text.
+    expect(/^Compartilhar /.test(await btn.getAttribute('aria-label') || ''), 'pt-BR: the button is not named Compartilhar');
     await btn.click(); await page.waitForTimeout(200);
     const d = await page.evaluate(() => window.__shared[0] || null);
     out.ptTitle = d && d.text;

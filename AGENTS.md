@@ -98,7 +98,11 @@ came to be.
   `src/data/data.ts` (catalog; permanent title ids), `src/data/guides.ts`,
   `src/data/media-data.ts` (TMDB paths), `src/config.ts` (public Supabase URL +
   publishable key), `src/main.ts` (the bundle entry), `schema.sql`,
-  `styles.css`, `styles-mobile.css`. The README's "Project structure" table is the full list.
+  `src/index.css` (tokens, the Tailwind entry and the few page-level rules;
+  V3's `styles.css` and `styles-mobile.css` were deleted with the shadcn pass,
+  2026-11-14), `src/app/shell.tsx` and `src/app/banners.tsx` (class recipes
+  for the app frame, the pinned character and the guide's module, used by
+  `app.tsx` and `mobile.tsx`). The README's "Project structure" table is the full list.
 - Docs: `README.md` (features, setup, deploy), `CHANGELOG.md`, `docs/` (handoff,
   decisions, catalog audit and sources, privacy review, V3 verification log).
 
@@ -365,11 +369,8 @@ and type below as it lands (Figma first, then code); the accessibility,
 keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
 rules carry over unchanged.
 
-- V3's colour tokens (`styles.css :root`) are prefixed `--v3-` so they
-  cannot collide with the design system's (shadcn defines `--border` and
-  `--accent` too), and since the first re-skin pass each is *defined from* a
-  design-system token (`--v3-surface: var(--card)` and so on), so V3's rules
-  follow the theme. Write new rules with the design system's tokens directly,
+- V3's colour tokens (`--v3-*`) are gone with V3's stylesheets (Notion
+  "shadcn pass 6", 2026-11-14). Write styles with the design system's tokens,
   never a raw colour. `PHASE_COLORS` in `app.tsx` (and `MPHASE_COLORS`) hold
   `var(--phase-N)`; code that paints on a canvas resolves them first.
 - Text on the dark overlays that sit on posters uses `--on-image` (fixed light
@@ -396,13 +397,15 @@ rules carry over unchanged.
   breakpoint for anything holding words: breakpoints can't know a
   translation's length or the text size. `test-fit` fails when something
   doesn't fit.
-- Type: the design system's Inter (`--font-sans`, served with the bundle) and
-  the system monospace (`--font-mono`) for labels, numbers and badges
-  (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
+- Type: the design system's Inter (`--font-sans`, served with the bundle)
+  everywhere, numbers included: no monospace is left in the UI, and figures
+  that need to line up (counts, ratings, budgets, table columns) use tabular
+  figures (`tabular-nums`) instead (Andre's decision, 2026-11-14, replacing
+  the system monospace of 2026-11-01). Bebas Neue appears only in the generated
   poster art. Logo: two SVG files, each drawn as a CSS mask so the next
   version is a file swap. `src/assets/logo-mark.svg` is the mark (today the
   work-in-progress push pin), painted with `--logo` (the designer's red, the
-  same in both themes; `.logo-mark` in `styles.css`) everywhere the mark
+  same in both themes; `.logo-mark` in `src/index.css`) everywhere the mark
   appears, including the share cards and link previews;
   `src/assets/logo-wordmark.svg` is the lettering, painted with
   `--foreground` (`.logo-word`) beside the mark in the toolbar and the phone
@@ -437,7 +440,7 @@ rules carry over unchanged.
 - Phones: each sheet owns one history entry, so the browser Back button closes
   it. Respect `prefers-reduced-motion`, and the visitor's Reduce motion
   setting: scripts ask `window.MCU_MOTION.reduced()` rather than the media
-  query, and turning it on puts `reduce-motion` on `<html>`, which `styles.css` answers by
+  query, and turning it on puts `reduce-motion` on `<html>`, which `src/index.css` answers by
   cutting every transition and animation.
 - Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`; the sliding
   selection in segmented groups (`src/app/seg-pill.tsx`) uses 300ms on the
@@ -498,33 +501,24 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   `src/main.ts` loads `src/index.css` and starts the theme, with no visible
   change, because V3's stylesheets still paint every surface. Putting the
   components into the app is Phase 4, one ticket per surface.
-- **The first re-skin pass (2026-11-01) restyled V3's markup**, it did not
-  rewrite it: each surface's look is a "RE-SKIN, FIRST PASS — <surface>"
-  section at the end of `styles.css` or `styles-mobile.css`, which gives V3's
-  classes shadcn's exact class recipes through `@apply` (both stylesheets
-  start with `@reference "./src/index.css"` for that). It sits last so it wins
-  over V3's rules of the same weight; V3's layout rules above it stay. New
-  work on a surface either edits its section or, better, swaps that surface's
-  markup for the React components in `src/components/ui/` and deletes the
-  section and the V3 rules it overrides together (docs/decisions.md).
-- **How a surface opts in** when its markup moves onto the components
-  (Settings, `src/app/settings.tsx`, was the first, built that way from the
-  start):
-  - Tailwind's preflight reset is scoped to `.v4` (`src/preflight-v4.css`,
-    generated from Tailwind's own; its header says why). A converted surface
-    puts class `v4` on its root, and a component that portals out of a
-    surface carries `v4` on its portaled root itself (`dialog.tsx`,
-    `tooltip.tsx`; add it to any new one that portals).
-  - Tailwind generates classes only from the files listed with `@source` in
-    `src/index.css`. Add the surface's file there in the ticket that converts
-    it; until then its class names are V3's and must not become utilities.
-  - V3's stylesheets are unlayered, so they beat every Tailwind class on an
-    element they match, whatever the order. Retire a surface's V3 rules in the
-    ticket that converts it.
-  - `qa/test-v4scope.js` holds this seam: the reset stays out of V3 and works
-    inside `.v4`, the two token sets don't collide, and the theme is wired.
-  - When no V3 surface is left: delete `src/preflight-v4.css`, import
-    `"tailwindcss"` whole, and drop the `v4` classes and the `--v3-` tokens.
+- **Every surface is on the design system** since the shadcn pass (Notion
+  epic "shadcn pass", 2026-11-14): V3's stylesheets, its first re-skin pass,
+  the `.v4` opt-in class and the scoped reset are gone, and Tailwind's own
+  preflight applies to the whole page.
+- **Tailwind generates classes only from the files listed with `@source` in
+  `src/index.css`** (`source(none)` on the utilities import). A file that
+  writes Tailwind classes must be listed. `app.tsx` and `mobile.tsx` are
+  deliberately not: they hold many old class names that are also Tailwind
+  utilities, so they take their classes from recipe files that are listed
+  (`src/app/shell.tsx`, `banners.tsx`, `list-parts.tsx`). Class names the app
+  and the QA checks read stay on the markup as hooks (`dl-row`, `m-lrow`,
+  `g-stop`, `cb-step`…) beside the utilities.
+- Styles go on the components, with the tokens: no new stylesheet. The only
+  hand-written CSS is in `src/index.css` (tokens, keyframes, and a few
+  page-level rules: the page background, search highlights, the logo masks,
+  `.story-sr`, the Reduce motion rule). `qa/test-v4scope.js` checks that no
+  V3 stylesheet or `--v3-` token comes back and that the reset and theme are
+  wired.
 - Install and add components with the shadcn CLI pinned to an exact version
   (`npx shadcn@<version> init --base base --preset vega` — the CLI's preset is
   `vega`, and `--base base` makes the style it records `base-vega`); commit

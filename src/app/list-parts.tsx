@@ -7,8 +7,7 @@
 // Moved out of mobile.tsx so they can be built on the design system: this file
 // is listed with `@source` in src/index.css, so the class recipes exported
 // below (used by MobileGrid and MobileList, which stay in mobile.tsx with their
-// grouping and reorder logic) are generated from here. Each root that holds
-// buttons carries `v4` (the scoped reset, src/preflight-v4.css).
+// grouping and reorder logic) are generated from here.
 //
 // Same content, order and actions as before; only the building blocks
 // changed. Class names the app, the QA checks and the surfaces still on V3
@@ -194,7 +193,7 @@ export function BulkHeaderAction({ ids, group }: { ids: string[]; group: string 
   if (!n) return null;
   const anySeen = ids.some(id => states[id] === 'seen');
   return (
-    <Button type="button" variant="outline" className={cn('pgh-action v4 ml-auto h-[max(32px,2rem)] shrink-0 px-[11px] text-xs font-medium tracking-normal normal-case')}
+    <Button type="button" variant="outline" className={cn('pgh-action ml-auto h-[max(32px,2rem)] shrink-0 px-[11px] text-xs font-medium tracking-normal normal-case')}
       onClick={() => requestBulk(ids, 'seen')} aria-label={tr('bulk.header.aria', { n, group })}>
       {anySeen ? tr('bulk.header.rest', { n }) : tr('bulk.header.all')}
     </Button>
@@ -246,7 +245,7 @@ type EmptyProps = { title?: string; sub?: string; mark?: React.ReactNode; action
  *  phones and, with `desktop`, in the desktop List. */
 export function EmptyState({ title, sub, mark, action, desktop = false }: EmptyProps & { desktop?: boolean }) {
   return (
-    <div className={cn(desktop ? 'dl-empty px-5 py-20' : 'm-empty flex flex-1 flex-col items-center justify-center gap-1.5 px-[30px] py-10', 'v4 text-center')}>
+    <div className={cn(desktop ? 'dl-empty px-5 py-20' : 'm-empty flex flex-1 flex-col items-center justify-center gap-1.5 px-[30px] py-10', 'text-center')}>
       {!desktop && <div className="m-empty-mark text-4xl text-border" aria-hidden="true">{mark || '◍'}</div>}
       <div className={cn(desktop ? 'dl-empty-t' : 'm-empty-t', 'text-base font-semibold text-foreground')}>{title || tr('empty.title')}</div>
       <div className={cn(desktop ? 'dl-empty-s mt-1.5 text-sm' : 'm-empty-s text-xs', 'text-muted-foreground')}>{sub || tr('empty.sub')}</div>
@@ -285,7 +284,7 @@ export const flatClass = (grid: boolean, settled: boolean) => cn(grid ? 'm-gflat
 // colour, and a watchlisted one (outside the Watchlist tab) a thin amber
 // outline. Each is a <div> around a dedicated open button, because Seen and
 // Watchlist are buttons too and a nested <button> is invalid HTML.
-const SURFACE = 'v4 rounded-xl border bg-card text-left text-card-foreground shadow-sm active:border-ring';
+const SURFACE = 'rounded-xl border bg-card text-left text-card-foreground shadow-sm active:border-ring';
 const WATCH = 'watch border-[color-mix(in_oklab,var(--status-watch)_75%,transparent)]';
 const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--primary))]';
 // The seen wash over a poster: badges stay above it.
@@ -472,7 +471,7 @@ export function SeenRunHead({ items, shut, onToggle }: { items: Title[]; shut: b
   const fx = (props: string) => `[transition-property:${props}] duration-(--fx) ease-(--fx-ease) motion-reduce:transition-none`;
   return (
     <button aria-expanded={!shut} aria-label={tr(shut ? 'list.seenRunShow' : 'list.seenRunHide', { n })} onClick={onToggle}
-      className={cn('m-run v4 flex w-full max-w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-xl border border-dashed border-transparent py-0.5 pr-1 pl-0.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+      className={cn('m-run flex w-full max-w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-xl border border-dashed border-transparent py-0.5 pr-1 pl-0.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
         DIM, fx('padding,background-color,border-color'),
         shut && 'shut border-input bg-[color-mix(in_oklab,var(--status-seen)_6%,transparent)] py-[9px] pr-3 pl-2.5 text-foreground')}>
       <span className={cn('m-run-stack flex flex-none', fx('max-width,opacity'), shut ? 'max-w-20 opacity-100' : 'max-w-0 opacity-0')} aria-hidden="true">

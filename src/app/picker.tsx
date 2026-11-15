@@ -105,7 +105,7 @@ function SeenPicker({ touch, onClose }) {
   ) : <span><b>{toSeen.length}</b> {pktr('picker.pickedWord', { n: toSeen.length })}</span>;
 
   const body = (
-    <div className={cn('pk v4 relative text-sm text-foreground', touch ? 'touch' : 'flex min-h-0 flex-1 flex-col')}>
+    <div className={cn('pk relative text-sm text-foreground', touch ? 'touch' : 'flex min-h-0 flex-1 flex-col')}>
       <div className={cn('pk-head', touch ? 'pt-1 pr-11' : 'border-b pt-[22px] pr-16 pb-4 pl-[26px]')}>
         <h2 id="pk-title" className={cn('pk-title font-semibold tracking-tight', touch ? 'text-xl' : 'text-lg')}>{pktr('picker.title')}</h2>
         <p className="pk-sub mt-1 text-sm leading-normal text-muted-foreground">{later ? pktr('picker.subLater') : pktr(touch ? 'picker.subTouch' : 'picker.sub')}</p>

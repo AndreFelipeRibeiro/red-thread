@@ -1,9 +1,8 @@
 // The desktop toolbar (Notion "shadcn pass 1/5: toolbar, header and filters").
 //
 // Moved out of app.tsx so that it can be built on the design system: this file
-// is listed with `@source` in src/index.css, its root carries `v4` (the scoped
-// reset, src/preflight-v4.css), and its look comes from src/components/ui and
-// the tokens rather than from styles.css. Same controls, same places, same
+// is listed with `@source` in src/index.css, and its look comes from
+// src/components/ui and the tokens. Same controls, same places, same
 // labels as before; only the building blocks changed.
 //
 // Class names that the QA checks and the Escape ladder read are kept as hooks
@@ -99,7 +98,7 @@ export function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, set
   const sortLabels = window.sortDirectionLabels(sort);
   const PHASE_COLORS = window.PHASE_COLORS as Record<string, string>;
   return (
-    <div className="toolbar v4 sticky top-0 z-70 flex flex-col gap-3 border-b border-border bg-background/95 px-[22px] py-3.5 backdrop-blur-md max-[1560px]:px-4 max-[1560px]:py-2.5" role="banner">
+    <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col gap-3 border-b border-border bg-background/95 px-[22px] py-3.5 backdrop-blur-md max-[1560px]:px-4 max-[1560px]:py-2.5" role="banner">
       <div className="tb-row tb-top-row flex flex-wrap items-center justify-between gap-x-4 gap-y-3 max-[1000px]:gap-x-[9px]">
         {/* The logo is a link home: it resets the app in place (onHome). */}
         <a className="brand group/brand flex min-w-0 shrink-0 items-center gap-3 rounded-lg text-inherit no-underline outline-none focus-visible:ring-3 focus-visible:ring-ring/50"

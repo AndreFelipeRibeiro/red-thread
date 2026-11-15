@@ -2,8 +2,7 @@
 // canvas, cards and threads").
 //
 // Moved out of app.tsx so it can be built on the design system: this file is
-// listed with `@source` in src/index.css and the card's root carries `v4` (the
-// scoped reset, src/preflight-v4.css). Same marks, same places, same size:
+// listed with `@source` in src/index.css. Same marks, same places, same size:
 // the canvas lays cards out from CARD_SIZE, so nothing here changes the card's
 // width, height, padding or the poster's ratio.
 //
@@ -115,7 +114,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
     <div
       data-id={title.id}
       onAnimationEnd={enter ? (e) => { if (e.animationName === 'card-enter') setEnter(false); } : undefined}
-      className={cn('card v4 absolute top-0 left-0 flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground',
+      className={cn('card absolute top-0 left-0 flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground',
         touch ? 'cursor-pointer' : isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isDragging ? '[transition:box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms]' : MOVE,
         border, shadow, z, fade, lift, hover,
@@ -178,7 +177,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
             {guideBadge && <span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-30')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>}
             {/* Skip a guide stop, under its number, once the card is large
                 enough for buttons. */}
-            {showActions && guideSkip && guideSkip.state === 'can' && <window.GuideSkipControl guide={guide} info={guideSkip} className="card-skipctl" onDone={onGuideSkip}/>}
+            {showActions && guideSkip && guideSkip.state === 'can' && <window.GuideSkipControl guide={guide} info={guideSkip} className="card-skipctl [&_.g-skip]:size-6 [&_.g-skip]:basis-6 [&_.g-skip]:bg-[color-mix(in_oklab,var(--background)_82%,transparent)] [&_.g-skip]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]" onDone={onGuideSkip}/>}
           </span>
           <Badge className={cn('badge phase-badge h-auto rounded-md border-transparent px-[7px] py-[4px] text-[10px] font-bold tracking-wide', skipped && 'opacity-30')}
             style={{ background: phaseColor, color: 'var(--on-color)' }}>{I18N.upper(tr('phase.label', { n: title.phase }))}</Badge>
@@ -188,11 +187,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         {showActions && skipped && (
           <div className="card-skipover pointer-events-none absolute inset-0 z-5 flex flex-col items-center justify-center gap-[10px] [&_.g-skipctl]:pointer-events-auto">
             <span className="card-skiptag rounded-[6px] border border-dashed border-(--on-image-dim) bg-[rgba(10,12,20,.85)] px-[9px] py-[4px] text-[10px] font-bold tracking-[1.2px] text-(--on-image) uppercase" aria-hidden="true">{tr('guide.skippedTag')}</span>
-            <window.GuideSkipControl guide={guide} info={guideSkip} className="card-unskipctl" onDone={onGuideSkip}/>
+            <window.GuideSkipControl guide={guide} info={guideSkip} className="card-unskipctl [&_.g-unskip]:min-h-[38px] [&_.g-unskip]:rounded-[10px] [&_.g-unskip]:border-muted-foreground [&_.g-unskip]:bg-[color-mix(in_oklab,var(--background)_94%,transparent)] [&_.g-unskip]:px-5 [&_.g-unskip]:text-[12.5px] [&_.g-unskip]:shadow-[0_6px_18px_rgba(0,0,0,.45)] [&_.g-unskip]:hover:bg-muted" onDone={onGuideSkip}/>
           </div>
         )}
         {showActions
-          ? !skipped && <window.TitleStatusActions title={title} variant="overlay" className="card-tsa"/>
+          ? !skipped && <window.TitleStatusActions title={title} variant="overlay" className="card-tsa [&_.tsa-btn]:size-8"/>
           : <span className="card-seen-mark absolute top-1/2 right-[8px] z-3 -translate-y-1/2"><window.SeenMarker seen={seen}/></span>}
         <div className={cn('rating-row absolute bottom-[10px] left-[10px] z-2 flex items-center gap-[5px]', touch && 'hidden')}>
           {title.imdb != null && (
@@ -212,7 +211,9 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
       {/* Every footer reserves room for a two-line title plus the year and
           story rows, so posters, badges and buttons sit at the same height on
           every card. */}
-      <div className={cn('card-meta min-h-[92px] flex-none px-[14px] pt-[12px] pb-[14px]', seen && 'opacity-82', skipped && 'opacity-30')}>
+      {/* A seen card fades its title only: the year and budget are muted
+          already, and fading them too took them under AA (3.4:1). */}
+      <div className={cn('card-meta min-h-[92px] flex-none px-[14px] pt-[12px] pb-[14px]', seen && '[&_.card-title]:opacity-82', skipped && 'opacity-30')}>
         <div className="card-title line-clamp-2 text-[13px] leading-[1.25] font-semibold tracking-tight text-pretty"><Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
         <div className="card-year mt-[4px] flex items-center justify-between gap-[8px] text-[11px] text-muted-foreground tabular-nums">
           <span>{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>

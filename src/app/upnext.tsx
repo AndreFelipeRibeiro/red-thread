@@ -15,7 +15,7 @@
 // TitleStatusActions, so marking goes through the usual toast, Undo and sync.
 //
 // On the design system (Notion "shadcn pass 2/5"): this file is listed with
-// `@source` in src/index.css, each surface's root carries `v4`, the card is
+// `@source` in src/index.css, the card is
 // shadcn's Card look and the buttons are Buttons. The `un-` class names stay as
 // hooks for the QA checks and the phone lists (`un-inline`); they carry no V3
 // styling any more. Keyframes for the slide are in src/index.css.
@@ -29,7 +29,7 @@ import type { Title, UpNextInfo, UpNextWithTitle } from '../types/catalog';
 // (Only the first child: the phone card puts its phase badge on the poster too.)
 const THUMB = 'block overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_svg]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover';
 // The card around the phone and List layouts.
-const CARD = 'v4 rounded-xl border border-border bg-card text-card-foreground shadow-sm';
+const CARD = 'rounded-xl border border-border bg-card text-card-foreground shadow-sm';
 // The title opens the details; the whole row is the button.
 const OPEN = 'un-open flex min-w-0 cursor-pointer items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 
@@ -131,7 +131,7 @@ function UpNextState({ info, strip = false }: { info: UpNextInfo; strip?: boolea
 function UpNextNote({ title }: { title: Title }) {
   const note = UpNI18N.storyNote(title);
   if (!note) return null;
-  return <div className="un-note mt-[5px]"><window.StoryYear title={title} detail/></div>;
+  return <div className="un-note mt-[5px] [&_.story-year]:text-(length:--fs-xs) [&_.story-year]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]"><window.StoryYear title={title} detail/></div>;
 }
 
 // The next title slides in and the one just marked slides out (Notion V4
@@ -235,7 +235,7 @@ function UpNextMeterRow({ info }: { info: UpNextInfo }) {
   if (r.kind !== 'next') return null;
   const t = r.title;
   return (
-    <section className="un-mrow v4 pointer-events-auto mt-2 flex items-center gap-1.5 border-t border-border pt-2.5 first:mt-0 first:border-t-0 first:pt-0"
+    <section className="un-mrow pointer-events-auto mt-2 flex items-center gap-1.5 border-t border-border pt-2.5 first:mt-0 first:border-t-0 first:pt-0"
       aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
       <UpNextSlide id={t.id} className="un-mrow-body flex min-w-0 flex-1 items-center gap-1.5">
         <button type="button" className={cn(OPEN, 'flex-1 gap-2.5')} onClick={() => info.onOpen(t.id)}>
@@ -261,7 +261,7 @@ function UpNextChip({ info }: { info: UpNextInfo }) {
   const t = r.title;
   return (
     <section aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}
-      className={cn('un-chip v4 absolute inset-x-3.5 bottom-3 z-21 rounded-[14px] border border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))] bg-background/96 py-1 pr-1 pl-3',
+      className={cn('un-chip absolute inset-x-3.5 bottom-3 z-21 rounded-[14px] border border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))] bg-background/96 py-1 pr-1 pl-3',
         'shadow-[0_12px_30px_rgba(0,0,0,.5)] not-dark:shadow-[0_1px_2px_rgb(0_0_0/.06),0_10px_28px_-12px_rgb(0_0_0/.2)]',
         // Above a guide's or character's pill; tablets have no gesture hint.
         '[.m-main.has-pill_&]:bottom-[76px] [.app.touch.tablet_&]:bottom-[calc(12px+env(safe-area-inset-bottom,0px))]')}>

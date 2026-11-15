@@ -4,8 +4,7 @@
 // tooltip for a hovered thread.
 //
 // Moved out of app.tsx so they can be built on the design system: this file is
-// listed with `@source` in src/index.css and each root carries `v4` (the
-// scoped reset, src/preflight-v4.css). Same content, same places; the app
+// listed with `@source` in src/index.css. Same content, same places; the app
 // shell still decides when each shows and hands over what it needs.
 //
 // Class names the canvas code, the Escape ladder and the QA checks read are
@@ -36,7 +35,7 @@ export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onComm
     touch && 'h-[max(40px,2.5rem)] min-w-[54px]');
   const start = String(Math.round(scale * 100));
   return (
-    <div className={cn('zoom-ctl v4 absolute flex items-stretch gap-px overflow-hidden rounded-md border border-border bg-background shadow-xs dark:border-input dark:bg-input/30',
+    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-border bg-background shadow-xs dark:border-input dark:bg-input/30',
       touch
         ? 'touch top-3 right-3 z-22 rounded-lg transition-opacity duration-250 motion-reduce:transition-none'
         : 'right-4 bottom-4 transition-[right] duration-360 ease-[cubic-bezier(.2,.8,.2,1)] [.app:not(.touch).drawer-open_&]:right-[396px]',
@@ -63,7 +62,7 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
   x: number; y: number; phase?: number | null; color?: string; plain: boolean; touch: boolean; children: React.ReactNode;
 }) {
   return (
-    <div className={cn('band-label v4 pointer-events-none absolute top-0 left-0 z-1 rounded-xl text-sm font-semibold tracking-tight whitespace-nowrap', FLOAT,
+    <div className={cn('band-label pointer-events-none absolute top-0 left-0 z-1 rounded-xl text-sm font-semibold tracking-tight whitespace-nowrap', FLOAT,
       touch ? 'w-[240px] px-[11px] pt-[7px] pb-[8px]' : 'w-[420px] px-[13px] pt-[8px] pb-[9px]', plain && 'plain w-auto',
       phase ? 'phase text-(--band)' : 'text-muted-foreground',
       '[transition:opacity_320ms_ease_60ms,top_420ms_cubic-bezier(.2,.8,.2,1)_60ms] motion-reduce:[transition:opacity_200ms_ease]',
@@ -79,7 +78,7 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
  *  next under it on desktop; top-right on desktop, across the top on phones. */
 export function SpatialOverall({ touch, children }: { touch: boolean; children: React.ReactNode }) {
   return (
-    <div className={cn('spatial-overall v4 pointer-events-none absolute z-40 rounded-xl px-[13px] pt-[8px] pb-[9px] text-sm font-semibold tracking-tight text-foreground', FLOAT,
+    <div className={cn('spatial-overall pointer-events-none absolute z-40 rounded-xl px-[13px] pt-[8px] pb-[9px] text-sm font-semibold tracking-tight text-foreground', FLOAT,
       touch ? 'top-[62px] right-3 left-3.5 w-auto' : 'top-3.5 right-4 w-[300px]')}>
       {children}
     </div>
@@ -92,7 +91,7 @@ export function SpatialOverall({ touch, children }: { touch: boolean; children: 
 export function SpatialEmpty({ actionLabel, onAction }: { actionLabel: string | null; onAction: () => void }) {
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   return (
-    <div className={cn('spatial-empty v4 absolute top-1/2 left-1/2 z-30 w-max max-w-[min(360px,calc(100%-32px))] -translate-1/2 rounded-xl px-6 py-[22px] text-center', FLOAT)}
+    <div className={cn('spatial-empty absolute top-1/2 left-1/2 z-30 w-max max-w-[min(360px,calc(100%-32px))] -translate-1/2 rounded-xl px-6 py-[22px] text-center', FLOAT)}
       role="status" onMouseDown={stop} onTouchStart={stop} onTouchEnd={stop} onClick={stop}>
       <div className="spatial-empty-t text-base font-semibold text-foreground">{tr('empty.title')}</div>
       <div className="spatial-empty-s mt-1.5 text-sm leading-[1.4] text-muted-foreground">{tr('empty.sub')}</div>
@@ -107,7 +106,7 @@ export function LineTooltip({ x, y, a, b, characters }: { x: number; y: number; 
   const I18N = window.MCU_I18N;
   const ta = window.TITLES.find((t) => t.id === a), tb = window.TITLES.find((t) => t.id === b);
   return (
-    <div className="line-tooltip v4 pointer-events-none fixed z-100 min-w-[180px] rounded-md bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md ring-1 ring-foreground/10 [.app.touch_&]:hidden"
+    <div className="line-tooltip pointer-events-none fixed z-100 min-w-[180px] rounded-md bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md ring-1 ring-foreground/10 [.app.touch_&]:hidden"
       style={{ left: x + 12, top: y + 12 }}>
       {ta && tb && <div className="tt-titles mb-1.5 max-w-[280px] border-b border-border pb-1.5 font-semibold text-foreground">
         {I18N.titleName(ta)} <span className="font-normal text-muted-foreground" aria-hidden="true">↔</span> {I18N.titleName(tb)}
@@ -164,7 +163,7 @@ export function ContextSummary({ variant, inList = false, showing, total, filter
 
   if (variant === 'float') {
     return (
-      <div className={cn('ctx ctx-float v4 pointer-events-none absolute top-3.5 left-4 z-40 flex max-w-[min(760px,calc(100%-32px))] flex-wrap items-center gap-x-2 gap-y-1.5 text-xs [&>*]:pointer-events-auto',
+      <div className={cn('ctx ctx-float pointer-events-none absolute top-3.5 left-4 z-40 flex max-w-[min(760px,calc(100%-32px))] flex-wrap items-center gap-x-2 gap-y-1.5 text-xs [&>*]:pointer-events-auto',
         inList && 'ctx-static static mb-1.5 max-w-none')} onMouseDown={stop} onWheel={stop}>
         <span className="ctx-count inline-flex h-7 items-center rounded-full border border-border bg-background px-[11px] text-xs font-medium whitespace-nowrap text-foreground tabular-nums" role="status">{count}</span>
         {chips.map(([key, label, onClear]) => (
@@ -180,7 +179,7 @@ export function ContextSummary({ variant, inList = false, showing, total, filter
 
   const pill = variant === 'pill';
   return (
-    <div className={cn('ctx v4 flex items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground', `ctx-${variant}`,
+    <div className={cn('ctx flex items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground', `ctx-${variant}`,
       pill ? 'absolute top-3 left-3.5 z-40 box-border min-h-[max(26px,1.625rem)] max-w-[calc(100%-164px)] rounded-[13px] border border-border bg-background/82 px-2.5 py-0.5 backdrop-blur-[6px] has-[.ctx-clear]:pr-1'
         : '-mt-0.5 mb-2.5 min-h-[22px] justify-between')} onTouchStart={stop} onMouseDown={stop}>
       <span className="ctx-text inline-flex min-w-0 flex-nowrap gap-x-[1ch] overflow-hidden text-xs leading-[1.4] tabular-nums [&_b]:font-semibold [&_b]:text-foreground" role="status">

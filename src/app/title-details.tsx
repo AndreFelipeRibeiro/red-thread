@@ -5,8 +5,7 @@
 // next (the release line and badge, "Set in", the synopsis).
 //
 // Moved out of mobile.tsx and app.tsx so they can be built on the design
-// system: this file is listed with `@source` in src/index.css, and each root
-// carries `v4` (the scoped reset, src/preflight-v4.css). Same order, content
+// system: this file is listed with `@source` in src/index.css. Same order, content
 // and actions as before; only the building blocks changed. The drawer keeps
 // its own behaviour (modeless, no focus trap, focus handling in app.tsx's
 // CastDrawer) and the phone sheet keeps the shared `Sheet` frame (focus trap,
@@ -57,7 +56,7 @@ export function StoryYear({ title, detail = false, className = '' }: { title: Ti
   const isTime = /^(c\. )?\d/.test(title.story);
   const full = isTime ? tr('story.setIn', { story }) : story;
   return (
-    <span className={cn('story-year inline-flex min-w-0 items-center gap-1 text-xs leading-[1.3] whitespace-nowrap tabular-nums', DIM,
+    <span className={cn('story-year inline-flex min-w-0 items-center gap-1 text-xs leading-[1.3] in-[.card]:text-[10px] whitespace-nowrap tabular-nums', DIM,
       '[&>span]:overflow-hidden [&>span]:text-ellipsis [&>svg]:flex-none [&>svg]:opacity-75',
       detail && 'detail flex items-start whitespace-normal [&>svg]:mt-px', className)}
       title={`${tr('story.tooltip', { story })}${note ? ' · ' + note : ''}`}>
@@ -98,7 +97,7 @@ export function ReleaseBadge({ title, className = '' }: { title: Title | null | 
   const full = r.date ? tr('release.' + r.status, { date: r.date }) : tr('release.tba');
   return (
     <Badge variant="outline" title={full}
-      className={cn('release-badge ml-[7px] h-auto px-2 py-0.5 align-[1px] text-xs leading-none font-medium', r.status,
+      className={cn('release-badge ml-[7px] h-auto px-2 py-0.5 align-[1px] text-xs leading-none font-medium in-[.card]:text-[9.5px]', r.status,
         r.status === 'expected' ? cn('border-dashed border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]', DIM) : 'text-foreground', className)}>
       <span aria-hidden="true">{tr('release.badge.' + r.status)}</span>
       <span className="story-sr">{full}</span>
@@ -264,9 +263,12 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
             </dd>
           </div>
         </dl>
-        <div className="td-actrow mt-3.5 flex flex-wrap items-center gap-2">
+        <div className="td-actrow mt-3.5 flex flex-wrap items-center gap-1.5">
           <window.TitleStatusActions title={title} variant="inline" className={cn('td-tsa mt-0', c.tsa)}/>
-          <window.ShareButton className="td-share" label={tr('share.titleLabel', { title: I18N().titleName(title) })}
+          {/* Share is icon-only here, a square as tall as Seen and Watchlist, so
+              the row stays on one line in every language ("On watchlist",
+              Portuguese's "Compartilhar"); its name is the label and tooltip. */}
+          <window.ShareButton iconOnly className="td-share size-[max(40px,2.5rem)] px-0 [&_svg]:size-4" label={tr('share.titleLabel', { title: I18N().titleName(title) })}
             payload={() => ({ params: { title: title.id }, text: tr('share.titleText', { title: I18N().titleName(title), year: title.year }) })}/>
         </div>
         {window.GuideDetailsSkip && <window.GuideDetailsSkip title={title}/>}
@@ -293,7 +295,7 @@ export function DrawerFrame({ asideRef, scrollRef, open, onClose, onSlid, childr
 }) {
   return (
     <aside ref={asideRef} aria-hidden={!open} aria-labelledby="drawer-title"
-      className={cn('drawer v4 fixed top-(--tb-h,0px) right-0 z-60 flex h-[calc(100vh-var(--tb-h,0px))] w-[380px] flex-col border-l border-border bg-popover text-popover-foreground shadow-lg',
+      className={cn('drawer in-[.app.touch]:hidden fixed top-(--tb-h,0px) right-0 z-60 flex h-[calc(100vh-var(--tb-h,0px))] w-[380px] flex-col border-l border-border bg-popover text-popover-foreground shadow-lg',
         'transition-transform duration-360 ease-[cubic-bezier(.2,.8,.2,1)] max-[900px]:w-full max-[900px]:max-w-[380px]',
         open ? 'open translate-x-0' : 'translate-x-full')}
       onTransitionEnd={(e) => { if (e.target === e.currentTarget) onSlid(); }}>
@@ -356,7 +358,7 @@ export function CastSheet({ title, onClose, onCharacterClick, activeChar, active
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   return (
     <Sheet onClose={onClose} tall label={tr('details.sheetLabel', { title: I18N().titleName(title) })}>
-      <div className="v4 contents">
+      <div className="contents">
         <TitleDetailsBody title={title} surface="sheet" search={search}
           cast={
             <DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })}
@@ -400,7 +402,7 @@ Object.assign(window, { Hourglass, StoryYear, ReleaseLine, ReleaseBadge, Synopsi
 /** The bottom sheet's frame: shadcn's Sheet look from the bottom (popover
  *  surface, rounded top, the dialogs' overlay). Its behaviour (focus trap,
  *  Back, swipe to close) is `Sheet` in mobile.tsx, which renders this. The
- *  frame carries no `v4`: the sheets' contents are on their own schedule. */
+ *  frame and its contents are on the design system. */
 export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describedBy, className = '', children }: {
   sheetRef: React.Ref<HTMLDivElement>; onClose: () => void; tall?: boolean; label?: string;
   labelledBy?: string; describedBy?: string; className?: string; children: React.ReactNode;
@@ -415,7 +417,7 @@ export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describ
           tall && 'tall max-h-[84vh]', className)}>
         <button type="button" className="m-grab relative mx-auto mt-2 mb-1 h-8 w-[46px] flex-none cursor-pointer border-0 bg-transparent p-0 after:absolute after:inset-x-1 after:top-2 after:h-1 after:rounded-[2px] after:bg-muted-foreground/30 after:content-['']"
           onClick={onClose} aria-label={tr('details.close')} tabIndex={-1}/>
-        {/* No `v4` reset here, so the ghost button says its own transparent fill. */}
+        {/* The ghost button says its own transparent fill. */}
         <Button variant="ghost" size="icon" title={tr('details.close')} aria-label={tr('details.close')} onClick={onClose}
           className="m-sheet-x absolute top-2 right-2.5 z-2 size-[max(36px,2.25rem)] bg-transparent font-sans text-lg leading-none text-muted-foreground active:bg-muted active:text-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100">×</Button>
         <div className="m-sheet-body overflow-y-auto overscroll-contain px-[18px] pt-1.5 pb-[calc(24px+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]">{children}</div>

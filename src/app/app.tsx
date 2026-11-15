@@ -6,6 +6,8 @@
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
+import * as B from './banners';
+import * as S from './shell';
 import ReactDOM from 'react-dom/client';
 
 // Red Thread — the app shell and the floating (Spatial) canvas layout
@@ -359,7 +361,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       return `M ${a.x} ${a.y} Q ${mx - dy / dist * sag} ${my + dx / dist * sag} ${b.x} ${b.y}`;
     };
     return (
-      <svg className="connection-layer guide-route" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
+      <svg className={`${S.THREADS} guide-route`} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
         {segs.map(([a, b, dashed], i) => (
           <path key={i} d={d(a, b)} fill="none" style={{ stroke: 'var(--primary)' }} strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
             strokeDasharray={dashed ? '10 9' : undefined} opacity={dashed ? 0.7 : 0.9}/>
@@ -612,7 +614,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 
   return (
     <>
-    <svg className="connection-layer" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
+    <svg className={S.THREADS} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
       <defs>
         <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3" result="b"/>
@@ -626,8 +628,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       {lineEls}
       <style>{`.connection-layer path { pointer-events: stroke; }`}</style>
     </svg>
-    {/* Labels above the cards (z-index in styles.css), so none hides behind one. */}
-    <svg className="connection-labels" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
+    {/* Labels above the cards (z-index: shell.tsx), so none hides behind one. */}
+    <svg className={S.LABELS} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
       {labelEls}
     </svg>
     </>
@@ -2684,38 +2686,38 @@ function App() {
       : (creditedHere || roster.length < 2) ? named
       : tr('credit.more', { name: named, n: roster.length - 1 });
     return (
-      <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
-        <span className="cb-photo" style={{ background: c.color }}>
+      <div className={`${B.BANNER}${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
+        <span className={`${B.PHOTO} size-10`} style={{ background: c.color }}>
           <window.Portrait url={photo} alt="" initials={c.initials}/>
         </span>
-        <span className="cb-who">
+        <span className={B.BANNER_WHO}>
           <b>{who}</b>
-          <span className="cb-sub">{sub} · {tr('header.count', { n: count })}</span>
+          <span className={B.BANNER_SUB}>{sub} · {tr('header.count', { n: count })}</span>
         </span>
         {pinned && <>
           {/* A character with its own guide offers it: the same titles,
               curated, with a reason for each. */}
           {window.MCU_GUIDE && window.MCU_GUIDE.forChar(activeChar) && (
-            <button type="button" className="cb-guide" onClick={() => openGuide(window.MCU_GUIDE.forChar(activeChar).id)}>
+            <button type="button" className={B.BANNER_GUIDE} onClick={() => openGuide(window.MCU_GUIDE.forChar(activeChar).id)}>
               <window.GuideIcon size={14}/>{tr('guide.seeCurated')}
             </button>
           )}
-          <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
+          <div className={`${B.SEGMENTED} cb-mode h-[max(34px,2.125rem)]`} role="group" aria-label={tr('highlight.modeAria')}>
             <window.SegPill value={charOnly}/>
-            <button className={charOnly ? 'on' : ''} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
-            <button className={!charOnly ? 'on' : ''} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
+            <button className={`${B.SEGMENT}${charOnly ? ' on' : ''}`} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
+            <button className={`${B.SEGMENT}${!charOnly ? ' on' : ''}`} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
           </div>
-          <div className="cb-step">
-            <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!pinnedTitles.length}>‹</button>
-            <span className="cb-pos" aria-live="polite">{stepIndex >= 0
+          <div className={B.STEP}>
+            <button className={B.STEP_BTN} onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!pinnedTitles.length}>‹</button>
+            <span className={B.POS} aria-live="polite">{stepIndex >= 0
               ? tr('highlight.position', { i: stepIndex + 1, n: pinnedTitles.length })
               : tr('header.count', { n: pinnedTitles.length })}</span>
-            <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
+            <button className={B.STEP_BTN} onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
           </div>
         </>}
-        {pinned && <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: who })}
+        {pinned && <window.ShareButton iconOnly size={15} className={B.BANNER_SHARE} label={tr('share.charLabel', { name: who })}
           payload={() => charSharePayload(activeChar)}/>}
-        <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
+        <button className={B.CLOSE} aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
           onClick={unpinCharacter}>×</button>
       </div>
     );
@@ -2737,38 +2739,38 @@ function App() {
     const n = pinnedTitles.length;
     const charGuide = window.MCU_GUIDE ? window.MCU_GUIDE.forChar(ch) : null;
     return (
-      <div className="char-pill" style={{ '--char-color': c.color }}>
-        <div className="cp-bar">
-          <span className="cp-who">
-            <span className="cb-photo" style={{ background: c.color }}>
+      <div className={B.PILL} style={{ '--char-color': c.color }}>
+        <div className={B.PILL_BAR}>
+          <span className={B.PILL_WHO}>
+            <span className={B.PILL_PHOTO} style={{ background: c.color }}>
               <window.Portrait url={photo} alt="" initials={c.initials}/>
             </span>
-            <span className="cp-text">
-              <span className="cp-name">{pinnedActor || I18N.charName(ch)}</span>
-              <span className="cp-actor">{pinnedActor
+            <span className={B.PILL_TEXT}>
+              <span className={B.PILL_NAME}>{pinnedActor || I18N.charName(ch)}</span>
+              <span className={B.PILL_ACTOR}>{pinnedActor
                 ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
                 : (creditedHere || roster.length < 2) ? named
                 : tr('credit.more', { name: named, n: roster.length - 1 })}</span>
             </span>
           </span>
-          <div className="cb-step">
-            <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
+          <div className={B.PILL_STEP}>
+            <button className={B.PILL_BTN} onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
             {/* Before the first step just the number of titles (read out as
                 "13 titles"), so the name keeps its space; then "1/13". */}
-            <span className="cb-pos" aria-live="polite">{stepIndex >= 0
+            <span className={B.PILL_POS} aria-live="polite">{stepIndex >= 0
               ? tr('highlight.short', { i: stepIndex + 1, n })
               : <>{n}<span className="story-sr"> {tr('highlight.titlesWord', { n })}</span></>}</span>
-            <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
+            <button className={B.PILL_BTN} onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
           </div>
           {charGuide && (
-            <button type="button" className="cp-guide" aria-label={tr('guide.seeCurated')} title={tr('guide.seeCurated')}
+            <button type="button" className={B.PILL_GUIDE} aria-label={tr('guide.seeCurated')} title={tr('guide.seeCurated')}
               onClick={() => openGuide(charGuide.id)}>
               <window.GuideIcon size={16}/>
             </button>
           )}
-          <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
+          <window.ShareButton iconOnly size={15} className={B.PILL_SHARE} label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
             payload={() => charSharePayload(ch)}/>
-          <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
+          <button className={B.PILL_CLOSE} aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
         </div>
       </div>
     );
@@ -2800,7 +2802,7 @@ function App() {
 
   const canvasEl = (
     <div
-      className="viewport"
+      className={S.VIEWPORT}
       ref={viewportRef}
       /* Focusing a card would let the browser scroll this clipped box; the
          camera does the moving instead (revealCard), so keep it at 0,0. */
@@ -2828,9 +2830,9 @@ function App() {
         setDrawerId(null);
       }}
     >
-      <div className="canvas-bg"/>
+      <div className={S.CANVAS_BG}/>
       <div
-        className={`canvas${linesSettling ? ' lines-settling' : ''}${bandsReturning ? ' bands-settling' : ''}`}
+        className={`${S.CANVAS}${linesSettling ? ' lines-settling' : ''}${bandsReturning ? ' bands-settling' : ''}`}
         style={{
           width: canvasW + 'px',
           height: canvasH + 'px',
@@ -2959,7 +2961,7 @@ function App() {
 
   if (isTouch) {
     return (
-      <div className={`app touch ${device}`}>
+      <div className={`${S.APP} touch ${device}`}>
         {upAnnouncer}
         {homeAnnouncer}
         {themeAnnouncer}
@@ -2980,16 +2982,16 @@ function App() {
           onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
-        <div role="main" className={`m-main${charPill || guide ? ' has-pill' : ''}`}
+        <div role="main" className={`${S.M_MAIN}${charPill || guide ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {guide && viewMode !== 'spatial' && (
             <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
-              currentId={stepCurrent} onOpen={(id) => setDrawerId(id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
+              currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
           )}
           {!guide && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {!guide && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
-            <div className="m-spatial-wrap">
+            <div className={S.M_SPATIAL_WRAP}>
               {canvasEl}
               {/* An open guide's dock carries its next stop, so the chip steps
                   aside while it is open. */}
@@ -3032,7 +3034,7 @@ function App() {
         )}
         {sheet === 'guides' && (
           <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
-            <h2 className="g-sheet-title">{tr('guide.menuTitle')}</h2>
+            <h2 className={S.GUIDES_SHEET_TITLE}>{tr('guide.menuTitle')}</h2>
             <window.GuideMenu currentId={guideId} onPick={(id) => { setSheet(null); openGuide(id); }}/>
           </window.Sheet>
         )}
@@ -3072,7 +3074,7 @@ function App() {
   }
 
   return (
-    <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
+    <div className={`${S.APP} ${drawerTitle ? 'drawer-open' : ''}`}>
       {upAnnouncer}
       {homeAnnouncer}
       {themeAnnouncer}
@@ -3101,7 +3103,9 @@ function App() {
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
             module={guideModule('list')}
-            currentId={stepCurrent} openId={drawerId} onOpen={toggleDetails} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            // A stop opened by a click becomes the guide's current one too,
+            // like ← → and ↑ ↓: the marker and "Stop n of N" follow it.
+            currentId={stepCurrent} openId={drawerId} onOpen={(id) => { setStepId(id); toggleDetails(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
             onFollow={(id) => {
               // The stop becomes the guide's current one too, so ← → carry on
               // from it and the banner announces "Stop n of N", as it does for

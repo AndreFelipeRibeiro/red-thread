@@ -3,16 +3,10 @@
 // in their place at deep zoom.
 //
 // Moved out of tracking.tsx so they can be built on the design system: this
-// file is listed with `@source` in src/index.css, and the group's root carries
-// `v4` (the scoped reset, src/preflight-v4.css), because it sits inside
-// surfaces that are still V3 (the List, the details, the phone, Up next,
-// guides). The buttons are shadcn's outline Button.
+// file is listed with `@source` in src/index.css. The buttons are shadcn's outline Button.
 //
-// The group's own look lives here. Where it sits and how big it is in each
-// surface stays with that surface's rules in styles.css / styles-mobile.css
-// (`.tsa.overlay.dl-tsa`, `.m-lrow-tsa .tsa-btn`, `.un-tsa`, `.g-tsa`…) until
-// that surface converts; those rules are unlayered, so they still win. They
-// read the class names kept here as hooks: `tsa`, `overlay` / `inline`,
+// The group's own look lives here; each surface places and sizes it through
+// `className` (merged with the defaults). The class names kept as hooks: `tsa`, `overlay` / `inline`,
 // `loading`, `busy`, `has-error`, `tsa-btn`, `seen` / `watch`, `on`, `pop`,
 // `tsa-gap`, `tsa-spin`, `tsa-lab`, `tsa-err`, `tsa-bang`.
 import React from 'react';
@@ -34,6 +28,10 @@ const ON = {
 // (Notion V4 Tasks, "Micro-interaction: the Seen check pops in…"); lifted
 // above its neighbour so the ring is never hidden. Keyframes: src/index.css.
 const POP = 'z-2 animate-[tsa-pop_440ms_cubic-bezier(.2,1.6,.4,1)] after:pointer-events-none after:absolute after:-inset-[2px] after:rounded-[inherit] after:border-2 after:border-(--pop) after:content-[\'\'] after:animate-[tsa-ring_560ms_ease-out_forwards] motion-reduce:animate-none motion-reduce:after:animate-none';
+/** The labelled buttons (the details' wider CTAs): a smaller pop and a tight
+ *  halo that fades out a few pixels from the edge, instead of the icon
+ *  buttons' ring that grows to twice their size. */
+const POP_INLINE = 'z-2 animate-[tsa-pop-sm_380ms_cubic-bezier(.2,1.3,.4,1)] after:pointer-events-none after:absolute after:-inset-px after:rounded-[inherit] after:content-[\'\'] after:animate-[tsa-halo_520ms_ease-out_forwards] motion-reduce:animate-none motion-reduce:after:animate-none';
 
 // The saving spinner, on the corner of the button being saved, out of the
 // row's layout, so the buttons never move while a mark saves. Published for
@@ -98,19 +96,19 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
   const spinOn = busy ? pressed : loading ? firstKind : null;
 
   const size = inline
-    ? 'h-9 min-h-9 gap-[7px] px-3 text-sm [&_svg]:size-[14px] [&_svg]:flex-[0_0_14px]'
+    ? 'h-auto min-h-[max(40px,2.5rem)] gap-[7px] px-2.5 text-xs [&_svg]:size-[14px] [&_svg]:flex-[0_0_14px]'
     : 'size-8 p-0 text-muted-foreground [&_svg]:size-[15px]';
   const btn = (kind: 'seen' | 'watch', on: boolean) => cn('tsa-btn relative transition-[color,border-color,background-color,scale] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100',
     size, onPoster && GLASS, on && ON[kind], busy && 'opacity-75', error && 'border-destructive dark:border-destructive',
-    kind === 'seen' ? '[--pop:var(--status-seen)]' : '[--pop:var(--status-watch)]', kind, on && 'on', pop === kind && cn('pop', POP));
+    kind === 'seen' ? '[--pop:var(--status-seen)]' : '[--pop:var(--status-watch)]', kind, on && 'on', pop === kind && cn('pop', inline ? POP_INLINE : POP));
   const spinner = <span className={TSA_SPIN} aria-hidden="true"/>;
 
   // `flex!`: the hook class `inline` is also Tailwind's display utility.
   // A host's own utilities in `className` win over the defaults here (they are
   // merged); the hook classes go on after, unmerged, because `inline` is also
   // Tailwind's display utility.
-  const root = cn('tsa v4 flex! items-center gap-[6px]',
-    inline ? 'mt-[10px] flex-wrap gap-2' : 'absolute top-1/2 right-[8px] z-3 flex-col [transform:translateY(-50%)]',
+  const root = cn('tsa flex! items-center gap-[6px]',
+    inline ? 'mt-[10px] flex-wrap gap-1.5' : 'absolute top-1/2 right-[8px] z-3 flex-col [transform:translateY(-50%)]',
     loading && 'pointer-events-none opacity-45', className) + (inline ? ' inline' : ' overlay')
     + (loading ? ' loading' : '') + (busy ? ' busy' : '') + (error ? ' has-error' : '');
 
@@ -121,7 +119,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
       {offerSeen && <Button
         variant="outline"
         className={btn('seen', seen)}
-        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
+        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring' || e.animationName === 'tsa-halo') setPop(null); }}
         disabled={loading}
         aria-busy={loading || busy}
         aria-pressed={loading ? undefined : seen}
@@ -137,7 +135,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
       <Button
         variant="outline"
         className={btn('watch', listed)}
-        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
+        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring' || e.animationName === 'tsa-halo') setPop(null); }}
         disabled={loading}
         aria-busy={loading || busy}
         aria-pressed={loading ? undefined : listed}
@@ -153,7 +151,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
       {/* The overlay variant has no room for a message; it carries the red
           treatment plus a tooltip, and the drawer/sheet spells it out. */}
       {error && inline && <span className="tsa-err basis-full text-xs text-destructive" role="status">{tr('status.notSaved', { error })}</span>}
-      {error && !inline && <span className="tsa-bang flex size-4 items-center justify-center rounded-full bg-destructive text-xs leading-none font-bold text-(--on-color)" role="status" aria-label={tr('status.notSaved', { error })}>!</span>}
+      {error && !inline && <span className="tsa-bang flex size-4 items-center justify-center rounded-full bg-destructive text-xs in-[.card]:text-[11px] leading-none font-bold text-(--on-color)" role="status" aria-label={tr('status.notSaved', { error })}>!</span>}
     </div>
   );
 }
@@ -163,7 +161,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
 export function SeenMarker({ seen }: { seen: boolean }) {
   if (!seen) return null;
   return (
-    <span className="seen-marker v4 flex size-[26px] items-center justify-center rounded-[7px] bg-(--status-seen) text-(--on-color) [&_svg]:size-[14px]"
+    <span className="seen-marker flex size-[26px] items-center justify-center rounded-[7px] bg-(--status-seen) text-(--on-color) [&_svg]:size-[14px]"
       title={tr('status.seen')} aria-hidden="true"><window.CheckIcon/></span>
   );
 }
