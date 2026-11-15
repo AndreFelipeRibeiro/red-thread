@@ -271,7 +271,7 @@ const keepFocusOnStep = () => {
   drawerStepTimer = setTimeout(() => { drawerStepFocus = false; }, 1000);
 };
 
-function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search }) {
+function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search, onShowInExplore }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
   // the last title while it slides away. Switching titles swaps the content.
   const [title, setTitle] = useState(current);
@@ -318,6 +318,8 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     <window.DrawerFrame asideRef={asideRef} scrollRef={scrollRef} open={open} onClose={onClose}
       onSlid={() => { if (!current) setTitle(null); }}>
       <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
+        // From My list and Guides: the title on the Explore canvas.
+        onExplore={onShowInExplore ? () => onShowInExplore(title.id) : null}
         cast={<window.DrawerCast title={title} activeChar={activeChar} activeChars={activeChars} search={search}
           onCharacterClick={onCharacterClick} onCharacterHover={onCharacterHover}/>}/>
     </window.DrawerFrame>
@@ -648,8 +650,14 @@ const PREFS_VERSION = 1;
 const VIEW_MODE_VALUES = ['list', 'grid', 'spatial'];
 const DESKTOP_VIEW_VALUES = ['spatial', 'list'];
 
+// A sort saved for one desktop section ({ sort, sortDir }), or null.
+function validSort(x) {
+  if (!x || !Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, x.sort)) return null;
+  return { sort: x.sort, sortDir: x.sortDir === 'asc' || x.sortDir === 'desc' ? x.sortDir : DEFAULT_SORT_DIR[x.sort] };
+}
+
 function readDisplayPrefs() {
-  const prefs = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+  const prefs = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release, guidesPage: false, sections: {} };
   let parsed = null;
   try {
     parsed = JSON.parse(window.localStorage.getItem(PREFS_KEY) || 'null');
@@ -662,6 +670,10 @@ function readDisplayPrefs() {
   if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, parsed.sort)) {
     prefs.sort = parsed.sort;
     prefs.sortDir = parsed.sortDir === 'asc' || parsed.sortDir === 'desc' ? parsed.sortDir : DEFAULT_SORT_DIR[parsed.sort];
+  }
+  prefs.guidesPage = parsed.guidesPage === true && prefs.desktopView === 'list';
+  if (parsed.sections && typeof parsed.sections === 'object') {
+    ['explore', 'list'].forEach(k => { const v = validSort(parsed.sections[k]); if (v) prefs.sections[k] = v; });
   }
   return prefs;
 }
@@ -678,7 +690,7 @@ function readURLState() {
   let q;
   try { q = new URLSearchParams(window.location.search); } catch (e) { return out; }
   out.any = URL_KEYS.some(k => q.has(k));
-  const v = q.get('view'); if (VIEW_MODE_VALUES.indexOf(v) !== -1) out.view = v;
+  const v = q.get('view'); if (VIEW_MODE_VALUES.indexOf(v) !== -1 || v === 'guides') out.view = v;
   const s = q.get('sort'); if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, s)) out.sort = s;
   const o = q.get('order'); if (o === 'asc' || o === 'desc') out.order = o;
   const ph = q.get('phase'); if (/^[1-6]$/.test(ph || '')) out.phase = ph;
@@ -720,8 +732,11 @@ function App() {
   // same to everyone. An address with none of our keys uses the saved prefs.
   const [initialPrefs] = useState(() => {
     if (!urlAtLoad.any) return readDisplayPrefs();
-    const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
-    if (urlAtLoad.view) { p.viewMode = urlAtLoad.view; p.desktopView = urlAtLoad.view === 'grid' ? 'list' : urlAtLoad.view; }
+    const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release, guidesPage: urlAtLoad.view === 'guides', sections: {} };
+    if (urlAtLoad.view) {
+      const v = urlAtLoad.view === 'guides' ? 'list' : urlAtLoad.view;
+      p.viewMode = v; p.desktopView = v === 'grid' ? 'list' : v;
+    }
     if (urlAtLoad.sort) { p.sort = urlAtLoad.sort; p.sortDir = DEFAULT_SORT_DIR[urlAtLoad.sort]; }
     if (urlAtLoad.order) p.sortDir = urlAtLoad.order;
     return p;
@@ -750,11 +765,30 @@ function App() {
   // has its own choice (Spatial by default, or List) so the two never fight.
   const [viewMode, setViewMode] = useState(initialPrefs.viewMode);
   const [desktopView, setDesktopView] = useState(initialPrefs.desktopView);
+  // Desktop sections (Notion "Desktop: navigation for Explore, My list and
+  // Guides"): Explore is the Spatial canvas, My list the List, and Guides
+  // either the gallery of guides (guidesPage) or the open guide's own list.
+  // Explore and My list each keep their own sort and filters: what one section
+  // leaves behind is parked here and comes back when it is shown again. The
+  // collection filter (To watch, Seen, Watchlist) belongs to My list only.
+  const [guidesPage, setGuidesPage] = useState(!!initialPrefs.guidesPage);
+  const sectionStore = useRef(null);
+  if (!sectionStore.current) {
+    const blank = (x) => ({ ...(x || { sort: 'release', sortDir: DEFAULT_SORT_DIR.release }), phase: 'all', type: 'all', budget: 'all', release: 'all', collection: 'all' });
+    const sec = initialPrefs.sections || {};
+    sectionStore.current = { explore: blank(sec.explore), list: blank(sec.list) };
+  }
   const prefsLoaded = useRef(false);
   useEffect(() => {
     if (!prefsLoaded.current) { prefsLoaded.current = true; return; }
-    writeDisplayPrefs({ viewMode, desktopView, sort, sortDir });
-  }, [viewMode, desktopView, sort, sortDir]);
+    const st = sectionStore.current;
+    const here = desktopView === 'spatial' ? 'explore' : 'list';
+    const sections = {
+      explore: here === 'explore' ? { sort, sortDir } : { sort: st.explore.sort, sortDir: st.explore.sortDir },
+      list: here === 'list' ? { sort, sortDir } : { sort: st.list.sort, sortDir: st.list.sortDir },
+    };
+    writeDisplayPrefs({ viewMode, desktopView, sort, sortDir, guidesPage, sections });
+  }, [viewMode, desktopView, sort, sortDir, guidesPage]);
   const [drawerId, setDrawerId] = useState(null);
   const drawerIdRef = useRef(null);
   drawerIdRef.current = drawerId;
@@ -2131,6 +2165,32 @@ function App() {
     setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
     setDesktopView(v);
   };
+  // The desktop section shown, and moving between them (see sectionStore).
+  const section = desktopView === 'spatial' ? 'explore' : (guide || guidesPage) ? 'guides' : 'mylist';
+  const slotOf = (s) => (s === 'explore' ? 'explore' : 'list');
+  const goSection = (next, opts) => {
+    if (next === section && !(opts && opts.force)) return;
+    const from = slotOf(section), to = slotOf(next);
+    if (from !== to) {
+      const st = sectionStore.current;
+      st[from] = { sort, sortDir, phase: phaseFilter, type: typeFilter, budget: budgetFilter, release: releaseFilter, collection: collectionFilter };
+      const n = st[to];
+      setSort(n.sort); setSortDir(n.sortDir);
+      setPhaseFilter(n.phase); setTypeFilter(n.type); setBudgetFilter(n.budget); setReleaseFilter(n.release);
+      setCollectionFilter(to === 'explore' ? 'all' : n.collection);
+    }
+    // My list is the person's own list: an open guide closes (it stays one
+    // click away in Guides).
+    if (next === 'mylist' && guideId) closeGuide();
+    setGuidesPage(next === 'guides');
+    if (opts && opts.select) {
+      // "Show in Explore": that title, selected on the canvas.
+      setDrawerId(opts.select);
+      setSelectedId(opts.select);
+      setDesktopView('spatial');
+    } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
+  };
+  const showInExplore = (id) => goSection('explore', { select: id, force: true });
   // `showing` is overridable because the Spatial canvas counts what is actually
   // on it: selecting a card fades every unconnected title out, so the pill has
   // to follow the ring rather than keep reporting the whole filtered set.
@@ -2223,6 +2283,9 @@ function App() {
     setPair(null);
     if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
     setGuideId(id);
+    // The open guide is what the Guides tab shows; closing it brings the
+    // gallery back (closeGuide).
+    setGuidesPage(false);
     setGuideOptional(false);
     setStepId(startAt || null);
     setUpHidden(false);
@@ -2232,6 +2295,9 @@ function App() {
     if (guideId && !(opts && opts.fromURL)) window.MCU_GUIDE.forget(guideId);
     setGuideId(null);
     setStepId(null);
+    // Desktop: a guide closed from its list stays in the Guides tab, on the
+    // gallery of guides.
+    if (!isTouch && desktopView === 'list' && guideId) setGuidesPage(true);
   };
   // Opening a guide (or showing its optional stops) in Spatial frames its
   // titles once the dimming has applied; nothing on the canvas moves. It waits
@@ -2326,7 +2392,7 @@ function App() {
   const urlTitle = urlChar ? (stepId || drawerId) : drawerId;
   const urlParams = () => {
     const p = {};
-    const view = isTouch ? viewMode : desktopView;
+    const view = isTouch ? viewMode : (section === 'guides' && !guideId ? 'guides' : desktopView);
     if (view !== (isTouch ? 'list' : 'spatial')) p.view = view;
     if (sort !== 'release') p.sort = sort;
     if (sortDir !== DEFAULT_SORT_DIR[sort]) p.order = sortDir;
@@ -2391,6 +2457,9 @@ function App() {
     setStepId(null);
     setGuideId(null);
     if (window.MCU_GUIDE) window.MCU_GUIDE.forget();
+    // The section not shown loses its parked filters and sort too.
+    const st = sectionStore.current, other = desktopView === 'spatial' ? 'list' : 'explore';
+    st[other] = { sort: 'release', sortDir: DEFAULT_SORT_DIR.release, phase: 'all', type: 'all', budget: 'all', release: 'all', collection: 'all' };
     setSearch('');
     setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all');
     setCollectionFilter('all');
@@ -2434,7 +2503,7 @@ function App() {
     if (urlAtLoad.title || urlAtLoad.char) applyURLSubject(urlAtLoad);
   }, []);
   useEffect(() => { writeURLState(urlParams()); },
-    [isTouch, viewMode, desktopView, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId]);
+    [isTouch, viewMode, desktopView, guidesPage, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId]);
   // Back and Forward restore the title and the character, never the filters:
   // closing the phone filter sheet is itself a step back in history, and
   // restoring filters there would undo the choices just made in it. A step
@@ -3080,15 +3149,16 @@ function App() {
         onAbout={() => setAboutOpen(true)}
         onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
         onPickTitle={pickTitle} onPickPerson={pickPerson}
-        desktopView={desktopView} setDesktopView={changeDesktopView}
+        section={section} onSection={(s) => goSection(s)}
+        // The Account menu's collection choices show My list with that filter.
+        onPickCollection={(v) => { goSection('mylist'); setCollectionFilter(v); }}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
         releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
-        collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
-        guideId={guideId} onOpenGuide={(id) => openGuide(id)}
+        guideId={guideId}
       />
 
       {/* An open guide shows its own module instead: at the top of the List,
@@ -3111,8 +3181,10 @@ function App() {
               setStepId(id);
               setDrawerId(id);
             }}/>
+        : desktopView === 'list' && guidesPage
+        ? <window.GuidesPage onPick={(id) => openGuide(id)}/>
         : desktopView === 'list'
-        ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
+        ? <window.DesktopList upNext={upNext} myList={{ collection: collectionFilter, setCollection: setCollectionFilter }} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={toggleDetails}
             onFollow={(id, n, total) => {
@@ -3138,6 +3210,7 @@ function App() {
         onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
         title={settingsOpen || settingsShown ? null : drawerTitle}
+        onShowInExplore={section !== 'explore' ? showInExplore : null}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
         onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}

@@ -30,10 +30,11 @@ const PILL = (sel) => {
     x: Math.round(r.left), op: getComputedStyle(pl).opacity, onClear: bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent' };
 };
 const aligned = (p) => p && p.dx !== undefined && Math.abs(p.dx) <= 1 && Math.abs(p.dy) <= 1 && Math.abs(p.dw) <= 1 && Math.abs(p.dh) <= 1 && p.op === '1' && p.onClear;
-// The six sort tabs that led this list moved into the Sort menu (Notion
-// "Merge sort and order into one Sort menu"); the type switch carries the
-// slide checks now.
-const GROUPS = ['.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.tb-view-switch'];
+// The groups on screen in My list (Notion "Desktop: navigation for Explore, My
+// list and Guides"): the section tabs and the collection switch, which carries
+// the slide checks. (The sort tabs went into the Sort menu, and Type and the
+// view switch into Filters and the tabs.)
+const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
 
 (async () => {
   await new Promise(r => server.listen(PORT, r));
@@ -41,7 +42,7 @@ const GROUPS = ['.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.t
   const out = {};
   const errors = [];
   const expect = (ok, msg) => { if (!ok) errors.push(msg); };
-  const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: 'asc' };
+  const prefs = { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release', sortDir: 'asc' };
 
   // Desktop: every group at rest, in English, Portuguese and at Large text.
   for (const [label, extra] of [['en', ''], ['pt-BR', "localStorage.setItem('mcu.lang.v1','pt-BR');"], ['large', "localStorage.setItem('mcu.textSize.v1','large');"]]) {
@@ -70,7 +71,7 @@ const GROUPS = ['.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.t
       const tick = () => { const p = document.querySelector(g + ' > .seg-pill'); window.__x.push(Math.round(p.getBoundingClientRect().left)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, g);
-    await page.locator(g + ' button').nth(2).click();
+    await page.locator(g + ' button').nth(3).click();
     await page.waitForTimeout(1000);
     const xs = await page.evaluate(() => window.__x);
     const end = await page.evaluate(PILL, g);
@@ -80,11 +81,10 @@ const GROUPS = ['.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.t
     // draw only one frame of the slide).
     expect(between.length >= 1, `the pill did not slide: ${JSON.stringify(out.slide)}`);
     expect(aligned(end), 'after the slide the pill is not on the new button: ' + JSON.stringify(end));
-    // The collection and view groups follow too.
-    await page.locator('.tb-sort-row .coll-switch button').nth(2).click();
-    await page.locator('.tb-view-switch button').nth(1).click();
+    // The section tabs follow too.
+    await page.locator('.nav-tabs button').nth(2).click();
     await page.waitForTimeout(600);
-    for (const s of [GROUPS[1], GROUPS[2]]) expect(aligned(await page.evaluate(PILL, s)), `after a change the pill in ${s} is not on the new button`);
+    expect(aligned(await page.evaluate(PILL, GROUPS[1])), `after a change the pill in ${GROUPS[1]} is not on the new button`);
     errors.push(...e);
     await ctx.close();
   }
@@ -94,7 +94,7 @@ const GROUPS = ['.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.t
     const { ctx, page, errors: e } = await ctxPage(browser, opts, prefs, {}, extra);
     await page.goto(URL); await settle(page);
     const g = GROUPS[0];
-    await page.locator(g + ' button').nth(2).click();
+    await page.locator(g + ' button').nth(3).click();
     await page.waitForTimeout(40);
     const p = await page.evaluate(PILL, g);
     out['reduced ' + label] = p;

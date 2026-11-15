@@ -368,6 +368,67 @@ function GuideMenu({ onPick, currentId }) {
   );
 }
 
+// Desktop: the Guides section's gallery (Notion "Desktop: navigation for
+// Explore, My list and Guides"; the low-fi "Guides" artboard): the same groups
+// and guides as the menu, as cards in a grid, each with its art, name, size and
+// a progress bar. Picking one opens it in the same section. Each card keeps
+// the menu row's hook (`g-row`) inside `g-page`.
+function GuidePageProgress({ guide }) {
+  const { statusOf } = window.useCollection();
+  useGuideSkips();
+  const p = MCU_GUIDE.progress(guide, statusOf);
+  const pct = p.complete ? 100 : p.ess.released ? Math.round(p.ess.seen / p.ess.released * 100) : 0;
+  return (
+    <span className="g-card-prog mt-2 flex items-center gap-2.5">
+      <span className="g-bar h-1 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
+        <span className={cn('block h-1 rounded-full transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none', p.complete ? 'bg-(--status-seen)' : 'bg-primary')} style={{ width: pct + '%' }}/>
+      </span>
+      <span className={cn('g-n text-xs whitespace-nowrap tabular-nums', p.complete ? 'text-foreground' : 'text-muted-foreground')}
+        aria-label={p.complete ? gtr('guide.complete') : gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>
+        {p.complete ? gtr('guide.complete') : `${p.ess.seen}/${p.ess.released}`}
+      </span>
+    </span>
+  );
+}
+function GuidesPage({ onPick }) {
+  window.useI18n();
+  const all = MCU_GUIDE.all();
+  return (
+    <div className="g-page min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-12 max-[1100px]:px-6" role="main" aria-labelledby="g-page-title">
+      <div className="mx-auto max-w-[1120px]">
+        <h1 id="g-page-title" className="m-0 text-2xl font-semibold tracking-tight text-foreground">{gtr('guide.menuTitle')}</h1>
+        <p className="mt-1 mb-0 text-sm text-muted-foreground">{gtr('guide.menuSub')}</p>
+        {GUIDE_GROUPS.map(grp => {
+          const list = all.filter(g => g.group === grp);
+          if (!list.length) return null;
+          return (
+            <section key={grp} className="g-group mt-7" aria-labelledby={'g-page-' + grp}>
+              <h2 id={'g-page-' + grp} className="g-group-h mt-0 mb-2.5 text-xs font-medium text-muted-foreground">{gtr('guide.group.' + grp)}</h2>
+              <div className="grid grid-cols-3 gap-4 max-[1200px]:grid-cols-2">
+                {list.map(g => {
+                  const date = MCU_GUIDE.targetDate(g);
+                  const who = g.character && window.CHARACTERS[g.character] ? window.CHARACTERS[g.character].actor : null;
+                  return (
+                    <button key={g.id} type="button" onClick={() => onPick(g.id)}
+                      className={cn('g-row g-card flex w-full cursor-pointer items-center gap-4 rounded-xl border bg-card p-4 text-left text-card-foreground shadow-xs transition-colors hover:bg-muted/50', FOCUS)}>
+                      <GuideArt guide={g} size={64}/>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="g-row-name text-[15px] leading-[1.3] font-semibold text-foreground">{MCU_GUIDE.name(g)}{date && <span className="g-ev ml-1.5 rounded-full border px-1.5 py-px align-[1px] text-xs font-medium text-foreground tabular-nums">{date}</span>}</span>
+                        <span className="g-row-sub mt-1 text-xs text-muted-foreground">{who ? `${who} · ` : ''}{MCU_GUIDE.size(g)}</span>
+                        <GuidePageProgress guide={g}/>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // The guide's meter: the shared ProgressHeader over its essential stops, with
 // the optional count beside it while optional stops are shown.
 // In the List and Grid it also offers "Mark N more seen" for the stops shown
@@ -1342,12 +1403,12 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
   return <window.ModalDialog onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className={PROMO_DIALOG}>{body}</window.ModalDialog>;
 }
 
-Object.assign(window, { GuideMenu, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt, GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint, GuideSkipControl, GuideDetailsSkip });
+Object.assign(window, { GuideMenu, GuidesPage, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt, GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint, GuideSkipControl, GuideDetailsSkip });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
 export { GuideMenu, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt,
-  GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint,
+  GuidePartOf, GuideIcon, GuidesButton, GuidesPage, GuidePromo, GuideOff, GuideOffHint,
   GuideSkipControl, GuideDetailsSkip, MCU_GUIDE, useGuideSkips };

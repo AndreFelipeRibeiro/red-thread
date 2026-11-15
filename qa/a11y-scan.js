@@ -36,11 +36,11 @@ const scan = async (page, name, out) => {
   x = await open(D, {version:1, viewMode:'list', desktopView:'list', sort:'phase'});
   await scan(x.page, 'desktop list, By Phase', out);
   await x.ctx.close();
-  // Guides: the desktop List with a guide open, then the Guides popover.
+  // Guides: the desktop Guides tab with a guide open, then its gallery.
   x = await open(D, {version:1, viewMode:'list', desktopView:'list', sort:'release'}, '?guide=before-doomsday');
   await scan(x.page, 'desktop guide', out);
-  await x.page.locator('.g-btn').click(); await x.page.waitForTimeout(500);
-  await scan(x.page, 'desktop guides popover', out);
+  await x.page.goto(x.page.url().replace(/\?.*$/, '') + '?view=guides'); await x.page.waitForTimeout(1200);
+  await scan(x.page, 'desktop guides gallery', out);
   await x.ctx.close();
   // The guide's module floating over desktop Spatial.
   x = await open(D, {version:1, viewMode:'list', desktopView:'spatial', sort:'release'}, '?guide=before-doomsday');

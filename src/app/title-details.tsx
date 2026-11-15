@@ -229,10 +229,12 @@ const TD_SURFACE = {
   },
 };
 
-export function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast, extras }: {
+export function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast, extras, onExplore }: {
   title: Title; surface: 'drawer' | 'sheet'; search?: string;
   headingRef?: React.Ref<HTMLHeadingElement>; headingId?: string;
   cast?: React.ReactNode; extras?: React.ReactNode;
+  /** Desktop, from My list and Guides: show the title on the Explore canvas. */
+  onExplore?: (() => void) | null;
 }) {
   const PosterArt = window.PosterArt;
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
@@ -271,6 +273,12 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
           <window.ShareButton iconOnly className="td-share size-[max(40px,2.5rem)] px-0 [&_svg]:size-4" label={tr('share.titleLabel', { title: I18N().titleName(title) })}
             payload={() => ({ params: { title: title.id }, text: tr('share.titleText', { title: I18N().titleName(title), year: title.year }) })}/>
         </div>
+        {onExplore && (
+          <Button variant="outline" className="td-explore mt-2.5 h-[max(40px,2.5rem)] gap-[7px] px-2.5 text-xs [&_svg]:size-[14px]" onClick={onExplore}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
+            {tr('explore.show')}
+          </Button>
+        )}
         {window.GuideDetailsSkip && <window.GuideDetailsSkip title={title}/>}
         <Synopsis title={title} className={cn('td-synopsis mt-3.5', c.synopsis)}/>
         <DetailSlot name="watch" title={title}/>

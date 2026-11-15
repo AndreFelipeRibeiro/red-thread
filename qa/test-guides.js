@@ -148,22 +148,21 @@ const DATA = () => {
   // ---- Desktop: menu, banner, List view ----
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs(seed1)));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.g-btn').click(); await page.waitForTimeout(300);
+  // The Guides tab's gallery (Notion "Desktop: navigation for Explore, My list
+  // and Guides") lists every guide, grouped.
+  await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(500);
   const menu = await page.evaluate(() => ({
-    rows: document.querySelectorAll('.g-pop .g-row').length,
-    groups: [...document.querySelectorAll('.g-pop .g-group-h')].map(h => h.textContent),
-    expanded: document.querySelector('.g-btn').getAttribute('aria-expanded'),
+    rows: document.querySelectorAll('.g-page .g-row').length,
+    groups: [...document.querySelectorAll('.g-page .g-group-h')].map(h => h.textContent),
+    url: location.search,
   }));
   out.menu = menu;
-  if (menu.rows !== data.guides.length) err(`desktop menu lists ${menu.rows} guides, expected ${data.guides.length}`);
-  if (menu.expanded !== 'true') err('desktop Guides button does not report aria-expanded=true while open');
-  await page.keyboard.press('Escape'); await page.waitForTimeout(200);
-  if (await page.locator('.g-pop').count()) err('Escape did not close the Guides popover');
-  await page.locator('.g-btn').click(); await page.waitForTimeout(300);
-  await page.locator('.g-pop .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
+  if (menu.rows !== data.guides.length) err(`desktop Guides lists ${menu.rows} guides, expected ${data.guides.length}`);
+  if (!/view=guides/.test(menu.url)) err('the Guides tab is not in the address: ' + menu.url);
+  await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
   const desk = await page.evaluate(() => ({
     url: new URLSearchParams(location.search).get('guide'),
-    pop: !!document.querySelector('.g-pop'),
+    pop: !!document.querySelector('.g-page'),
     banner: !!document.querySelector('.guide-banner'),
     charBanner: !!document.querySelector('.char-banner:not(.guide-banner)'),
     rows: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.dataset.rowId),
@@ -179,7 +178,7 @@ const DATA = () => {
   }));
   out.desk = { rows: desk.rows.length, next: desk.next, dest: desk.dest };
   if (desk.url !== plan.id) err(`desktop: address says guide=${desk.url}, expected ${plan.id}`);
-  if (desk.pop) err('desktop: the popover stayed open after picking a guide');
+  if (desk.pop) err('desktop: the gallery stayed after picking a guide');
   if (!desk.banner) err('desktop: no guide banner');
   if (desk.charBanner) err('desktop: a character banner shows beside the guide');
   if (desk.rows.join(',') !== plan.ess.join(',')) err(`desktop List rows ${desk.rows.join(',')} ≠ essential stops ${plan.ess.join(',')}`);

@@ -161,6 +161,7 @@ declare global {
     ContextSummary: SpatialChrome['ContextSummary'];
     CARD_SIZE: SpatialCardModule['CARD_SIZE'];
     Segmented: ToolbarModule['Segmented'];
+    SECTIONS: ToolbarModule['SECTIONS'];
     SyncStatus: Tracking['SyncStatus'];
     SeenMarker: StatusActions['SeenMarker'];
     TSA_SPIN: StatusActions['TSA_SPIN'];
@@ -278,6 +279,7 @@ declare global {
     GuidePartOf: GuidesUI['GuidePartOf'];
     GuideIcon: GuidesUI['GuideIcon'];
     GuidesButton: GuidesUI['GuidesButton'];
+    GuidesPage: GuidesUI['GuidesPage'];
     GuidePromo: GuidesUI['GuidePromo'];
     GuideOff: GuidesUI['GuideOff'];
     GuideOffHint: GuidesUI['GuideOffHint'];

@@ -79,12 +79,12 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
     // A row overflows when one of its controls runs past it (measured by box,
     // so count badges overhanging a button's corner don't count).
     const past = (inner, outer) => Math.max(inner.right - outer.right, outer.left - inner.left);
-    const rows = [...document.querySelectorAll('.tb-top-row, .tb-filter-row, .tb-sort-row, .tb-sort-controls, .ctx-float, .ctx-line, .ctx-pill, .tb-view-switch, .m-searchrow, .m-viewrow')]
+    const rows = [...document.querySelectorAll('.tb-top-row, .ml-status, .ctx-float, .ctx-line, .ctx-pill, .m-searchrow, .m-viewrow')]
       .filter(r => r.offsetParent).map(r => { const box = r.getBoundingClientRect(); return Math.max(0, ...[...r.children].filter(c => c.getClientRects().length).map(c => past(c.getBoundingClientRect(), box))); })
       .filter(d => d > 1).map(d => Math.round(d));
     const search = document.querySelector('.search-wrap, .m-searchbar');
     // overlapping toolbar controls
-    const els = [...document.querySelectorAll('.toolbar .segmented, .toolbar .coll-switch, .toolbar .filters-pill, .toolbar .search-wrap, .toolbar .acct-wrap, .toolbar .sort-order')].map(e => e.getBoundingClientRect());
+    const els = [...document.querySelectorAll('.toolbar .segmented, .toolbar .coll-switch, .toolbar .filters-pill, .toolbar .search-wrap, .toolbar .acct-wrap, .toolbar .sort-menu')].map(e => e.getBoundingClientRect());
     let overlaps = 0;
     for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) overlaps++; }
     return { offscreen: over, rowOverflow: rows, overlaps, searchW: search ? Math.round(search.getBoundingClientRect().width) : null, hScroll: document.documentElement.scrollWidth > innerWidth, tbH: (document.querySelector('.toolbar')||{}).offsetHeight,
@@ -104,7 +104,8 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
   };
   for (const w of [900, 999, 1000, 1100, 1199, 1200, 1250, 1279, 1280, 1300, 1301, 1439, 1440, 1600, 1919, 1920, 2199, 2200, 2559, 2560]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
-    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+    // My list: the header row plus the collection switch, which lives there.
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/?view=list'); await require('./ready').appReady(page);
     if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['d' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (MODE === 'watch' ? 'watch' : '') + (TEXT ? '-' + TEXT : '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });

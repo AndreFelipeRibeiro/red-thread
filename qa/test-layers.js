@@ -36,7 +36,7 @@ const MENUS = {
     await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(600);
     await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(1300);
     for (const view of ['Spatial', 'List']) {
-      await page.locator('.tb-view-switch button', { hasText: view }).click(); await page.waitForTimeout(900);
+      await page.locator('.nav-tabs button', { hasText: view === 'Spatial' ? 'Explore' : 'My list' }).click(); await page.waitForTimeout(900);
       const r = {};
       for (const [k, [trig, pop]] of Object.entries(MENUS)) {
         await page.locator(trig).first().click(); await page.waitForTimeout(350);

@@ -26,6 +26,13 @@ window.MCU_LOCALES['pt-BR'] = {
     'sort.short.imdb': 'IMDb',
     'sort.short.rt': 'RT',
 
+    'nav.aria': 'Seções',
+    'nav.explore': 'Explorar',
+    'nav.mylist': 'Minha lista',
+    'nav.guides': 'Guias',
+    'search.slash': 'Aperte / para buscar',
+    'mylist.title': 'Minha lista',
+    'explore.show': 'Mostrar em Explorar',
     'sortmenu.title': 'Ordenar',
     'sortmenu.aria': 'Ordenar: {label}',
     'sortmenu.release.asc': 'Lançamento, mais antigos primeiro',

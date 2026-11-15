@@ -11,7 +11,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const fresh = await T(page);
   out.defaultSpatial = !!(await page.$('.viewport')) && !(await page.$('.dlist'));
-  await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(600);
+  await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(600);
   const st = () => page.evaluate(() => ({
     rows: document.querySelectorAll('.dl-row:not(.dl-head)').length,
     activeHead: [...document.querySelectorAll('.dl-h.on')].map(h => h.textContent + ':' + h.getAttribute('aria-sort')).join(','),
@@ -42,12 +42,12 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   await page.locator('.drawer .cast-row, .drawer [class*="cast"] button, .drawer .char-row').first().click().catch(() => {}); await page.waitForTimeout(300);
   out.dimmed = await page.evaluate(() => document.querySelectorAll('.dl-row.dim').length);
   // switch to Spatial with the drawer open: that card is selected
-  await page.locator('.tb-view-switch button', { hasText: 'Spatial' }).click(); await page.waitForTimeout(1200);
+  await page.locator('.nav-tabs button', { hasText: 'Explore' }).click(); await page.waitForTimeout(1200);
   out.toSpatial = await page.evaluate(() => ({ selected: (document.querySelector('.card.selected .card-title') || {}).textContent || null, drawer: (document.querySelector('.drawer.open .drawer-title') || {}).textContent || null }));
   await page.locator('.drawer-close').click(); await page.waitForTimeout(1200);
-  await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(400);
+  await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(400);
   // filters
-  await page.fill('.search-wrap input', 'man'); await page.locator('.tb-sort-row .coll-switch button').nth(1).click(); await page.waitForTimeout(500);
+  await page.fill('.search-wrap input', 'man'); await page.locator('.ml-status .coll-switch button').nth(1).click(); await page.waitForTimeout(500);
   out.filtered = { ...(await st()), matchedFaces: await page.evaluate(() => document.querySelectorAll('.dl-face.matched').length), chips: await page.evaluate(() => [...document.querySelectorAll('.dlist .ctx-chip')].map(c => c.textContent)) };
   await page.fill('.search-wrap input', 'zzzz'); await page.waitForTimeout(400);
   out.empty = await page.evaluate(() => ({ empty: !!document.querySelector('.dl-empty'), ctx: (document.querySelector('.dlist .ctx-count') || {}).textContent }));
@@ -56,7 +56,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   // reload remembers List; back to Spatial frames like a fresh load
   await page.reload(); await require('./ready').appReady(page);
   out.reload = { list: !!(await page.$('.dlist')), prefs: await page.evaluate(() => localStorage.getItem('mcu.prefs.v1')) };
-  await page.locator('.tb-view-switch button', { hasText: 'Spatial' }).click(); await page.waitForTimeout(800);
+  await page.locator('.nav-tabs button', { hasText: 'Explore' }).click(); await page.waitForTimeout(800);
   out.reenter = { fresh, now: await T(page) };
   out.errors = errors; await ctx.close();
   // widths, PT, drawer open

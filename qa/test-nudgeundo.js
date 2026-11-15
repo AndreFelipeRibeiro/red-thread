@@ -66,7 +66,7 @@ const NUDGE_KEY = 'mcu.signInNudge.v1';
   const { page, errors } = await ctxPage(browser, DESKTOP,
     "localStorage.setItem('mcu.welcome.v1','test'); try { localStorage.removeItem('mcu.signInNudge.v1'); } catch (e) {}");
   await go(page);
-  await page.locator('.tb-view-switch button', { hasText: 'List' }).click();
+  await page.locator('.nav-tabs button', { hasText: 'My list' }).click();
   await page.waitForTimeout(700);
   const row = (name) => page.locator('.dl-row', { hasText: name }).first();
   const stage = () => page.evaluate(k => localStorage.getItem(k), NUDGE_KEY);

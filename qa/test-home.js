@@ -173,8 +173,8 @@ const STATE = () => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release', sortDir: 'asc' });
     await page.goto(URL + '?view=list'); await settle(page);
-    await page.locator('.g-btn').click(); await page.waitForTimeout(400);
-    await page.locator('.g-pop .g-row').first().click(); await page.waitForTimeout(800);
+    await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(400);
+    await page.locator('.g-page .g-row').first().click(); await page.waitForTimeout(800);
     let s = await page.evaluate(STATE);
     expect(s.guide && s.kept, `guide setup: ${JSON.stringify(s)}`);
     await page.locator('.toolbar a.brand').click(); await page.waitForTimeout(800);

@@ -264,7 +264,7 @@ function BulkCount({ n, onFill = false }) {
   return <Badge variant="secondary" className={cn('bulk-n rounded-md px-1.5 tabular-nums', XS, onFill && 'bg-black/22 text-inherit')}>{n}</Badge>;
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, progress, upNext }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, progress, upNext, myList }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf, states, requestBulk } = window.useCollection();
@@ -410,10 +410,20 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
     : leadPhase ? phaseMeter(leadPhase) : null;
   return (
     <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[402px] [&>.m-flip-layer]:z-4', ranked && 'ranked')} ref={flipRef} role="main" aria-label={tr('view.list')}>
+      {/* My list (Notion "Desktop: navigation for Explore, My list and
+          Guides"): its title first; the collection tabs, with the sort as a
+          quiet note, sit under Up next, just above the table. */}
+      {myList && <h1 className="ml-title mt-1 mb-3 text-2xl font-semibold tracking-tight text-foreground">{tr('mylist.title')}</h1>}
       {header}
       {/* Up next: a strip above the table. The desktop List does not fold seen
           titles, so the suggestion can be far down; the strip brings it up. */}
       {upNext && <window.UpNextStrip info={upNext}/>}
+      {myList && (
+        <div className="ml-status mt-1 mb-3 flex flex-wrap items-center justify-between gap-3">
+          <window.CollectionSwitch value={myList.collection} onChange={myList.setCollection}/>
+          <span className="ml-sort text-xs text-muted-foreground">{window.sortPhrase(sort, sortDir)}</span>
+        </div>
+      )}
       {!titles.length ? (
         <EmptyState desktop title={empty && empty.title} sub={empty && empty.sub} action={empty && empty.action}/>
       ) : (

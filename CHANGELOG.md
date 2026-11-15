@@ -13,6 +13,30 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 feature — Desktop: Explore, My list and Guides
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The desktop header is one row: the wordmark, Explore / My list / Guides
+  tabs, search with a "/" shortcut, Sort and Filters (Type moved inside
+  Filters), then sync, Settings and Account.
+- Explore is the Spatial canvas; My list is the List with its title and the
+  All / Unseen / Seen / Watchlist tabs, the only place the collection filter
+  lives. Each section keeps its own sort and filters, remembered on the
+  device.
+- Guides shows a gallery of the guides when none is open (also at
+  `?view=guides`); picking one opens it there, closing it brings the gallery
+  back, and choosing My list closes it.
+- "Show in Explore" in the details jumps to that title on the canvas.
+- QA: new `test-nav`; the checks that used the view switch, the Guides
+  button or the old header follow the tabs.
+- Verified: typecheck and build; full `qa/regress.sh` with the phone ticket,
+  60 check runs clean; the header fits on one row from 900px in English and
+  Portuguese.
+- Limits: the designs' bottom selection bar, progress chip and simplified
+  My list rows were not built (Andre: keep the details panel; the list gets
+  its own ticket).
+
 ## V5 improvement — One Sort menu for sort and order
 
 Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).

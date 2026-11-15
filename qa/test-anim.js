@@ -41,7 +41,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   // desktop list
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await page.waitForTimeout(1800);
-  await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(800);
+  await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(800);
   const dcoll = async (i) => { await page.locator('.coll-switch button').nth(i).click(); return probe(page); };
   out.dUnseen = await dcoll(1); await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(S, 'shots', 'anim-d-mid.png') });

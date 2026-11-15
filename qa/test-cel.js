@@ -32,7 +32,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + SEED);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.load = await st(page);
-  await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(700);
+  await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(700);
   const row = (name) => page.locator('.dl-row', { hasText: name }).first();
   await row('Ant-Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(150);
   out.markSeen = await st(page);
@@ -89,7 +89,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.fresh = await st(page);
   out.vq = await page.evaluate(() => { const t = window.TITLES.find(x => x.id === 'visionquest'); return { cast: t.cast, paladin: window.CHARACTERS.paladin && window.CHARACTERS.paladin.actor, bnd: window.TITLES.find(x => x.id === 'brand-new-day').imdb, chars: Object.keys(window.CHARACTERS).length, titles: window.TITLES.length }; });
-  await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(600);
+  await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(600);
   await row('Iron Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(120);
   out.firstMark = await st(page);
   await page.screenshot({ path: path.join(S, 'shots', 'cel-d-first.png'), clip: { x: 900, y: 50, width: 540, height: 80 } });

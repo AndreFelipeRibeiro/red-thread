@@ -1,13 +1,14 @@
 // An open guide sets aside the view options it doesn't use (V3 Tasks, "Guide
 // disables other view options"):
-// - desktop: the Guides button shows as on and is named after the guide; in
-//   the List the layout tabs, Order, Filters, type and collection switches are
-//   dimmed and inert (aria-disabled, a tooltip, a described-by hint) while
-//   search and the view switch stay live; a click on one changes nothing;
-// - desktop Spatial: the layout tabs and Order come back on, Filters, type and
-//   collection stay off; with Series set, every stop of a film guide is still
-//   laid out and lit, and the count summary is hidden;
-// - closing the guide brings Series back and every control on again;
+// - desktop: a guide in the list is the Guides tab (Notion "Desktop:
+//   navigation for Explore, My list and Guides"), which shows no Sort or
+//   Filters; search stays live;
+// - desktop Explore: Sort is on and arranges the guide, Filters is dimmed and
+//   inert (aria-disabled, a tooltip, a described-by hint), a click on it opens
+//   nothing; every stop of the guide is laid out and lit, and the count
+//   summary is hidden;
+// - closing the guide brings every control on again, and My list kept the
+//   link's Series filter;
 // - phones: the bar shortens (Filters and the collection row fold away, the
 //   view menu sits beside search; Sort dimmed outside Spatial), the List's
 //   last card scrolls clear of the dock, the dock's
@@ -81,10 +82,10 @@ const OFF = (sels) => {
   });
   return r;
 };
-const DESK_SELS = {
-  sort: '.tb-sort-control .sort-menu-trigger', filters: '.filters-pop-wrap > .filters-pill',
-  type: '.tb-type-controls button', collection: '.tb-sort-row .coll-switch button', view: '.tb-view-switch button',
-};
+// Desktop (Notion "Desktop: navigation for Explore, My list and Guides"): the
+// guide's list is the Guides tab, which has no Sort or Filters; on the Explore
+// canvas Sort still arranges the guide and Filters is dimmed.
+const DESK_SELS = { sort: '.tb-sort-control .sort-menu-trigger', filters: '.filters-pop-wrap > .filters-pill', tabs: '.nav-tabs button' };
 // The phone's Sort menu (it replaced the Order toggle and the sort tabs).
 const PHONE_SELS = { sort: '.m-searchrow .sort-menu-trigger', filters: '.m-fpill', collection: '.m-viewrow .coll-switch button' };
 const CANVAS = () => {
@@ -107,49 +108,39 @@ const CANVAS = () => {
     await page.goto(URL + '?view=list&type=series&guide=infinity-saga'); await appReady(page);
     let s = await page.evaluate(OFF, DESK_SELS);
     out.deskList = s;
-    expect(s.sort === 'off' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop List: ${JSON.stringify(s)}`);
-    expect(s.view === 'on', 'desktop List: the view switch is off');
-    const b = await page.evaluate(() => { const g = document.querySelector('.g-btn'); const h = document.getElementById('guide-off-hint');
-      return { on: g.classList.contains('on'), name: g.getAttribute('aria-label'), hint: h && h.textContent,
-        title: document.querySelector('.tb-type-controls button').getAttribute('title'),
-        search: !document.querySelector('.search-wrap input').disabled }; });
-    out.deskButton = b;
-    expect(b.on && b.name === 'Guides, The Infinity Saga essentials open', `Guides button: ${JSON.stringify(b)}`);
-    expect(b.hint === HINT && b.title === HINT, `hint: ${JSON.stringify(b)}`);
-    expect(b.search, 'search is disabled in a guide');
-    // A click on a dimmed control changes nothing, by mouse or keyboard.
-    await page.locator('.tb-type-controls button', { hasText: 'Films' }).click({ force: true });
-    await page.locator('.tb-sort-control .sort-menu-trigger').focus(); await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
-    const kept = await page.evaluate(() => ({ type: (document.querySelector('.tb-type-controls button.on') || {}).textContent,
-      sortOpen: !!document.querySelector('.sort-menu-pop'), url: location.search }));
-    out.deskKept = kept;
-    expect(kept.type === 'Series' && !kept.sortOpen && /type=series/.test(kept.url), `a dimmed control acted: ${JSON.stringify(kept)}`);
+    const tabOn = () => page.evaluate(() => (document.querySelector('.nav-tabs button.on') || {}).textContent);
+    expect(s.sort === 'missing' && s.filters === 'missing' && s.tabs === 'on', `desktop Guides tab: ${JSON.stringify(s)}`);
+    expect(await tabOn() === 'Guides', 'a guide in the list is not the Guides tab');
+    expect(await page.evaluate(() => !document.querySelector('.search-wrap input').disabled), 'search is disabled in a guide');
 
-    // Spatial: Sort comes back; the whole guide is laid out.
-    await page.locator('.tb-view-switch button').first().click(); await page.waitForTimeout(1200);
+    // Explore: Sort arranges the guide; Filters is dimmed and does nothing.
+    await page.locator('.nav-tabs button', { hasText: 'Explore' }).click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
     out.deskSpatial = s;
-    expect(s.sort === 'on' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop Spatial: ${JSON.stringify(s)}`);
+    expect(s.sort === 'on' && s.filters === 'off', `desktop Explore: ${JSON.stringify(s)}`);
+    const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
+    expect(hint === HINT, `hint: ${hint}`);
+    await page.locator('.filters-pop-wrap > .filters-pill').click({ force: true }); await page.waitForTimeout(300);
+    expect(!(await page.locator('.filters-pop').count()), 'a dimmed Filters opened');
     let c = await page.evaluate(CANVAS);
     out.deskCanvas = c;
-    expect(c.stops === 10 && c.dimmed === 0 && c.films >= 9, `Spatial with Series set: ${JSON.stringify(c)}`);
+    expect(c.stops === 10 && c.dimmed === 0 && c.films >= 9, `Explore with a guide: ${JSON.stringify(c)}`);
     expect(!c.summary, 'the count summary shows during a guide');
     await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
     await page.locator('.sort-menu-pop [data-sort="chrono"][data-dir="asc"]').click(); await page.waitForTimeout(400);
     const sortNow = await page.evaluate(() => (document.querySelector('.sort-menu-trigger') || {}).textContent);
-    expect(sortNow === 'Story order', `Sort did not work in Spatial: ${sortNow}`);
+    expect(/^Story order/.test(sortNow || ''), `Sort did not work in Explore: ${sortNow}`);
 
-    // Closing the guide: Series is back and every control is on.
+    // Closing the guide: every control is on again; My list kept the link's
+    // Series filter (each section keeps its own).
     await page.locator('.guide-banner .cb-close, .cb-close').first().click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
-    c = await page.evaluate(CANVAS);
-    const after = await page.evaluate(() => ({ type: (document.querySelector('.tb-type-controls button.on') || {}).textContent,
-      chip: (document.querySelector('.ctx-float .ctx-count') || {}).textContent, gbtn: document.querySelector('.g-btn').classList.contains('on'),
-      title: document.querySelector('.filters-pop-wrap > .filters-pill').getAttribute('title') }));
+    const after = await page.evaluate(() => ({ title: document.querySelector('.filters-pop-wrap > .filters-pill').getAttribute('title') }));
+    await page.locator('.nav-tabs button', { hasText: 'My list' }).click(); await page.waitForTimeout(900);
+    after.url = await page.evaluate(() => location.search);
     out.deskClosed = { s, after };
     expect(Object.values(s).every(v => v === 'on'), `after closing, controls still off: ${JSON.stringify(s)}`);
-    expect(after.type === 'Series' && /24 of 64/.test(after.chip || '') && !after.gbtn && after.title === 'Filters', `after closing: ${JSON.stringify(after)}`);
+    expect(after.title === 'Filters' && /type=series/.test(after.url) && !/guide=/.test(after.url), `after closing: ${JSON.stringify(after)}`);
     errors.push(...e);
     await ctx.close();
   }

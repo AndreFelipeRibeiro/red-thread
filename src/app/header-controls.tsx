@@ -59,7 +59,7 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
 }) {
   const [open, setOpen] = React.useState(false);
   const current = sortPhrase(sort, sortDir);
-  const shown = mobile ? tr('sortmenu.short.' + sort) : current;
+  const shown = tr('sortmenu.short.' + sort);
   return (
     <div className={cn('sort-menu relative shrink-0', mobile && 'mobile-sort')}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -69,7 +69,12 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
             stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M7 4v16M3 16l4 4 4-4M14 6h7M14 12h5M14 18h3"/>
           </svg>
-          <span className="sort-menu-label truncate">{shown}</span>
+          {mobile ? <span className="sort-menu-label truncate">{shown}</span> : <>
+            {/* Desktop: the whole phrase from 1280px, the sort's short name
+                below, so the one header row fits. */}
+            <span className="sort-menu-label truncate max-[1279px]:hidden">{current}</span>
+            <span className="sort-menu-label truncate min-[1280px]:hidden">{tr('sortmenu.short.' + sort)}</span>
+          </>}
           <svg className="block size-3 flex-[0_0_12px]" width="12" height="12" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="m6 9 6 6 6-6"/>
