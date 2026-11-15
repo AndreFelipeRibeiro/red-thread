@@ -256,6 +256,12 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
     handoff, and the user approves it like any other ticket.
   - New work found while on a ticket becomes a new ticket under the same
     parent (Level and Parent item set), not extra scope on the current one.
+  - **When the user names an epic or a parent task** ("work the shadcn pass
+    epic"), work its leaf tickets in their Backlog column order, one at a
+    time: claim, build, verify, hand off to Awaiting review, then take the
+    next. Stop where the user said to stop (e.g. "stop after 1/5"), when a
+    ticket is Blocked, or when the next one's "Before you start" isn't met,
+    and say which ticket is next. Keep to one epic or batch per session.
   - The **All tasks** board filters out containers (Sub-items is empty), so
     every card on it is claimable; cards show their **Parent item** and
     **Level**. Epics are in the **Epics** table view, with their tasks listed

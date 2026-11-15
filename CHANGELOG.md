@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 maintenance — Working an epic: one leaf ticket at a time
+
+Recorded: 2026-11-14 23:12 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- `AGENTS.md` (Backlog workflow): when the user names an epic or a parent
+  task, its leaf tickets are worked in Backlog order, one at a time (claim,
+  build, verify, hand off to Awaiting review, then the next), stopping where
+  the user said, at a Blocked ticket or an unmet "Before you start", and
+  keeping to one epic or batch per session.
+- Verified: read back in the file. Limits: documentation only.
+
 ## V5 maintenance — One master backlog in Notion
 
 Recorded: 2026-11-14 17:56 EST (-0500). Pushed to `version/5.0` (V5 staging).
