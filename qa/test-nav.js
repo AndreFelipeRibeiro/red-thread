@@ -1,5 +1,6 @@
 // The desktop sections (Notion "Desktop: navigation for Explore, My list and
 // Guides"):
+// - My list's tabs read All / Unseen / Seen / Watchlist;
 // - one header row: the wordmark, the Explore / My list / Guides tabs, search
 //   with a "/" hint, Sort and Filters, then sync, Settings and Account; no
 //   second row, view switch, type switch or Guides button;
@@ -63,6 +64,11 @@ const STATE = () => ({
     s = await page.evaluate(STATE);
     out.myList = s;
     expect(s.tab === 'My list' && s.myList && s.myColl && s.coll === 1 && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
+    // The status tabs, in their order (the designs' To watch rename was tried
+    // and reverted, 2026-11-15; Notion "Rename the top-level sections").
+    const tabs = await page.evaluate(() => [...document.querySelectorAll('.ml-status .coll-switch button')].map(b => b.dataset.coll + ':' + (b.querySelector('.cl-full, .coll-label') || b).textContent.trim()));
+    out.tabs = tabs;
+    expect(tabs.join() === 'all:All,unseen:Unseen,seen:Seen,watchlist:Watchlist', `My list's tabs: ${tabs.join()}`);
     await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
     await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); await page.waitForTimeout(400);
     await page.locator('.ml-status .coll-switch button[data-coll="seen"]').click(); await page.waitForTimeout(400);

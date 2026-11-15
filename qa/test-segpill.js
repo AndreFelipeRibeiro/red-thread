@@ -71,11 +71,13 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
       const tick = () => { const p = document.querySelector(g + ' > .seg-pill'); window.__x.push(Math.round(p.getBoundingClientRect().left)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, g);
-    await page.locator(g + ' button').nth(3).click();
+    await page.locator(g + ' button[data-coll="unseen"]').click();
     await page.waitForTimeout(1000);
     const xs = await page.evaluate(() => window.__x);
     const end = await page.evaluate(PILL, g);
-    const between = xs.filter(x => x > start + 10 && x < end.x - 10);
+    // Either direction, so the check does not depend on the tabs' order.
+    const lo = Math.min(start, end.x), hi = Math.max(start, end.x);
+    const between = xs.filter(x => x > lo + 10 && x < hi - 10);
     out.slide = { start, between: between.length, mid: between[0], end: end.x };
     // At least one place in between (about 12 normally; a choked machine may
     // draw only one frame of the slide).
@@ -94,7 +96,7 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
     const { ctx, page, errors: e } = await ctxPage(browser, opts, prefs, {}, extra);
     await page.goto(URL); await settle(page);
     const g = GROUPS[0];
-    await page.locator(g + ' button').nth(3).click();
+    await page.locator(g + ' button[data-coll="unseen"]').click();
     await page.waitForTimeout(40);
     const p = await page.evaluate(PILL, g);
     out['reduced ' + label] = p;

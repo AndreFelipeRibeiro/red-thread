@@ -13,6 +13,19 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — One quiet seen mark: the picker and guide stops
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- A seen guide stop's number uses the quiet seen mark (soft green tint, tinted
+  ring, green check) instead of a solid green disc; the promo strip's stops
+  get the dark-glass version; "What have you seen?" ticks are dark glass with
+  a green check and a softer ring.
+- Includes check fixes the per-ticket QA found (`test-anim`, `test-segpill`,
+  `test-progress`, `test-nav`).
+- Verified: `test-picker`, `test-guides`, `test-promo`, `test-skip`,
+  `test-contrast`; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
 ## V5 improvement — Phone: the Grid view is removed
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

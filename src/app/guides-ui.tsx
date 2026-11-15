@@ -788,6 +788,9 @@ function GuideDetailsSkip({ title }) {
   );
 }
 
+// A seen stop's number turns into the quiet seen mark the Seen button uses
+// (Notion "One quiet seen mark: the picker and guide stops"): a soft tint, a
+// tinted ring and the check in the seen colour.
 function GuideNum({ stop, seen, next, skipped, className = '' }) {
   const label = stop.optional
     ? gtr(seen ? 'guide.optSeenAria' : skipped ? 'guide.optSkippedAria' : 'guide.optAria')
@@ -796,7 +799,7 @@ function GuideNum({ stop, seen, next, skipped, className = '' }) {
     <span role="img" aria-label={label}
       className={cn('g-num inline-flex size-[26px] flex-[0_0_26px] items-center justify-center rounded-full border-[1.5px] border-muted-foreground text-xs font-extrabold tabular-nums text-foreground',
         stop.optional && cn('o border-dashed', DIM), skipped && 'skip border-dashed bg-transparent text-muted-foreground',
-        seen && 'done border-solid border-(--status-seen) bg-(--status-seen) text-(--on-color) [&_svg]:size-[13px]',
+        seen && 'done border-solid border-[color-mix(in_oklab,var(--status-seen)_55%,var(--border))] bg-[color-mix(in_oklab,var(--status-seen)_14%,transparent)] text-(--status-seen) [&_svg]:size-[13px]',
         next && 'cur border-primary bg-primary text-primary-foreground', className)}>
       {seen ? <window.CheckIcon/> : stop.optional ? '+' : stop.n}
     </span>
@@ -804,9 +807,8 @@ function GuideNum({ stop, seen, next, skipped, className = '' }) {
 }
 
 // Skip and Unskip for one stop. Skip is an icon button beside Seen and
-// Watchlist on desktop, under the stop's number in the phone List and on the
-// poster's corner in the Grid; Unskip is a text button in the
-// minimized row. Focus follows to the other button, since the one pressed goes.
+// Watchlist on desktop, under the stop's number in the phone List; Unskip is
+// a text button in the minimized row. Focus follows to the other button, since the one pressed goes.
 function SkipIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1248,7 +1250,7 @@ function GuideCaughtUp({ promo, touch, onClose }) {
             <li key={s.id} className={P.st('seen')}>
               <span className={P.p()} aria-hidden="true">
                 <span className={P.art('opacity-45')}><PosterArt title={s.title}/></span>
-                <span className={P.n('done border-(--status-seen) bg-(--status-seen) text-(--on-color)')}><window.CheckIcon/></span>
+                <span className={P.n('done border-[#5fa856] bg-[rgba(10,12,20,0.85)] text-[#7cc472]')}><window.CheckIcon/></span>
               </span>
               <span className={P.t(false)} aria-hidden="true">{promoCoverName(s.title, touch)}</span>
               <span className="story-sr">{gtr('guide.promoStopSeenAria', { title: GI18N.titleName(s.title), i: s.n })}</span>
@@ -1320,7 +1322,7 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
             <li key={s.id} className={P.st(cn(seen && 'seen', isNext && 'next', skippedNow && 'skipped'))}>
               <span className={P.p(isNext ? 'next' : skippedNow ? 'skipped' : '')} aria-hidden="true">
                 <span className={P.art(seen ? 'opacity-45' : skippedNow ? 'opacity-30' : '')}><PosterArt title={s.title}/></span>
-                <span className={P.n(seen ? 'done border-(--status-seen) bg-(--status-seen) text-(--on-color)' : isNext ? 'cur border-primary bg-primary text-primary-foreground' : '')}>{seen ? <window.CheckIcon/> : s.n}</span>
+                <span className={P.n(seen ? 'done border-[#5fa856] bg-[rgba(10,12,20,0.85)] text-[#7cc472]' : isNext ? 'cur border-primary bg-primary text-primary-foreground' : '')}>{seen ? <window.CheckIcon/> : s.n}</span>
               </span>
               <span className={cn(P.t(false), isNext && 'font-semibold text-foreground')} aria-hidden="true">{promoCoverName(s.title, touch)}</span>
               <span className="story-sr">{gtr(seen ? 'guide.promoStopSeenAria' : 'guide.promoStopAria', { title: GI18N.titleName(s.title), i: s.n })}</span>
