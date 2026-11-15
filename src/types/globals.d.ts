@@ -153,6 +153,8 @@ declare global {
     SegPill: SegPillModule['SegPill'];
     Toolbar: ToolbarModule['Toolbar'];
     SpatialCard: SpatialCardModule['SpatialCard'];
+    CardText: SpatialCardModule['CardText'];
+    CardActions: SpatialCardModule['CardActions'];
     ZoomControl: SpatialChrome['ZoomControl'];
     BandLabel: SpatialChrome['BandLabel'];
     SpatialOverall: SpatialChrome['SpatialOverall'];

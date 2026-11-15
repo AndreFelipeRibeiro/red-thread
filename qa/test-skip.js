@@ -217,13 +217,15 @@ const STATE = () => {
       card: !!document.querySelector('.card.g-skipped[data-id="cap-brave"]') }));
     out.detailsSkip = r;
     expect(r.note === 'Skipped in this guide' && /g-unskip/.test(r.focus || '') && (r.stored || '').includes('cap-brave') && r.card, `details Skip: ${JSON.stringify(r)}`);
-    // Zoomed in, the card itself offers Unskip (it was skipped) and Skip on another stop.
+    // Zoomed in, the selected card's action row offers Unskip (it was skipped);
+    // other cards offer nothing until selected (Notion "Cards: one card design
+    // at rest, selected and on the phone": no hover band).
     for (let i = 0; i < 4; i++) { await page.locator('.zoom-ctl button, .zoom button').last().click().catch(() => {}); await page.waitForTimeout(300); }
     await page.waitForTimeout(700);
     r = await page.evaluate(() => ({ unskip: !!document.querySelector('.card[data-id="cap-brave"] .g-skipctl .g-unskip'),
       skip: !!document.querySelector('.card[data-id="thunderbolts"] .g-skipctl .g-skip, .card[data-id="fantastic-four"] .g-skipctl .g-skip') }));
     out.cardSkip = r;
-    expect(r.unskip && r.skip, `zoomed-in cards: ${JSON.stringify(r)}`);
+    expect(r.unskip && !r.skip, `zoomed-in cards: ${JSON.stringify(r)}`);
     await page.locator('.card[data-id="cap-brave"] .g-skipctl .g-unskip').click(); await page.waitForTimeout(500);
     r = await page.evaluate(() => ({ stored: localStorage.getItem('mcu.guideSkips.v1'), card: !!document.querySelector('.card.g-skipped[data-id="cap-brave"]'),
       drawer: !!document.querySelector('.drawer.open .g-dskip-btn') }));
@@ -237,7 +239,7 @@ const STATE = () => {
     // A phone guide opens framed on its next stop (Loki: Season 2): tap it.
     await page.locator('.card[data-id="loki-s2"]').click({ force: true }); await page.waitForTimeout(900);
     await page.locator('.m-focuspop .g-skip').tap(); await page.waitForTimeout(500);
-    const r = await page.evaluate(() => ({ unskip: !!document.querySelector('.m-focuspop .g-unskip'), tsa: !!document.querySelector('.m-focuspop .m-fp-tsa'),
+    const r = await page.evaluate(() => ({ unskip: !!document.querySelector('.m-focuspop .g-unskip'), tsa: !!document.querySelector('.m-focuspop .card-acts-tsa'),
       stored: localStorage.getItem('mcu.guideSkips.v1') }));
     out.popupSkip = r;
     expect(r.unskip && !r.tsa && (r.stored || '').includes('loki-s2'), `phone popup Skip: ${JSON.stringify(r)}`);

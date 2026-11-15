@@ -1,8 +1,12 @@
 // A title's card on the Spatial canvas (Notion "shadcn pass 2/5: Spatial
 // canvas, cards and threads"; simplified in Notion "Simplify the Spatial
-// cards": the poster, the title, the phase as a coloured dot, the year and a
-// quiet seen check; scores, budget, story year, Seen and Watchlist come up in
-// a band over the poster on hover or keyboard focus).
+// cards"; made one design in Notion "Cards: one card design at rest, selected
+// and on the phone"): the whole poster with nothing on it, the title, one meta
+// line (phase dot · year · "Set in" · budget, "Series" for a series) and one
+// status mark at its end, the quiet seen check or, in a guide, the stop's
+// number. Selected, the same card gains an action row: Seen, Watchlist, IMDb,
+// RT (and Cast on the phone, whose selected card is FocusPop in mobile.tsx,
+// built from the same CardText and CardActions). Hover only lifts it.
 //
 // Moved out of app.tsx so it can be built on the design system: this file is
 // listed with `@source` in src/index.css. The canvas lays cards out from
@@ -17,8 +21,9 @@
 //
 // Class names the canvas code, the Escape ladder and the QA checks read are
 // kept as hooks (`card` and its state classes, `card-open`, `card-poster`,
-// `card-hover`, `card-tsa`, `card-gnum`, `card-phase`, `card-seen`,
-// `rating-row`, `card-rating`, `card-meta`, `card-title`, `card-year`…).
+// `card-gnum`, `card-phase`, `card-seen`, `card-meta`, `card-title`,
+// `card-year`, `card-story`, `card-budget`, `card-acts`, `card-acts-tsa`,
+// `card-rating`…).
 import React, { useRef, useState } from 'react';
 import { cn } from 'cn';
 import type { Title } from '../types/catalog';
@@ -27,8 +32,10 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 
 /** The card's size on the canvas, in canvas pixels. The layout reads it.
  *  168px inside the border, so the 2:3 poster is 168 × 252 and the text
- *  block below gets 76px (two lines of title and the year line). */
-export const CARD_SIZE = { w: 170, h: 330 };
+ *  block below gets 94px: two lines of title and two of the meta line. A
+ *  selected card grows downward for its action row, into the gap below its
+ *  row (CARD_H + 70). */
+export const CARD_SIZE = { w: 170, h: 348 };
 
 // Layout moves (AGENTS.md, "Motion"), then the state fades.
 const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms,visibility_0s]';
@@ -37,7 +44,8 @@ const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_22
 const SHADOW = {
   base: 'shadow-sm not-dark:shadow-[0_1px_2px_rgb(0_0_0/.05),0_10px_24px_-14px_rgb(0_0_0/.22)]',
   drag: 'shadow-[0_24px_50px_-8px_rgba(0,0,0,0.6),0_0_0_1px_var(--phase-color)]',
-  hover: 'hover:shadow-[0_16px_40px_-8px_color-mix(in_oklab,var(--phase-color)_60%,transparent),0_0_0_1px_var(--phase-color),0_0_30px_-4px_color-mix(in_oklab,var(--phase-color)_40%,transparent)]',
+  // Hover is a slight lift, nothing more.
+  hover: 'hover:shadow-[0_18px_36px_-12px_rgb(0_0_0/.55)] not-dark:hover:shadow-[0_16px_32px_-14px_rgb(0_0_0/.3)]',
   selected: 'shadow-[0_0_0_2px_var(--phase-color),0_20px_50px_-8px_color-mix(in_oklab,var(--phase-color)_70%,transparent)]',
   highlighted: 'shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_40%,transparent),0_16px_40px_-8px_color-mix(in_oklab,var(--foreground)_27%,transparent)] not-dark:shadow-[0_14px_34px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)]',
   current: 'shadow-[0_0_0_3px_var(--cur-color,var(--primary)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--primary))_50%,transparent),0_24px_50px_-8px_rgba(0,0,0,.65)]',
@@ -74,8 +82,6 @@ export interface CardProps {
 
 export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, touch = false }: CardProps) {
   const I18N = window.MCU_I18N;
-  // mobile.tsx is not typed yet: Highlight returns text or marked pieces.
-  const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
   // cards fade softly when a filter changes"); the canvas's first cards don't.
@@ -86,8 +92,9 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   const seen = status === 'seen', listed = status === 'watchlist';
   const skipped = !!guideSkip && guideSkip.state === 'skipped';
   // Below TSA_MIN_SCALE the toggles are rendered smaller than a usable hit
-  // target, so they withdraw and the seen state reads as a static marker only.
+  // target, so the selected card leaves its action row out.
   const showActions = (scale || 1) >= window.TSA_MIN_SCALE;
+  const actions = isSelected && !touch && showActions;
 
   // The states, resolved in the order they override each other (later wins):
   // dragging, hover, selected, highlighted, dimmed, watchlisted, collection
@@ -106,9 +113,9 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (isRingFocus && !touch) { lift = '[--lift:1.18]'; z = 'z-27'; }
   const stateOwnsBorder = isSelected || isHighlighted || listed || skipped || isCurrent;
   const stateOwnsShadow = isSelected || isHighlighted || isCurrent;
-  const hover = cn(!stateOwnsBorder && 'hover:border-(--phase-color)', !stateOwnsShadow && SHADOW.hover,
+  const hover = cn(!stateOwnsShadow && SHADOW.hover,
     !(isSelected || isHighlighted || isCurrent || (isRingFocus && !touch)) && 'hover:z-20',
-    !(isDimmed || isCollDimmed || isCurrent) && 'hover:brightness-110');
+    !(isCurrent || (isRingFocus && !touch) || isDragging || touch) && 'hover:[--lift:1.025] motion-reduce:hover:[--lift:1]');
 
   return (
     <div
@@ -136,7 +143,8 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         // GPU layer, which phones cannot afford when zoomed far out.
         transform: `translate(${pos.x}px, ${pos.y}px) scale(var(--lift, 1))`,
         width: CARD_SIZE.w + 'px',
-        height: CARD_SIZE.h + 'px',
+        height: actions ? undefined : CARD_SIZE.h + 'px',
+        minHeight: actions ? CARD_SIZE.h + 'px' : undefined,
       } as React.CSSProperties}
       onMouseDown={(e) => {
         downRef.current = { x: e.clientX, y: e.clientY, moved: false };
@@ -165,80 +173,106 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         seen && 'after:pointer-events-none after:absolute after:inset-0 after:z-1 after:bg-[rgba(10,12,20,0.34)] after:content-[\'\'] [&>:first-child]:saturate-35',
         skipped && '[&>:first-child]:opacity-30')}>
         <window.PosterArt title={title}/>
-        {/* Nothing sits on the artwork at rest (Notion "Simplify the Spatial
-            cards"). Hovering the card, or Tab reaching its buttons, brings up
-            a band over the foot of the poster with the scores, budget and
-            story year, and Seen and Watchlist (Skip / Unskip on a guide stop).
-            It is laid over the art, so nothing moves. Phones tap a card to pop
-            it out instead, and far zoomed out the band stays away. */}
-        {!touch && showActions && (
-          <div className={cn('card-hover absolute inset-x-0 bottom-0 z-3 flex flex-col gap-[7px] bg-[linear-gradient(to_top,rgba(10,12,20,.94)_60%,rgba(10,12,20,0))] px-[10px] pt-[26px] pb-[10px] text-(--on-image)',
-            'opacity-0 transition-opacity duration-150 group-hover/card:opacity-100 group-focus-within/card:opacity-100 motion-reduce:transition-none')}>
-            <div className="rating-row flex flex-wrap items-center gap-[5px]">
-              {title.imdb != null && (
-                <div className={cn(RATING, 'imdb')} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
-                  <span className="imdb-tag rounded-[2px] bg-[#f5c518] px-[3px] py-px text-[8.5px] font-extrabold tracking-[.2px] text-black">IMDb</span>
-                  {title.imdb.toFixed(1)}
-                </div>
-              )}
-              {title.rt != null && (
-                <div className={cn(RATING, 'rt')} title={tr('score.rt')}>
-                  <span className="rt-tag rounded-[2px] bg-[#cc2a0a] px-[3px] py-px text-[8.5px] font-extrabold tracking-[.2px] text-white">RT</span>
-                  {title.rt}%
-                </div>
-              )}
-            </div>
-            <div className="card-facts flex flex-wrap items-center gap-x-[8px] gap-y-[3px] text-[10.5px] text-(--on-image-dim) tabular-nums [&_.card-story]:text-(--on-image-dim)">
-              <span>{I18N.upper(window.typeLabel(title.type))}</span>
-              {title.budget != null && <span className="card-budget">{I18N.budget(title.budget)}</span>}
-              <window.StoryYear title={title} className="card-story flex"/>
-            </div>
-            <div className="card-actions flex items-center gap-[6px]">
-              {!skipped && <window.TitleStatusActions title={title} variant="overlay" className="card-tsa static top-auto right-auto flex-row [transform:none] [&_.tsa-btn]:size-8"/>}
-              {guideSkip && (guideSkip.state === 'can' || skipped) && (
-                <window.GuideSkipControl guide={guide} info={guideSkip} onDone={onGuideSkip}
-                  className={cn(skipped ? 'card-unskipctl [&_.g-unskip]:min-h-8 [&_.g-unskip]:rounded-md [&_.g-unskip]:px-3 [&_.g-unskip]:text-[11.5px]' : 'card-skipctl [&_.g-skip]:size-8 [&_.g-skip]:basis-8', '[&_button]:border-[#ffffff26] [&_button]:bg-[rgba(10,12,20,0.78)] [&_button]:text-(--on-image-dim) [&_button]:hover:text-(--on-image)')}/>
-              )}
-            </div>
-          </div>
-        )}
       </div>
-      {/* Under the poster: the title, then the phase (its colour only), the
-          year and a quiet check once seen. An open guide's stop number leads
-          that line; a skipped stop says so. */}
-      <div className={cn('card-meta min-h-0 flex-1 px-[14px] pt-[11px] pb-[12px]', seen && '[&_.card-title]:opacity-82')}>
-        <div className={cn('card-title line-clamp-2 text-[13px] leading-[1.25] font-semibold tracking-tight text-pretty', skipped && 'opacity-40')}><Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
-        <div className="card-year mt-[5px] flex items-center gap-[6px] text-[11px] text-muted-foreground tabular-nums">
-          {guideBadge && <span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-40')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>}
-          <span className="card-phase size-[7px] flex-[0_0_7px] rounded-full" style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
-          <span className={cn('min-w-0 truncate', skipped && 'opacity-40')}>{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>
-          {skipped && <span className="card-skiptag rounded-[4px] border border-dashed border-border px-[5px] text-[9.5px] font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
-          {seen && (
-            <span className="card-seen ml-auto inline-flex size-[16px] flex-[0_0_16px] items-center justify-center rounded-full text-(--status-seen) [&_svg]:size-[12px]" role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
-          )}
-        </div>
-        <window.MatchBadge matchedChars={matchedChars} query={searchQuery} title={title}/>
-      </div>
+      <CardText title={title} seen={seen} skipped={skipped} guideBadge={guideBadge} query={searchQuery}
+        matchedChars={matchedChars}/>
+      {actions && (
+        <CardActions title={title} skipped={skipped} guide={guide} guideSkip={guideSkip} onGuideSkip={onGuideSkip}
+          className="px-[14px] pb-[12px]"/>
+      )}
     </div>
   );
 }
 
-// A score in the hover band: a brand tag (black on IMDb yellow, white on RT
-// red at 5.4:1) and the score, light on the band's dark ground in both themes.
-const RATING = 'card-rating flex items-center gap-[4px] rounded-[4px] border border-[#ffffff20] bg-[rgb(10,12,20)] px-[7px] py-[3px] text-[10px] font-bold text-(--on-image) tabular-nums';
-
 // A guide stop's number on the card, under the type label: filled while
 // ahead, green once seen, dashed for an optional stop, the destination and a
 // skipped stop. `cls` is the guide's own state list ("o done", "dest"…).
-function gnumClass(cls: string) {
+function gnumClass(cls: string, pop = false) {
   const k = new Set(cls.split(/\s+/));
-  const dashed = 'border-[1.5px] border-dashed bg-[rgba(10,12,20,.88)]';
-  return cn('card-gnum relative z-3 inline-flex h-[22px] min-w-[22px] flex-none items-center justify-center rounded-[11px] px-[5px] text-[11px] font-extrabold tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.5)]',
+  const dashed = 'border-[1.5px] border-dashed bg-transparent';
+  return cn('card-gnum inline-flex flex-none items-center justify-center rounded-full font-bold tabular-nums',
+    pop ? 'h-[max(22px,1.375rem)] min-w-[max(22px,1.375rem)] px-[6px] text-[max(12px,0.75rem)]' : 'h-[18px] min-w-[18px] px-[4px] text-[10.5px]',
     cls,
-    k.has('skip') ? cn(dashed, 'border-(--on-image-dim) text-(--on-image-muted)')
-      : k.has('o') ? (k.has('done') ? 'border-[1.5px] border-solid border-[#5fa856] bg-[#5fa856] text-[#0a0c14]' : cn(dashed, 'border-(--on-image-dim) text-(--on-image)'))
-        : k.has('dest') ? cn(dashed, 'border-primary text-(--on-image)')
-          : k.has('done') ? 'bg-[#5fa856] text-[#0a0c14]' : 'bg-primary text-[#0a0c14]');
+    k.has('skip') ? cn(dashed, 'border-border text-muted-foreground')
+      // Seen: the quiet seen mark, as on the Seen button and the guide's own list.
+      : k.has('done') ? 'border border-[color-mix(in_oklab,var(--status-seen)_55%,var(--border))] bg-[color-mix(in_oklab,var(--status-seen)_14%,transparent)] text-(--status-seen)'
+        : k.has('o') ? cn(dashed, 'border-muted-foreground text-foreground')
+          : k.has('dest') ? cn(dashed, 'border-primary text-foreground')
+            : 'bg-primary text-primary-foreground');
 }
 
-Object.assign(window, { SpatialCard, CARD_SIZE });
+type GuideBadge = { cls: string; label: string; text: string } | null | undefined;
+
+/** "Set in 2010" (or the era's name), as the meta line shows it. */
+function storyText(title: Title): string | null {
+  if (!title.story) return null;
+  const I18N = window.MCU_I18N;
+  const story = I18N.storyLabel(title.story);
+  return /^(c\. )?\d/.test(title.story) ? tr('story.setIn', { story }) : story;
+}
+
+/** The card's text, on the canvas and in the phone's selected card (`pop`):
+ *  the title, then one meta line with one status mark at its end. */
+export function CardText({ title, seen, skipped = false, guideBadge, query, matchedChars, pop = false }: {
+  title: Title; seen: boolean; skipped?: boolean; guideBadge?: GuideBadge; query?: string; matchedChars?: string[] | null; pop?: boolean;
+}) {
+  const I18N = window.MCU_I18N;
+  const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
+  const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
+  const story = storyText(title);
+  const dot = <span className="card-sep text-muted-foreground/60" aria-hidden="true">·</span>;
+  // One mark: the stop's state in a guide, else the quiet seen check.
+  const mark = guideBadge
+    ? <span className={cn(gnumClass(guideBadge.cls, pop), skipped && 'opacity-60')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>
+    : seen ? <span className={cn('card-seen inline-flex flex-none items-center justify-center rounded-full text-(--status-seen)', pop ? 'size-[max(18px,1.125rem)] [&_svg]:size-[max(14px,0.875rem)]' : 'size-[16px] [&_svg]:size-[12px]')} role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
+      : null;
+  return (
+    <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[6px] px-3 pt-2.5 pb-2' : 'gap-[5px] px-[14px] pt-[10px] pb-[10px]', seen && '[&_.card-title]:opacity-82')}>
+      <div className={cn('card-title line-clamp-2 leading-[1.25] font-semibold tracking-tight text-pretty', pop ? 'text-[max(15px,0.9375rem)]' : 'text-[14px]', skipped && 'opacity-40')}>
+        <Highlight text={I18N.titleName(title)} query={query}/>
+      </div>
+      <div className={cn('card-year flex items-start gap-[6px] text-muted-foreground tabular-nums', pop ? 'text-[max(13px,0.8125rem)] leading-[1.35]' : 'text-[11px] leading-[1.35]')}>
+        <span className={cn('card-line flex min-w-0 flex-1 flex-wrap items-center gap-x-[5px] gap-y-[1px]', skipped && 'opacity-40')}>
+          <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
+          <span className="whitespace-nowrap">{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>
+          {story && <>{dot}<span className="card-story whitespace-nowrap">{story}</span></>}
+          {title.budget != null && <>{dot}<span className="card-budget whitespace-nowrap">{I18N.budget(title.budget)}</span></>}
+          {title.type === 'series' && <>{dot}<span className="card-type whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
+          {skipped && <span className="card-skiptag rounded-[4px] border border-dashed border-border px-[5px] text-[9.5px] font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
+        </span>
+        {mark && <span className="card-mark ml-auto flex flex-none pt-px">{mark}</span>}
+      </div>
+      <window.MatchBadge matchedChars={matchedChars} query={query} title={title}/>
+    </div>
+  );
+}
+
+/** A selected card's action row: Seen, Watchlist (or Skip / Unskip in a
+ *  guide), IMDb, RT, and Cast where the card is the way to the cast (phone). */
+export function CardActions({ title, skipped = false, guide, guideSkip, onGuideSkip, onCast, pop = false, className }: {
+  title: Title; skipped?: boolean; guide?: unknown; guideSkip?: { state: string } | null; onGuideSkip?: () => void;
+  onCast?: () => void; pop?: boolean; className?: string;
+}) {
+  const btn = pop ? '[&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn_svg]:size-4' : '[&_.tsa-btn]:size-8';
+  return (
+    <div className={cn('card-acts relative z-5 flex flex-wrap items-center gap-[6px]', className)} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+      {!skipped && <window.TitleStatusActions title={title} className={cn('card-acts-tsa static top-auto right-auto flex-row gap-[6px] [transform:none]', btn)}/>}
+      {guideSkip && (guideSkip.state === 'can' || skipped) && (
+        <window.GuideSkipControl guide={guide} info={guideSkip} onDone={onGuideSkip}
+          className={cn(skipped ? 'card-unskipctl [&_.g-unskip]:min-h-8 [&_.g-unskip]:px-3' : 'card-skipctl [&_.g-skip]:size-8 [&_.g-skip]:basis-8')}/>
+      )}
+      {(title.imdb != null || title.rt != null) && (
+        <span className="card-scores flex flex-none items-center gap-[5px]">
+          <window.ScoreChip kind="imdb" title={title} compact={!pop} className="card-rating"/>
+          <window.ScoreChip kind="rt" title={title} compact={!pop} className="card-rating"/>
+        </span>
+      )}
+      {onCast && (
+        <button type="button" className="card-cast ml-auto inline-flex h-[max(36px,2.25rem)] items-center gap-1 rounded-md border border-input bg-background px-2.5 text-[max(13px,0.8125rem)] font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          onClick={onCast}>{tr('card.cast')} <span aria-hidden="true">›</span></button>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { SpatialCard, CARD_SIZE, CardText, CardActions });

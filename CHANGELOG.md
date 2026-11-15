@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — One card design at rest, selected and on the phone
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- No hover band over the poster; hover only lifts the card. One status mark
+  per card, never two in a guide. The phone's selected card is built from the
+  same pieces as the canvas card.
+- QA: `test-cards` rewritten, `test-skip` updated.
+- Verified: 30 card, canvas and guide checks; full `qa/regress.sh`
+  on the final tree, 62 check runs clean.
+
 ## V5 design — Posters shown whole at 2:3
 
 Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).

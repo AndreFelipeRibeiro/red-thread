@@ -262,6 +262,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'details.noCast': 'Nenhum elenco recorrente principal registrado.',
     'details.goSpatial': 'Ver conexões',
     'details.tapForCast': 'Toque para ver o elenco ›',
+    'card.cast': 'Elenco',
     'details.budget': 'Orçamento',
     'details.budgetUnknown': 'Não divulgado',
     'details.ratingsAfterRelease': 'Notas após o lançamento',

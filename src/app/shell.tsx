@@ -44,16 +44,10 @@ export const UN_INLINE = 'un-inline mt-0.5 mb-3.5';
 // Phones: the tapped card, popped out of the zoomed canvas at 1:1 so its
 // type stays legible.
 export const FP = {
-  root: 'm-focuspop absolute z-25 block w-[168px] -translate-1/2 animate-[mpop_200ms_cubic-bezier(.2,.9,.25,1)] cursor-pointer overflow-hidden rounded-xl border border-ring bg-card p-0 text-left text-card-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent),0_18px_44px_rgba(0,0,0,.7)] motion-reduce:animate-none',
+  root: 'm-focuspop absolute z-25 flex w-[188px] flex-col -translate-1/2 animate-[mpop_200ms_cubic-bezier(.2,.9,.25,1)] cursor-pointer overflow-hidden rounded-xl border border-ring bg-card p-0 text-left text-card-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_28%,transparent),0_18px_44px_rgba(0,0,0,.7)] motion-reduce:animate-none',
   open: 'm-fp-open block w-full cursor-pointer p-0 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
   poster: 'm-fp-poster relative aspect-[2/3] bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover [&>:first-child_svg]:size-full',
   seenWash: "after:pointer-events-none after:absolute after:inset-0 after:z-1 after:bg-[rgba(10,12,20,0.34)] after:backdrop-saturate-[.35] after:content-['']",
-  meta: 'm-fp-meta flex flex-col gap-[7px] px-2.5 pt-[9px] pb-2.5',
-  title: 'm-fp-title text-sm leading-[1.25] font-medium tracking-tight text-pretty',
-  story: 'm-fp-story mt-[3px] mb-[5px] flex',
-  cta: 'm-fp-cta text-xs font-medium text-foreground',
-  /** Seen and Watchlist top-right: the PH badge owns top-left. */
-  tsa: 'm-fp-tsa absolute top-[7px] right-[7px] bottom-auto z-3 flex-row [transform:none] [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn_svg]:size-4',
 };
 
 /** The startup screen (index.html, boot.js) is plain markup outside React;

@@ -684,30 +684,27 @@ function Sheet({ children, onClose, tall, label, labelledBy, describedBy, classN
 // The title details (TitleDetailsBody, DetailSection, CastSheet) moved to
 // title-details.tsx (Notion "shadcn pass 3/5").
 
-// Unscaled overlay that "pops" the focused card out of the zoomed canvas so it stays legible
+// Unscaled overlay that "pops" the focused card out of the zoomed canvas so it
+// stays legible: the same card as on the canvas (Notion "Cards: one card
+// design at rest, selected and on the phone"), poster whole with nothing on it,
+// the text at phone sizes (CardText `pop`), then the action row with Cast,
+// which opens the details sheet like a tap on the card.
 function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
   const { statusOf } = window.useCollection();
   if (!title) return null;
   const PosterArt = window.PosterArt;
   const seen = statusOf(title.id) === 'seen';
+  const skipped = !!guideSkip && guideSkip.state === 'skipped';
   return (
     <div className={cn(S.FP.root, seen && 'seen')} style={{left:x+'px', top:y+'px'}}>
-      <button className={S.FP.open} onClick={onOpenCast}>
+      <button className={S.FP.open} onClick={onOpenCast} aria-label={MI18N.titleName(title)}>
         <div className={cn(S.FP.poster, seen && S.FP.seenWash)}>
           <PosterArt title={title}/>
-          <PhaseBadge phase={title.phase}/>
-        </div>
-        <div className={cn(S.FP.meta, seen && 'opacity-82')}>
-          <div className={S.FP.title}>{MI18N.titleName(title)}</div>
-          <StoryYear title={title} className={S.FP.story}/>
-          <ScoreBadges title={title}/>
-          <div className={S.FP.cta}>{mtr('details.tapForCast')}</div>
         </div>
       </button>
-      {/* In a guide, Skip sits beside Seen and Watchlist; a skipped stop shows
-          Unskip in their place. */}
-      {!(guideSkip && guideSkip.state === 'skipped') && <window.TitleStatusActions title={title} className={S.FP.tsa}/>}
-      {guideSkip && <window.GuideSkipControl guide={guide} info={guideSkip} className="m-fp-skip" onDone={onGuideSkip}/>}
+      <window.CardText title={title} seen={seen} skipped={skipped} pop/>
+      <window.CardActions title={title} skipped={skipped} guide={guide} guideSkip={guideSkip} onGuideSkip={onGuideSkip}
+        onCast={onOpenCast} pop className="px-3 pb-3"/>
     </div>
   );
 }
