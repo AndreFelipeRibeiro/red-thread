@@ -158,26 +158,20 @@ const CANVAS = () => {
     let b = await page.evaluate(BAR);
     out.phoneList = { b };
     expect(!b.toolrow && b.tab === 'guides', `phone guide list: ${JSON.stringify(b)}`);
-    // Scrolled to the end, the destination card sits wholly above the dock.
+    // In Guides the guide has no dock (Notion "Guides 3/4": its header does
+    // that job); scrolled to the end, "Where it leads" sits wholly above the
+    // bottom bar.
     const clear = await page.evaluate(async () => {
       const sa = document.querySelector('.m-scrollarea'); sa.scrollTop = 1e6;
       await new Promise(r => setTimeout(r, 300));
       const last = document.querySelector('.g-stop.dest').getBoundingClientRect();
-      const dock = document.querySelector('.g-dock .g-dock-card').getBoundingClientRect();
-      return { lastBottom: Math.round(last.bottom), dockTop: Math.round(dock.top) };
+      const bar = document.querySelector('.m-navbar').getBoundingClientRect();
+      return { lastBottom: Math.round(last.bottom), barTop: Math.round(bar.top), dock: !!document.querySelector('.g-dock') };
     });
     out.phoneListEnd = clear;
-    expect(clear.lastBottom <= clear.dockTop - 8, `phone List: the last card hides behind the dock: ${JSON.stringify(clear)}`);
-    // The dock's arrows step past the last stop to the destination, then wrap.
-    const stops = await page.locator('.g-stop[data-row-id]:not(.dest)').count();
-    for (let i = 0; i <= stops; i++) { await page.locator('.g-dock .cb-step button').last().tap(); await page.waitForTimeout(150); }
-    const atDest = await page.evaluate(() => ({ cur: !!document.querySelector('.g-stop.dest.current'), pos: document.querySelector('.g-dock .cb-pos').textContent }));
-    out.phoneListDest = atDest;
-    expect(atDest.cur && /Aonde leva/.test(atDest.pos), `phone List: the arrows did not reach the destination: ${JSON.stringify(atDest)}`);
-    await page.locator('.g-dock .cb-step button').last().tap(); await page.waitForTimeout(150);
-    expect(!(await page.locator('.g-stop.dest.current').count()), 'phone List: the arrows did not wrap past the destination');
-    // Closing the guide brings the Guides gallery back.
-    await page.locator('.guide-pill .cb-close').tap(); await page.waitForTimeout(900);
+    expect(!clear.dock && clear.lastBottom <= clear.barTop, `phone List: ${JSON.stringify(clear)}`);
+    // "‹ Guides" brings the Guides list back.
+    await page.locator('.g-back').tap(); await page.waitForTimeout(900);
     b = await page.evaluate(BAR);
     out.phoneClosed = { b };
     expect(b.tab === 'guides' && b.gallery >= 5 && !b.toolrow, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);

@@ -10,7 +10,7 @@
     "test-recastname", "test-bannerhold", "test-progress", "test-release", "test-urlstate", "test-bulk",
     "test-details", "test-nextup", "test-watch", "test-guides", "test-picker", "test-listkeys", "test-promo",
     "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode",
-    "test-contrast", "test-v4scope", "test-retap", "test-logo", "test-threads", "test-settings", "test-share", "test-previews", "test-textsize", "test-stepzoom", "test-segpill", "test-micro", "test-nav", "test-cards", "test-themelab",
+    "test-contrast", "test-gpage", "test-v4scope", "test-retap", "test-logo", "test-threads", "test-settings", "test-share", "test-previews", "test-textsize", "test-stepzoom", "test-segpill", "test-micro", "test-nav", "test-cards", "test-themelab",
     { "check": "a11y-scan", "env": { "LOC": "en-US" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "en-US", "SCHEME": "dark" }, "exitOnly": true }
@@ -22,7 +22,7 @@
     "src/app/mobile.tsx": ["test-retap", "test-textsize", "test-share", "test-settings", "test-logo", "test-back", "test-guidemode", "test-v2", "test-panel", "test-details", "test-mviewport", "test-align2", "test-progress"],
     "src/app/desktop-list.tsx": ["test-nav", "test-textsize", "test-dlist", "test-bulk", "test-listkeys", "test-progress", "test-home", "test-unreleased", "test-layers", "test-anim", "test-contrast", "test-nextup"],
     "src/data/guides.ts": ["test-guides", "test-promo", "test-partof", "test-skip"],
-    "src/app/guides-ui.tsx": ["test-nav", "test-share", "test-guidemode", "test-guides", "test-promo", "test-partof", "test-details", "test-skip"],
+    "src/app/guides-ui.tsx": ["test-gpage", "test-nav", "test-share", "test-guidemode", "test-guides", "test-promo", "test-partof", "test-details", "test-skip"],
     "src/app/picker.tsx": ["test-picker", "test-welcome"],
     "src/app/seg-pill.tsx": ["test-segpill"],
     "src/app/tracking.tsx": ["test-micro", "test-segpill", "test-v2", "test-bulk", "test-nextup", "test-unreleased", "test-cel", "test-progress"],

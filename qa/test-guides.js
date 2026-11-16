@@ -163,46 +163,47 @@ const DATA = () => {
   const desk = await page.evaluate(() => ({
     url: new URLSearchParams(location.search).get('guide'),
     pop: !!document.querySelector('.g-page'),
-    banner: !!document.querySelector('.guide-banner'),
+    banner: !!document.querySelector('.g-desk .g-head'),
     charBanner: !!document.querySelector('.char-banner:not(.guide-banner)'),
     rows: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.dataset.rowId),
     nums: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest) .g-num')].map(n => n.textContent),
     dest: (document.querySelector('.g-desk .g-stop.dest') || {}).dataset ? document.querySelector('.g-desk .g-stop.dest').dataset.rowId : null,
     next: (document.querySelector('.g-desk .g-stop.next') || { dataset: {} }).dataset.rowId || null,
-    meter: (document.querySelector('.g-desk .g-module .gm-meter') || {}).textContent || '',
-    // The guide's module heads the List (V3 Tasks, "Desktop guide: one taller
-    // module…"); seen stops are compact (no reason, no scores).
-    module: !!document.querySelector('.g-desk > .g-module.list'),
-    compact: [...document.querySelectorAll('.g-desk .g-stop.seen')].map(r => ({ c: r.classList.contains('compact'), why: !!r.querySelector('.g-why'), scores: !!r.querySelector('.g-col .score, .g-col [class*="badge"], .g-col .m-scores') })),
+    meter: (document.querySelector('.g-desk .g-meter .pgh-count') || {}).textContent || '',
+    // The guide's header heads the List, its title the switcher (Notion
+    // "Guides 3/4"); seen stops follow the Titles list: full strength with the
+    // seen mark on the poster.
+    module: !!document.querySelector('.g-desk .g-head .g-sw-btn'),
+    compact: [...document.querySelectorAll('.g-desk .g-stop.seen')].map(r => ({ mark: !!r.querySelector('.g-seen') })),
     mains: document.querySelectorAll('[role="main"]').length,
   }));
   out.desk = { rows: desk.rows.length, next: desk.next, dest: desk.dest };
   if (desk.url !== plan.id) err(`desktop: address says guide=${desk.url}, expected ${plan.id}`);
   if (desk.pop) err('desktop: the gallery stayed after picking a guide');
-  if (!desk.banner) err('desktop: no guide banner');
+  if (!desk.banner) err('desktop: no guide header');
   if (desk.charBanner) err('desktop: a character banner shows beside the guide');
   if (desk.rows.join(',') !== plan.ess.join(',')) err(`desktop List rows ${desk.rows.join(',')} ≠ essential stops ${plan.ess.join(',')}`);
   if (desk.dest !== plan.target) err(`desktop: destination row is ${desk.dest}, expected ${plan.target}`);
   if (desk.next !== nextExpected) err(`desktop: next stop is ${desk.next}, expected ${nextExpected}`);
   if (desk.mains !== 1) err(`desktop: ${desk.mains} main landmarks`);
-  if (desk.meter.indexOf(`1/${plan.essRel.length}`) === -1) err(`desktop meter reads "${desk.meter}", expected 1/${plan.essRel.length}`);
-  if (!desk.module) err('desktop List: the guide module does not head the List');
-  if (!desk.compact.length || desk.compact.some(r => !r.c || r.why || r.scores)) err(`desktop List: a seen stop is not compact: ${JSON.stringify(desk.compact)}`);
+  if (desk.meter.indexOf(`1 of ${plan.essRel.length} `) !== 0) err(`desktop meter reads "${desk.meter}", expected 1 of ${plan.essRel.length}`);
+  if (!desk.module) err('desktop List: the guide header (with its switcher) does not head the List');
+  if (!desk.compact.length || desk.compact.some(r => !r.mark)) err(`desktop List: a seen stop has no seen mark: ${JSON.stringify(desk.compact)}`);
 
   // Include optional: every stop, essential numbers unchanged.
   if (plan.all.length > plan.ess.length) {
-    await page.locator('.guide-banner .g-optcheck input').check(); await page.waitForTimeout(400);
+    await page.locator('.g-desk .g-optrow [role="switch"]').click(); await page.waitForTimeout(400);
     const opt = await page.evaluate(() => ({
       rows: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.dataset.rowId),
       nums: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest):not(.optional) .g-num')].map(n => n.textContent),
     }));
     if (opt.rows.join(',') !== plan.all.join(',')) err(`desktop with optional: rows ${opt.rows.join(',')} ≠ ${plan.all.join(',')}`);
     if (opt.nums.join(',') !== desk.nums.join(',')) err(`desktop: essential numbers changed with optional stops shown (${desk.nums} → ${opt.nums})`);
-    await page.locator('.guide-banner .g-optcheck input').uncheck(); await page.waitForTimeout(300);
+    await page.locator('.g-desk .g-optrow [role="switch"]').click(); await page.waitForTimeout(300);
   }
 
   // "Mark N more seen" on the guide's meter: the released stops left, with Undo.
-  const bulkBtn = page.locator('.g-desk .g-module .pgh-action');
+  const bulkBtn = page.locator('.g-desk .g-meter .pgh-action');
   const wantN = plan.essRel.length - 1;
   if (!wantN) { if (await bulkBtn.count()) err('desktop: a bulk button on a guide with nothing left'); }
   else if (!(await bulkBtn.count())) err('desktop: no "Mark N more seen" on the guide meter');
@@ -219,32 +220,45 @@ const DATA = () => {
     if (back !== 1) err(`desktop: after Undo ${back} stops are seen, expected 1`);
   }
 
-  // The stepper: › goes to stop 1 and names it.
-  await page.locator('.guide-banner .cb-step button').last().click(); await page.waitForTimeout(400);
-  const step = await page.evaluate(n => ({
-    pos: document.querySelector('.guide-banner .cb-pos').textContent,
-    want: window.MCU_I18N.tr('guide.stepOf', { i: 1, n }),
-    url: new URLSearchParams(location.search).get('guide'),
-  }), plan.ess.length);
-  if (step.pos !== step.want) err(`desktop stepper reads "${step.pos}", expected "${step.want}"`);
-
   // A guide shows only its own titles: no Guide titles / All titles switch.
   const allMode = await page.evaluate(() => ({ modeSwitch: !!document.querySelector('.guide-banner .cb-mode'), gdesk: !!document.querySelector('.g-desk'), dlist: !!document.querySelector('.dlist:not(.g-desk)') }));
   if (allMode.modeSwitch || !allMode.gdesk || allMode.dlist) err(`desktop guide should show only its titles, with no switch: ${JSON.stringify(allMode)}`);
+
+  // Moving between guides (Notion "Guides 3/4"): the title switcher opens
+  // another guide in one step (its list: Following, More guides, All guides);
+  // "‹ Guides" and the Guides tab go back to the list.
+  await page.locator('.g-desk .g-sw-btn').click(); await page.waitForTimeout(400);
+  const sw = await page.evaluate(() => ({
+    items: document.querySelectorAll('.g-switch-list .g-sw-item').length,
+    current: (document.querySelector('.g-switch-list .g-sw-item[aria-current]') || {}).textContent || null,
+    all: !!document.querySelector('.g-switch-list .g-sw-all'),
+  }));
+  out.switcher = sw;
+  if (sw.items !== data.guides.length || !sw.current || !sw.all) err(`desktop switcher: ${JSON.stringify(sw)}`);
+  await page.locator('.g-switch-list .g-sw-item:not([aria-current])').first().click(); await page.waitForTimeout(700);
+  const swTo = await page.evaluate(() => new URLSearchParams(location.search).get('guide'));
+  if (!swTo || swTo === plan.id) err(`the switcher did not open another guide (${swTo})`);
+  await page.locator('.g-desk .g-back').click(); await page.waitForTimeout(600);
+  let backTo = await page.evaluate(() => ({ page: !!document.querySelector('.g-page'), url: location.search }));
+  if (!backTo.page || /guide=/.test(backTo.url)) err(`"‹ Guides" did not go back to the list: ${JSON.stringify(backTo)}`);
+  await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(600);
+  await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(600);
+  backTo = await page.evaluate(() => ({ page: !!document.querySelector('.g-page'), url: location.search }));
+  if (!backTo.page || /guide=/.test(backTo.url)) err(`the Guides tab did not close the open guide: ${JSON.stringify(backTo)}`);
   await finish('desktop', ctx, errors);
 
   // Escape closes the guide (one layer) and the address forgets it.
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs(seed1)));
   await page.goto(URL + `?view=list&guide=${plan.id}`); await settle(page);
-  const restored = await page.evaluate(() => !!document.querySelector('.guide-banner') && !!document.querySelector('.g-desk'));
+  const restored = await page.evaluate(() => !!document.querySelector('.g-desk .g-head'));
   if (!restored) err('desktop: ?guide= did not open the guide on load');
-  await page.mouse.click(700, 600); await page.waitForTimeout(100);
+  await page.mouse.click(1420, 880); await page.waitForTimeout(100); // empty margin, beside the list
   await page.keyboard.press('Escape'); await page.waitForTimeout(400);
-  const esc = await page.evaluate(() => ({ banner: !!document.querySelector('.guide-banner'), url: location.search }));
+  const esc = await page.evaluate(() => ({ banner: !!document.querySelector('.g-desk'), url: location.search }));
   if (esc.banner) err('desktop: Escape did not close the guide');
   if (/guide=/.test(esc.url)) err(`desktop: the address still names the guide after closing (${esc.url})`);
   await page.goto(URL + '?view=list&guide=no-such-guide'); await settle(page);
-  if (await page.locator('.guide-banner').count()) err('desktop: an unknown ?guide= opened something');
+  if (await page.locator('.g-desk').count()) err('desktop: an unknown ?guide= opened something');
   await finish('desktop-esc', ctx, errors);
 
   // Search: the guide is a suggestion under "Guides"; picking it opens it and
@@ -265,14 +279,14 @@ const DATA = () => {
   if (sug.heads[0] !== sug.want) err(`search "${plan.query}": the first group is ${sug.heads[0]}, expected ${sug.want}`);
   if (sug.first !== plan.name) err(`search "${plan.query}": first suggestion is "${sug.first}", expected "${plan.name}"`);
   await page.locator('.ss-pop .ss-item').first().click(); await page.waitForTimeout(600);
-  const picked = await page.evaluate(() => ({ banner: !!document.querySelector('.guide-banner'), box: document.querySelector('.toolbar input').value }));
+  const picked = await page.evaluate(() => ({ banner: !!document.querySelector('.guide-banner, .g-desk .g-head'), box: document.querySelector('.toolbar input').value }));
   if (!picked.banner) err('search: picking the guide did not open it');
   if (picked.box) err(`search: the box kept "${picked.box}" after picking a guide`);
   // Keyboard: arrow down + Enter picks it too.
-  await page.locator('.guide-banner .cb-close').click(); await page.waitForTimeout(300);
+  await page.locator('.guide-banner .cb-close, .g-desk .g-back').first().click(); await page.waitForTimeout(300);
   await page.locator('.toolbar input').first().fill(plan.query); await page.waitForTimeout(400);
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter'); await page.waitForTimeout(600);
-  if (!(await page.locator('.guide-banner').count())) err('search: ArrowDown + Enter did not open the guide');
+  if (!(await page.locator('.guide-banner, .g-desk .g-head').count())) err('search: ArrowDown + Enter did not open the guide');
   await finish('search', ctx, errors);
 
   // A character with a guide offers it from the banner; one without does not.
@@ -283,7 +297,7 @@ const DATA = () => {
     if (has !== 1) err(`desktop: the ${plan.charGuide.character} banner has ${has} "See the curated path" buttons`);
     if (has) {
       await page.locator('.char-banner .cb-guide').click(); await page.waitForTimeout(600);
-      const r = await page.evaluate(() => ({ url: new URLSearchParams(location.search), guide: !!document.querySelector('.guide-banner'), pin: !!document.querySelector('.char-banner:not(.guide-banner)') }));
+      const r = await page.evaluate(() => ({ url: new URLSearchParams(location.search), guide: !!document.querySelector('.guide-banner, .g-desk .g-head'), pin: !!document.querySelector('.char-banner:not(.guide-banner)') }));
       if (!r.guide || r.pin) err('desktop: "See the curated path" did not swap the pin for the guide');
     }
     if (plan.plain) {
@@ -335,7 +349,7 @@ const DATA = () => {
   await page.goto(URL + `?view=list&guide=${plan.id}`); await settle(page);
   await page.evaluate(() => { window.__confetti = 0; new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.classList && n.classList.contains('mcu-confetti')) window.__confetti++; }))).observe(document.body, { childList: true }); });
   await page.locator(`.g-desk .g-stop[data-row-id="${lastStop}"] .tsa-btn.seen`).click(); await page.waitForTimeout(600);
-  const done1 = await page.evaluate(() => ({ n: window.__confetti, ready: !!document.querySelector('.g-desk .g-module.done') }));
+  const done1 = await page.evaluate(() => ({ n: window.__confetti, ready: !!document.querySelector('.g-desk .g-kind.done') }));
   if (done1.n !== 1) err(`completion: ${done1.n} confetti bursts, expected 1`);
   if (!done1.ready) err('completion: the guide module did not turn complete after the last essential stop');
   // Unmark and mark again: it becomes complete again, so it bursts again.
@@ -376,7 +390,9 @@ const DATA = () => {
     upcard: document.querySelectorAll('.spatial-overall .un-mrow').length,
   }));
   if (ph.sheet) err('phone: the sheet stayed open after picking a guide');
-  if (!ph.head || !ph.pill) err(`phone: header ${ph.head}, pill ${ph.pill}`);
+  // In Guides the header does the dock's job ("‹ Guides", progress, the
+  // switcher; Notion "Guides 3/4"): the dock is Connections' only.
+  if (!ph.head || ph.pill) err(`phone: header ${ph.head}, dock ${ph.pill}`);
   if (ph.rows.join(',') !== plan.ess.join(',')) err(`phone List rows ${ph.rows.join(',')} ≠ ${plan.ess.join(',')}`);
   if (ph.next !== nextExpected) err(`phone: next stop ${ph.next}, expected ${nextExpected}`);
   if (ph.upcard) err('phone: the Up next card shows inside the guide view');
@@ -386,11 +402,19 @@ const DATA = () => {
     const n = await page.evaluate(() => ({ rows: document.querySelectorAll('.g-stops .g-stop[data-row-id]:not(.dest)').length, sw: document.querySelector('.g-switch').getAttribute('aria-checked') }));
     if (n.rows !== plan.all.length || n.sw !== 'true') err(`phone: with optional on, ${n.rows} rows (expected ${plan.all.length}), switch ${n.sw}`);
   }
-  // The pill's ×: closes the guide and the Guides gallery comes back (Notion
-  // "Phone: bottom bar becomes Explore, My list and Guides").
-  await page.locator('.guide-pill .cb-close').click(); await page.waitForTimeout(500);
+  // Guides in the bottom bar with the guide open goes back to the list (Notion
+  // "Phone: tapping Guides in the bottom bar closes the open guide"), and the
+  // guide keeps its Include optional when opened again.
+  await page.locator('.m-tab[data-section="guides"]').click(); await page.waitForTimeout(500);
   const closed = await page.evaluate(() => ({ g: !!document.querySelector('.g-head'), pill: !!document.querySelector('.guide-pill'), gallery: document.querySelectorAll('.g-page .g-row').length }));
-  if (closed.g || closed.pill || !closed.gallery) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
+  if (closed.g || closed.pill || !closed.gallery) err(`phone: Guides with the guide open left ${JSON.stringify(closed)}`);
+  if (plan.all.length > plan.ess.length) {
+    await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(600);
+    const kept = await page.evaluate(() => document.querySelector('.g-switch') && document.querySelector('.g-switch').getAttribute('aria-checked'));
+    if (kept !== 'true') err(`phone: Include optional was not kept (${kept})`);
+    await page.locator('.g-back').click(); await page.waitForTimeout(500);
+    if (!(await page.locator('.g-page').count())) err('phone: "‹ Guides" did not go back to the list');
+  }
   await finish('phone', ctx, errors);
 
   // Phone: an old Grid link opens the guide's List; Spatial: the guide's dock carrying the next stop
@@ -418,7 +442,7 @@ const DATA = () => {
       const name = await b.getAttribute('aria-label');
       if (!name) err('phone: the curated path button has no name');
       await b.click(); await page.waitForTimeout(600);
-      if (!(await page.locator('.guide-pill').count())) err('phone: the pill button did not open the guide');
+      if (!(await page.locator('.guide-pill, .g-head').count())) err('phone: the pill button did not open the guide');
     }
     await finish('phone-char', ctx, errors);
   }
@@ -431,7 +455,7 @@ const DATA = () => {
     const W = document.documentElement.clientWidth;
     const over = [...document.querySelectorAll('.g-head *, .g-stop *, .guide-pill *')].filter(e => e.getBoundingClientRect().right > W + 0.5 && e.getClientRects().length).map(e => e.className);
     return { over: over.slice(0, 5), name: (document.querySelector('.g-name') || {}).textContent, want: g.name['pt-BR'], lang: document.documentElement.lang,
-      tag: (document.querySelector('.g-stop.next .un-tag') || {}).textContent || null, wantTag: window.MCU_I18N.tr('guide.nextStop') };
+      tag: (document.querySelector('.g-stop.next .g-next-pill') || {}).textContent || null, wantTag: window.MCU_I18N.tr('upnext.label') };
   });
   if (narrow.over.length) err(`320px: past the edge: ${narrow.over.join(' | ')}`);
   if (narrow.name !== narrow.want) err(`pt-BR: the guide is called "${narrow.name}", expected "${narrow.want}"`);

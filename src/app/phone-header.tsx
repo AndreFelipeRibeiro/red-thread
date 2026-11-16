@@ -162,7 +162,9 @@ function scrollListToTop() {
 // The bottom bar: the app's three sections, each with its icon; the current
 // one in the accent colour. Hooks: `m-navbar`, `m-tabs`, `m-tab`, `on`,
 // `data-section`.
-export function MobileNavBar({ section, onSection }: { section: PhoneSection; onSection: (s: PhoneSection) => void }) {
+// `onReselect`: tapping the section already shown; returning true means the
+// app handled it (Guides with a guide open goes back to the list).
+export function MobileNavBar({ section, onSection, onReselect }: { section: PhoneSection; onSection: (s: PhoneSection) => void; onReselect?: (s: PhoneSection) => boolean }) {
   window.useI18n();
   return (
     <div className="m-navbar relative z-30 flex-[0_0_auto] bg-background">
@@ -171,7 +173,7 @@ export function MobileNavBar({ section, onSection }: { section: PhoneSection; on
           <button key={v} type="button" data-section={v} aria-current={section === v ? 'page' : undefined}
             className={cn('m-tab flex min-h-[60px] flex-1 cursor-pointer flex-col items-center justify-center gap-[5px] border-0 bg-transparent px-0.5 pt-2.5 pb-2 text-[length:max(12px,calc(var(--fs-xs)*var(--fs-chrome-scale,1)))] leading-[1.3] font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [-webkit-tap-highlight-color:transparent]',
               section === v && 'on text-primary')}
-            onClick={() => { if (section === v) { if (v !== 'explore') scrollListToTop(); } else onSection(v); }}>
+            onClick={() => { if (section === v) { if (onReselect && onReselect(v)) return; if (v !== 'explore') scrollListToTop(); } else onSection(v); }}>
             <svg className="size-[22px]" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{NAV_ICONS[v]}</svg>
             {tr('nav.' + v)}
           </button>

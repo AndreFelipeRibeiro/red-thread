@@ -19,17 +19,18 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 
 // One segmented group: shadcn's ToggleGroup in the tab list's look, with the
 // sliding selection (SegPill) as its first child. Single choice: pressing the
-// selected item again keeps it selected. The selected item keeps `on`, which
-// SegPill and the QA checks look for.
-export function Segmented({ value, onChange, items, className, label }: {
+// selected item again keeps it selected (and calls `onReselect`, if given).
+// The selected item keeps `on`, which SegPill and the QA checks look for.
+export function Segmented({ value, onChange, onReselect, items, className, label }: {
   value: string;
   onChange: (v: string) => void;
+  onReselect?: (v: string) => void;
   items: { value: string; content: React.ReactNode; className?: string; title?: string; label?: string; style?: React.CSSProperties }[];
   className?: string;
   label?: string;
 }) {
   return (
-    <ToggleGroup value={[value]} onValueChange={(v: unknown[]) => { if (v.length) onChange(String(v[v.length - 1])); }}
+    <ToggleGroup value={[value]} onValueChange={(v: unknown[]) => { if (v.length) onChange(String(v[v.length - 1])); else if (onReselect) onReselect(value); }}
       aria-label={label}
       className={cn('segmented relative h-11 shrink-0 items-stretch gap-0 rounded-lg bg-muted p-1 max-[1560px]:p-[3px] max-[1000px]:p-0.5', className)}>
       <window.SegPill value={value}/>
@@ -187,7 +188,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
         {/* The sections. A tab list in the segmented look; each tab says
             which section is shown (aria-current), like a site's navigation. */}
         <nav className="nav-tabs ml-2 shrink-0 max-[1100px]:ml-0" aria-label={tr('nav.aria')}>
-          <Segmented value={section} onChange={(v) => onSection(v as Section)} label={tr('nav.aria')} className="h-10"
+          <Segmented value={section} onChange={(v) => onSection(v as Section)} onReselect={(v) => onSection(v as Section)} label={tr('nav.aria')} className="h-10"
             items={SECTIONS.map((v) => ({ value: v, content: tr('nav.' + v), className: 'px-4 text-sm max-[1560px]:px-3.5 max-[1000px]:px-2.5' }))}/>
         </nav>
         <div className="min-w-0 flex-1"/>

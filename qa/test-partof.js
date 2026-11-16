@@ -101,13 +101,15 @@ const PART = () => {
     await page.keyboard.press('Enter'); await page.waitForTimeout(300);
     p = await page.evaluate(PART);
     expect(p.expanded === 'true', 'Enter did not open it');
-    await page.locator('.guide-banner .cb-step button').last().click(); await page.waitForTimeout(700);
+    // The next stop: → steps the guide (the list has no stepper buttons since
+    // Notion "Guides 3/4"; the keys still step).
+    await page.locator('body').press('ArrowRight'); await page.waitForTimeout(700);
     p = await page.evaluate(PART);
     out.deskGuideNext = p;
     expect(p.present && p.title !== 'Loki: Season 2' && p.expanded === 'true', `the in-guide choice did not hold on the next stop: ${JSON.stringify(p)}`);
     // Close the guide: the other context's default (open) is back.
     // (Closing it leaves the Guides tab on its gallery; Endgame is in My list.)
-    await page.locator('.guide-banner .cb-close').click(); await page.waitForTimeout(500);
+    await page.locator('.g-desk .g-back').click(); await page.waitForTimeout(500);
     await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
     await page.locator('.dl-row[data-row-id="endgame"] .dl-open').click(); await page.waitForTimeout(700);
     p = await page.evaluate(PART);

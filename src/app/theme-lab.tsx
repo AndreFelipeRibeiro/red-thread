@@ -104,7 +104,7 @@ const STACK: Record<string, string> = {
 };
 // Where display type goes: page titles, the details' title, Up next's title
 // (the Editorial spec: display type for titles only, Inter everywhere else).
-const DISPLAY_TARGETS = '.ml-title, #g-page-title, .drawer-title, .m-dtitle, .un-title, .g-page .g-row-name';
+const DISPLAY_TARGETS = '.ml-title, #g-page-title, .drawer-title, .m-dtitle, .un-title, .g-hero-title';
 
 export const DEFAULT_STATE: LabState = { preset: 'default', sans: 'Inter', display: 'None', radius: null, density: 1, custom: null };
 

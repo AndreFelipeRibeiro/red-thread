@@ -126,7 +126,7 @@ const STATE = () => ({
     s = await page.evaluate(STATE);
     out.guide = s;
     expect(s.tab === 'Guides' && s.guideList && /guide=/.test(s.url), `a guide from the gallery: ${JSON.stringify(s)}`);
-    await page.locator('.guide-banner .cb-close').click(); await page.waitForTimeout(800);
+    await page.locator('.g-desk .g-back').click(); await page.waitForTimeout(800);
     s = await page.evaluate(STATE);
     out.guideClosed = s;
     expect(s.tab === 'Guides' && s.gallery >= 5 && !/guide=/.test(s.url), `closing a guide: ${JSON.stringify(s)}`);

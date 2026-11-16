@@ -879,6 +879,7 @@ function App() {
   // order, with optional stops behind a switch. One of the two at a time.
   const [guideId, setGuideId] = useState(() => readURLState().guide || null);
   const [guideOptional, setGuideOptional] = useState(false);
+  const guideOptionalById = useRef({});
   const guide = useMemo(() => (guideId && window.MCU_GUIDE ? window.MCU_GUIDE.get(guideId) : null), [guideId]);
   // Read by the details' "Part of" section (guides-ui.jsx), which starts
   // closed while a guide is open. Set during render, before the details render.
@@ -2267,6 +2268,16 @@ function App() {
   const section = spatialNow ? 'explore' : (guide || guidesPage) ? 'guides' : 'mylist';
   const slotOf = (s) => (s === 'explore' ? 'explore' : 'list');
   const goSection = (next, opts) => {
+    // Guides again (bottom bar or desktop tab) with a guide open goes back to
+    // the list, as an iPhone tab bar returns to its top level; on the list
+    // itself it scrolls to the top (Notion "Phone: tapping Guides in the
+    // bottom bar closes the open guide").
+    if (next === section && next === 'guides' && !(opts && opts.force)) {
+      if (guideId && (isTouch ? viewMode !== 'spatial' : desktopView === 'list')) { closeGuide(); return; }
+      const page = document.querySelector('.g-page');
+      if (page && page.scrollTop) page.scrollTo({ top: 0, behavior: window.MCU_MOTION.reduced() ? 'auto' : 'smooth' });
+      return;
+    }
     if (next === section && !(opts && opts.force)) return;
     const from = slotOf(section), to = slotOf(next);
     if (from !== to) {
@@ -2399,10 +2410,13 @@ function App() {
     // The open guide is what the Guides tab shows; closing it brings the
     // gallery back (closeGuide).
     setGuidesPage(false);
-    setGuideOptional(false);
+    // Each guide keeps its own "Include optional" for the visit (Notion
+    // "Phone: tapping Guides in the bottom bar closes the open guide").
+    setGuideOptional(!!guideOptionalById.current[id]);
     setStepId(startAt || null);
     if (isTouch) setDrawerId(null);
   };
+  useEffect(() => { if (guideId) guideOptionalById.current[guideId] = guideOptional; }, [guideId, guideOptional]);
   const closeGuide = (opts) => {
     if (guideId && !(opts && opts.fromURL)) window.MCU_GUIDE.forget(guideId);
     setGuideId(null);
@@ -3161,13 +3175,14 @@ function App() {
           guideActive={!!guide}
           subNav={!guide && !guidesPage && viewMode === 'list' ? myListBar : null}
         />
-        <div role="main" className={`${S.M_MAIN}${charPill || guide || phoneCard ? ' has-pill' : ''}`}
+        <div role="main" className={`${S.M_MAIN}${charPill || (guide && viewMode === 'spatial') || phoneCard ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {guide && viewMode !== 'spatial' && (
-            <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
-              currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
+            <window.GuideView guide={guide} surface="phone" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
+              currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }}
+              onBack={() => closeGuide()} onPick={(id) => openGuide(id)}/>
           )}
-          {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage onPick={(id) => openGuide(id)}/>}
+          {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage inMain onPick={(id) => openGuide(id)}/>}
           {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} groupProgress={groupProgress} markWatch={collectionFilter !== 'watchlist'} header={narrowed ? contextSummary('line') : null} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} sortDir={sortDir} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className={S.M_SPATIAL_WRAP}>
@@ -3175,7 +3190,10 @@ function App() {
             </div>
           )}
           {phoneCard}
-          {guide ? (
+          {/* An open guide's dock is Connections' (Notion "Guides 3/4": in
+              Guides, the header's "‹ Guides", progress and switcher do its
+              job). */}
+          {guide ? viewMode === 'spatial' && (
             <window.GuidePill guide={guide} stepIndex={stepIndex} stepCount={stepStops}
               current={stepIndex >= 0 ? stepList[stepIndex] : null}
               next={upNext && upNext.result && upNext.result.kind === 'next' ? upNext.result.title : null}
@@ -3183,7 +3201,7 @@ function App() {
               onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
           ) : charPill}
         </div>
-        <window.MobileNavBar section={section} onSection={(v) => goSection(v)}/>
+        <window.MobileNavBar section={section} onSection={(v) => goSection(v)} onReselect={(v) => { if (v !== 'guides') return false; goSection(v); return true; }}/>
         {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
@@ -3280,10 +3298,11 @@ function App() {
       {desktopView === 'list' && <div className="story-sr" aria-live="polite">{listAnnounce}</div>}
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
-            module={guideModule('list')}
+            // "‹ Guides" and the title switcher (Notion "Guides 3/4").
+            onBack={() => closeGuide()} onPick={(id) => openGuide(id)}
             // A stop opened by a click becomes the guide's current one too,
             // like ← → and ↑ ↓: the marker and "Stop n of N" follow it.
-            currentId={stepCurrent} openId={drawerId} onOpen={(id) => { setStepId(id); toggleDetails(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            currentId={stepCurrent} openId={drawerId} onOpen={(id) => { setStepId(id); toggleDetails(id); }}
             onFollow={(id) => {
               // The stop becomes the guide's current one too, so ← → carry on
               // from it and the banner announces "Stop n of N", as it does for

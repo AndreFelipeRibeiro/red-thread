@@ -13,6 +13,43 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Guides: a page with a hero and shelves, and moving between guides (Guides 1/4 and 3/4)
+
+Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- **The Guides page (1/4):** a hero for the guide in focus (a followed guide
+  leading to a release in the next 60 days, else the most recent one you
+  follow; with none, the guide the promotion rules pick, not started), its
+  stops on a thread with the next one larger and its button attached ("Mark
+  seen" when followed, "Start guide" when not), an event guide's destination
+  last with its date. Below, shelves of guide cards, 4 across on desktop and
+  sideways on phones, at least 4 guides a shelf; each card has three posters
+  and a status row: a progress bar only when followed, "2 of 6 seen" with
+  "+ Follow" otherwise, "✓ All 10 seen" once finished. Real posters
+  throughout. Replaces the misaligned phone cards.
+- **Following (1/4, ahead of 2/4):** several guides can be followed, kept on
+  the device (`mcu.guidesFollowed.v1`); the old remembered guide becomes the
+  first one.
+- **The open guide (3/4):** "‹ Guides" (back to the list where it was
+  scrolled), the kicker, the title as a switcher (Following, More guides,
+  All guides: a dropdown on desktop, a bottom sheet on phones), progress with
+  Mark N more seen, Following, Share and Include optional (kept per guide for
+  the visit), "Where it leads" for event guides, and the stops as the Titles
+  list. The desktop module and the phone dock stay on Connections only; the
+  arrow keys still step, and the current stop is announced.
+- **Guides again:** the Guides tab or bottom-bar button with a guide open goes
+  back to the list; on the list it scrolls to the top. The desktop tabs now
+  react to a click on the selected tab.
+- On phones the Guides page is a region inside the phone's main area (it was
+  a second main landmark).
+- Verified: typecheck and build; the full `qa/regress.sh` before the push; the
+  accessibility scan in English and Portuguese (now with the phone Guides
+  page); checked against the Figma at 1440, 390 and 320px, dark and light.
+  New `qa/test-gpage.js`; test-guides, test-skip, test-nav, test-partof,
+  test-share, test-guidemode, test-listkeys and test-home updated.
+- Limits: not yet tried on a real iPhone. Following is on the device only
+  until Guides 2/4 syncs it.
+
 ## V5 fix — Titles: switching tabs no longer flashes unstyled rows
 
 Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
