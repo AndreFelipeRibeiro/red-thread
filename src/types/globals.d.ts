@@ -150,8 +150,8 @@ declare global {
     /** The live collection (what useCollection() returns), for code outside React and the QA checks. */
     MCU_COLLECTION?: ReturnType<Tracking['useCollection']>;
     TitleStatusActions: StatusActions['TitleStatusActions'];
+    SwipeRow: StatusActions['SwipeRow'];
     MCU_emitStatusChange: Tracking['MCU_emitStatusChange'];
-    CollectionSwitch: HeaderControls['CollectionSwitch'];
     SegPill: SegPillModule['SegPill'];
     Toolbar: ToolbarModule['Toolbar'];
     SpatialCard: SpatialCardModule['SpatialCard'];
@@ -212,7 +212,6 @@ declare global {
 
     MobileTopBar: PhoneHeader['MobileTopBar'];
     MobileNavBar: PhoneHeader['MobileNavBar'];
-    MyListBar: PhoneHeader['MyListBar'];
     MobileList: Mobile['MobileList'];
     FilterSheet: PhoneHeader['FilterSheet'];
     CastSheet: TitleDetails['CastSheet'];
@@ -259,7 +258,6 @@ declare global {
 
     DesktopList: DesktopList['DesktopList'];
     useRowKeys: DesktopList['useRowKeys'];
-    TitlesSubNav: DesktopList['TitlesSubNav'];
     /** The List's groups for an order (phases, eras, or one flat run). */
     MCU_listGroups: DesktopList['dlGroups'];
     ListGroupHeader: DesktopList['GroupHeader'];
@@ -300,6 +298,10 @@ declare global {
     SeenPicker: Picker['SeenPicker'];
 
     PHASE_COLORS: App['PHASE_COLORS'];
+    /** Phase is multi-select: 'all' or phases joined with commas ("2,3"). */
+    MCU_phaseMatches(t: Title, phases: string): boolean;
+    /** The catalog filters (phase, type, budget, released) in one test. */
+    MCU_filterMatches(t: Title, f: { phase: string; type: string; budget: string; release: string }): boolean;
     sortTitles: App['sortTitles'];
     sortDirectionLabels: App['sortDirectionLabels'];
     tr: App['tr'];

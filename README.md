@@ -32,26 +32,41 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   On phones the zoom control stays hidden and shows only while you zoom.
   Release/Chrono open closer and centred on the titles in view; closing a title's
   details glides the camera back to where you were.
-- Three sections: **Connections** (the Spatial canvas), **Titles** (the List,
-  with the All | Unseen, Watchlist, Seen tabs, each with its count; Unseen
-  counts released titles only, so it matches "44 of 60 seen") and **Guides** (the
-  Guides page, then the open guide). Explore and My list each keep their own
-  sort and filters. Titles' heading carries the progress ("44 of 60 seen", a bar
+- Three sections: **Connections** (the Spatial canvas), **Titles** (the List)
+  and **Guides** (the Guides page, then the open guide). Connections and Titles share one
+  sort and one set of filters: what you apply in one stays applied in the other. Titles' heading carries the progress ("44 of 60 seen", a bar
   and the share). On desktop they are tabs in one header row: the wordmark,
   the tabs, search ("/" focuses it), Sort and Filters (Type is inside Filters),
+  the Seen and Watchlist pills with their counts, "Mark what you've seen",
   then sync, Settings and Account; the row fits from 900px in English and
   Portuguese. On phones they are the bottom bar; the header holds the wordmark
   and the search, Settings and Account buttons, and one row below it holds
-  Sort and Filters (and, in Titles, "Mark what you've seen", an icon button
-  where its label doesn't fit). In Titles the status tabs are the header's
-  third row, pinned with it. "See connections" in a title's details selects
+  Sort, Filters, the Seen and Watchlist pills and "Mark what you've seen".
+  The header is the same on Connections and Titles; neither has a second
+  row. "See connections" in a title's details selects
   it on the canvas.
 - A context summary shows what the controls don't: how many titles match and
   which filters are on. On desktop it floats at the top-left of Spatial: the
-  count, a removable chip per active filter (search, collection, type, phase,
-  budget) and Clear all when two or more are on. On phones it is one line at the
-  top of the List (only when a search or filter narrows it) and a small pill
-  in Spatial (count, how many filters, Clear).
+  count, a removable chip per active filter (search, collection, type, one per
+  chosen phase, budget) and Clear all when two or more are on. On phones it is
+  a line at the top of the List with the same removable chips under it (only
+  when a search or filter narrows it) and a small pill in Spatial (count, how
+  many filters, Clear).
+- Filters is one panel, a popover on desktop and a bottom sheet on phones:
+  Status (All / Unseen / Watchlist / Seen) as a switch whose options show
+  their icon and only the picked one its word, Phase as chips with their color dots (one or more; the address carries
+  them as `phase=2,3`), Type as a three-way switch, Budget as chips (one;
+  picking it again clears it) and Released only as a switch. Filters apply as
+  you choose them; the panel counts what matches ("11 of 64 titles match"),
+  and on phones its button closes the sheet ("Show 11 titles"). The trigger
+  reads "Filters · 2" when filters are on.
+- Red is the one interface accent, through tokens in `src/index.css`:
+  `--primary` fills buttons (white ink), `--brand` draws accent text, lines,
+  focus rings and fills (the guide route, the Up next edge and outline, the
+  active section on phones), and progress is `--progress` (red) everywhere,
+  turning `--progress-done` (the seen green) once complete. Seen keeps a muted
+  green of its own (`--status-seen`, `--seen-mark` on posters): done is not an
+  action.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
 - Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
   list rows and details, alongside the release year. Chronological order
@@ -65,25 +80,37 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   `?view=grid` links open the List), with the desktop List's rules at the
   phone's size: the same phase or era headings with their bar and "4/6",
   no folding and no dimming, the seen mark on the poster, and the Up next
-  row's red edge, pill and filled check. Rows show a 40×60 poster, the
-  title, one meta line (year and phase; where it is set in Story order), the
-  score being sorted by and rank numbers when sorting by rating, and Seen
-  and Watchlist as 40px buttons.
-- On Connections and on phones, one Sort menu holds every sort in both
-  directions as plain phrases ("Release date, oldest first"); desktop Titles
-  sorts from its own order bar and column headers (below). In Spatial, connection lines and
+  row's red edge, "Up next" at the start of its meta line and filled check.
+  Rows show a 40×60 poster, the title, one meta line (year and phase; where
+  it is set in Story order; the score in place of the phase in a score
+  order) and Seen as the one button (Watchlist only on titles not out yet).
+- Phone lists (Titles, a guide's stops) swipe: a row slid right is marked
+  seen, slid left joins the Watchlist; on a title already in that state it
+  undoes it. Past a threshold the action runs on release with the usual
+  toast and Undo; short of it the row springs back, and a vertical drag
+  scrolls. The details keep both buttons.
+- One Sort menu (a popover on desktop, a bottom sheet on phones) lists the six
+  sorts once each, with a line on what each is for, then an Order switch whose
+  labels follow the sort (Oldest first / Newest first, Highest first / Lowest
+  first, A–Z / Z–A). Choosing a sort applies its usual direction and closes the
+  menu; flipping Order keeps it open. The trigger reads "Release date · Oldest
+  first" on desktop and "Release ↑" on phones. Desktop Titles also sorts from
+  its column headers (below). In Spatial, connection lines and
   row labels wait for the cards to finish moving after a new layout (row labels
   also after a selection closes), then fade back in. The List and Spatial use
   the same order; unrated titles stay last for either rating direction.
-  Changing the sort, the status tab or the phase, films/series and budget
+  Changing the sort, the status filter or the phase, films/series and budget
   filters animates the phone and desktop Lists:
   titles glide to their new slots, echoing Spatial. On phones, changes made in the
   filter sheet play when the sheet closes (all off with reduced motion).
 - Menus in the desktop toolbar (language, order, filters, account, search
   suggestions) open over the details drawer; the zoom control moves left of it.
-- Phase, film/series, budget and release (Released only) filters. All |
-  Unseen, Watchlist, Seen are Titles' tabs, with a dashed-ring, check and
-  bookmark icon for each state; Connections always shows every title.
+- Phase (several at once), film/series, budget, release (Released only) and
+  status filters. The header's Seen and Watchlist pills show their counts on
+  landing and filter the current section (a second tap clears it); All and
+  Unseen are in Filters → Status. Unseen counts released titles only, so it
+  matches "44 of 60 seen". Each state has its icon: a dashed ring, a check
+  and a bookmark.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
   language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without
@@ -135,8 +162,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   brings back fade in; Up next slides to the next title; a pinned
   character's thread draws itself along their titles.
 - Desktop Titles is your path through the catalogue in an order you choose.
-  Its header is the same as on Connections (search, Sort, Filters), with a
-  second row for the status tabs and "Mark what you've seen". Below it, a
+  Its header is the same as on Connections (search, Sort, Filters, the
+  status pills and "Mark what you've seen"). Below it, a
   slim header row (#, Title, Released, IMDb, RT) sorts with one click and
   reverses with a second; it and the Sort menu are one state with the
   address's `sort` and `order`. Release date and Phase group the rows by
@@ -153,7 +180,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   is marked in its Titles row with a red edge, an "Up next" pill and a filled
   "Mark seen", and on Connections its card has a red outline (an open
   guide's next stop too); the list opens with that row in view. The compact card
-  ("All titles 43/60 +4" and Up next with ✓ and ✕) is the same card in the
+  ("All titles 43/60 +4" with ✕ in its header, then Up next with ✓; laid out
+  like an open guide's card) is the same card in the
   same place on Connections and Titles: the top-right corner on desktop,
   docked above the bottom bar on phones (the list's last row scrolls clear
   of it). ✕ hides it, and the outline, until the next visit. Phone
@@ -187,7 +215,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   next stop ("Stop 6 of 7: …"), progress, "Open guide →" and the next poster
   with Mark seen ("Seen" on phones); "Manage" opens the list of guides.
   Marking a stop seen inside an open guide follows it, with a toast whose
-  Undo stops following (the mark stays); seen marks anywhere else never
+  Undo takes the mark back and stops following; seen marks anywhere else never
   follow a guide. A followed guide is unfollowed once every essential stop
   is seen. With a followed guide in focus and nothing narrowing the view, Up
   next in Titles and on Connections is that guide's next stop. Followed
@@ -220,8 +248,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Stones, Thanos, and an event guide before Secret Wars. A guide marked
   `draft: true` in `src/data/guides.ts` shows only in development and on
   Vercel previews until it is approved (none are now). Each
-  stop says why it is there; essential
-  stops are numbered and optional ones sit behind "Include optional". An open
+  stop says why it is there, and every stop counts: a guide is just the
+  titles that matter for its storyline (optional stops were dropped on
+  2026-11-16), numbered in viewing order. An open
   guide works like a pinned character: the List and Grid show its stops in
   order with the next one marked, Spatial dims the rest and draws the route
   between its numbered cards (an arrow on an event guide's destination) and
@@ -241,14 +270,16 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   go"), the title as a switcher (the guides you follow with their progress,
   then the others, then All guides: a dropdown on desktop, a bottom sheet on
   phones), the blurb, progress with Mark N more seen, Following / Follow,
-  Share and Include optional (kept per guide for the visit); an event
+  and Share; an event
   guide's "Where it leads" (the destination and its Watchlist) sits in the
   right column on desktop and after the stops on phones. Its stops are the
   Titles list in the guide's order: number, poster with the seen mark,
-  title, one meta line with the reason, Seen and Watchlist, and the next
-  stop with the red edge, "Up next" pill and filled check. On Connections
-  one row floats over the canvas on desktop, and on phones one dock at the
-  bottom carries the guide, its next stop (its poster, with Seen), its red
+  title, one meta line, the stop's note (two lines at most on phones), Seen
+  and Watchlist (Seen alone on phones, where a swipe adds to the Watchlist),
+  and the next stop with the red edge, "Up next" and filled check. On Connections
+  one card sits top right on desktop (where Up next sits without a guide),
+  and on phones one dock at the bottom; both carry the guide, its next stop
+  (its poster, with Seen), its red
   progress and the stepper, and the canvas opens on the next stop; Seen with
   the camera on another stop glides back to the one being marked,
   and `?guide=` shares it. The guide you are following reopens when you come
@@ -316,7 +347,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   stops at the details panel's edge, the same as its hover preview.
 - On phones, watchlisted titles have a thin amber outline outside the
   Watchlist tab.
-- Phone sheets close with the × button, a tap on the handle, a swipe down or
+- Phone sheets grow with their content up to nearly the screen's height,
+  leaving a strip of the page above them on any phone. They close with the × button, a tap on the handle, a swipe down or
   the browser's Back button (each open sheet owns one history entry).
 - Spatial timelines have labelled rows: Release by phase, Chronological by
   in-story era (Before 2008, 2008–2012, … 2027–2028), so both read as a

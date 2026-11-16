@@ -7,7 +7,7 @@
 // real ones.
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DIALOG } from './about';
 
@@ -98,7 +98,7 @@ function burstConfetti(palette) {
   // cannot read var(): resolve each one against the page before painting.
   const root = getComputedStyle(document.documentElement);
   const resolve = (c) => { const m = /^var\((--[\w-]+)\)$/.exec(c); return m ? root.getPropertyValue(m[1]).trim() || '#888' : c; };
-  const colors = (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['#5fa856', '#d4a05a', '#ffffff'])).map(resolve);
+  const colors = (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['var(--seen)', '#d4a05a', '#ffffff'])).map(resolve);
   const parts = [];
   // Called once the toast has rendered (it usually has by the first frame).
   const launch = () => {
@@ -192,8 +192,9 @@ function StatusToast({ touch }) {
 
   const undo = () => {
     if (!toast) return;
-    // Auto-follow (Guides 2/4): Undo stops following; the seen mark stays.
-    if (toast.autoFollow) { window.MCU_GUIDE.unfollow(toast.autoFollow); setToast(null); return; }
+    // Auto-follow (Guides 2/4): Undo takes back the mark and stops following
+    // (Andre, 2026-11-16: it used to keep the mark, and Undo looked broken).
+    if (toast.autoFollow) window.MCU_GUIDE.unfollow(toast.autoFollow);
     if (toast.bulk) undoMany(toast.prev);
     else setStatus(toast.title.id, toast.from);
     // The mark that finished a followed guide stopped following it; undoing
@@ -215,23 +216,23 @@ function StatusToast({ touch }) {
       : followed ? tr('toast.followedSub')
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
-      <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-sm text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
+      <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-body text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
         toast.to, m && 'milestone border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
-        <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-[9px] text-lg text-(--on-color) [&_svg]:size-4',
-          m ? 'bg-linear-to-br from-[#f0c34a] to-[#e84a3a] text-white' : toast.to === 'watchlist' ? 'bg-(--status-watch)' : toast.to === 'none' ? 'bg-border text-foreground' : 'bg-(--status-seen)')}>
+        <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-[9px] text-title text-(--on-color) [&_svg]:size-4',
+          m ? 'bg-linear-to-br from-[#f0c34a] to-[#e84a3a] text-white' : toast.to === 'watchlist' ? 'bg-(--status-watch)' : toast.to === 'none' ? 'bg-border text-foreground' : 'bg-(--seen) text-(--seen-foreground)')}>
           {m ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>
-        <span className="mt-text flex min-w-0 flex-auto flex-col"><b className="truncate text-sm font-semibold">{head}</b><span className={cn('text-(length:--fs-xs)', TOAST_DIM)}>{sub}</span></span>
-        <Button variant="outline" size="sm" className="mt-undo h-auto min-h-[max(32px,2rem)] flex-none px-3 text-xs font-semibold" onClick={undo}
+        <span className="mt-text flex min-w-0 flex-auto flex-col"><b className="truncate text-body font-semibold">{head}</b><span className={cn('text-caption', TOAST_DIM)}>{sub}</span></span>
+        <Button variant="outline" size="sm" className="mt-undo h-auto min-h-[max(32px,2rem)] flex-none px-3 text-label font-semibold" onClick={undo}
           aria-label={followed ? tr('toast.followedUndo', { name: window.MCU_GUIDE.short(followed) }) : undefined}>{tr('toast.undo')}</Button>
         {/* A milestone can be shared (Notion "Share 1/3"); Undo stays first. */}
         {m && <window.ShareButton iconOnly size={15} className="mt-share size-[max(32px,2rem)]" label={tr('share.toastLabel', { what: head })}
           payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}
           onShare={() => window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal,
             tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }))}/>}
-        <Button variant="ghost" size="icon-sm" className="mt-x size-[max(30px,1.875rem)] flex-none rounded-full text-lg text-muted-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</Button>
+        <Button variant="ghost" size="icon-sm" className="mt-x size-[max(30px,1.875rem)] flex-none rounded-full text-title text-muted-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</Button>
       </div>
     );
   }
@@ -327,7 +328,7 @@ function SignInNudge({ touch }) {
         <h2 id={titleId} className={DIALOG.title}>{tr('nudge.title')}</h2>
       </div>
       <p className={DIALOG.lead}>{tr('nudge.text', { n: open.n })}</p>
-      <p className="nudge-note mt-2.5 text-xs leading-normal text-muted-foreground">{tr('nudge.merge')}</p>
+      <p className="nudge-note mt-2.5 text-label leading-normal text-muted-foreground">{tr('nudge.merge')}</p>
       <div className={DIALOG.actions}>
         <Button className={cn(DIALOG.primary, 'gap-2.5 [&_svg]:size-[17px] [&_svg]:flex-none')} onClick={signIn}><window.GoogleMark/>{tr('account.signInGoogle')}</Button>
         <Button variant="outline" className={DIALOG.secondary} onClick={close}>{tr('nudge.later')}</Button>

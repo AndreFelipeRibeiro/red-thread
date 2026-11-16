@@ -25,7 +25,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   const st = (page) => page.evaluate(() => {
     const b = k => { const el = document.querySelector('.coll-count.' + k); return el ? { n: el.textContent, cls: el.className } : null; };
     const t = document.querySelector('.mcu-toast'); const r = t && t.getBoundingClientRect();
-    return { seen: b('seen'), watch: b('watchlist'), unseenBadge: !!document.querySelector('.coll-switch button[data-coll="unseen"] .coll-count'),
+    return { seen: b('seen'), watch: b('watchlist'),
       toast: t ? { text: t.innerText.replace(/\\n/g, ' | '), cls: t.className, top: Math.round(r.top), bottom: Math.round(innerHeight - r.bottom), cx: Math.round(r.left + r.width / 2), w: Math.round(r.width) } : null,
       confetti: !!document.querySelector('.mcu-confetti'), pop: document.querySelectorAll('.tsa-btn.pop').length };
   });

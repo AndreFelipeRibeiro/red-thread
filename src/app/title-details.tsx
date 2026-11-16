@@ -16,7 +16,7 @@
 // `td-*`, `cast-row`, `active`, `m-crow`, `on`, `story-year`, `release-line`,
 // `release-badge`, `synopsis`…); they carry no V3 styling here any more.
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Title } from '../types/catalog';
@@ -30,7 +30,7 @@ const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foregrou
 // A poster thumbnail: the art fills the box.
 const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_svg]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover';
 // Search matches in a cast row, underlined in the character's colour.
-const MARKS = '[&_mark.hl]:decoration-(--match-color,var(--primary)) [&_.cast-sub_mark.hl]:font-bold [&_.cast-sub_mark.hl]:text-(--match-color,var(--primary))';
+const MARKS = '[&_mark.hl]:decoration-(--match-color,var(--brand)) [&_.cast-sub_mark.hl]:font-bold [&_.cast-sub_mark.hl]:text-(--match-color,var(--brand))';
 
 // ---------------------------------------------------------------------------
 // Small lines shared with cards, rows, Up next and guides
@@ -56,7 +56,7 @@ export function StoryYear({ title, detail = false, className = '' }: { title: Ti
   const isTime = /^(c\. )?\d/.test(title.story);
   const full = isTime ? tr('story.setIn', { story }) : story;
   return (
-    <span className={cn('story-year inline-flex min-w-0 items-center gap-1 text-xs leading-[1.3] in-[.card]:text-[10px] whitespace-nowrap tabular-nums', DIM,
+    <span className={cn('story-year inline-flex min-w-0 items-center gap-1 text-label leading-[1.3] in-[.card]:text-card-micro whitespace-nowrap tabular-nums', DIM,
       '[&>span]:overflow-hidden [&>span]:text-ellipsis [&>svg]:flex-none [&>svg]:opacity-75',
       detail && 'detail flex items-start whitespace-normal [&>svg]:mt-px', className)}
       title={`${tr('story.tooltip', { story })}${note ? ' · ' + note : ''}`}>
@@ -72,7 +72,7 @@ export function StoryYear({ title, detail = false, className = '' }: { title: Ti
 // "Expected March 2027 · day not yet confirmed", each at the precision the
 // catalog has, so an announced month is never shown as a firm date.
 const RELEASE_DOT: Record<string, string> = {
-  released: 'bg-(--status-seen)',
+  released: 'bg-(--seen)',
   upcoming: 'bg-primary',
   expected: 'bg-transparent shadow-[inset_0_0_0_1.5px_var(--muted-foreground)]',
 };
@@ -81,7 +81,7 @@ export function ReleaseLine({ title, className = '' }: { title: Title | null | u
   const r = I18N().release(title);
   const text = r.date ? tr('release.' + r.status, { date: r.date }) : tr('release.tba');
   return (
-    <span className={cn('release-line inline-flex items-center gap-[7px] text-xs', DIM, r.status, className)}>
+    <span className={cn('release-line inline-flex items-center gap-[7px] text-label', DIM, r.status, className)}>
       <span className={cn('release-dot size-[7px] flex-[0_0_7px] rounded-full', RELEASE_DOT[r.status] || 'bg-muted-foreground')} aria-hidden="true"/>
       <span>{text}{r.status === 'expected' && r.date && <span className="release-note text-muted-foreground"> · {tr('release.expectedNote')}</span>}</span>
     </span>
@@ -97,7 +97,7 @@ export function ReleaseBadge({ title, className = '' }: { title: Title | null | 
   const full = r.date ? tr('release.' + r.status, { date: r.date }) : tr('release.tba');
   return (
     <Badge variant="outline" title={full}
-      className={cn('release-badge ml-[7px] h-auto px-2 py-0.5 align-[1px] text-xs leading-none font-medium in-[.card]:text-[9.5px]', r.status,
+      className={cn('release-badge ml-[7px] h-auto px-2 py-0.5 align-[1px] text-label leading-none font-medium in-[.card]:text-card-micro', r.status,
         r.status === 'expected' ? cn('border-dashed border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]', DIM) : 'text-foreground', className)}>
       <span aria-hidden="true">{tr('release.badge.' + r.status)}</span>
       <span className="story-sr">{full}</span>
@@ -122,8 +122,8 @@ export function Synopsis({ title, className = '' }: { title: Title; className?: 
   if (!text) return null;
   return (
     <div className={cn('synopsis', className)}>
-      <p ref={ref} className={cn('m-0 text-sm leading-[1.5] text-pretty text-muted-foreground', open ? 'open block' : 'line-clamp-3')}>{text}</p>
-      {(long || open) && <Button variant="link" className="synopsis-more mt-1 h-auto p-0 py-0.5 text-xs font-medium text-foreground" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <p ref={ref} className={cn('m-0 text-body leading-[1.5] text-pretty text-muted-foreground', open ? 'open block' : 'line-clamp-3')}>{text}</p>
+      {(long || open) && <Button variant="link" className="synopsis-more mt-1 h-auto p-0 py-0.5 text-label font-medium text-foreground" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         {tr(open ? 'details.less' : 'details.more')}
       </Button>}
     </div>
@@ -163,7 +163,7 @@ export function DetailSection({ id, stateKey, label, labelClass = '', bodyClass 
       <div className="td-acc-head flex items-center gap-2.5">
         <h3 className="td-acc-h m-0 min-w-0 flex-1">
           <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)}
-            className={cn('td-acc-btn flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-md text-left text-sm font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [&:hover_.td-acc-label]:underline [&:hover_.td-acc-label]:underline-offset-4', labelClass)}>
+            className={cn('td-acc-btn flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-md text-left text-body font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [&:hover_.td-acc-label]:underline [&:hover_.td-acc-label]:underline-offset-4', labelClass)}>
             <span className="td-acc-label">{label}</span>
             <svg className={cn('td-acc-chev ml-auto flex-none text-muted-foreground transition-transform duration-200 motion-reduce:transition-none', !open && '-rotate-90')}
               width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -193,7 +193,7 @@ function DetailScores({ title }: { title: Title }) {
   const out = I18N().release(title).status === 'released';
   return (
     <div className="td-scores mt-3.5 flex">
-      <Badge variant="secondary" className="td-pending h-auto rounded-full px-[9px] py-1 text-xs font-medium">{tr(out ? 'score.none' : 'details.ratingsAfterRelease')}</Badge>
+      <Badge variant="secondary" className="td-pending h-auto rounded-full px-[9px] py-1 text-label font-medium">{tr(out ? 'score.none' : 'details.ratingsAfterRelease')}</Badge>
     </div>
   );
 }
@@ -219,12 +219,12 @@ const TD_SURFACE = {
   drawer: {
     head: 'drawer-header border-b border-border px-6 pt-6 pb-[18px]', hero: 'pr-[34px]',
     eyebrow: 'drawer-eyebrow mb-[7px]',
-    title: 'drawer-title mb-[7px] text-lg rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+    title: 'drawer-title mb-[7px] text-title rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
     release: 'drawer-release mt-0.5 mb-1.5', story: 'drawer-story mt-[7px]', synopsis: 'drawer-synopsis', tsa: 'drawer-tsa',
   },
   sheet: {
     head: 'm-cast-hero-wrap mb-[18px]', hero: 'gap-[13px]',
-    eyebrow: 'm-eyebrow', title: 'm-dtitle mt-1.5 mb-[9px] text-xl',
+    eyebrow: 'm-eyebrow', title: 'm-dtitle mt-1.5 mb-[9px] text-title',
     release: 'm-hero-release mt-[3px] mb-1.5', story: 'm-hero-story', synopsis: 'm-synopsis', tsa: 'm-hero-tsa',
   },
 };
@@ -248,7 +248,7 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
         <div className={cn('td-hero flex items-start gap-3.5', c.hero)}>
           <div className={cn('td-thumb h-[99px] w-[66px] flex-[0_0_66px] rounded-lg', THUMB)} aria-hidden="true"><PosterArt title={title}/></div>
           <div className="td-hero-text min-w-0">
-            <div className={cn('td-eyebrow text-xs font-medium', c.eyebrow)} style={{ color }}>{phase} · {type} · {title.year}</div>
+            <div className={cn('td-eyebrow text-label font-medium', c.eyebrow)} style={{ color }}>{phase} · {type} · {title.year}</div>
             <h2 className={cn('td-title m-0 leading-[1.2] font-semibold tracking-tight text-pretty', c.title)} id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}>
               <Highlight text={I18N().titleName(title)} query={search}/>
             </h2>
@@ -259,8 +259,8 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
         <DetailScores title={title}/>
         <dl className="td-facts mt-2.5 mb-0">
           <div className="td-fact flex items-baseline gap-2">
-            <dt className="text-xs font-medium text-muted-foreground">{tr('details.budget')}</dt>
-            <dd className={cn('m-0 text-sm tabular-nums', title.budget == null ? cn('unknown', DIM) : 'text-foreground')}>
+            <dt className="text-label font-medium text-muted-foreground">{tr('details.budget')}</dt>
+            <dd className={cn('m-0 text-body tabular-nums', title.budget == null ? cn('unknown', DIM) : 'text-foreground')}>
               {title.budget != null ? I18N().budget(title.budget) : tr('details.budgetUnknown')}
             </dd>
           </div>
@@ -274,7 +274,7 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
             payload={() => ({ params: { title: title.id }, text: tr('share.titleText', { title: I18N().titleName(title), year: title.year }) })}/>
         </div>
         {onExplore && (
-          <Button variant="outline" className="td-explore mt-2.5 h-[max(40px,2.5rem)] gap-[7px] px-2.5 text-xs [&_svg]:size-[14px]" onClick={onExplore}>
+          <Button variant="outline" className="td-explore mt-2.5 h-[max(40px,2.5rem)] gap-[7px] px-2.5 text-label [&_svg]:size-[14px]" onClick={onExplore}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
             {tr('explore.show')}
           </Button>
@@ -309,7 +309,7 @@ export function DrawerFrame({ asideRef, scrollRef, open, onClose, onSlid, childr
       onTransitionEnd={(e) => { if (e.target === e.currentTarget) onSlid(); }}>
       {/* The close button sits in the panel's corner, outside the scrolling
           body, so it stays put while the details scroll. */}
-      <Button variant="ghost" size="icon-sm" className="drawer-close absolute top-5 right-5 z-2 text-2xl leading-none text-muted-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100"
+      <Button variant="ghost" size="icon-sm" className="drawer-close absolute top-5 right-5 z-2 text-title leading-none text-muted-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100"
         onClick={onClose} aria-label={tr('details.close')}>×</Button>
       {/* One scrolling body (details, then cast): a long synopsis or a short
           window never squeezes the cast out of reach. */}
@@ -327,8 +327,8 @@ export function DrawerCast({ title, activeChar, activeChars, search, onCharacter
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   return (
     <DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })}
-      labelClass="drawer-section-label px-6 pt-3 pb-2 text-xs text-muted-foreground" bodyClass="cast-list px-3 pb-6">
-      {title.cast.length === 0 && <div className="empty-cast px-4 py-5 text-xs text-muted-foreground italic">{tr('details.noCast')}</div>}
+      labelClass="drawer-section-label px-6 pt-3 pb-2 text-label text-muted-foreground" bodyClass="cast-list px-3 pb-6">
+      {title.cast.length === 0 && <div className="empty-cast px-4 py-5 text-label text-muted-foreground italic">{tr('details.noCast')}</div>}
       {title.cast.map((ch) => {
         const c = window.CHARACTERS[ch];
         if (!c) return null;
@@ -337,13 +337,13 @@ export function DrawerCast({ title, activeChar, activeChars, search, onCharacter
           <button key={ch} type="button" data-char={ch} style={{ '--match-color': c.color } as React.CSSProperties}
             className={cn('cast-row flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50', MARKS, isActive && 'active bg-muted')}
             onClick={() => onCharacterClick(ch)} onMouseEnter={() => onCharacterHover(ch)} onMouseLeave={() => onCharacterHover(null)}>
-            <div className="portrait flex size-[38px] flex-none items-center justify-center overflow-hidden rounded-full text-xs font-bold tracking-[.5px] text-(--on-color) shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
+            <div className="portrait flex size-[38px] flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold tracking-[.5px] text-(--on-color) shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
               style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
               <window.Portrait url={window.castPortrait(title, ch)} alt={I18N().charName(ch)} initials={c.initials}/>
             </div>
             <div className="cast-text min-w-0 flex-1">
-              <div className="char-name truncate text-sm font-medium"><Highlight text={I18N().charName(ch)} query={search}/></div>
-              <div className="actor-name cast-sub mt-px truncate text-xs text-muted-foreground"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
+              <div className="char-name truncate text-body font-medium"><Highlight text={I18N().charName(ch)} query={search}/></div>
+              <div className="actor-name cast-sub mt-px truncate text-label text-muted-foreground"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
             </div>
             <div className="cast-color-dot size-2 flex-none rounded-full" style={{ background: c.color }}/>
           </button>
@@ -370,8 +370,8 @@ export function CastSheet({ title, onClose, onCharacterClick, activeChar, active
         <TitleDetailsBody title={title} surface="sheet" search={search}
           cast={
             <DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })}
-              labelClass="m-flab mb-0 min-h-11 p-0 text-xs text-muted-foreground" bodyClass="m-castlist flex flex-col">
-              {title.cast.length === 0 && <div className="m-empty-cast py-2.5 text-xs text-muted-foreground">{tr('details.noCast')}</div>}
+              labelClass="m-flab mb-0 min-h-11 p-0 text-label text-muted-foreground" bodyClass="m-castlist flex flex-col">
+              {title.cast.length === 0 && <div className="m-empty-cast py-2.5 text-label text-muted-foreground">{tr('details.noCast')}</div>}
               {title.cast.map((ch) => {
                 const c = window.CHARACTERS[ch];
                 if (!c) return null;
@@ -379,13 +379,13 @@ export function CastSheet({ title, onClose, onCharacterClick, activeChar, active
                 return (
                   <button key={ch} type="button" style={{ '--match-color': c.color } as React.CSSProperties} onClick={() => onCharacterClick(ch)}
                     className={cn('m-crow flex min-h-[max(56px,3.5rem)] w-full cursor-pointer items-center gap-[11px] border-t border-border py-[9px] text-left outline-none first:border-t-0 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset', MARKS, on && 'on [&_.m-cn]:text-primary')}>
-                    <div className="m-port flex size-10 flex-[0_0_40px] items-center justify-center overflow-hidden rounded-full text-xs font-bold text-[#0a0c14] [&_img]:block [&_img]:size-full [&_img]:object-cover"
+                    <div className="m-port flex size-10 flex-[0_0_40px] items-center justify-center overflow-hidden rounded-full text-label font-bold text-[#0a0c14] [&_img]:block [&_img]:size-full [&_img]:object-cover"
                       style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
                       <window.Portrait url={window.castPortrait(title, ch)} alt={I18N().charName(ch)} initials={c.initials}/>
                     </div>
                     <div className="m-ctext min-w-0 flex-1">
-                      <div className="m-cn truncate text-sm font-semibold"><Highlight text={I18N().charName(ch)} query={search}/></div>
-                      <div className="m-an cast-sub mt-px truncate text-xs text-muted-foreground"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
+                      <div className="m-cn truncate text-body font-semibold"><Highlight text={I18N().charName(ch)} query={search}/></div>
+                      <div className="m-an cast-sub mt-px truncate text-label text-muted-foreground"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
                     </div>
                     <span className="m-cdot size-2 flex-[0_0_8px] rounded-full" style={{ background: c.color }}/>
                   </button>
@@ -415,19 +415,23 @@ export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describ
   sheetRef: React.Ref<HTMLDivElement>; onClose: () => void; tall?: boolean; label?: string;
   labelledBy?: string; describedBy?: string; className?: string; children: React.ReactNode;
 }) {
+  // Height (Andre, 2026-11-16: the sheets looked short): a sheet is as tall
+  // as its content, up to the screen less a strip of the page above it (the
+  // scrim, tap to close), so a long sheet uses the phone's height and a short
+  // phone still shows the strip. dvh follows the browser's own bars.
   return (
     <>
       <div className="m-scrim fixed inset-0 z-90 animate-[mfade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none" onClick={onClose} aria-hidden="true"/>
       <div ref={sheetRef} role="dialog" aria-modal="true" aria-label={labelledBy ? undefined : (label || tr('details.label'))}
         aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}
-        className={cn('m-sheet fixed inset-x-0 bottom-0 z-100 flex max-h-[72vh] touch-pan-y flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-lg outline-none',
+        className={cn('m-sheet fixed inset-x-0 bottom-0 z-100 flex max-h-[calc(100dvh-64px-env(safe-area-inset-top,0px))] touch-pan-y flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-lg outline-none',
           'animate-[mrise_240ms_cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none min-[600px]:left-auto min-[600px]:w-[min(440px,100%)]',
-          tall && 'tall max-h-[84vh]', className)}>
+          tall && 'tall max-h-[calc(100dvh-32px-env(safe-area-inset-top,0px))]', className)}>
         <button type="button" className="m-grab relative mx-auto mt-2 mb-1 h-8 w-[46px] flex-none cursor-pointer border-0 bg-transparent p-0 after:absolute after:inset-x-1 after:top-2 after:h-1 after:rounded-[2px] after:bg-muted-foreground/30 after:content-['']"
           onClick={onClose} aria-label={tr('details.close')} tabIndex={-1}/>
         {/* The ghost button says its own transparent fill. */}
         <Button variant="ghost" size="icon" title={tr('details.close')} aria-label={tr('details.close')} onClick={onClose}
-          className="m-sheet-x absolute top-2 right-2.5 z-2 size-[max(36px,2.25rem)] bg-transparent font-sans text-lg leading-none text-muted-foreground active:bg-muted active:text-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100">×</Button>
+          className="m-sheet-x absolute top-2 right-2.5 z-2 size-[max(36px,2.25rem)] bg-transparent font-sans text-title leading-none text-muted-foreground active:bg-muted active:text-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100">×</Button>
         <div className="m-sheet-body overflow-y-auto overscroll-contain px-[18px] pt-1.5 pb-[calc(24px+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]">{children}</div>
       </div>
     </>

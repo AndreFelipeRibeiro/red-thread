@@ -1,8 +1,8 @@
 // The sliding selection in segmented groups (Notion V4 Tasks, "Interface
 // animation: sliding selection in the segmented controls"):
-// - in every group that has one (sort, type, collection, view, and the phone
-//   collection row), the pill sits exactly on the selected button, in English
-//   and Portuguese and at the Large text size;
+// - in every group that has one (the section tabs; the collection tabs went
+//   with Notion "Universal status pills", 2026-11-16), the pill sits exactly
+//   on the selected button, in English and Portuguese and at the Large text size;
 // - choosing another item slides it there (it is caught between the two) and
 //   it ends on the new button;
 // - with Reduce motion (the Settings choice or the system's), it moves at once;
@@ -31,10 +31,11 @@ const PILL = (sel) => {
 };
 const aligned = (p) => p && p.dx !== undefined && Math.abs(p.dx) <= 1 && Math.abs(p.dy) <= 1 && Math.abs(p.dw) <= 1 && Math.abs(p.dh) <= 1 && p.op === '1' && p.onClear;
 // The groups on screen in My list (Notion "Desktop: navigation for Explore, My
-// list and Guides"): the section tabs and the collection switch, which carries
-// the slide checks. (The sort tabs went into the Sort menu, and Type and the
-// view switch into Filters and the tabs.)
-const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
+// list and Guides"): the section tabs, which carry
+// the slide checks. (The sort tabs went into the Sort menu, Type and the
+// view switch into Filters and the tabs, and the collection tabs into the
+// header's status pills.)
+const GROUPS = ['.nav-tabs .segmented'];
 
 (async () => {
   await new Promise(r => server.listen(PORT, r));
@@ -71,7 +72,7 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
       const tick = () => { const p = document.querySelector(g + ' > .seg-pill'); window.__x.push(Math.round(p.getBoundingClientRect().left)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, g);
-    await page.locator(g + ' button[data-coll="unseen"]').click();
+    await page.locator('.nav-tabs button').nth(0).click();
     await page.waitForTimeout(1000);
     const xs = await page.evaluate(() => window.__x);
     const end = await page.evaluate(PILL, g);
@@ -83,10 +84,10 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
     // draw only one frame of the slide).
     expect(between.length >= 1, `the pill did not slide: ${JSON.stringify(out.slide)}`);
     expect(aligned(end), 'after the slide the pill is not on the new button: ' + JSON.stringify(end));
-    // The section tabs follow too.
+    // And again, to the far end.
     await page.locator('.nav-tabs button').nth(2).click();
     await page.waitForTimeout(600);
-    expect(aligned(await page.evaluate(PILL, GROUPS[1])), `after a change the pill in ${GROUPS[1]} is not on the new button`);
+    expect(aligned(await page.evaluate(PILL, g)), `after a second change the pill in ${g} is not on the new button`);
     errors.push(...e);
     await ctx.close();
   }
@@ -96,25 +97,11 @@ const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
     const { ctx, page, errors: e } = await ctxPage(browser, opts, prefs, {}, extra);
     await page.goto(URL); await settle(page);
     const g = GROUPS[0];
-    await page.locator(g + ' button[data-coll="unseen"]').click();
+    await page.locator('.nav-tabs button').nth(0).click();
     await page.waitForTimeout(40);
     const p = await page.evaluate(PILL, g);
     out['reduced ' + label] = p;
     expect(aligned(p), `reduce motion (${label}): the pill did not move at once: ${JSON.stringify(p)}`);
-    errors.push(...e);
-    await ctx.close();
-  }
-
-  // Phone: the collection row.
-  {
-    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, prefs, {});
-    await page.goto(URL); await settle(page);
-    const g = '.m-listbar .coll-switch';
-    out.phone = await page.evaluate(PILL, g);
-    expect(aligned(out.phone), 'phone: the pill is not on the selected collection: ' + JSON.stringify(out.phone));
-    await page.locator(g + ' button[data-coll="seen"]').tap(); await page.waitForTimeout(600);
-    out.phoneAfter = await page.evaluate(PILL, g);
-    expect(aligned(out.phoneAfter), 'phone: after a tap the pill is not on the new collection: ' + JSON.stringify(out.phoneAfter));
     errors.push(...e);
     await ctx.close();
   }

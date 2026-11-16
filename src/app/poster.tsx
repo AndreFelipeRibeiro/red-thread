@@ -84,9 +84,11 @@ function MonogramPoster({ title }: { title: Title }) {
       style={{ '--mh': monoHue(title), aspectRatio: '2 / 3' } as React.CSSProperties}>
       <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
         <span className="poster-mono-initials font-display leading-none tracking-[-0.02em] whitespace-nowrap text-[oklch(0.6_0.07_var(--mh))] dark:text-[oklch(0.66_0.06_var(--mh))]"
+          // type-scale: art. The initials are drawn to the poster's width
+          // (cqw), like the art they stand in for, not set as text.
           style={{ fontSize: text.length > 2 ? '40cqw' : '46cqw' }}>{text}</span>
       </span>
-      <span aria-hidden="true" className="poster-mono-year absolute top-[max(6px,8.5cqw)] left-[max(6px,8.5cqw)] text-[12px] leading-none font-semibold text-black/45 tabular-nums dark:text-white/55 @max-[64px]:hidden">{title.year}</span>
+      <span aria-hidden="true" className="poster-mono-year absolute top-[max(6px,8.5cqw)] left-[max(6px,8.5cqw)] text-caption leading-none font-semibold text-black/45 tabular-nums dark:text-white/55 @max-[64px]:hidden">{title.year}</span>
     </div>
   );
 }

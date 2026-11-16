@@ -86,7 +86,7 @@ const SPY = `(() => {
       checks: document.querySelectorAll('.dlist .dl-check, .dlist input[type="checkbox"]').length,
       bar: !!document.querySelector('.bulk-bar'),
       headerActions: document.querySelectorAll('.dlist .pgh-action').length,
-      picker: !!document.querySelector('.toolbar .ml-status .ml-pick'),
+      picker: !!document.querySelector('.toolbar .ml-pick'),
     }));
     if (R.desk.checks) errors.push(`the desktop List still has ${R.desk.checks} checkboxes`);
     if (R.desk.bar) errors.push('the desktop List still shows a bulk bar');

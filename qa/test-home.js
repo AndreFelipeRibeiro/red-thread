@@ -11,6 +11,7 @@
 //   Enter); Cmd/Ctrl-click doesn't reset this page.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const { chromium } = require('playwright');
+const { setColl } = require('./coll');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -64,7 +65,9 @@ const settle = (page) => require('./ready').appReady(page, 1000);
 // The state the logo is meant to reset, read from the page.
 const STATE = () => {
   const q = new URLSearchParams(location.search);
-  const coll = document.querySelector('.coll-switch button[aria-pressed="true"], .coll-switch button.on');
+  // The status filter: a pressed header pill (Seen, Watchlist), else All.
+  const pill = document.querySelector('.status-counts [aria-pressed="true"]');
+  const coll = pill ? { textContent: pill.dataset.coll } : { textContent: 'All' };
   const search = document.querySelector('.search-wrap input, .m-search-input input');
   const canvas = document.querySelector('.canvas');
   return {
@@ -193,7 +196,7 @@ const STATE = () => {
     await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
     await page.locator('.m-search-input input').fill('iron'); await page.waitForTimeout(300);
     await page.locator('.m-search-input input').blur();
-    await page.locator('.coll-switch button[data-coll="watchlist"]').tap(); await page.waitForTimeout(500);
+    await setColl(page, 'watchlist'); await page.waitForTimeout(500);
     await page.evaluate(() => { const a = document.querySelector('.m-scrollarea'); if (a) a.scrollTop = 200; });
     const link = await page.evaluate(() => { const a = document.querySelector('a.m-brandrow'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label') }; });
     expect(link && link.href === '/' && link.name === 'Red Thread, home', `phone logo is not a home link: ${JSON.stringify(link)}`);

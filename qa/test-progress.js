@@ -1,5 +1,6 @@
 const QA_PORT = +process.env.PORT || 8218; // regress/quick give each check its own port
 const { chromium } = require('playwright');
+const { setColl } = require('./coll');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -87,7 +88,7 @@ const phoneView = (page, name) => page.evaluate(async (n) => {
   const tab = (v) => document.querySelector(`.m-tab[data-section="${v}"]`);
   if (!tab('explore')) return 'no bottom bar';
   if (/Spatial|Espacial/.test(n)) { tab('explore').click(); await new Promise(r => setTimeout(r, 2200)); return 'ok'; }
-  if (!document.querySelector('.m-listbar')) { tab('mylist').click(); await new Promise(r => setTimeout(r, 700)); }
+  if (!document.querySelector('.m-tab.on[data-section="mylist"]')) { tab('mylist').click(); await new Promise(r => setTimeout(r, 700)); }
   await new Promise(r => setTimeout(r, 2200));
   return 'ok';
 }, name);
@@ -195,20 +196,12 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   }
   // The collection tab must NOT feed the fraction. On the Seen tab only seen
   // titles are listed, so a count taken from the visible set would read 1/1.
-  await page.evaluate(async () => {
-    const b = document.querySelector('.ml-status .coll-switch button[data-coll="seen"]');
-    if (b) b.click();
-    await new Promise(r => setTimeout(r, 1200));
-  });
+  await setColl(page, 'seen'); await page.waitForTimeout(1200);
   R.onSeenTab = (await dividers())[0] || null;
   if (!R.onSeenTab || R.onSeenTab.count !== '1 of 6 seen') {
     errors.push(`the Seen tab changed Phase 1 to "${R.onSeenTab && R.onSeenTab.count}"; the collection tab must not feed its own numbers`);
   }
-  await page.evaluate(async () => {
-    const b = document.querySelector('.ml-status .coll-switch button[data-coll="all"]');
-    if (b) b.click();
-    await new Promise(r => setTimeout(r, 1000));
-  });
+  await setColl(page, 'all'); await page.waitForTimeout(1000);
   // A text search narrows the catalog, so the counts stand down entirely
   // (the groups stay, without numbers).
   await page.fill('.search-wrap input', 'iron');
@@ -243,7 +236,7 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     dl.scrollTop = 3000;
     await new Promise((r) => setTimeout(r, 600));
     const card = document.querySelector('.dlist .spatial-overall');
-    const out = { sticky, tabs: !!document.querySelector('.toolbar .tb-sub-row .coll-switch'),
+    const out = { sticky, tabs: !!document.querySelector('.toolbar .status-counts'),
       card: card ? Math.round(card.getBoundingClientRect().top - dl.getBoundingClientRect().top) : null,
       rowgroups: document.querySelectorAll('.dl-table > [role="rowgroup"]').length };
     dl.scrollTop = 0;
@@ -252,7 +245,7 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   {
     const d = R.deskScroll;
     if (d.sticky.length) errors.push(`still pinned in the List: ${d.sticky.join(', ')}`);
-    if (!d.tabs) errors.push('the status tabs are not the header\'s second row');
+    if (!d.tabs) errors.push('the header has no Seen and Watchlist pills');
     if (d.card !== 14) errors.push(`the compact card is not in the list's top-right corner after scrolling (${d.card})`);
     if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
   }
@@ -401,7 +394,7 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     return heads.map(h => {
       const marks = [...h.querySelectorAll('.dl-group-marks > span')];
       return { label: h.querySelector('.dl-group-label').textContent.trim(), marks: marks.length,
-        filled: marks.filter(x => /bg-\(--brand\)/.test(x.className)).length,
+        filled: marks.filter(x => /\bon\b/.test(x.className)).length,
         sticky: getComputedStyle(h).position === 'sticky' };
     }).concat([{ seenTotal: Object.values(st).filter(v => v === 'seen').length }]);
   });

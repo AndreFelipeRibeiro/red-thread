@@ -134,10 +134,10 @@ came to be.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (54 check scripts in 56 runs plus the accessibility scan in English,
+    (63 check scripts in 65 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **59 check runs clean**
+    output, not just the exit code. A good run is **68 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -407,16 +407,27 @@ rules carry over unchanged.
   `var(--phase-N)`; code that paints on a canvas resolves them first.
 - Text on the dark overlays that sit on posters uses `--on-image` (fixed light
   values): the overlay stays dark in both themes because it sits on an image.
-- **Font sizes come from the type scale** (`--fs-xs` … `--fs-7xl` in
-  `src/index.css`, in rem): never a pixel size, so all text follows the
-  browser's default font size and Settings' Text size. No informative text
-  under 12px (`--fs-xs`) at the default size. The one exception is the
-  Spatial canvas (cards and band labels keep px; the canvas has zoom), and the
-  shared pieces a card borrows are pinned back to px inside `.card`.
-  `qa/test-textsize.js` holds the floor. Tailwind's `text-xs` / `text-sm` are
-  one step bigger than the library default (13 / 15px) for the same reason.
-  They read the scale's variables (`--fs-sm` / `--fs-md`), so phones, which
-  set body text at 14px, move them in one place (`src/index.css`).
+- **Font sizes are the type roles** (Notion "Set a real type system"):
+  `text-display` (36px, phones 24), `text-title` (20), `text-heading` (16),
+  `text-body` (15, phones 14), `text-label` (13) and `text-caption` (12),
+  declared in `src/index.css` (`@theme`, on the `--fs-*` sizes, in rem) so
+  all text follows the browser's default font size and Settings' Text size.
+  Pick by job, not by pixel: a page's one big heading, a sheet or panel
+  title, an item's title, running text, a control or secondary line, small
+  print. Numbers take their context's role with `tabular-nums`. Tailwind's
+  own scale (`text-xs` … `text-9xl`) is cleared, so it renders nothing.
+  Never write a size into a class or a style. The only other sizes are the
+  **art sizes**, fixed compositions that keep px: the Spatial cards
+  (`text-card-title`, `-meta`, `-micro` and their `-lg` / `-pop` steps; the
+  shared pieces a card borrows are pinned to them inside `.card`), poster
+  tags (`text-tag`) and the promo countdown (`text-numeral`,
+  `text-numeral-word`). A new size is a new token in `src/index.css` and in
+  `TEXT_SIZES` (`src/lib/utils.ts`), which tells `cn()` it is a size: merged
+  next to an unknown `text-*`, a size is otherwise taken for a color and
+  dropped. Import `cn` from `@/lib/utils`, not from `cn`. No informative text
+  under 12px at the default size outside the art sizes.
+  `qa/test-typescale.js` keeps all of this; `qa/test-textsize.js` holds the
+  12px floor.
 - **Control sizes grow with the text, never shrink:** a control's height (and
   a square icon button's width) is `max(Npx, N/16 rem)`, and Tailwind's
   spacing unit is `max(0.25rem, 4px)`. At Large everything grows in step; at
@@ -604,6 +615,14 @@ class names (internal, and the QA checks read them), the Supabase project
 address, "MCU" where it means the Marvel Cinematic Universe, and history
 (CHANGELOG entries, the V3 plan files). The local folders keep their names
 until the rename ticket's folder step (docs/HANDOFF.md).
+
+**American English spelling everywhere** (Andre, 2026-11-16): the app's
+English strings, code comments, token and class names, commit messages,
+CHANGELOG entries, docs, Notion tickets, calendar events and chat replies.
+Write "color", "gray", "center", "favorite", "behavior", "canceled",
+"catalog", not the British forms. Existing text and names are not renamed in
+passing (a rename of a token or hook is its own change); new and edited text
+follows the rule.
 
 User-facing text is translated: never hard-code UI strings in components. Add a
 key to `locales/en.js` (the complete base), translate it in every other

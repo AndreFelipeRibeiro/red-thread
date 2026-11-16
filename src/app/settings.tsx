@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { getChoice as getThemeChoice, setChoice as setThemeChoice, subscribe as subscribeTheme, type ThemeChoice } from '../theme';
 import { Radio as RadioPrimitive } from '@base-ui/react/radio';
 import { RadioGroup } from '@/components/ui/radio-group';
@@ -364,7 +364,7 @@ document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true)
 // it. Rows are at least 44px tall. Groups are bordered cards rather than grey
 // fills because muted text on the muted fill falls short of AA in the light
 // theme (qa/test-contrast.js).
-const ROW = 'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left text-sm';
+const ROW = 'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left text-body';
 // Rows sit inside a card that clips them to its corners, so focus rings are
 // drawn inside the row.
 const ROW_FOCUS = 'outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50';
@@ -375,7 +375,7 @@ function Section({ id, title, footnote, children }: {
 }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
-      <h3 id={id} className="px-4 text-xs font-medium text-muted-foreground">{title}</h3>
+      <h3 id={id} className="px-4 text-label font-medium text-muted-foreground">{title}</h3>
       {children}
       {footnote}
     </section>
@@ -387,7 +387,7 @@ function Group({ children, className = '' }: { children: React.ReactNode; classN
 }
 
 function Footnote({ children, role }: { children: React.ReactNode; role?: string }) {
-  return <p role={role} className="px-4 text-xs leading-relaxed text-muted-foreground">{children}</p>;
+  return <p role={role} className="px-4 text-label leading-relaxed text-muted-foreground">{children}</p>;
 }
 
 /** A segmented control (theme): a radio group drawn as one track. */
@@ -402,7 +402,7 @@ function Segmented<T extends string>({ value, onChange, label, options }: {
       className="@container grid-flow-col auto-cols-fr gap-1 rounded-xl bg-muted p-1">
       {options.map((o) => (
         <RadioPrimitive.Root key={o.value} value={o.value}
-          className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-sm font-medium text-foreground outline-none transition-[background-color,box-shadow] focus-visible:ring-3 focus-visible:ring-ring/50 data-checked:bg-background data-checked:shadow-sm dark:data-checked:bg-input/60 [&_svg]:hidden [&_svg]:size-4 [&_svg]:shrink-0 @min-[19rem]:[&_svg]:block">
+          className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-body font-medium text-foreground outline-none transition-[background-color,box-shadow] focus-visible:ring-3 focus-visible:ring-ring/50 data-checked:bg-background data-checked:shadow-sm dark:data-checked:bg-input/60 [&_svg]:hidden [&_svg]:size-4 [&_svg]:shrink-0 @min-[19rem]:[&_svg]:block">
           {o.icon}
           <span>{o.label}</span>
         </RadioPrimitive.Root>
@@ -441,7 +441,7 @@ function SwitchRow({ id, title, text, checked, onChange }: {
     <Label htmlFor={id} className={`${ROW} cursor-pointer justify-between font-normal leading-normal`}>
       <span className="flex flex-col gap-0.5">
         <span id={id + '-title'}>{title}</span>
-        {text && <span id={id + '-text'} className="text-xs leading-snug text-muted-foreground">{text}</span>}
+        {text && <span id={id + '-text'} className="text-label leading-snug text-muted-foreground">{text}</span>}
       </span>
       <Switch id={id} checked={checked} onCheckedChange={(on) => onChange(!!on)}
         aria-labelledby={id + '-title'} aria-describedby={text ? id + '-text' : undefined}/>
@@ -478,7 +478,7 @@ function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
   if (regions.indexOf(prefs.region) === -1) regions.push(prefs.region);
 
   return (
-    <div className="flex flex-col gap-6 text-sm text-foreground">
+    <div className="flex flex-col gap-6 text-body text-foreground">
       <Section id="settings-appearance" title={tr('settings.appearance')}
         footnote={keyboard ? <Footnote>{tr('settings.themeShortcut')}</Footnote> : undefined}>
         <Segmented<ThemeChoice> label={tr('theme.label')} value={prefs.theme} onChange={setThemeChoice}
@@ -558,7 +558,7 @@ function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
           <ActionRow chevron onClick={() => { onClose(); onAbout(); }}>{tr('about.title')}</ActionRow>
           <ActionRow trailing={<window.ShareIcon/>} onClick={() => window.MCU_SHARE.share({ text: tr('share.appText') })}>{tr('share.appLabel')}</ActionRow>
         </Group>
-        <footer className="flex flex-col gap-1 px-4 text-center text-xs leading-relaxed text-muted-foreground">
+        <footer className="flex flex-col gap-1 px-4 text-center text-label leading-relaxed text-muted-foreground">
           <p>{tr('about.fan')}</p>
           <p>{tr('settings.version', { v: pkg.version })}</p>
         </footer>
@@ -651,7 +651,7 @@ function SettingsPanel({ onClose, onAbout, onShowWelcome, leaving = false, onGon
       aria-labelledby="settings-title"
       onTransitionEnd={(e) => { if (leavingRef.current && e.target === e.currentTarget && e.propertyName === 'transform') goneRef.current?.(); }}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
-        <h2 id="settings-title" ref={headingRef} tabIndex={-1} className="text-lg font-semibold tracking-tight outline-none">{tr('settings.title')}</h2>
+        <h2 id="settings-title" ref={headingRef} tabIndex={-1} className="text-title font-semibold tracking-tight outline-none">{tr('settings.title')}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</Button>
       </div>
       <div className="settings-scroll flex-auto overflow-y-auto overscroll-contain px-5 py-5">
@@ -671,7 +671,7 @@ function SettingsSheet({ onClose, onAbout, onShowWelcome }: {
   return (
     <Sheet onClose={onClose} tall labelledBy="settings-sheet-title">
       <div className="m-sh-head mb-4 flex items-center justify-between">
-        <div id="settings-sheet-title" className="m-sh-title text-lg font-semibold tracking-tight">{tr('settings.title')}</div>
+        <div id="settings-sheet-title" className="m-sh-title text-title font-semibold tracking-tight">{tr('settings.title')}</div>
       </div>
       <div className="settings-sheet-body pb-2">
         <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose}/>

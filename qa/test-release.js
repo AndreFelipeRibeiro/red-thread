@@ -132,7 +132,8 @@ const statusOf = `(t, today) => {
     await new Promise(r => setTimeout(r, 500));
     // The panel is a popover rendered at the page root (shadcn pass 1/5), not
     // inside the toolbar.
-    const opt = [...document.querySelectorAll('.toolbar button, .filters-pop button')].find(b => b.textContent.trim() === 'Released only');
+    // The Filters panel (option A): Released only is a switch.
+    const opt = document.querySelector('.filters-pop .f-released');
     if (!opt) return { error: 'no Released only option in the Filters panel' };
     opt.click();
     await new Promise(r => setTimeout(r, 1800));
@@ -173,8 +174,8 @@ const statusOf = `(t, today) => {
     if (!filt) return { error: 'no phone Filters button' };
     filt.click();
     await new Promise(r => setTimeout(r, 900));
-    const group = [...document.querySelectorAll('.m-flab')].some(l => /^Release$/i.test(l.textContent.trim()));
-    const opt = [...document.querySelectorAll('.m-chip')].some(c => c.textContent.trim() === 'Released only');
+    const group = [...document.querySelectorAll('.m-sheet .filters-panel span')].some(l => /^Released only$/i.test(l.textContent.trim()));
+    const opt = !!document.querySelector('.m-sheet .f-released');
     return { group, opt };
   });
   if (R.phone.error) errors.push(R.phone.error);

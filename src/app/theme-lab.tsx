@@ -122,17 +122,25 @@ const block = (sel: string, vars: Vars) => {
   return body ? `${sel} {\n${body}\n}\n` : '';
 };
 
+// The app's accent has two roles (src/index.css): --primary fills buttons,
+// --brand draws lines and fills (progress, the Up next edge, the guide
+// route). A preset or a pasted theme names only shadcn's --primary and
+// --ring, so its accent reaches the lines too through --brand: the ring's
+// color (a line color already), else the primary.
+const withAccent = (vars: Vars): Vars =>
+  vars['--primary'] && !vars['--brand'] ? { ...vars, '--brand': vars['--ring'] || vars['--primary'] } : vars;
+
 /** The CSS for a lab state: an empty string for the app's own look. */
 export function labCSS(s: LabState): string {
   const p = s.preset === 'custom' && s.custom ? { label: 'Custom', light: s.custom.light, dark: s.custom.dark } as Preset : (PRESETS[s.preset] || PRESETS.default);
-  const root: Vars = { ...p.light };
+  const root: Vars = withAccent({ ...p.light });
   const radius = s.radius != null ? s.radius : p.radius;
   if (radius != null) root['--radius'] = radius + 'rem';
   if (s.density !== 1) root['--spacing'] = `calc(max(0.25rem, 4px) * ${s.density})`;
   if (s.sans && s.sans !== 'Inter') root['--font-sans'] = STACK[s.sans];
   // The display choice also sets the token the poster fallback reads.
   if (s.display && s.display !== 'None') root['--font-display'] = STACK[s.display];
-  let css = block('html:root', root) + block('html.dark', p.dark);
+  let css = block('html:root', root) + block('html.dark', withAccent({ ...p.dark }));
   if (s.display && s.display !== 'None') {
     css += `${DISPLAY_TARGETS} { font-family: ${STACK[s.display]}; font-weight: 400; letter-spacing: -0.01em; }\n`;
   }
@@ -235,8 +243,8 @@ function useLabOpeners(enabled: boolean, open: boolean, setOpen: React.Dispatch<
   }, [enabled]);
 }
 
-const FIELD = 'flex flex-col gap-1.5 text-xs font-medium text-muted-foreground';
-const SELECT = 'h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
+const FIELD = 'flex flex-col gap-1.5 text-label font-medium text-muted-foreground';
+const SELECT = 'h-9 rounded-md border border-input bg-background px-2 text-body text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 
 export function ThemeLab() {
   const [enabled] = React.useState(labEnabled);
@@ -266,8 +274,8 @@ export function ThemeLab() {
     <div className="theme-lab-root fixed bottom-4 left-4 z-90 flex flex-col items-start gap-2 in-[.app.touch]:bottom-[calc(76px+env(safe-area-inset-bottom,0px))] in-[.app.touch]:left-2">
       <div ref={panel} className="theme-lab w-[300px] max-w-[calc(100vw-16px)] rounded-xl border bg-popover p-3.5 text-popover-foreground shadow-lg" role="dialog" aria-label="Theme lab">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-sm font-semibold">Theme lab <span className="ml-1 rounded-sm border px-1 text-[10px] font-medium text-muted-foreground uppercase">dev</span> <span className="ml-1 text-xs font-normal text-muted-foreground in-[.app.touch]:hidden">T or Esc to close</span></div>
-          <Button variant="ghost" size="icon-sm" className="text-lg text-muted-foreground" aria-label="Close the theme lab" onClick={() => setOpen(false)}>×</Button>
+          <div className="text-body font-semibold">Theme lab <span className="ml-1 rounded-sm border px-1 text-caption font-medium text-muted-foreground uppercase">dev</span> <span className="ml-1 text-label font-normal text-muted-foreground in-[.app.touch]:hidden">T or Esc to close</span></div>
+          <Button variant="ghost" size="icon-sm" className="text-title text-muted-foreground" aria-label="Close the theme lab" onClick={() => setOpen(false)}>×</Button>
         </div>
         <div className="flex flex-col gap-3">
           <label className={FIELD}>Preset
@@ -296,9 +304,9 @@ export function ThemeLab() {
               <option value="0.875">Compact</option><option value="1">Default</option><option value="1.125">Comfortable</option>
             </select>
           </label>
-          <details className="text-xs">
+          <details className="text-label">
             <summary className="cursor-pointer font-medium text-muted-foreground">Paste a tweakcn / shadcn theme</summary>
-            <textarea data-tl="paste" className="mt-2 h-24 w-full rounded-md border border-input bg-background p-2 font-mono text-[11px] text-foreground outline-none" value={paste}
+            <textarea data-tl="paste" className="mt-2 h-24 w-full rounded-md border border-input bg-background p-2 font-mono text-caption text-foreground outline-none" value={paste}
               placeholder={':root { --background: …; }\n.dark { … }'} onChange={(e) => setPaste(e.target.value)}/>
             <div className="mt-1.5 flex items-center gap-2">
               <Button size="sm" variant="outline" data-tl="paste-apply" onClick={() => {
@@ -309,7 +317,7 @@ export function ThemeLab() {
               {pasteError && <span className="text-destructive">{pasteError}</span>}
             </div>
           </details>
-          <Button variant="ghost" size="sm" data-tl="reset" className="self-start px-0 text-xs text-muted-foreground" onClick={() => setState({ ...DEFAULT_STATE, custom: state.custom })}>Back to the app's own look</Button>
+          <Button variant="ghost" size="sm" data-tl="reset" className="self-start px-0 text-label text-muted-foreground" onClick={() => setState({ ...DEFAULT_STATE, custom: state.custom })}>Back to the app's own look</Button>
         </div>
       </div>
     </div>

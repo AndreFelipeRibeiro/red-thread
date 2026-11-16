@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -84,10 +84,10 @@ const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foregrou
  *  bulk confirmation, the picker's leave prompt): body, heading row, title,
  *  lead paragraph, the stacked actions and their two buttons. */
 export const DIALOG = {
-  body: 'about text-sm text-foreground',
+  body: 'about text-body text-foreground',
   head: 'about-head flex items-center gap-3.5 pr-10',
-  title: 'about-title text-lg leading-tight font-semibold tracking-tight',
-  lead: 'about-lead mt-[18px] text-sm leading-[1.6] text-pretty text-muted-foreground',
+  title: 'about-title text-title leading-tight font-semibold tracking-tight',
+  lead: 'about-lead mt-[18px] text-body leading-[1.6] text-pretty text-muted-foreground',
   ic: 'about-ic inline-flex size-[34px] flex-[0_0_34px] items-center justify-center rounded-md bg-muted text-foreground',
   actions: 'about-cta-row mt-5 flex flex-col items-stretch gap-2',
   primary: 'about-cta h-auto min-h-10',
@@ -109,7 +109,7 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
         <div className="brand-mark logo-mark size-8 flex-[0_0_32px]" aria-hidden="true"/>
         <div>
           <h2 id={titleId} className={DIALOG.title}>{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
-          <div className="about-tag mt-[3px] text-sm text-muted-foreground">{tr('about.tagline')}</div>
+          <div className="about-tag mt-[3px] text-body text-muted-foreground">{tr('about.tagline')}</div>
         </div>
       </div>
       {/* The language menu lives in Settings now, so a first visit that can't
@@ -117,28 +117,28 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
           written in its own language. */}
       {welcome && langs.length > 1 && (
         <div className="welcome-lang mt-3.5 flex flex-wrap items-center gap-2.5" role="group" aria-labelledby="welcome-lang-label">
-          <span id="welcome-lang-label" className="welcome-lang-label text-sm font-medium text-muted-foreground">{tr('lang.label')}</span>
+          <span id="welcome-lang-label" className="welcome-lang-label text-body font-medium text-muted-foreground">{tr('lang.label')}</span>
           <div className="segmented inline-flex rounded-lg bg-muted p-[3px]">
             {langs.map((l) => (
               <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code} onClick={() => setLang(l.code)}
-                className={cn('min-h-[max(36px,2.25rem)] rounded-md px-3.5 text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50',
+                className={cn('min-h-[max(36px,2.25rem)] rounded-md px-3.5 text-body font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50',
                   lang === l.code && 'on bg-background text-foreground shadow-sm dark:bg-input/30')}>{l.name}</button>
             ))}
           </div>
         </div>
       )}
       <p className={DIALOG.lead}>{tr('about.lead')}</p>
-      <h3 className="about-h mt-[22px] mb-2.5 text-xs font-medium text-muted-foreground">{tr('about.waysTitle')}</h3>
+      <h3 className="about-h mt-[22px] mb-2.5 text-label font-medium text-muted-foreground">{tr('about.waysTitle')}</h3>
       <ul className="about-ways grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
         {ways.map(([icon, key]) => (
           <li key={key} className="flex flex-col items-start gap-2.5 rounded-lg border bg-card p-3.5 text-card-foreground max-[520px]:flex-row max-[520px]:gap-3 max-[520px]:border-0 max-[520px]:bg-transparent max-[520px]:p-0">
             <span className={DIALOG.ic}><AboutIcon kind={icon}/></span>
-            <span><b className="block text-sm font-medium">{tr(key + '.title')}</b><span className="mt-0.5 block text-sm leading-normal text-muted-foreground">{tr(key + '.text')}</span></span>
+            <span><b className="block text-body font-medium">{tr(key + '.title')}</b><span className="mt-0.5 block text-body leading-normal text-muted-foreground">{tr(key + '.text')}</span></span>
           </li>
         ))}
       </ul>
-      <h3 className="about-h mt-[22px] mb-2.5 text-xs font-medium text-muted-foreground">{tr('about.creditsTitle')}</h3>
-      <div className="about-credits text-xs leading-[1.55] text-muted-foreground [&_p]:mb-2">
+      <h3 className="about-h mt-[22px] mb-2.5 text-label font-medium text-muted-foreground">{tr('about.creditsTitle')}</h3>
+      <div className="about-credits text-label leading-[1.55] text-muted-foreground [&_p]:mb-2">
         <p>{tr('about.tmdb')} {tr('about.tmdbNotice')}</p>
         <p>{tr('about.justwatch')}</p>
         <p>{tr('about.ratings')}</p>
@@ -156,8 +156,8 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
             'in-[.m-sheet]:bottom-[calc(-24px-env(safe-area-inset-bottom,0px))] in-[.m-sheet]:-mx-[18px] in-[.m-sheet]:-mb-[calc(24px+env(safe-area-inset-bottom,0px))] in-[.m-sheet]:px-[18px] in-[.m-sheet]:pt-3.5 in-[.m-sheet]:pb-[calc(20px+env(safe-area-inset-bottom,0px))]',
             "before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-12 before:bg-linear-to-b before:from-transparent before:to-popover before:transition-opacity before:duration-200 before:content-['']",
             atEnd && 'before:opacity-0')}>
-          <div className="welcome-q text-base font-semibold">{tr('picker.welcomeQ')}</div>
-          <p className={cn('welcome-qs mt-1 text-xs leading-normal', DIM)}>{tr('picker.welcomeText')}</p>
+          <div className="welcome-q text-heading font-semibold">{tr('picker.welcomeQ')}</div>
+          <p className={cn('welcome-qs mt-1 text-label leading-normal', DIM)}>{tr('picker.welcomeText')}</p>
           <div className="about-cta-row mt-3 flex flex-col items-stretch gap-2">
             <Button className="picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>
             <Button variant="outline" className="nudge-later welcome-start h-auto min-h-10" onClick={onClose}>{tr('about.start')}</Button>

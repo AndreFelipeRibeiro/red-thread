@@ -189,7 +189,7 @@ async function openCentreCard(page, tally) {
 // Spatial is the Explore tab, the List is My list (the Grid is gone).
 const phoneView = async (page, v) => {
   if (v === 'spatial') { await page.locator('.m-tab[data-section="explore"]').click(); return; }
-  if (!(await page.locator('.m-listbar').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
+  if (!(await page.locator('.m-tab.on[data-section="mylist"]').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
 };
 const pickView = (page, n) => phoneView(page, ['list', 'list', 'spatial'][n]);
 (async () => {

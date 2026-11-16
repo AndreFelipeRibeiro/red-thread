@@ -1,4 +1,5 @@
 // The desktop sections (Notion "Desktop: navigation for Explore, My list and
+const { setColl } = require('./coll');
 // Guides"):
 // - the sections read Connections / Titles / Guides (Notion "Rename the
 //   top-level sections"); Titles' tabs read All | Unseen, Watchlist, Seen,
@@ -9,7 +10,8 @@
 // - Explore is the canvas, My list the List with the collection tabs at its
 //   top (the collection filter exists nowhere else), Guides the gallery of
 //   guides, with no Sort or Filters;
-// - Explore and My list keep their own sort and filters;
+// - Explore and My list share one sort, filters and status filter (Andre,
+//   2026-11-16: what is applied in one stays applied in the other);
 // - picking a guide in the gallery opens it in the Guides tab; closing it
 //   brings the gallery back; My list with a guide open closes the guide;
 // - "See connections" in the details (Titles) selects the title on the
@@ -33,15 +35,17 @@ const STATE = () => ({
   tab: (document.querySelector('.nav-tabs button.on') || {}).textContent || null,
   url: location.search,
   rows: document.querySelectorAll('.toolbar .tb-row').length,
-  sort: (document.querySelector('.toolbar .sort-menu-trigger .sort-menu-label:not(.min-\\[1280px\\]\\:hidden)') || document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || null,
+  sort: (document.querySelector('.toolbar .sort-menu-trigger .sort-menu-label:not(.min-\\[1440px\\]\\:hidden)') || document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || null,
   sortShown: !!document.querySelector('.toolbar .sort-menu-trigger'),
   filtersShown: !!document.querySelector('.toolbar .filters-pill'),
-  coll: document.querySelectorAll('.coll-switch').length,
-  myColl: !!document.querySelector('.ml-status .coll-switch'),
+  // The Seen and Watchlist pills, in the header of every section with a
+  // toolbar row (Notion "Universal status pills", 2026-11-16).
+  pills: [...document.querySelectorAll('.toolbar .status-counts [data-coll]')].map(b => b.dataset.coll).join(),
+  oldTabs: document.querySelectorAll('.coll-switch, .tb-sub-row, .ml-status').length,
   gallery: document.querySelectorAll('.g-page .g-row').length,
   guideList: !!document.querySelector('.g-desk'),
   canvas: !!document.querySelector('.viewport'),
-  myList: !!document.querySelector('.toolbar .tb-sub-row .ml-status .coll-switch'),
+  myList: !!document.querySelector('.dlist'),
   old: ['.tb-sort-row', '.tb-view-switch', '.g-btn', '.toolbar .tb-type-controls'].filter(s => document.querySelector(s)),
 });
 
@@ -59,57 +63,51 @@ const STATE = () => ({
     let s = await page.evaluate(STATE);
     out.explore = s;
     expect(s.tab === 'Connections' && s.canvas && s.rows === 1 && !s.old.length, `Explore: ${JSON.stringify(s)}`);
-    expect(s.coll === 0 && s.sortShown && s.filtersShown, `Explore: no collection switch, Sort and Filters shown: ${JSON.stringify(s)}`);
+    expect(s.pills === 'seen,watchlist' && !s.oldTabs && s.sortShown && s.filtersShown, `Connections: the status pills, Sort and Filters: ${JSON.stringify(s)}`);
 
-    // My list: its own sort and collection; Explore keeps its own.
+    // My list: the same header; the sort and status carry across both ways.
     await TAB(page, 'Titles'); await page.waitForTimeout(800);
     s = await page.evaluate(STATE);
     out.myList = s;
-    expect(s.tab === 'Titles' && s.myList && s.myColl && s.coll === 1 && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
+    expect(s.tab === 'Titles' && s.myList && s.pills === 'seen,watchlist' && !s.oldTabs && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
     // Titles has the same header as Connections (Andre, 2026-11-15).
     expect(s.sortShown && s.filtersShown, `Titles: the header should carry Sort and Filters, as on Connections: ${JSON.stringify(s)}`);
-    // The status tabs, in their order (the designs' To watch rename was tried
-    // and reverted, 2026-11-15; Notion "Rename the top-level sections").
-    const tabs = await page.evaluate(() => [...document.querySelectorAll('.ml-status .coll-switch button')].map(b => b.dataset.coll + ':' + (b.querySelector('.cl-full, .coll-label') || b).textContent.trim()));
-    out.tabs = tabs;
-    expect(tabs.join() === 'all:All,unseen:Unseen,watchlist:Watchlist,seen:Seen', `My list's tabs: ${tabs.join()}`);
-    // Each tab's count, catalogue-wide; Unseen is released and not seen, and
-    // its list has nothing that is not out yet.
-    await page.locator('.ml-status .coll-switch button[data-coll="unseen"]').click(); await page.waitForTimeout(500);
+    // The pills' counts, catalog-wide; Unseen (Filters → Status) lists the
+    // released titles not seen, and nothing that is not out yet.
+    await setColl(page, 'unseen'); await page.waitForTimeout(500);
     const counts = await page.evaluate(() => {
-      const n = (k) => Number((document.querySelector(`.ml-status .coll-switch button[data-coll="${k}"] .coll-count`) || {}).textContent);
+      const n = (k) => Number((document.querySelector(`.toolbar .status-counts [data-coll="${k}"] .coll-count`) || {}).textContent || 0);
       const released = window.TITLES.filter(t => window.MCU_isReleased(t)).length;
       const rows = [...document.querySelectorAll('.dl-row[data-row-id]')].map(r => r.getAttribute('data-row-id'));
       const byId = Object.fromEntries(window.TITLES.map(t => [t.id, t]));
-      return { all: n('all'), unseen: n('unseen'), seen: n('seen'), watchlist: n('watchlist'), total: window.TITLES.length, released,
-        unreleasedRows: rows.filter(id => byId[id] && !window.MCU_isReleased(byId[id])), divider: !!document.querySelector('.ml-status .coll-div') };
+      return { rows: rows.length, seen: n('seen'), watchlist: n('watchlist'), released,
+        unreleasedRows: rows.filter(id => byId[id] && !window.MCU_isReleased(byId[id])) };
     });
     out.counts = counts;
-    expect(counts.all === counts.total && counts.seen === 2 && counts.unseen === counts.released - 2 && counts.watchlist === 0 && !counts.divider,
-      // No divider after All since 2026-11-15 (Andre: the tabs read as one set).
-      `tab counts, or a divider came back: ${JSON.stringify(counts)}`);
+    expect(counts.seen === 2 && counts.watchlist === 0 && counts.rows === counts.released - 2, `the pills' counts or the Unseen list: ${JSON.stringify(counts)}`);
     expect(!counts.unreleasedRows.length, `Unseen lists titles not released yet: ${counts.unreleasedRows.join()}`);
-    await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
+    await setColl(page, 'all'); await page.waitForTimeout(400);
     await page.locator('.dl-head .c-imdb button').click(); await page.waitForTimeout(400);
-    await page.locator('.ml-status .coll-switch button[data-coll="seen"]').click(); await page.waitForTimeout(400);
+    await setColl(page, 'seen'); await page.waitForTimeout(400);
     await TAB(page, 'Connections'); await page.waitForTimeout(900);
     s = await page.evaluate(STATE);
-    out.exploreAgain = s;
-    expect(!/sort=/.test(s.url) && s.coll === 0, `Explore did not keep its own sort: ${JSON.stringify(s)}`);
+    const collExplore = await page.evaluate(() => (document.querySelector('.toolbar .status-counts [aria-pressed="true"]') || { dataset: {} }).dataset.coll);
+    out.exploreAgain = { ...s, collOn: collExplore };
+    expect(/sort=imdb/.test(s.url) && collExplore === 'seen', `Connections did not keep the sort and status set in Titles: ${JSON.stringify(out.exploreAgain)}`);
     await TAB(page, 'Titles'); await page.waitForTimeout(800);
     s = await page.evaluate(STATE);
-    const collOn = await page.evaluate(() => (document.querySelector('.ml-status .coll-switch button.on .coll-label') || document.querySelector('.ml-status .coll-switch button.on') || {}).textContent);
+    const collOn = await page.evaluate(() => (document.querySelector('.toolbar .status-counts [aria-pressed="true"]') || { dataset: {} }).dataset.coll);
     out.myListAgain = { ...s, collOn };
-    expect(/sort=imdb/.test(s.url) && /Seen/.test(collOn || ''), `My list did not keep its sort and collection: ${JSON.stringify(out.myListAgain)}`);
+    expect(/sort=imdb/.test(s.url) && collOn === 'seen', `Titles did not keep the shared sort and status: ${JSON.stringify(out.myListAgain)}`);
 
     // "/" puts the cursor in search.
-    await page.locator('.ml-status').click({ position: { x: 600, y: 10 } });
+    await page.evaluate(() => document.activeElement && document.activeElement.blur());
     await page.keyboard.press('/'); await page.waitForTimeout(100);
     expect(await page.evaluate(() => !!document.activeElement.closest('.search-wrap')), '"/" did not focus search');
-    await page.keyboard.press('Escape'); await page.locator('.ml-status').click({ position: { x: 600, y: 10 } });
+    await page.keyboard.press('Escape'); await page.evaluate(() => document.activeElement && document.activeElement.blur());
 
     // See connections from the details.
-    await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
+    await setColl(page, 'all'); await page.waitForTimeout(400);
     await page.locator('.dl-row[data-row-id="thor"] .dl-open').click(); await page.waitForTimeout(800);
     await page.locator('.drawer.open .td-explore').click(); await page.waitForTimeout(1500);
     s = await page.evaluate(STATE);
@@ -137,9 +135,9 @@ const STATE = () => ({
     out.myListClosesGuide = s;
     expect(s.tab === 'Titles' && s.myList && !/guide=/.test(s.url), `My list with a guide open: ${JSON.stringify(s)}`);
     // The Account menu holds account things only (Notion "Take the collection
-    // filters out of the Account menu"); "Mark what you've seen" is in My list,
-    // in the progress widget's strip since Notion "Titles 3/5".
-    expect(await page.locator('.ml-status .ml-pick').count() === 1, 'My list has no "Mark what you\'ve seen"');
+    // filters out of the Account menu"); "Mark what you've seen" is a header
+    // button on every section with a toolbar row (Notion "Universal status pills").
+    expect(await page.locator('.toolbar .ml-pick').count() === 1, 'the header has no "Mark what you\'ve seen"');
     await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
     const acct = await page.evaluate(() => { const p = document.querySelector('.acct-panel'); return p && { links: !!p.querySelector('.acct-links, .acct-pick'), text: p.innerText }; });
     out.account = acct;
@@ -161,8 +159,7 @@ const STATE = () => ({
   }
 
   // The header's top row stays one line from 900px, in both languages, and
-  // so does Titles' second row (the status tabs, since Andre's review on
-  // 2026-11-15).
+  // Titles has no second row (Notion "Universal status pills", 2026-11-16).
   for (const lang of ['en', 'pt-BR']) {
     for (const w of [900, 1000, 1280, 1440]) {
       const { ctx, page } = await ctxPage(browser, { viewport: { width: w, height: 800 } }, { ...prefs, desktopView: 'list' }, {}, `localStorage.setItem('mcu.lang.v1','${lang}');`);
@@ -174,7 +171,7 @@ const STATE = () => ({
           off: [...document.querySelectorAll('.toolbar button, .toolbar input')].filter(b => { const r = b.getBoundingClientRect(); return r.width && (r.right > innerWidth + 0.5 || r.left < -0.5); }).length };
       });
       out[`fit ${lang} ${w}`] = f;
-      expect(f.h <= 48 && f.sub !== null && f.sub <= 56 && !f.overflow && f.off === 0, `header at ${w}px (${lang}): ${JSON.stringify(f)}`);
+      expect(f.h <= 48 && f.sub === null && !f.overflow && f.off === 0, `header at ${w}px (${lang}): ${JSON.stringify(f)}`);
       await ctx.close();
     }
   }

@@ -22,8 +22,8 @@
 // hooks for the QA checks; they carry no V3 styling any more. Keyframes for the slide are in src/index.css.
 
 import React from 'react';
-import { cn } from 'cn';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import * as B from './banners';
 import type { Title, UpNextInfo } from '../types/catalog';
 
 // A poster thumbnail: the art fills the box.
@@ -40,7 +40,7 @@ const untr = (key: string, vars?: Record<string, unknown>) => UpNI18N.tr(key, va
 // filters then move to the tooltip.
 function UpNextTag({ info, short = false, className = '' }: { info: UpNextInfo; short?: boolean; className?: string }) {
   return (
-    <div className={cn('un-tag text-xs font-medium text-foreground [&_span]:text-muted-foreground', className)}
+    <div className={cn('un-tag text-label font-medium text-foreground [&_span]:text-muted-foreground', className)}
       title={short ? `${info.lead} · ${info.detail}. ${untr('upnext.rule')}` : untr('upnext.rule')}>
       {info.lead}{!short && <span> · {info.detail}</span>}
     </div>
@@ -52,11 +52,9 @@ function UpNextTag({ info, short = false, className = '' }: { info: UpNextInfo; 
 // means "not now", not "something else".
 function UpNextHide({ info, className = '' }: { info: UpNextInfo; className?: string }) {
   return (
-    <Button variant="outline" className={cn('un-hide size-[max(36px,2.25rem)] flex-[0_0_36px] p-0 text-muted-foreground', className)}
+    <button type="button" className={cn('un-hide', B.W_CLOSE, className)}
       onClick={(e) => { e.stopPropagation(); info.onHide(); }}
-      aria-label={untr('upnext.hideAria')} title={untr('upnext.hide')}>
-      <svg className="size-[15px]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-    </Button>
+      aria-label={untr('upnext.hideAria')} title={untr('upnext.hide')}>×</button>
   );
 }
 
@@ -107,33 +105,34 @@ function UpNextSlide({ id, className, children }: { id: string; className: strin
 
 // One row inside the compact All titles card, on Connections and in Titles:
 // top right on desktop, docked above the bottom bar on phones (Notion
-// "Titles 3/5" and "4/5").
-function UpNextMeterRow({ info }: { info: UpNextInfo }) {
+// "Titles 3/5" and "4/5"), laid out like a guide's next stop (B.W_*, Andre
+// 2026-11-16). Under the All titles header the card's × is in the header;
+// on its own (By Phase has no All titles meter) the row keeps it.
+function UpNextMeterRow({ info, hide = true }: { info: UpNextInfo; hide?: boolean }) {
   const PosterArt = window.PosterArt;
   const r = info.result;
   if (r.kind !== 'next') return null;
   const t = r.title;
   return (
-    <section className="un-mrow pointer-events-auto mt-2 flex items-center gap-1.5 border-t border-border pt-2.5 first:mt-0 first:border-t-0 first:pt-0"
-      aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
-      <UpNextSlide id={t.id} className="un-mrow-body flex min-w-0 flex-1 items-center gap-1.5">
-        <button type="button" className={cn(OPEN, 'flex-1 gap-2.5')} onClick={() => info.onOpen(t.id)}>
-          <span className={cn('un-mposter h-[54px] w-9 flex-[0_0_36px] rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
-          <span className="un-mtext min-w-0 flex-1 text-xs text-muted-foreground">
-            <UpNextTag info={info} short className="truncate"/>
-            <span className={cn(TITLE, 'mt-[3px] truncate')}>{UpNI18N.titleName(t)}</span>
-          </span>
-        </button>
-        <UpNextStatus info={info} title={t} variant="inline"
-          className="un-compact mt-0 flex-nowrap [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn]:min-h-[max(36px,2.25rem)] [&_.tsa-btn]:justify-center [&_.tsa-btn]:p-0 [&_.tsa-btn.watch]:hidden [&_.tsa-lab]:hidden"/>
-        <UpNextHide info={info}/>
-      </UpNextSlide>
-    </section>
+    <>
+      <div className={cn(B.W_RULE, 'first:hidden')} role="presentation"/>
+      <section className="un-mrow pointer-events-auto" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
+        <UpNextSlide id={t.id} className={cn('un-mrow-body', B.W_ROW)}>
+          <button type="button" className={cn(OPEN, 'flex-1 gap-2.5')} onClick={() => info.onOpen(t.id)}>
+            <span className={cn('un-mposter', B.W_POSTER, THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
+            <span className={cn('un-mtext', B.W_TEXT)}>
+              <UpNextTag info={info} short className={B.W_KICKER}/>
+              <span className={cn('un-title block', B.W_TITLE)}>{UpNI18N.titleName(t)}</span>
+            </span>
+          </button>
+          <UpNextStatus info={info} title={t} variant="inline"
+            className={cn('un-compact mt-0 flex-nowrap [&_.tsa-btn]:min-h-0 [&_.tsa-btn]:justify-center [&_.tsa-btn]:p-0 [&_.tsa-lab]:hidden', B.W_TSA)}/>
+          {hide && <UpNextHide info={info}/>}
+        </UpNextSlide>
+      </section>
+    </>
   );
 }
-
-// The title, as the card's row sets it.
-const TITLE = 'un-title block text-base leading-[1.25] font-semibold tracking-tight text-foreground';
 
 Object.assign(window, { UpNextTag, UpNextHide, UpNextMeterRow });
 
