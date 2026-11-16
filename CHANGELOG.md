@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 design — Phone Titles: the desktop list's rules, and one card above the bottom bar (Titles 4/5)
 
-Recorded: 2026-11-15 20:39 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 20:39 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - **Header:** the toolbar row is Sort, Filters and, in Titles, "Mark what
   you've seen" in place of the "12 of 60 seen" count (an icon button, its
@@ -51,7 +52,8 @@ Recorded: 2026-11-15 20:39 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Titles: one header, a quieter list and Up next (Titles 1/5–3/5)
 
-Recorded: 2026-11-15 19:54 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 19:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - **Header (1/5):** Titles uses the same header as Connections (search, the
   Sort menu, Filters, settings, profile) plus a second row with the status
@@ -92,7 +94,8 @@ Recorded: 2026-11-15 19:54 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — A shorter card: connections in the corner
 
-Recorded: 2026-11-15 16:48 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 16:48 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - The connections count is a small pill in the poster's top-left corner
   (thread icon + number); the seen check or a guide stop's mark stays
@@ -107,7 +110,8 @@ Recorded: 2026-11-15 16:48 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — AGENTS.md: ticket placement, ✅ on completion, calendar events
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - New tickets are placed under an epic, start a new epic, or stay standalone,
   and the report says which and why (Andre's edit).
@@ -118,7 +122,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Card review: one card everywhere, cleaner canvas
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - The selected card (the ring's centre, the phone's pop-out) is the same card
   as the rest, at the same size, with no action row; Seen, Watchlist and the
@@ -141,7 +146,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 fix — Titles: the heading and tabs line up with the table
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - On wide screens the Titles heading, its progress, the summary pill, the
   tabs and the sort note share the table's width cap instead of floating at
@@ -151,7 +157,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — One card design at rest, selected and on the phone
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - No hover band over the poster; hover only lifts the card. One status mark
   per card, never two in a guide. The phone's selected card is built from the
@@ -162,7 +169,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Posters shown whole at 2:3
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - Spatial cards show the whole poster at 2:3 (168 × 252); every other poster
   box was checked, and the desktop List and search thumbnails, which cropped
@@ -173,7 +181,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Connections / Titles / Guides
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - The sections are Connections / Titles / Guides (pt: Conexões / Títulos /
   Guias). Titles' tabs read All | Unseen, Watchlist, Seen, each with a soft
@@ -186,7 +195,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — Theme lab: no button; T opens it
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - The floating Theme lab button is gone. T opens and closes it (never while
   typing), Esc closes it first; on a phone, a long press on the wordmark or
@@ -197,7 +207,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — One quiet seen mark: the picker and guide stops
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - A seen guide stop's number uses the quiet seen mark (soft green tint, tinted
   ring, green check) instead of a solid green disc; the promo strip's stops
@@ -210,7 +221,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — Phone: the Grid view is removed
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - My list (now Titles) is one list on the phone: the List / Grid switch and
   the guide's phone grid are gone, and a saved Grid setting or an old
@@ -222,7 +234,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — Theme lab: try visual directions on the real app
 
-Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - A dev-only panel (`src/app/theme-lab.tsx`), in development and on Vercel
   previews only, never on redthread.tv: presets (the app's own look,
@@ -237,7 +250,8 @@ Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — The Account menu holds account things only
 
-Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - Show unseen / seen / watchlist and "Mark what you've seen" left the Account
   menu; the collection lives in My list, and "Mark what you've seen" sits in
@@ -252,7 +266,8 @@ Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Simpler Spatial cards
 
-Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - Nothing sits on the posters any more. Under each card: the title, a dot in
   its phase colour, the year, and a small check once seen.
@@ -268,7 +283,8 @@ Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Phone: bottom bar for Explore, My list and Guides
 
-Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - The phone's bottom bar is Explore / My list / Guides; tapping the active
   tab scrolls back to the top. The header is the wordmark with search,
@@ -285,7 +301,8 @@ Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Desktop: Explore, My list and Guides
 
-Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - The desktop header is one row: the wordmark, Explore / My list / Guides
   tabs, search with a "/" shortcut, Sort and Filters (Type moved inside
@@ -309,7 +326,8 @@ Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — One Sort menu for sort and order
 
-Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - One Sort menu replaces the six sort tabs, the Oldest / Newest button and
   the Order rows in Filters, on desktop and phone. Each choice reads as a
