@@ -215,9 +215,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Guides: short, curated paths through the catalogue (a Guides button in the
   desktop toolbar and the phone app bar). Catch up before Avengers: Doomsday,
   the Infinity Saga essentials, Spider-Man, the Avengers films, the Multiverse
-  Saga and the animated series. Twenty more are drafts awaiting approval
-  (Notion "Guides 4/4", `draft: true` in `src/data/guides.ts`): they show
-  only in development and on Vercel previews, never on redthread.tv. Each
+  Saga and the animated series, plus twenty more since Guides 4/4: eleven
+  characters, three teams, three corners of the universe, the Infinity
+  Stones, Thanos, and an event guide before Secret Wars. A guide marked
+  `draft: true` in `src/data/guides.ts` shows only in development and on
+  Vercel previews until it is approved (none are now). Each
   stop says why it is there; essential
   stops are numbered and optional ones sit behind "Include optional". An open
   guide works like a pinned character: the List and Grid show its stops in

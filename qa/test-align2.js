@@ -21,7 +21,7 @@ const off = page => page.evaluate(() => {
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   await page.fill('.search-wrap input', 'Iron Man'); await page.waitForTimeout(400);
-  await page.locator('.ss-item', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
+  await page.locator('.ss-item[data-kind="title"]', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
   await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(900);
   await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(2500);
   for (let k = 0; k < 11; k++) { out.d.push(await off(page)); await page.locator('.cb-step button').last().click(); await page.waitForTimeout(900); }

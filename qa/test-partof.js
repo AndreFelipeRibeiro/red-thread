@@ -131,10 +131,16 @@ const PART = () => {
     await page.goto(URL + '?view=list&title=endgame'); await settle(page);
     p = await page.evaluate(PART);
     expect(p.expanded === 'true', `after a reload, outside a guide: ${JSON.stringify(p)}`);
-    // A title in no guide: no section.
-    await page.goto(URL + '?view=list&title=incredible-hulk'); await settle(page);
-    p = await page.evaluate(PART);
-    expect(!p.present, 'a title in no guide shows a Part of section');
+    // A title in no guide: no section (found from the data, since Guides 4/4
+    // put The Incredible Hulk in one).
+    const lone = await page.evaluate(() => { const inGuide = new Set(window.GUIDES.flatMap(g => g.stops.map(s => s.id).concat(g.target ? [g.target] : [])));
+      const t = window.TITLES.find(x => !inGuide.has(x.id)); return t ? t.id : null; });
+    out.lone = lone;
+    if (lone) {
+      await page.goto(URL + '?view=list&title=' + lone); await settle(page);
+      p = await page.evaluate(PART);
+      expect(!p.present, `a title in no guide (${lone}) shows a Part of section`);
+    }
     // A row still opens its guide.
     await page.goto(URL + '?view=list&title=loki-s2'); await settle(page);
     await page.locator('.drawer .g-partof-row').first().click(); await page.waitForTimeout(700);

@@ -13,6 +13,31 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 feature — Guides: the 20 new guides are live
+
+Recorded: 2026-11-16 09:21 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- Andre approved the Guides 4/4 drafts: the eleven character guides, the
+  Guardians, the Thunderbolts and the next generation, the cosmic,
+  street-level and mystic corners, the Infinity Stones, Thanos and "Catch up
+  before Avengers: Secret Wars" now show on redthread.tv, each with its link
+  preview. The Avengers move to the Teams shelf and the animated series to
+  Corners of the universe.
+- The draft switch stays for future guides (`draft: true`, none now).
+- Search suggestions carry their kind (`data-kind` on each row): with the
+  new guides, "Iron Man" and "Sam" also suggest a guide, so test-layers and
+  test-align2 pick the title row, test-pickperson picks the person's row
+  (a character guide can share the name) and test-panel closes the
+  suggestions before tapping a row.
+- QA follows the new data: test-promo checks that the closest-to-finished
+  guide has the fewest stops left (Hulk now ties The Avengers and comes
+  first in the menu), that finishing every guide in 2027 counts down to
+  Secret Wars, and keeps the no-release case after its date; test-partof
+  finds a title in no guide from the data.
+- Verified: test-guides checks that production shows all 26; the full
+  regress.
+
 ## V5 feature — Guides: following, the Continue shelf and Up next from your guide (Guides 2/4)
 
 Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);

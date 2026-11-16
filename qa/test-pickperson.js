@@ -155,16 +155,17 @@ const subjects = []
     }
     try {
       await page.waitForFunction(
-        l => [...document.querySelectorAll('.ss-item .ss-main')].some(n => n.textContent.trim() === l),
-        s.label, { timeout: 4000 });
+        ([l, k]) => [...document.querySelectorAll(`.ss-item[data-kind="${k}"] .ss-main`)].some(n => n.textContent.trim() === l),
+        [s.label, s.kind], { timeout: 4000 });
     } catch (e) { noSuggestion.push(s.kind + ': ' + s.label); continue; }
 
-    await page.evaluate(l => {
-      for (const li of document.querySelectorAll('.ss-item')) {
+    // The person's own row: a character guide can share the name (Thor).
+    await page.evaluate(([l, k]) => {
+      for (const li of document.querySelectorAll(`.ss-item[data-kind="${k}"]`)) {
         const m = li.querySelector('.ss-main');
         if (m && m.textContent.trim() === l) { li.click(); return; }
       }
-    }, s.label);
+    }, [s.label, s.kind]);
 
     let got = null;
     try {

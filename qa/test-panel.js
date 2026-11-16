@@ -41,6 +41,8 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   await page.fill('.m-searchbar input', 'Sam'); await page.waitForTimeout(400);
+  // Close the suggestions (a guide match makes them taller than the first row).
+  await page.locator('.m-searchbar input').evaluate(el => el.blur()); await page.waitForTimeout(300);
   await page.locator('.m-lrow-open').first().tap(); await page.waitForTimeout(700);
   out.mobileMarks = await page.evaluate(() => [...document.querySelectorAll('.m-crow mark.hl')].map(m => m.textContent));
   out.mobileErrors = errors; await ctx.close();
