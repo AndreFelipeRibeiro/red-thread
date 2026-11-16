@@ -205,7 +205,7 @@ const CANVAS = () => {
       const card = document.querySelector(`.card[data-id="${next}"]`).getBoundingClientRect();
       const vp = document.querySelector('.viewport').getBoundingClientRect(), dock = document.querySelector('.g-dock').getBoundingClientRect();
       return { next, sub: (document.querySelector('.g-dock .g-dock-sub') || {}).textContent, seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen'),
-        segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-chip'), meter: !!document.querySelector('.spatial-overall'),
+        segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-mrow'), meter: !!document.querySelector('.spatial-overall'),
         cx: Math.round(card.left + card.width / 2 - innerWidth / 2), inView: card.top >= vp.top && card.bottom <= dock.top + 1, readable: card.width >= 140 };
     });
     out.phoneDock = d;

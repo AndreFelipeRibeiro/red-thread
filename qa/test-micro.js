@@ -176,12 +176,13 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
   }
 
   // ---- "Up next slides to the next title when one is marked seen" -----------
-  // Desktop Spatial's meter row and the phone chip: right after marking, the
+  // The compact card's Up next row, on desktop and on the phone (docked above
+  // the bottom bar; Notion "Titles 4/5"): right after marking, the
   // old title is on its way out (inert, hidden from screen readers) and the
   // next one on its way in; then only the next one is left. Reduce motion:
   // an instant swap with nothing leaving.
   for (const [label, opts, extra, row] of [
-    ['desktop', DESK, '', '.un-mrow'], ['phone', PHONE, '', '.un-chip'], ['reduced', DESK, REDUCED, '.un-mrow']]) {
+    ['desktop', DESK, '', '.un-mrow'], ['phone', PHONE, '', '.spatial-overall .un-mrow'], ['reduced', DESK, REDUCED, '.un-mrow']]) {
     const { ctx, page, errors: e } = await ctxPage(browser, opts, opts === PHONE ? { ...prefs, viewMode: 'spatial' } : prefs, seenBefore('she-hulk'), extra);
     await page.goto(URL); await settle(page);
     const READ = (row) => {

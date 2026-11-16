@@ -246,16 +246,18 @@ function TitlesSubNav({ collection, setCollection }) {
 // Unseen tab hides what you've seen. Progress counts released titles in the
 // catalogue's filters, not the tab (app.tsx `groupProgress`), so Seen does not
 // always read 100%. Hooks: `dl-group`, `dl-group-head`, `dl-group-count`,
-// `dl-group-marks`.
-function GroupHeader({ g, prog }) {
+// `dl-group-marks`. `phone`: the same heading over the phone List's rows
+// (Notion "Titles 4/5"), outside a table and at the phone's sizes.
+function GroupHeader({ g, prog, phone = false }) {
   const tr = window.MCU_I18N.tr;
   const has = !!(prog && prog.released > 0);
   const done = has && prog.seen >= prog.released;
   // Marks while they stay small enough to tell apart; a short bar past that.
   const marks = has && prog.released <= 24;
   return (
-    <div role="row" className="dl-group">
-      <span role="cell" className="dl-group-head flex items-center gap-2.5 pt-(--dl-group-pt) pb-2.5 text-(length:--dl-group) font-semibold text-foreground">
+    <div role={phone ? undefined : 'row'} className={cn('dl-group', phone && 'm-ghead [.m-group:first-child>&]:-mt-1')}>
+      <span role={phone ? undefined : 'cell'} className={cn('dl-group-head flex items-center gap-2.5 font-semibold text-foreground',
+        phone ? 'pt-5 pb-2.5 text-base' : 'pt-(--dl-group-pt) pb-2.5 text-(length:--dl-group)')}>
         <span className="size-2 flex-[0_0_8px] rounded-full" style={{ background: g.color || 'var(--muted-foreground)' }} aria-hidden="true"/>
         <span className="dl-group-label whitespace-nowrap">{g.label}</span>
         {has && (
@@ -418,9 +420,12 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
 }
 window.DesktopList = DesktopList;
 window.TitlesSubNav = TitlesSubNav;
+// The phone List groups and heads its rows the same way (mobile.tsx).
+window.MCU_listGroups = dlGroups;
+window.ListGroupHeader = GroupHeader;
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { useRowKeys, DesktopList, TitlesSubNav };
+export { useRowKeys, DesktopList, TitlesSubNav, dlGroups, GroupHeader };

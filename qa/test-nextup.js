@@ -60,7 +60,7 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // worked out from the catalogue and today's date at run time, never a fixed
 // list: Avengers: Doomsday becomes suggestible on its release day, and a
 // check that named it would start failing that morning.
-const seedJs = (states, folds) => `localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: ${JSON.stringify(states)} }));` + (folds ? `localStorage.setItem('mcu.seenFolds.v1', ${JSON.stringify(JSON.stringify(folds))});` : '');
+const seedJs = (states) => `localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: ${JSON.stringify(states)} }));`;
 const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true };
 
 (async () => {
@@ -68,17 +68,19 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   const browser = await chromium.launch();
   const out = { errors: [] };
   const err = (m) => out.errors.push(m);
-  // The phone card sits at the top of the List and Grid (above the meter),
-  // and the suggested title's own row or card is left out of the list.
+  // Phones (Notion "Titles 4/5"): Up next is the compact card's second row,
+  // docked above the bottom bar, and the same title is marked in its own row
+  // of the List (red edge, "Up next" pill, filled check).
   const phoneCard = () => page.evaluate(() => {
-    const c = document.querySelector('.un-gcard');
-    const scroll = document.querySelector('.m-scrollarea');
-    const kids = scroll ? [...scroll.children] : [];
-    const at = kids.findIndex(k => k.contains(c));
-    const meter = kids.findIndex(k => k.matches('.m-phase-divider.overall') || k.querySelector('.m-phase-divider.overall'));
-    return { id: c ? c.dataset.titleId : null, n: document.querySelectorAll('.un-gcard').length,
-      region: c && c.getAttribute('aria-label'), aboveMeter: c ? (meter === -1 || at < meter) : false,
-      dupe: c ? !!document.querySelector(`[data-row-id="${c.dataset.titleId}"]:not(.un-inline)`) : false,
+    const c = document.querySelector('.spatial-overall.docked .un-mrow');
+    const cur = c && c.querySelector('.un-slide > :not(.un-leave)');
+    const t = cur && cur.querySelector('.un-title').textContent;
+    const hit = t ? window.TITLES.find(x => window.MCU_I18N.titleName(x) === t) : null;
+    const rows = [...document.querySelectorAll('.m-lrow.up-next')];
+    const tag = cur && cur.querySelector('.un-tag');
+    return { id: hit ? hit.id : null, n: document.querySelectorAll('.spatial-overall .un-mrow').length,
+      region: c && c.getAttribute('aria-label'), tag: tag ? tag.getAttribute('title') : null,
+      rows: rows.length, rowId: rows.length ? rows[0].dataset.rowId : null, pill: rows.length ? !!rows[0].querySelector('.m-next-pill') : false,
       live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean) };
   });
 
@@ -94,16 +96,15 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   out.expect = { release: byRelease[0].id, story: byStory[0].id, firstUnreleased: unreleased[0] && unreleased[0].id };
 
   // 1. A new guest: the first title out, in release and story order, on the
-  //    phone List; never a title not out yet.
+  //    phone List; never a title not out yet. The card and the row agree.
   let { ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({}));
   await page.goto(URL + '?view=list'); await settle(page);
   let r = await phoneCard();
   out.newRelease = r;
   if (r.id !== out.expect.release) err(`new guest, release order: suggested ${r.id}, expected ${out.expect.release}`);
-  if (r.n !== 1) err(`expected exactly one Up next card, found ${r.n}`);
-  if (!r.region) err('the Up next card has no accessible name');
-  if (!r.aboveMeter) err('the Up next card should sit at the top, above the All titles meter');
-  if (r.dupe) err('the suggested title also appears as a normal row');
+  if (r.n !== 1) err(`expected exactly one Up next in the card, found ${r.n}`);
+  if (!r.region) err('the Up next row has no accessible name');
+  if (r.rows !== 1 || r.rowId !== r.id || !r.pill) err(`the List should mark ${r.id} in its own row with the pill: ${JSON.stringify(r)}`);
   await page.goto(URL + '?view=list&sort=chrono'); await settle(page);
   r = (await phoneCard()).id;
   out.newStory = r;
@@ -113,97 +114,82 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   // 2. Mark seen from the row moves on; Undo brings it back; the new
   //    suggestion is announced politely.
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.un-gcard .tsa-btn.seen').click(); await page.waitForTimeout(900);
+  await page.locator('.m-lrow.up-next .tsa-btn.seen').click(); await page.waitForTimeout(900);
   r = await phoneCard();
   out.afterMark = r;
-  if (r.id !== byRelease[1].id) err(`after marking ${out.expect.release} seen, suggested ${r.id}, expected ${byRelease[1].id}`);
+  if (r.id !== byRelease[1].id || r.rowId !== byRelease[1].id) err(`after marking ${out.expect.release} seen, suggested ${r.id} (row ${r.rowId}), expected ${byRelease[1].id}`);
   if (!r.live.some(t => t.includes(name(byRelease[1].id)))) err('the new suggestion was not announced in a polite live region');
   await page.locator('.mt-undo').click(); await page.waitForTimeout(900);
   r = (await phoneCard()).id;
   if (r !== out.expect.release) err(`Undo should bring back ${out.expect.release}, got ${r}`);
 
-  // 3. The × hides Up next for now (user decision, 2026-10-29): it closes
-  //    rather than moving on, comes back on reload, and never touches the
-  //    collection.
+  // 3. The card's × hides the card for this visit (Andre, 2026-11-15): the
+  //    List keeps marking Up next, a reload brings the card back, and the
+  //    collection is never touched.
   const before = await page.evaluate(() => localStorage.getItem('mcu.collection.v1'));
-  await page.locator('.un-gcard .un-hide').click(); await page.waitForTimeout(600);
-  const gone = () => page.evaluate(() => !document.querySelector('.un-card, .un-chip, .un-mrow'));
-  if (!(await gone())) err('the × should close Up next, not move to another title');
-  if (await page.evaluate(() => localStorage.getItem('mcu.collection.v1')) !== before) err('hiding Up next changed the stored collection');
+  await page.locator('.spatial-overall .un-hide').click(); await page.waitForTimeout(600);
+  r = await page.evaluate(() => ({ card: !!document.querySelector('.spatial-overall'), row: !!document.querySelector('.m-lrow.up-next') }));
+  out.hidden = r;
+  if (r.card) err('the × should close the card');
+  if (!r.row) err('hiding the card should leave Up next marked in the List');
+  if (await page.evaluate(() => localStorage.getItem('mcu.collection.v1')) !== before) err('hiding the card changed the stored collection');
   await page.reload(); await settle(page);
-  if (await gone()) err('Up next should come back after a reload');
+  if (!(await page.evaluate(() => !!document.querySelector('.spatial-overall .un-mrow')))) err('the card should come back after a reload');
 
   // 4. A-Z, IMDb and RT follow the list itself, in its direction (user
   //    decision, 2026-10-29): the first released, unseen title of that list.
+  //    The card's tag says "Up next"; its tooltip names the order.
   const byTitle = T.filter(isOut).slice().sort((x, y) => x.title.localeCompare(y.title, 'en'));
   const byImdb = T.filter(isOut).slice().sort((x, y) => (x.imdb == null) - (y.imdb == null) || (y.imdb || 0) - (x.imdb || 0));
   for (const [q, want, label] of [['sort=title', byTitle[0], /A–Z order/], ['sort=title&order=desc', byTitle[byTitle.length - 1], /Z–A order/], ['sort=imdb', byImdb[0], /highest IMDb first/]]) {
     await page.goto(URL + '?view=list&' + q); await settle(page);
-    r = await page.evaluate(() => ({ tag: (document.querySelector('.un-gcard .un-tag') || {}).textContent,
-      id: (document.querySelector('.un-gcard') || { dataset: {} }).dataset.titleId,
-      dupes: document.querySelectorAll(`[data-row-id="${(document.querySelector('.un-gcard') || { dataset: {} }).dataset.titleId}"]:not(.un-inline)`).length }));
-    (out.listOrders = out.listOrders || {})[q] = r;
+    r = await phoneCard();
+    (out.listOrders = out.listOrders || {})[q] = { id: r.id, tag: r.tag, rowId: r.rowId };
     if (r.id !== want.id) err(`${q}: suggested ${r.id}, expected ${want.id}`);
     if (!label.test(r.tag || '')) err(`${q}: the card should name the order, says "${r.tag}"`);
-    if (r.dupes) err(`${q}: the suggested title also appears as a normal row`);
+    if (r.rowId !== want.id) err(`${q}: the List marks ${r.rowId}, expected ${want.id}`);
   }
 
-  // 5. Search and the Seen tab hide it.
+  // 5. Search hides it, in the card and in the List.
   await page.goto(URL + '?view=list'); await settle(page);
   await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   await page.locator('.m-search-input input').fill('iron'); await page.waitForTimeout(800);
-  if (await page.evaluate(() => !!document.querySelector('.un-card'))) err('Up next shows during a search');
+  if (await page.evaluate(() => !!document.querySelector('.un-mrow, .m-lrow.up-next'))) err('Up next shows during a search');
   errors.forEach(e => err('phone console: ' + e));
   await ctx.close();
 
-  // 6. Caught up: everything out is seen, so the card names the next arrival
-  //    at its real precision, after the seen titles.
+  // 6. Caught up: everything out is seen, so nothing is suggested: the card
+  //    keeps All titles alone and no row is marked.
   if (unreleased.length) {
     const allSeen = Object.fromEntries(byRelease.map(t => [t.id, 'seen']));
     ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs(allSeen)));
     await page.goto(URL + '?view=list'); await settle(page);
-    r = await page.evaluate(() => {
-      const c = document.querySelector('.un-state');
-      return { head: c && c.querySelector('.un-head').textContent, arrival: c && (c.querySelector('.un-arrival-title') || {}).textContent,
-        release: c && (c.querySelector('.release-line') || {}).textContent, top: !!document.querySelector('.m-scrollarea > .un-inline.top .un-state') };
-    });
+    r = await page.evaluate(() => ({ meter: !!document.querySelector('.spatial-overall.docked .pgh'), upnext: !!document.querySelector('.un-mrow'), row: !!document.querySelector('.m-lrow.up-next') }));
     out.caughtUp = r;
-    if (r.head !== "You're caught up") err(`caught up should say "You're caught up", said ${r.head}`);
-    if (r.arrival !== name(unreleased[0].id)) err(`next arrival should be ${name(unreleased[0].id)}, was ${r.arrival}`);
-    if (!r.top) err('the caught-up card should sit at the top of the list');
+    if (!r.meter || r.upnext || r.row) err(`caught up: ${JSON.stringify(r)}, expected All titles alone`);
     errors.forEach(e => err('caught-up console: ' + e));
     await ctx.close();
   }
 
-  // 7. Watchlist tab: empty says so and offers everything; with only titles
-  //    not out yet it says when the next one arrives.
+  // 7. Watchlist tab: with nothing on it, nothing is suggested; back on All,
+  //    Up next returns.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({})));
   await page.goto(URL + '?view=list'); await settle(page);
   await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(700);
-  r = await page.evaluate(() => ({ head: (document.querySelector('.un-head') || {}).textContent, btn: (document.querySelector('.un-state .un-btn') || {}).textContent }));
+  r = await page.evaluate(() => ({ upnext: !!document.querySelector('.un-mrow'), row: !!document.querySelector('.m-lrow.up-next') }));
   out.watchEmpty = r;
-  if (r.head !== 'Nothing on your Watchlist to watch yet') err(`empty Watchlist reads "${r.head}"`);
-  await page.locator('.un-state .un-btn').click(); await page.waitForTimeout(700);
-  if (!(await page.evaluate(() => !!document.querySelector('.un-gcard')))) err('Show from everything did not switch back to all titles');
+  if (r.upnext || r.row) err(`the empty Watchlist suggests something: ${JSON.stringify(r)}`);
+  await page.locator('.coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(700);
+  if (!(await page.evaluate(() => !!document.querySelector('.spatial-overall .un-mrow')))) err('Up next did not come back on All');
   errors.forEach(e => err('watchlist console: ' + e));
   await ctx.close();
-  if (unreleased.length) {
-    ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({ [unreleased[0].id]: 'watchlist' })));
-    await page.goto(URL + '?view=list'); await settle(page);
-    await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(700);
-    r = await page.evaluate(() => ({ head: (document.querySelector('.un-head') || {}).textContent, arrival: (document.querySelector('.un-arrival-title') || {}).textContent, top: !!document.querySelector('.un-inline.top .un-state') }));
-    out.watchNotOut = r;
-    if (r.head !== 'Nothing on your Watchlist is out yet' || r.arrival !== name(unreleased[0].id)) err(`Watchlist with nothing out reads "${r.head}" / "${r.arrival}"`);
-    if (!r.top) err('the Watchlist message should sit at the top of the list');
-    await ctx.close();
-  }
 
   // 8. Filters narrow it and the card names them.
   const firstSeries = T.filter(isOut).filter(t => t.type === 'series').sort((a, b) => a.release.localeCompare(b.release))[0];
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({})));
   await page.goto(URL + '?view=list&type=series'); await settle(page);
-  r = await page.evaluate(() => ({ id: (document.querySelector('.un-gcard') || { dataset: {} }).dataset.titleId, tag: (document.querySelector('.un-tag') || {}).textContent }));
-  out.series = r;
+  r = await phoneCard();
+  out.series = { id: r.id, tag: r.tag };
   if (r.id !== firstSeries.id) err(`Series filter: suggested ${r.id}, expected ${firstSeries.id}`);
   if (!/Series/.test(r.tag || '')) err(`the card should name the Series filter: "${r.tag}"`);
 
@@ -213,22 +199,26 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   r = await page.evaluate(() => ({ cards: document.querySelectorAll('.m-card').length, rows: document.querySelectorAll('.m-lrow').length }));
   if (r.cards || !r.rows) err(`?view=grid on a phone: ${JSON.stringify(r)}, expected the List`);
 
-  // 10. Phone Spatial: a chip that opens the details.
+  // 10. Phone Spatial: the same card, docked in the same place; its Up next
+  //     opens the details.
   await page.goto(URL + '?view=spatial'); await settle(page);
-  const chip = await page.evaluate(() => (document.querySelector('.un-chip .un-title') || {}).textContent);
-  if (chip !== name(out.expect.release)) err(`phone Spatial chip shows ${chip}`);
-  await page.locator('.un-chip .un-open').click(); await page.waitForTimeout(1200);
+  const chip = await page.evaluate(() => (document.querySelector('.spatial-overall.docked .un-slide > :not(.un-leave) .un-title') || {}).textContent);
+  if (chip !== name(out.expect.release)) err(`phone Spatial card shows ${chip}`);
+  await page.locator('.spatial-overall .un-open').click(); await page.waitForTimeout(1200);
   const sheet = await page.evaluate(() => (document.querySelector('.m-sheet .td-title') || {}).textContent);
-  if (sheet !== name(out.expect.release)) err(`the chip should open ${name(out.expect.release)}'s details, opened ${sheet}`);
+  if (sheet !== name(out.expect.release)) err(`the card should open ${name(out.expect.release)}'s details, opened ${sheet}`);
   errors.forEach(e => err('phone views console: ' + e));
   await ctx.close();
 
-  // 11. 320px: nothing runs past the edge.
+  // 11. 320px: nothing in the card or the Up next row runs past its edge.
   ({ ctx, page, errors } = await ctxPage(browser, PHONE320, seedJs({})));
   await page.goto(URL + '?view=list&sort=title'); await settle(page);
-  r = await page.evaluate(() => { const c = document.querySelector('.un-gcard'); if (!c) return 'missing'; const box = c.getBoundingClientRect();
-    return [...c.querySelectorAll('*')].some(e => e.getBoundingClientRect().right > box.right + 0.5) ? 'overflow' : 'ok'; });
-  if (r !== 'ok') err(`320px card: ${r}`);
+  r = await page.evaluate(() => ['.spatial-overall.docked', '.m-lrow.up-next'].map(sel => {
+    const c = document.querySelector(sel); if (!c) return sel + ' missing';
+    const box = c.getBoundingClientRect();
+    return [...c.querySelectorAll('*')].some(e => e.getBoundingClientRect().right > box.right + 0.5) ? sel + ' overflow' : 'ok';
+  }).filter(x => x !== 'ok'));
+  if (r.length) err(`320px: ${r.join(', ')}`);
   await ctx.close();
 
   // 12. Desktop: the compact card in Titles and on Connections, whose Up next
@@ -360,9 +350,9 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   // 13. Portuguese.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({}) + "localStorage.setItem('mcu.lang.v1','pt-BR');"));
   await page.goto(URL + '?view=list'); await settle(page);
-  r = await page.evaluate(() => ({ tag: (document.querySelector('.un-tag') || {}).textContent, hide: (document.querySelector('.un-gcard .un-hide') || { getAttribute: () => null }).getAttribute('aria-label') }));
+  r = await page.evaluate(() => { const t = document.querySelector('.spatial-overall .un-tag'); return { tag: t && t.textContent, tip: t && t.getAttribute('title'), hide: (document.querySelector('.spatial-overall .un-hide') || { getAttribute: () => null }).getAttribute('aria-label') }; });
   out.pt = r;
-  if (r.tag !== 'A seguir · ordem de lançamento' || r.hide !== 'Ocultar A seguir por enquanto') err(`Portuguese reads "${r.tag}" / "${r.hide}"`);
+  if (r.tag !== 'A seguir' || !/^A seguir · ordem de lançamento/.test(r.tip || '') || r.hide !== 'Ocultar A seguir por enquanto') err(`Portuguese reads "${r.tag}" / "${r.tip}" / "${r.hide}"`);
   await ctx.close();
 
   console.log(JSON.stringify(out, null, 1));

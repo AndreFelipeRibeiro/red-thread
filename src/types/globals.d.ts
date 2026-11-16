@@ -257,16 +257,15 @@ declare global {
     DesktopList: DesktopList['DesktopList'];
     useRowKeys: DesktopList['useRowKeys'];
     TitlesSubNav: DesktopList['TitlesSubNav'];
+    /** The List's groups for an order (phases, eras, or one flat run). */
+    MCU_listGroups: DesktopList['dlGroups'];
+    ListGroupHeader: DesktopList['GroupHeader'];
     /** Keeps focus on a row as the List reorders; assigned inline. */
     MCU_followRowFocus(toRow: unknown): void;
 
     UpNextTag: UpNext['UpNextTag'];
     UpNextHide: UpNext['UpNextHide'];
-    UpNextState: UpNext['UpNextState'];
-    UpNextCard: UpNext['UpNextCard'];
     UpNextMeterRow: UpNext['UpNextMeterRow'];
-    UpNextChip: UpNext['UpNextChip'];
-    UpNextNote: UpNext['UpNextNote'];
 
     WhereToWatch: Watch['WhereToWatch'];
     MCU_region: Watch['MCU_region'];

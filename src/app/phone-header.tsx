@@ -44,24 +44,36 @@ export interface MobileTopBarProps {
   onOpenAccount: () => void;
   onOpenSettings?: () => void;
   guideActive: boolean;
-  /** A quiet count at the end of the toolbar row ("44 of 60 seen"). */
-  count?: string | null;
+  /** The header's second row: Titles' collection tabs (MyListBar), pinned
+   *  with the header as on desktop (Notion "Titles 4/5"). */
+  subNav?: React.ReactNode;
 }
 
 // The phone header (Notion "Phone: bottom bar becomes Explore, My list and
 // Guides"): the wordmark, then search, Settings and Account as icon buttons;
-// under it one toolbar row for Explore and My list: Sort, Filters and a quiet
-// count. Search opens in place of that row (the suggestions list spans it) and
-// a ✕ closes it; it stays open while there is text. Guides has no toolbar row.
+// under it one toolbar row for Explore and My list: Sort and Filters, plus
+// "Mark what you've seen" in Titles; then, in Titles, the status tabs
+// (`subNav`). Search opens in place of the toolbar row (the suggestions list
+// spans it) and a ✕ closes it; it stays open while there is text. Guides has
+// no toolbar row.
 // An open guide on the canvas dims Filters (GuideOff); Sort still arranges it.
-export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, guideActive, count }: MobileTopBarProps) {
-  window.useI18n();
+export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, guideActive, subNav }: MobileTopBarProps) {
+  const { lang } = window.useI18n();
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState<HTMLDivElement | null>(null);
   const [searching, setSearching] = React.useState(false);
   const open = searching || !!search;
   const Off = window.GuideOff;
   const tools = section !== 'guides';
+  // "Mark what you've seen" ends the toolbar row in Titles, where the count
+  // used to be (Andre, 2026-11-15; the compact card shows the count). Where
+  // its label doesn't fit (Portuguese, small phones, large text) it becomes
+  // an icon button, its label kept for screen readers (step 1); at 320px the
+  // row's gaps tighten too (step 2), and at a large text size Filters becomes
+  // an icon button as well (step 3; its name and count stay in aria-label).
+  const picker = section === 'mylist' && !!window.MCU_openPicker;
+  const toolRow = React.useRef<HTMLDivElement | null>(null);
+  window.useFitSteps(toolRow, 3, [lang, section, sort, filterCount, picker, open]);
   // The field is drawn and focused inside the tap itself: iPhones only bring
   // up the keyboard for focus given during the gesture.
   const openSearch = () => {
@@ -106,19 +118,26 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
           <Button variant="ghost" className="m-clear h-11 shrink-0 px-2.5 text-sm" onClick={() => { setSearch(''); setSearching(false); }}>{tr('search.done')}</Button>
         </div>
       ) : tools && (
-        <div className="m-toolrow flex min-w-0 items-center gap-2">
+        <div ref={toolRow} className="m-toolrow group/toolrow flex min-w-0 items-center gap-2 data-[fit=2]:gap-1 data-[fit=3]:gap-1">
           <SortMenu sort={sort} sortDir={sortDir} onChange={(k, d) => { setSort(k); setSortDir(d); }} mobile/>
           <Off off={guideActive && section === 'explore'}>
-            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-xs text-foreground', filterCount && 'act bg-muted dark:bg-input/50')}
+            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-xs text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0', filterCount && 'act bg-muted dark:bg-input/50')}
               onClick={onOpenFilters} aria-label={filterCount ? tr('filters.aria', { n: filterCount }) : tr('filters.title')} title={tr('filters.title')}>
               <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              {tr('filters.title')}
+              <span className="group-data-[fit=3]/toolrow:sr-only">{tr('filters.title')}</span>
               {filterCount ? <span className="m-fcount absolute tabular-nums -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-primary px-1 text-xs font-bold text-primary-foreground">{filterCount}</span> : null}
             </Button>
           </Off>
-          {count && <span className="m-count ml-auto truncate text-xs text-muted-foreground tabular-nums">{count}</span>}
+          {picker && (
+            <Button variant="outline" className="m-pick ml-auto h-11 gap-1.5 px-3 text-xs font-medium text-(--status-seen-text) hover:text-(--status-seen-text) group-data-[fit=1]/toolrow:w-11 group-data-[fit=1]/toolrow:px-0 group-data-[fit=2]/toolrow:w-11 group-data-[fit=2]/toolrow:px-0 group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0"
+              onClick={() => window.MCU_openPicker && window.MCU_openPicker()} title={tr('picker.open')}>
+              <svg className="size-[15px]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>
+              <span className="group-data-[fit=1]/toolrow:sr-only group-data-[fit=2]/toolrow:sr-only group-data-[fit=3]/toolrow:sr-only">{tr('picker.open')}</span>
+            </Button>
+          )}
         </div>
       )}
+      {subNav}
     </div>
   );
 }
@@ -162,35 +181,32 @@ export function MobileNavBar({ section, onSection }: { section: PhoneSection; on
   );
 }
 
-// My list's own bar on phones: the collection tabs (the phone's Grid was
-// removed, Notion "Phone: remove the Grid view"). Hook: `m-listbar`.
+// My list's own bar on phones: the collection tabs, the header's second row
+// (Notion "Titles 4/5"; "Mark what you've seen" moved up into the toolbar
+// row). Hook: `m-listbar`.
 //
 // Portuguese labels are much longer than English ones (Notion "Top nav (PT) /
 // content overflowing"), so the row tries each step and keeps the first that
 // fits (useFitSteps), in any language and at any text size:
 //   0  every label;  1  (no change; the view menu's old step);  2  the switch
 //   shows only "All" and the selected option's label;  3  "Para ver" in place
-//   of "Para assistir" (Andre's approval). The steps are CSS keyed on the row
-//   (group/viewrow).
+//   of "Para assistir" (Andre's approval);  4  tighter tabs, the selected
+//   one with its icon and count only (a large text size at 320px). The steps are CSS keyed on the row (group/viewrow).
 export function MyListBar({ collection, setCollection }: {
   collection: string; setCollection: (v: string) => void;
 }) {
   const { lang } = window.useI18n();
+  // The tabs' counts widen the row as the collection loads and changes (the
+  // row sits in the header now, mounted before the collection arrives), so
+  // they are measured again whenever the counts change.
+  const { states } = window.useCollection() as unknown as { states: Record<string, string> };
+  const counts = Object.values(states || {}).reduce((a, v) => a + (v === 'seen' ? 1 : v === 'watchlist' ? 1000 : 0), 0);
   const row = React.useRef<HTMLDivElement | null>(null);
-  const fit = window.useFitSteps(row, 3, [lang, collection]);
+  const fit = window.useFitSteps(row, 4, [lang, collection, counts]);
   return (
-    <>
-    <div ref={row} className="m-listbar group/viewrow mb-1.5 flex min-w-0 items-center gap-2" data-fit={fit}>
+    <div ref={row} className="m-listbar group/viewrow flex min-w-0 items-center gap-2" data-fit={fit}>
       <CollectionSwitch value={collection} onChange={setCollection} variant="compact" short={fit >= 3}/>
     </div>
-    {/* "Mark what you've seen" moved here from the Account sheet (Notion
-        "Take the collection filters out of the Account menu"). */}
-    {window.MCU_openPicker && (
-      <Button variant="ghost" className="m-pick mb-2 h-9 gap-1.5 self-start px-1.5 text-xs text-(--status-seen) hover:text-(--status-seen)" onClick={() => window.MCU_openPicker()}>
-        <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>{tr('picker.open')}
-      </Button>
-    )}
-    </>
   );
 }
 

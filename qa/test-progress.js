@@ -118,9 +118,14 @@ const checkDeskList = (sort, got, errors) => {
 };
 // Titles sorts from the header's Sort menu, as Connections does.
 const deskListSort = (page, key) => deskSort(page, key);
-const readPhone = (page) => page.evaluate(() => ({
-  phaseMeters: document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar').length,
-  overall: !!document.querySelector('.m-phase-divider.overall'),
+// The phone List follows the desktop List (Notion "Titles 4/5"): the same
+// group headings with their marks, and All titles in the compact card docked
+// above the bottom bar (none in By Phase, where the headings carry it).
+const readPhoneList = (page) => page.evaluate(() => ({
+  groups: document.querySelectorAll('.m-scrollarea .m-ghead').length,
+  meters: document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-marks').length,
+  phases: [...document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-label')].filter(b => /^Phase \d/.test(b.textContent.trim())).length,
+  overall: !!document.querySelector('.spatial-overall.docked .pgh'),
 }));
 const checkRule = (where, sort, got, errors) => {
   const want = expectFor(sort);
@@ -348,13 +353,18 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     if (sw !== 'ok') { errors.push(`could not reach the phone ${view}: ${sw}`); continue; }
     for (const sort of SORTS) {
       await phoneSort(m, PHONE_SORT[sort]);
-      const got = view === 'Spatial' ? await readCanvas(m) : await readPhone(m);
+      const got = view === 'Spatial' ? await readCanvas(m) : await readPhoneList(m);
       R.rule['phone ' + view.toLowerCase() + ' ' + sort] = got;
-      checkRule('phone ' + view, sort, got, errors);
+      if (view === 'Spatial') checkRule('phone ' + view, sort, got, errors);
+      else {
+        checkDeskList(sort, got, errors);
+        if (got.overall !== expectFor(sort).overall) errors.push(`phone List in ${sort} order ${got.overall ? 'shows' : 'has no'} All titles in the docked card`);
+      }
     }
   }
-  // Phone canvas: the meter takes its own row, clear of the count pill and the
-  // zoom control, and the first band pill stays on screen below it.
+  // Phone canvas: the card docked at the bottom stays clear of the count pill
+  // and the zoom control, and the first band pill and cards stay on screen
+  // above it.
   R.phoneCanvas = {};
   for (const sort of ['release', 'chrono', 'phase', 'title']) {
     await phoneSort(m, PHONE_SORT[sort]);
@@ -380,65 +390,25 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     if (c.cardOnMeter) errors.push(`on a phone the first cards sit under the All titles meter (${sort})`);
   }
 
-  // ---- Phone: the List in By Phase: sticky dividers, segments --------------
-  const readDividers = (pg) => pg.evaluate(() => {
-    const d = [...document.querySelectorAll('.m-phase-divider.sticky:not(.overall)')];
-    const cs = d.length ? getComputedStyle(d[0]) : null;
-    const lab = d.length ? d[0].querySelector('.pgh-label') : null;
-    return {
-      n: d.length, blocks: document.querySelectorAll('.m-gblock').length,
-      segs: document.querySelectorAll('.m-phase-divider .pgh-seg').length,
-      position: cs && cs.position, top: cs && cs.top,
-      labelSize: lab && getComputedStyle(lab).fontSize,
-    };
-  });
-  // My list keeps its own sort (Notion navigation), so By Phase is picked there.
+  // ---- Phone: the List in By Phase: one heading per phase, with its marks ---
+  // Plain headings (no sticky dividers, no folding; Notion "Titles 4/5"): one
+  // mark per released title, as many filled as are seen.
   await phoneView(m, 'List');
   await phoneSort(m, PHONE_SORT.phase);
-  // The sticky divider pins flush to the top of the scroll area, and stays out
-  // of the reorder animation: a transform on a sticky element left it hanging.
-  R.listSticky = await m.evaluate(async () => {
-    const sa = document.querySelector('.m-scrollarea');
-    const d = document.querySelector('.m-phase-divider.sticky');
-    if (!sa || !d) return null;
-    sa.scrollTop = 700;
-    await new Promise(r => setTimeout(r, 500));
-    const out = {
-      pinnedOffset: Math.round(d.getBoundingClientRect().top - sa.getBoundingClientRect().top),
-      transform: getComputedStyle(d).transform, flipId: d.getAttribute('data-flip-id'),
-    };
-    sa.scrollTop = 0;
-    return out;
+  R.listPhase = await m.evaluate(() => {
+    const heads = [...document.querySelectorAll('.m-scrollarea .m-ghead')];
+    const st = JSON.parse(localStorage.getItem('mcu.collection.v1') || '{"states":{}}').states;
+    return heads.map(h => {
+      const marks = [...h.querySelectorAll('.dl-group-marks > span')];
+      return { label: h.querySelector('.dl-group-label').textContent.trim(), marks: marks.length,
+        filled: marks.filter(x => /bg-\(--brand\)/.test(x.className)).length,
+        sticky: getComputedStyle(h).position === 'sticky' };
+    }).concat([{ seenTotal: Object.values(st).filter(v => v === 'seen').length }]);
   });
-  if (!R.listSticky) errors.push('no sticky divider in the phone List');
-  else {
-    if (Math.abs(R.listSticky.pinnedOffset) > 1) errors.push(`the pinned List divider sits ${R.listSticky.pinnedOffset}px from the top of the scroll area, not flush`);
-    if (R.listSticky.transform !== 'none') errors.push(`the sticky divider carries ${R.listSticky.transform}; it must stay out of the reorder animation`);
-    if (R.listSticky.flipId) errors.push('the sticky divider has a data-flip-id again');
-  }
-  R.listPhase = await readDividers(m);
-  if (R.listPhase.n !== 6) errors.push(`the List in By Phase shows ${R.listPhase.n} phase dividers, expected 6`);
-  if (R.listPhase.position !== 'sticky') errors.push(`the List divider is ${R.listPhase.position}, not sticky`);
-  if (!R.listPhase.segs) errors.push('the meter has no segments');
-
-  // The meter fills when its header comes into view, so the progress is
-  // something you watch happen rather than something already sitting there.
-  R.reveal = await m.evaluate(async () => {
-    const lit = () => [...document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar')].map((b) => b.classList.contains('lit'));
-    const sa = document.querySelector('.m-scrollarea');
-    sa.scrollTop = 0;
-    await new Promise((r) => setTimeout(r, 600));
-    const atTop = lit();
-    sa.scrollTop = sa.scrollHeight;
-    await new Promise((r) => setTimeout(r, 1400));
-    return { atTop, atBottom: lit(), scrolled: sa.scrollTop > 0 };
-  });
-  if (!R.reveal.scrolled) errors.push('the List did not scroll, so the reveal was never exercised');
-  else {
-    if (!R.reveal.atTop[0]) errors.push('the first meter never filled, though its header starts on screen');
-    if (R.reveal.atTop[R.reveal.atTop.length - 1]) errors.push('the last meter was already full before it was scrolled to');
-    if (!R.reveal.atBottom[R.reveal.atBottom.length - 1]) errors.push('the last meter did not fill after being scrolled to');
-  }
+  const heads = R.listPhase.slice(0, -1);
+  if (heads.length !== 6) errors.push(`the List in By Phase shows ${heads.length} phase headings, expected 6`);
+  if (heads.some(h => h.sticky)) errors.push('a phone List heading is sticky again');
+  if (heads.some(h => !h.marks)) errors.push(`a phase heading has no marks: ${JSON.stringify(heads)}`);
 
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));

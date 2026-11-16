@@ -50,14 +50,15 @@ async function ctxPage(browser, opts, init) {
 const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 
-// Bulk marking: the phone section headers ("Mark all seen", "Mark N more
-// seen"), the confirmation, Undo, and the rules every bulk action follows —
+// Bulk marking: a guide's "Mark all seen" / "Mark N more seen", Undo, and
+// the rules every bulk action follows —
 // exactly the right titles (never an unreleased one marked seen), one
 // guest-storage write and one announcement per action, and Undo restoring
 // each title as it was, a watchlist that a seen mark replaced included.
 // The desktop List lost its row checkboxes and bulk bar (Notion "Titles 1/5":
-// marking many at once is "Mark what you've seen"); the first block checks
-// they stay gone and that Escape now goes straight to the details.
+// marking many at once is "Mark what you've seen"), and the phone List its
+// "Mark all seen" headings ("Titles 4/5"); the first blocks check they stay
+// gone and that Escape now goes straight to the details.
 const KEY = 'mcu.collection.v1';
 const seed = (states) => `localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.signInNudge.v1','9');` +
   `localStorage.setItem('${KEY}', JSON.stringify({ version: 1, states: ${JSON.stringify(states)} }));`;
@@ -101,38 +102,63 @@ const SPY = `(() => {
     await page.context().close();
   }
 
-  // ---- Phones, a phase at a time: exact titles, one write, Undo ------------
-  // Iron Man starts on the Watchlist, so Undo has a replaced watchlist to
-  // restore.
+  // ---- Phone Titles: no bulk buttons, the picker in the toolbar -----------
+  // The phone List follows desktop (Notion "Titles 4/5"): plain group
+  // headings with no "Mark all seen", and "Mark what you've seen" ending the
+  // Sort / Filters row.
+  {
+    const { page: m } = await ctxPage(browser, MOBILE, seed({}));
+    m.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    await m.goto(URL + '?view=list&sort=phase'); await require('./ready').appReady(m);
+    R.phoneList = await m.evaluate(() => ({
+      heads: document.querySelectorAll('.m-scrollarea .m-ghead').length,
+      headerActions: document.querySelectorAll('.m-scrollarea .pgh-action').length,
+      picker: !!document.querySelector('.m-toolrow .m-pick'),
+    }));
+    if (!R.phoneList.heads) errors.push('the phone List has no group headings in Phase order');
+    if (R.phoneList.headerActions) errors.push(`the phone List still has ${R.phoneList.headerActions} "Mark … seen" header buttons`);
+    if (!R.phoneList.picker) errors.push('the phone toolbar has no "Mark what you\'ve seen"');
+    await m.context().close();
+  }
+
+  // ---- The bulk rules, through a guide's "Mark N more seen" (phone) --------
+  // Exactly the guide's stops shown (released only), one guest-storage write,
+  // one announcement, and Undo restoring each title as it was: Iron Man starts
+  // on the Watchlist, so Undo has a replaced watchlist to restore. (The
+  // confirmation above 20 titles has no surface left to test it from: no
+  // guide has that many stops.)
   {
     const { page: m } = await ctxPage(browser, MOBILE, seed({ 'iron-man': 'watchlist' }) + SPY);
     m.on('pageerror', e => errors.push('pageerror: ' + e.message));
-    await m.goto(URL + '?sort=phase'); await require('./ready').appReady(m);
+    await m.goto(URL + '?view=list&guide=infinity-saga'); await require('./ready').appReady(m);
     const st = () => m.evaluate((k) => JSON.parse(localStorage.getItem(k) || '{"states":{}}').states, KEY);
     await m.evaluate(() => { window.__writes = 0; window.__events = []; });
     R.mark = await m.evaluate(async () => {
-      const p1div = [...document.querySelectorAll('.m-phase-divider')].find(d => /Phase 1/i.test(d.textContent));
-      const btn = p1div && p1div.querySelector('.pgh-action');
-      if (!btn) return { error: 'no action on the Phase 1 header' };
-      const ids = window.TITLES.filter(t => t.phase === 1).map(t => t.id);
+      const btn = document.querySelector('.g-meter .pgh-action');
+      if (!btn) return { error: 'no "Mark all seen" on the guide meter' };
+      const label = btn.textContent.trim();
+      const ids = window.MCU_GUIDE.stops(window.GUIDES.find(g => g.id === 'infinity-saga'), false).map(s => s.id);
       const expect = ids.filter(id => window.MCU_isReleased(window.TITLES.find(t => t.id === id)));
       btn.click(); await new Promise(r => setTimeout(r, 1200));
-      return { ids, expect, toast: (document.querySelector('.mcu-toast b') || {}).textContent || null };
+      return { label, ids, expect, toast: (document.querySelector('.mcu-toast b') || {}).textContent || null };
     });
     if (R.mark.error) errors.push(R.mark.error);
     else {
       R.afterMark = await st();
       R.writes = await m.evaluate(() => window.__writes);
       R.events = await m.evaluate(() => window.__events);
+      if (R.mark.label !== 'Mark all seen') errors.push(`the guide meter reads "${R.mark.label}"`);
       const marked = R.mark.ids.filter(id => R.afterMark[id] === 'seen');
       if (marked.length !== R.mark.expect.length) errors.push(`${marked.length} titles were marked seen; expected ${R.mark.expect.length}`);
       const outside = Object.keys(R.afterMark).filter(id => R.afterMark[id] === 'seen' && !R.mark.ids.includes(id));
-      if (outside.length) errors.push(`titles outside Phase 1 were marked: ${outside.join(', ')}`);
+      if (outside.length) errors.push(`titles outside the guide were marked: ${outside.join(', ')}`);
       if (R.writes !== 1) errors.push(`the bulk action wrote the guest collection ${R.writes} times; expected once`);
       if (R.events.length !== 1 || !/^bulk:seen:/.test(R.events[0])) errors.push(`expected one bulk announcement, got ${JSON.stringify(R.events)}`);
-      // Finishing a whole phase shows the celebration ("Phase 1 complete!")
-      // in place of "6 titles marked as seen"; either way the toast has Undo.
-      if (!/as seen|complete/.test(R.mark.toast || '')) errors.push(`no bulk toast (${R.mark.toast})`);
+      // Finishing the guide may celebrate in place of "10 titles marked as
+      // seen"; either way the toast has Undo.
+      if (!/as seen|complete|finished|Infinity/i.test(R.mark.toast || '')) errors.push(`no bulk toast (${R.mark.toast})`);
+      R.after = await m.evaluate(() => { const b = document.querySelector('.g-meter .pgh-action'); return b ? b.textContent.trim() : null; });
+      if (R.after) errors.push(`the guide meter still offers "${R.after}" with nothing left to mark`);
       R.undo = await m.evaluate(async () => {
         const b = document.querySelector('.mcu-toast .mt-undo');
         if (!b) return { error: 'no Undo on the bulk toast' };
@@ -147,71 +173,7 @@ const SPY = `(() => {
         if (left.length) errors.push(`Undo left marks on ${left.join(', ')}`);
       }
     }
-    // ---- Over 20 titles asks first, and Cancel marks nothing ---------------
-    await m.goto(URL); await require('./ready').appReady(m);
-    R.confirm = await m.evaluate(async () => {
-      const btn = document.querySelector('.m-phase-divider.overall .pgh-action');
-      if (!btn) return { error: 'no action on the All titles header' };
-      btn.click(); await new Promise(r => setTimeout(r, 900));
-      const sheet = document.querySelector('.m-sheet');
-      const cancel = sheet && [...sheet.querySelectorAll('button')].find(b => /Cancel/.test(b.textContent));
-      if (cancel) cancel.click();
-      await new Promise(r => setTimeout(r, 600));
-      return { asked: !!sheet };
-    });
-    R.afterCancel = await st();
-    if (R.confirm.error) errors.push(R.confirm.error);
-    else if (!R.confirm.asked) errors.push('marking more than 20 titles did not ask first');
-    if (Object.keys(R.afterCancel).filter(k => R.afterCancel[k] === 'seen').length) errors.push('Cancel still marked titles seen');
     await m.context().close();
-  }
-
-  // ---- Phones: the section header action ----------------------------------
-  const { page: m } = await ctxPage(browser, MOBILE, seed({}) + SPY);
-  await m.goto(URL + '?sort=phase'); await require('./ready').appReady(m);
-  R.phone = await m.evaluate(async () => {
-    const p1div = [...document.querySelectorAll('.m-phase-divider')].find(d => /Phase 1/i.test(d.textContent));
-    const btn = p1div && p1div.querySelector('.pgh-action');
-    if (!btn) return { error: 'no action on the Phase 1 header' };
-    const label = btn.textContent.trim();
-    const p1 = window.TITLES.filter(t => t.phase === 1 && window.MCU_isReleased(t)).length;
-    window.__events = [];
-    btn.click(); await new Promise(r => setTimeout(r, 1200));
-    const st = JSON.parse(localStorage.getItem('mcu.collection.v1')).states;
-    const seen = window.TITLES.filter(t => t.phase === 1 && st[t.id] === 'seen').length;
-    const after = p1div.querySelector('.pgh-action');
-    return { label, p1, seen, events: window.__events, buttonAfter: after ? after.textContent.trim() : null };
-  });
-  if (R.phone.error) errors.push(R.phone.error);
-  else {
-    if (R.phone.label !== 'Mark all seen') errors.push(`the Phase 1 header reads "${R.phone.label}"`);
-    if (R.phone.seen !== R.phone.p1) errors.push(`the Phase 1 action marked ${R.phone.seen} of ${R.phone.p1}`);
-    if (R.phone.events.length !== 1) errors.push(`the Phase 1 action announced ${R.phone.events.length} times`);
-    if (R.phone.buttonAfter) errors.push(`the Phase 1 header still offers "${R.phone.buttonAfter}" with nothing left to mark`);
-  }
-  // Release order: one All titles header; more than 20 to mark, so it asks.
-  await m.goto(URL); await require('./ready').appReady(m);
-  R.phoneAll = await m.evaluate(async () => {
-    const btn = document.querySelector('.m-phase-divider.overall .pgh-action');
-    if (!btn) return { error: 'no action on the All titles header' };
-    const label = btn.textContent.trim();
-    btn.click(); await new Promise(r => setTimeout(r, 900));
-    const sheet = document.querySelector('.m-sheet');
-    const go = sheet && [...sheet.querySelectorAll('button')].find(b => /^Mark \d+ as seen$/.test(b.textContent.trim()));
-    if (!go) return { label, error: 'no confirmation sheet' };
-    go.click(); await new Promise(r => setTimeout(r, 1500));
-    const st = JSON.parse(localStorage.getItem('mcu.collection.v1')).states;
-    const released = window.TITLES.filter(t => window.MCU_isReleased(t));
-    const unreleased = window.TITLES.filter(t => !window.MCU_isReleased(t));
-    return { label, allSeen: released.every(t => st[t.id] === 'seen'), unreleasedMarked: unreleased.filter(t => st[t.id]).map(t => t.id) };
-  });
-  if (R.phoneAll.error) errors.push(R.phoneAll.error);
-  else {
-    // The init script reseeds an empty collection on every load, so nothing is
-    // seen yet here and the header offers to mark them all.
-    if (R.phoneAll.label !== 'Mark all seen') errors.push(`the All titles header reads "${R.phoneAll.label}"`);
-    if (!R.phoneAll.allSeen) errors.push('confirming did not mark every released title seen');
-    if (R.phoneAll.unreleasedMarked.length) errors.push(`unreleased titles were marked: ${R.phoneAll.unreleasedMarked.join(', ')}`);
   }
 
   R.errors = errors;

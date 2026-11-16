@@ -42,22 +42,27 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   then sync, Settings and Account; the row fits from 900px in English and
   Portuguese. On phones they are the bottom bar; the header holds the wordmark
   and the search, Settings and Account buttons, and one row below it holds
-  Sort, Filters and how many titles are seen ("2 of 60 seen"). "See connections" in a
-  title's details, or on Up next, selects it on the canvas.
+  Sort and Filters (and, in Titles, "Mark what you've seen", an icon button
+  where its label doesn't fit). In Titles the status tabs are the header's
+  third row, pinned with it. "See connections" in a title's details selects
+  it on the canvas.
 - A context summary shows what the controls don't: how many titles match and
   which filters are on. On desktop it floats at the top-left of Spatial: the
   count, a removable chip per active filter (search, collection, type, phase,
   budget) and Clear all when two or more are on. On phones it is one line at the
-  top of List and Grid and a small pill in Spatial (count, how many filters,
-  Clear).
+  top of the List (only when a search or filter narrows it) and a small pill
+  in Spatial (count, how many filters, Clear).
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
 - Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
   cards, list rows and details, alongside the release year. Chronological order
   follows those timeframes, and the mobile Chrono list groups by them.
-- Phones show My list as a List (the Grid was removed on 2026-11-15; old
-  `?view=grid` links open the List). Rows place IMDb and Rotten Tomatoes
-  numeric badges together beneath their phase/budget metadata, with rank
-  numbers when sorting by rating.
+- Phones show Titles as a List (the Grid was removed on 2026-11-15; old
+  `?view=grid` links open the List), with the desktop List's rules at the
+  phone's size: the same phase or era headings with their marks and "4/6",
+  no folding and no dimming, the seen mark on the poster, and the Up next
+  row's red edge, pill and filled check. Rows show a 40×60 poster, the
+  title, one meta line (year, phase, setting), the IMDb and RT badges, and
+  Seen and Watchlist as 40px buttons; rank numbers when sorting by rating.
 - On Connections and on phones, one Sort menu holds every sort in both
   directions as plain phrases ("Release date, oldest first"); desktop Titles
   sorts from its own order bar and column headers (below). In Spatial, connection lines and
@@ -140,8 +145,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Up next (the first released, unseen title in the order, tab and filters)
   is marked in its Titles row with a red edge, an "Up next" pill and a filled
   "Mark seen", and the list opens with that row in view. The compact card
-  ("All titles 43/60 +4" and Up next with ✓ and ✕) sits in the top-right
-  corner on both Connections and Titles; ✕ hides it until the next visit.
+  ("All titles 43/60 +4" and Up next with ✓ and ✕) is the same card in the
+  same place on Connections and Titles: the top-right corner on desktop,
+  docked above the bottom bar on phones (the list's last row scrolls clear
+  of it). ✕ hides it until the next visit.
 - Cast drawer on desktop; List and Spatial views with detail sheets on mobile.
 - Details read the same on desktop and phones: poster beside the phase, type,
   year, title, release date and story timeframe; then IMDb and RT scores
@@ -150,17 +157,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Both surfaces render one shared body (`TitleDetailsBody` in `mobile.tsx`).
 - Up next suggests what to watch now: the first released title you haven't
   marked seen, earliest first in release order (story order on Chronological),
-  or the first of the list itself on A–Z, IMDb and RT. It has Mark seen,
-  Watchlist and a × that hides it until the page is reloaded. It follows the
+  or the first of the list itself on A–Z, IMDb and RT. It follows the
   Watchlist tab, a pinned character and the type, phase and budget filters,
-  and says so in one line. Phones show it as a card at the top of the List and
-  Grid (the title's own row is left out, so it never appears twice), the
-  desktop List as a strip above the table, desktop Spatial as a row in the All
-  titles meter and phone Spatial as a chip. When everything out is seen it
-  says you're caught up and names the next arrival.
+  and says so in one line. It is the compact card's second row (above) and
+  is marked in its own row in Titles; with nothing to suggest (all caught up,
+  the Seen tab) the card shows progress alone.
 - Phone Spatial opens on your Up next title once you've marked anything
   seen: each order (and Recenter) centres it at a readable zoom above the
-  chip, at one card size in every order. A first visit, or one with everything
+  docked card, at one card size in every order. A first visit, or one with everything
   seen, opens on the start of the order instead; a Seen, Unseen or Watchlist
   filter frames its matches.
 - Where to watch: a section of the details, closed until you open it (the
@@ -262,14 +266,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   the character in the title in view, with that performer's own title count,
   while the stepper counts the whole chain ("6 of 8"). On desktop the banner
   stops at the details panel's edge, the same as its hover preview.
-- On phones' All tab, each run of two or more consecutive seen titles gets an
-  accordion header that folds it into one summary row; order is never changed.
-  In List the seen titles are compact rows (headings inside a folded run hide
-  with it); in Grid each run is its own section and cards glide when runs form
-  or split. Folds stay closed across visits on this device (shared by List and
-  Grid). Rows shrink, grow and fold with an animation once the collection has
-  loaded (none with reduced motion). The Seen tab keeps full rows and cards.
-  Watchlisted titles have a thin amber outline outside the Watchlist tab.
+- On phones, watchlisted titles have a thin amber outline outside the
+  Watchlist tab.
 - Phone sheets close with the × button, a tap on the handle, a swipe down or
   the browser's Back button (each open sheet owns one history entry).
 - Spatial timelines have labelled rows: Release by phase, Chronological by

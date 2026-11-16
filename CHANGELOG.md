@@ -13,6 +13,42 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Phone Titles: the desktop list's rules, and one card above the bottom bar (Titles 4/5)
+
+Recorded: 2026-11-15 20:39 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- **Header:** the toolbar row is Sort, Filters and, in Titles, "Mark what
+  you've seen" in place of the "12 of 60 seen" count (an icon button, its
+  label kept for screen readers, where the label doesn't fit; at a large
+  text size at 320px Filters does too). The status tabs are the header's
+  last row, pinned with it, as on desktop, and measure again as their counts
+  change; at the last step the selected tab shows its icon and count only.
+- **List:** the desktop List's groups and headings (phase for Release date
+  and Phase, in-story era for Story order, flat for Title, IMDb and RT), each
+  with a mark per released title and "4/6". No folded seen runs, no dimming,
+  no "Mark all seen" on headings. Rows: a 40×60 poster with the seen mark in
+  its corner, the title, one meta line, the IMDb and RT badges, and Seen and
+  Watchlist side by side as 40px buttons. "64 titles" only when a search or
+  filter narrows the list.
+- **Up next:** marked in its own row (red edge, pill, filled check); the list
+  opens with that row in view.
+- **The compact card** (All titles and Up next with ✓ and ✕) is docked above
+  the bottom bar on Connections and Titles, in the same place on both (Andre,
+  2026-11-15). The list's last row scrolls clear of it; ✕ hides it for the
+  visit; a pinned character's pill or an open guide takes its place. Phone
+  Connections frames Up next above it.
+- **Removed:** the phone list's Up next card, the Connections chip, the
+  "caught up" / "Watchlist empty" states (the card shows progress alone, as
+  on desktop), the top meter on phone Connections, seen-run folding, the
+  sticky phase dividers and 15 unused locale keys. Swipes: not now (Andre).
+- Verified: typecheck and build; the full `qa/regress.sh` before the push;
+  the accessibility scan in English and Portuguese; by eye at 390 and 320px,
+  English and Portuguese, light and dark. QA updated for the new design
+  (test-nextup, test-progress, test-bulk, test-refocus, test-micro,
+  test-guides, test-home, test-guidemode).
+- Limits: not yet tried on a real iPhone. The bulk confirmation above 20
+  titles has no surface left to reach it (no guide is that long).
+
 ## V5 design — Titles: one header, a quieter list and Up next (Titles 1/5–3/5)
 
 Recorded: 2026-11-15 19:54 EST (-0500). Pushed to `version/5.0` (V5 staging).

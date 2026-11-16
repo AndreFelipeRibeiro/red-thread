@@ -9,11 +9,7 @@ import React from 'react';
 import type { Title } from '../types/catalog';
 import { cn } from 'cn';
 import * as S from './shell';
-import {
-  ScoreBadges, PhaseBadge, ProgressHeader, BulkHeaderAction, MatchBadge, EmptyState, PhoneRow,
-  seenRuns, useSeenFolds, useSettled, Fx, SeenRunHead,
-  GLABEL, GLABEL_STORY, PHASE_DIVIDER, PHASE_DIVIDER_ALL, GBLOCK, GROUP, LIST, flatClass,
-} from './list-parts';
+import { EmptyState, PhoneRow, GROUP, LIST } from './list-parts';
 
 const { useState: mUseState } = React;
 
@@ -283,221 +279,65 @@ const StoryYear = (props) => <window.StoryYear {...props}/>;
 const ReleaseLine = (props) => <window.ReleaseLine {...props}/>;
 const ReleaseBadge = (props) => <window.ReleaseBadge {...props}/>;
 
-// Up next in the phone List: always at the top of the list, above the
-// All titles meter, like the desktop List strip (changed from in-line on
-// 2026-10-29). The suggestion's own row or card is left out of the list, so a
-// title never appears twice. Returns the card to show and the title to hide.
-function upNextPlacement(upNext) {
-  if (!upNext) return { topNode: null, hideId: null };
-  const r = upNext.result;
-  if (r.kind === 'next') return { topNode: <window.UpNextCard info={upNext}/>, hideId: r.title.id };
-  return { topNode: <window.UpNextState info={upNext}/>, hideId: null };
-}
-
-function MobileList({ header, currentId, titles: allTitles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch, progress, upNext }) {
-  const PosterArt = window.PosterArt;
+// The phone List (Notion "Titles 4/5"): the desktop List's rules at the
+// phone's size. Groups by phase (Release date, Phase) or in-story era (Story
+// order) under plain headings with one mark per released title and "4/6"
+// (DesktopList's GroupHeader); none for the column sorts. No folding, no
+// dimming, no bulk buttons: seen titles carry the mark on their poster, and
+// "Mark what you've seen" is in the header. Up next is marked in its own row
+// (red edge, pill, filled check) and the list opens with that row in view;
+// progress and Up next themselves are the compact card docked above the
+// bottom bar (app.tsx).
+function MobileList({ header, currentId, titles, sort, sortDir, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, groupProgress, upNext }) {
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
-  const folds = useSeenFolds();
-  // The collection arrives after the first paint: rows only animate (shrink,
-  // fold, appear) once it has loaded, so the list opens already compact.
-  const settled = useSettled();
-  const place = upNextPlacement(upNext);
-  const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
-  // The lifted title's row, for a step that scrolls to it (a pinned character
-  // or guide stepping onto the suggestion).
-  const top = place.topNode && <div className={`${S.UN_INLINE} top`} data-row-id={place.hideId || undefined}>{place.topNode}</div>;
-  if (!allTitles.length) return <div className={S.SCROLL} ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
-  // Ranks count the whole list, the suggestion lifted to the top included.
-  const rankOf = (t) => allTitles.indexOf(t) + 1;
+  const upNextId = upNext && upNext.result && upNext.result.kind === 'next' ? upNext.result.title.id : null;
+  // Opens with the Up next row in view: scrolled to it when it is below the
+  // fold (or under the docked card), on first show and again when the order
+  // or the tab changes. As on desktop, it never scrolls back up to it.
+  const scrollWant = React.useRef(true);
+  const scrollSig = sort + ':' + sortDir + ':' + (upNext && upNext.watchScope ? 'w' : '');
+  const lastSig = React.useRef(scrollSig);
+  if (lastSig.current !== scrollSig) { lastSig.current = scrollSig; scrollWant.current = true; }
+  React.useLayoutEffect(() => {
+    const area = flipRef.current;
+    if (!scrollWant.current || !upNextId || !area) return undefined;
+    scrollWant.current = false;
+    const row = area.querySelector(`.m-lrow[data-row-id="${CSS.escape(upNextId)}"]`);
+    if (!row) return undefined;
+    // The docked card is already in the page but may not have published its
+    // height yet, so it is measured here.
+    const card = area.parentElement && area.parentElement.querySelector('.spatial-overall.docked');
+    const dock = card ? card.offsetHeight + (parseFloat(getComputedStyle(card).bottom) || 0) : 0;
+    if (row.getBoundingClientRect().bottom > area.getBoundingClientRect().bottom - dock) row.scrollIntoView({ block: 'center' });
+    return undefined;
+  });
+  if (!titles.length) return <div className={S.SCROLL} ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
-  // Group headers for the non-score sorts. Chrono groups by in-story timeframe
-  // (headers carry the hourglass, so rows show their release year instead).
-  const groups = [];
-  const chrono = sort === 'chrono';
-  if (chrono) {
-    titles.forEach(t => {
-      const label = t.story ? MI18N.storyLabel(t.story) : mtr('story.tba');
-      const last = groups[groups.length-1];
-      if (last && last.label === label) last.items.push(t);
-      else groups.push({ key: 's:' + label + '#' + groups.length, label, story: true, items: [t] });
-    });
-  } else if (sort === 'release') {
-    titles.forEach(t => {
-      const key = String(t.year);
-      const last = groups[groups.length-1];
-      if (last && last.label === key) last.items.push(t);
-      else groups.push({ key: key + '#' + groups.length, label: key, items: [t] });
-    });
-  } else if (sort === 'phase') {
-    titles.forEach(t => {
-      const key = String(t.phase);
-      const last = groups[groups.length-1];
-      if (last && last.key.startsWith('p' + key + '#')) last.items.push(t);
-      else groups.push({ key: 'p' + key + '#' + groups.length, label: mPhaseLabel(t.phase), color: MPHASE_COLORS[t.phase], phase: t.phase, items: [t] });
-    });
-  } else {
-    groups.push({ key: 'all', label: null, items: titles });
-  }
-  // Release groups by year here too, so each phase opens with a divider above
-  // its first year — the same super-header the desktop List uses.
-  if (sort === 'release') {
-    let lastPhase = null;
-    groups.forEach(g => {
-      const phase = g.items[0].phase;
-      if (phase !== lastPhase) { g.phaseStart = phase; lastPhase = phase; }
-    });
-  } else if (sort === 'phase') {
-    // In Phase order every group IS a phase, so the same sticky divider the
-    // Grid uses becomes its heading. Its own label would only repeat it — and
-    // the label was the reason the two views looked different here.
-    groups.forEach(g => { g.phaseStart = g.phase; g.label = null; });
-  }
-  const row = (t, rank, compact) => (
-    <PhoneRow t={t} rank={rankOf(t)} ranked={ranked} chrono={chrono} lead={lead} compact={compact}
-      matchedChars={searchCharMatches ? searchCharMatches[t.id] : null} search={search} onSelect={onSelect}
-      seen={statusOf(t.id) === 'seen'} watch={!!markWatch && statusOf(t.id) === 'watchlist'} current={currentId === t.id}/>
-  );
-  const pg = (phase) => (progress && progress.byPhase && progress.byPhase[phase]) || null;
-  // Every order but By Phase gets one meter over the whole catalogue, in the
-  // same sticky header the phase divider uses.
-  const overall = (progress && progress.all) || null;
-  const overallHead = overall ? (
-    <div className={cn(PHASE_DIVIDER, PHASE_DIVIDER_ALL)}>
-      <ProgressHeader label={mtr('progress.all')} {...overall}
-        action={<BulkHeaderAction ids={allTitles.map(t => t.id)} group={mtr('progress.all')}/>}/>
-    </div>
-  ) : null;
-  const label = (g) => {
-    const p = g.phase ? pg(g.phase) : null;
-    return (
-      <div className={cn(GLABEL, g.story && GLABEL_STORY)} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
-        {p ? <ProgressHeader label={g.label} color={g.color} {...p}/> : <>{g.story && <Hourglass/>}{g.label}</>}
-      </div>
-    );
-  };
-  // Same component, same size and the same sticky behaviour as the Grid's.
-  // No data-flip-id: the reorder animation moves what it tracks with a
-  // transform, and a sticky element is already positioned from the scroll
-  // offset — together they leave the bar hanging below the top of the list.
-  const phaseDivider = (g) => {
-    const p = g.phaseStart ? pg(g.phaseStart) : null;
-    if (!p) return null;
-    return (
-      <div className={PHASE_DIVIDER}>
-        <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}
-          action={<BulkHeaderAction ids={allTitles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
-      </div>
-    );
-  };
-
-  if (collapseSeen) {
-    // All tab: seen titles are compact rows, and each run of two or more
-    // consecutive seen titles (with any headings between them) gets a header
-    // that folds the run into one row. Everything is one flat column of
-    // collapsible wrappers so rows keep their element while they shrink, grow,
-    // join a run or fold away.
-    const entries = [];
-    groups.forEach(g => {
-      // The phase divider sits above its year heading and, unlike the heading,
-      // is never folded into a seen run: it is the super-header for the whole
-      // phase, so it has to stay put while runs underneath it collapse.
-      if (g.phaseStart) entries.push({ kind: 'divider', g, key: 'pd:' + g.key });
-      if (g.label) entries.push({ kind: 'label', g, key: 'g:' + g.key });
-      g.items.forEach(t => entries.push({ kind: 'row', t, g, key: t.id }));
-    });
-    const rowOf = new Map(entries.filter(e => e.kind === 'row').map(e => [e.t.id, e]));
-    // Runs are found within a phase, never across one, exactly as the Grid does
-    // it: the divider is the stronger grouping, and a fold that swallowed the
-    // boundary would hide which phase the rows below belong to.
-    const runScopes = [];
-    entries.forEach((e) => {
-      if (e.kind === 'divider' || !runScopes.length) runScopes.push([]);
-      if (e.kind === 'row') runScopes[runScopes.length - 1].push(e.t);
-    });
-    runScopes.flatMap(ts => seenRuns(ts, statusOf)).forEach(items => {
-      const r = items.map(t => rowOf.get(t.id));
-      const info = { key: items[0].id, items, shut: folds.isShut(items) };
-      const a = entries.indexOf(r[0]), b = entries.indexOf(r[r.length - 1]);
-      for (let i = a; i <= b; i++) entries[i].run = info;
-      r[0].head = info;
-      // A heading folded inside the run whose group carries on after it is
-      // repeated after the run while the run is folded.
-      const next = entries[b + 1];
-      if (next && next.kind === 'row' && next.g.label && entries.indexOf(entries.find(e => e.kind === 'label' && e.g === next.g)) > a) {
-        next.repeatLabel = info;
-      }
-    });
-    const appear = settled;
-    let rank = 0;
-    // Each phase gets its own block so its sticky divider is bounded by it and
-    // hands over at the boundary instead of the two stacking up.
-    const chunks = [];
-    entries.forEach((e) => {
-      if (e.kind === 'divider' || !chunks.length) chunks.push({ key: 'b:' + e.key, items: [] });
-      chunks[chunks.length - 1].items.push(e);
-    });
-    const renderEntry = (e) => {
-      const shut = e.run && e.run.shut;
-      if (e.kind === 'divider') return <React.Fragment key={e.key}>{phaseDivider(e.g)}</React.Fragment>;
-      if (e.kind === 'label') return <Fx key={e.key} open={!shut}>{label(e.g)}</Fx>;
-      rank += 1;
-      return (
-        <React.Fragment key={e.key}>
-          {e.repeatLabel && <Fx key={'again:' + e.key} open={e.repeatLabel.shut}>{label(e.g)}</Fx>}
-          {e.head && (
-            <Fx key={'run:' + e.head.key} appear={appear}>
-              <SeenRunHead items={e.head.items} shut={e.head.shut} onToggle={() => folds.toggle(e.head.items)}/>
-            </Fx>
-          )}
-          <Fx open={!shut}>{row(e.t, rank, statusOf(e.t.id) === 'seen')}</Fx>
-        </React.Fragment>
-      );
-    };
-    return (
-      <div className={S.SCROLL} ref={flipRef}>
-        {header}
-        {top}
-        {overallHead}
-        <div className={flatClass(settled)}>
-          {chunks.map((c) => (
-            <div className={GBLOCK} key={c.key}>{c.items.map(renderEntry)}</div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
+  const groups = window.MCU_listGroups(titles, sort);
   let n = 0;
-  // Year groups belonging to one phase share a block, so the phase's sticky
-  // divider stays pinned across all of them and steps aside at the next phase.
-  const blocks = [];
-  groups.forEach((g) => {
-    if (g.phaseStart || !blocks.length) blocks.push({ key: 'b:' + g.key, groups: [] });
-    blocks[blocks.length - 1].groups.push(g);
-  });
   return (
     <div className={S.SCROLL} ref={flipRef}>
       {header}
-      {top}
-      {overallHead}
-      {blocks.map((b) => (
-        <div className={GBLOCK} key={b.key}>
-          {phaseDivider(b.groups[0])}
-          {b.groups.map(g => (
-            <div className={GROUP} key={g.key}>
-              {g.label && label(g)}
-              <div className={LIST}>
-                {g.items.map(t => {
-                  n += 1;
-                  return <React.Fragment key={t.id}>{row(t, n, false)}</React.Fragment>;
-                })}
-              </div>
+      {groups.map(g => {
+        const prog = !g.flat && groupProgress ? (g.phase ? groupProgress.byPhase[g.phase] : groupProgress.byEra[g.era]) : null;
+        return (
+          <div className={GROUP} key={g.id}>
+            {!g.flat && <window.ListGroupHeader g={g} prog={prog} phone/>}
+            <div className={LIST}>
+              {g.items.map(t => {
+                n += 1;
+                return (
+                  <PhoneRow key={t.id} t={t} rank={n} ranked={ranked} lead={lead} upNext={t.id === upNextId}
+                    matchedChars={searchCharMatches ? searchCharMatches[t.id] : null} search={search} onSelect={onSelect}
+                    seen={statusOf(t.id) === 'seen'} watch={!!markWatch && statusOf(t.id) === 'watchlist'} current={currentId === t.id}/>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 }

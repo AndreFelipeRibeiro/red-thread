@@ -1257,17 +1257,15 @@ function App() {
   // character and the type, phase and budget filters. Search does not narrow
   // it: the card hides while typing instead of jumping about. It waits for the
   // collection to load, so a signed-in visitor never sees Iron Man flash up
-  // before their own collection arrives. Its × hides it for now: plain state,
-  // nothing stored, so a reload brings it back.
-  const [upHidden, setUpHidden] = useState(false);
-  const hideUpNext = () => setUpHidden(true);
-  // The desktop compact card's ✕ (Connections and Titles): hides the card
-  // for this visit, the way the canvas's card always did (Andre,
-  // 2026-11-15). Unlike `upHidden` it leaves Up next itself alone, so the
-  // list still marks its row.
+  // before their own collection arrives.
+  //
+  // The compact card's ✕ (Connections and Titles, desktop and phones) hides
+  // the card for this visit (Andre, 2026-11-15): plain state, nothing stored,
+  // so a reload brings it back. It leaves Up next itself alone, so the list
+  // still marks its row.
   const [cardHidden, setCardHidden] = useState(false);
   const upNextData = useMemo(() => {
-    if (upHidden || !collectionReady) return null;
+    if (!collectionReady) return null;
     // An open guide scopes Up next to its stops, in guide order.
     if (guide) {
       const result = window.MCU_nextUp(guideStepTitles, statusOf, { ordered: true });
@@ -1293,7 +1291,7 @@ function App() {
     if (budgetFilter !== 'all') parts.push(tr('budget.' + budgetFilter));
     const scoped = watchScope || !!pinnedTitleIds || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
     return { result, lead, detail: parts.join(' · '), scoped, watchScope };
-  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, upHidden, collectionStates, lang, guide, guideStepTitles]);
+  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, collectionStates, lang, guide, guideStepTitles]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1666,7 +1664,10 @@ function App() {
     // top-right corner there, out of the way). Phone: the count pill and zoom
     // control share the first row, so the meter takes a row of its own beneath
     // them in every order but By Phase.
-    const chromeTop = isTouch ? (sort === 'phase' ? 44 : 113) : 52;
+    // Phones: the count pill at the top of the canvas (the All titles meter
+    // that sat under it moved into the card docked at the bottom; Notion
+    // "Titles 4/5").
+    const chromeTop = isTouch ? 44 : 52;
 
     // The scale this sort opens at with no filter applied. Used as the yardstick
     // below: framing a match set is only an improvement if it doesn't mean
@@ -1700,8 +1701,8 @@ function App() {
     }
 
     // Phones, once you've started (at least one title Seen): each order opens
-    // on your Up next title, centred between the top chrome and the Up next
-    // bar at the phone's reading zoom (the same in every order), its
+    // on your Up next title, centred between the top chrome and the compact
+    // card docked at the bottom, at the phone's reading zoom (the same in every order), its
     // neighbours peeking in. A dimming filter
     // frames its matches instead (below), and first-time visitors and anyone
     // caught up keep the bird's-eye view of the order's start.
@@ -1710,8 +1711,9 @@ function App() {
     const up = upStop && basePositions[upStop];
     if (up) {
       const scale = phoneReadScale(rect.width);
-      const chip = viewportRef.current.parentNode && viewportRef.current.parentNode.querySelector('.un-chip');
-      const cr = chip && chip.getBoundingClientRect();
+      const dock = viewportRef.current.closest('.m-main');
+      const card = dock && dock.querySelector('.spatial-overall.docked');
+      const cr = card && card.getBoundingClientRect();
       const bottom = cr && cr.height ? cr.top - rect.top - 8 : rect.height - 14;
       const top = chromeTop;
       const v = {
@@ -2193,13 +2195,7 @@ function App() {
   const upNext = upNextData && {
     ...upNextData,
     onOpen: openUpNext,
-    onHide: hideUpNext,
-    onShowAll: () => setCollectionFilter('all'),
-    // "See connections", from Titles only (Connections already shows them).
-    onConnections: (isTouch ? viewMode === 'spatial' : desktopView === 'spatial') ? undefined : (id) => {
-      if (isTouch) { goSection('explore', { force: true }); setSelectedId(id); setDrawerId(null); }
-      else showInExplore(id);
-    },
+    onHide: () => setCardHidden(true),
   };
   // Announce a new suggestion politely once the previous one was marked seen
   // (the toast already announces the mark itself).
@@ -2218,17 +2214,18 @@ function App() {
     }
   }, [upNextId]);
   const upAnnouncer = <div className="story-sr" aria-live="polite">{upAnnounce}</div>;
-  // Desktop Spatial shows it as a row in the floating meter, which (like the
-  // meter) stands down while a title is selected.
-  const upNextInMeter = !isTouch && !guide && !!upNext && upNext.result.kind === 'next';
-  // The compact card on desktop (Connections, top right; Titles, bottom
-  // right): All titles with its bar, and Up next with ✓ and ✕. ✕ hides the
-  // card for this visit. In By Phase there is no All titles meter (the phase
-  // headings carry it), so the card is Up next alone.
-  const compactCard = !isTouch && !cardHidden && ((viewProgress && viewProgress.all) || upNextInMeter) ? (inList) => (
-    <window.SpatialOverall touch={false} floating={!inList}>
+  // Up next is a row in the compact card, which stands down while a title is
+  // selected on Connections.
+  const upNextInMeter = !guide && !!upNext && upNext.result.kind === 'next';
+  // The compact card, the same card in the same place on Connections and in
+  // Titles: top right on desktop, docked above the bottom bar on phones
+  // (Notion "Titles 4/5"). All titles with its bar, and Up next with ✓ and ✕.
+  // ✕ hides the card for this visit. In By Phase there is no All titles meter
+  // (the phase headings carry it), so the card is Up next alone.
+  const compactCard = !cardHidden && ((viewProgress && viewProgress.all) || upNextInMeter) ? (inList) => (
+    <window.SpatialOverall touch={isTouch} floating={!inList}>
       {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
-      {upNextInMeter && <window.UpNextMeterRow info={{ ...upNext, onHide: () => setCardHidden(true) }}/>}
+      {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
     </window.SpatialOverall>
   ) : null;
 
@@ -2299,13 +2296,17 @@ function App() {
   const showInExplore = (id) => goSection('explore', { select: id, force: true });
   // The progress widget's counts open Titles on that tab (Notion "Titles 3/5").
 
-  // Phones: My list's collection tabs, at the top of the list.
+  // Phones: My list's collection tabs, the header's second row (pinned with
+  // it, as on desktop; Notion "Titles 4/5").
   const myListBar = isTouch ? (
     <window.MyListBar collection={collectionFilter} setCollection={setCollectionFilter}/>
   ) : null;
   // `showing` is overridable because the Spatial canvas counts what is actually
   // on it: selecting a card fades every unconnected title out, so the pill has
   // to follow the ring rather than keep reporting the whole filtered set.
+  // "64 titles" and its chips show in Titles only when a search or a filter
+  // narrows the list (Notion "Titles 1/5"); the tabs already count the rest.
+  const narrowed = !!search.trim() || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all';
   const contextSummary = (variant, inList, showing) => (
     <ContextSummary variant={variant} inList={inList}
       showing={showing == null ? visible.length : showing} total={window.TITLES.length}
@@ -2400,7 +2401,6 @@ function App() {
     setGuidesPage(false);
     setGuideOptional(false);
     setStepId(startAt || null);
-    setUpHidden(false);
     if (isTouch) setDrawerId(null);
   };
   const closeGuide = (opts) => {
@@ -2577,7 +2577,7 @@ function App() {
     setCollectionFilter('all');
     setSort('release'); setSortDir(DEFAULT_SORT_DIR.release);
     setSheet(null); setAboutOpen(false); setWelcome(false); setPickerOpen(false); setPromo(null);
-    setUpHidden(false);
+    setCardHidden(false);
     window.dispatchEvent(new Event('mcu:home'));
     homePendingRef.current = true;
     setHomeAnnounce('');
@@ -3124,26 +3124,24 @@ function App() {
           with it — exactly the cards left standing on the canvas. */}
       {/* The summary describes filters an open guide sets aside, so it waits. */}
       {!guide && contextSummary(isTouch ? 'pill' : 'float', false, ringIds ? ringIds.size : null)}
-      {/* Every order but By Phase carries one meter over the whole catalogue.
-          It stands down with the band labels whenever a title is selected,
-          since the canvas is then showing one ring. */}
-      {/* Phones show an open guide's progress in its dock instead. */}
-      {/* An open guide carries its progress in its own module (desktop) or
-          dock (phones). */}
-      {/* The compact card (Andre, 2026-11-15: the progress widget's bigger
-          card was too much for the canvas). Its × skips Up next for the
-          session. */}
-      {!selectedId && !guide && (isTouch
-        ? viewProgress && viewProgress.all && (
-          <window.SpatialOverall touch>
-            <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>
-          </window.SpatialOverall>
-        )
-        : compactCard && compactCard(false))}
+      {/* The compact card (All titles and Up next; Andre, 2026-11-15: the
+          progress widget's bigger card was too much for the canvas). It
+          stands down while a title is selected, since the canvas is then
+          showing one ring, and while a guide is open (the guide carries its
+          own progress). Its ✕ hides it for the visit. Phones dock it above
+          the bottom bar instead (below). */}
+      {!selectedId && !guide && !isTouch && compactCard && compactCard(false)}
       {guide && !isTouch && guideModule('spatial')}
       {focusPop}
     </div>
   );
+
+  // Phones: the compact card docked above the bottom bar, on Connections and
+  // in Titles (Notion "Titles 4/5"; Andre chose the dock over the top so it is
+  // within thumb reach). A pinned character's or guide's pill takes that
+  // place, and the card stands down while a title is selected on Connections.
+  const phoneCard = isTouch && !guide && !charPill && !guidesPage && compactCard
+    && (viewMode === 'list' || (viewMode === 'spatial' && !selectedId && filtered.length > 0)) ? compactCard(false) : null;
 
   if (isTouch) {
     return (
@@ -3161,24 +3159,22 @@ function App() {
           onOpenAccount={() => setSheet('account')}
           onOpenSettings={() => setSheet('settings')}
           guideActive={!!guide}
-          count={groupProgress && groupProgress.all ? tr('nav.countSeen', { seen: groupProgress.all.seen, n: groupProgress.all.released }) : null}
+          subNav={!guide && !guidesPage && viewMode === 'list' ? myListBar : null}
         />
-        <div role="main" className={`${S.M_MAIN}${charPill || guide ? ' has-pill' : ''}`}
+        <div role="main" className={`${S.M_MAIN}${charPill || guide || phoneCard ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {guide && viewMode !== 'spatial' && (
             <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
               currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
           )}
           {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage onPick={(id) => openGuide(id)}/>}
-          {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={<>{myListBar}{contextSummary('line')}</>} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} groupProgress={groupProgress} markWatch={collectionFilter !== 'watchlist'} header={narrowed ? contextSummary('line') : null} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} sortDir={sortDir} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className={S.M_SPATIAL_WRAP}>
               {canvasEl}
-              {/* An open guide's dock carries its next stop, so the chip steps
-                  aside while it is open. */}
-              {filtered.length > 0 && !selectedId && upNext && !guide && <window.UpNextChip info={upNext}/>}
             </div>
           )}
+          {phoneCard}
           {guide ? (
             <window.GuidePill guide={guide} stepIndex={stepIndex} stepCount={stepStops}
               current={stepIndex >= 0 ? stepList[stepIndex] : null}
@@ -3314,7 +3310,7 @@ function App() {
             }}
             // "64 titles" says something only when a search or a filter
             // narrows the list (the tabs carry their own counts).
-            header={search.trim() || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all' ? contextSummary('float', true) : null}
+            header={narrowed ? contextSummary('float', true) : null}
             empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 

@@ -186,22 +186,25 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
         const label = n != null ? tr('collection.countAria', { label: l, n }) : l;
         const on = value === v, first = v === 'all';
         // Which compact steps drop this option's label (the row's data-fit).
+        // At the last phone step (a large text size at 320px in Portuguese)
+        // the selected option keeps only its icon and count too; its name
+        // stays in aria-label.
         const labelSteps = compact
-          ? (first || on ? '' : 'group-data-[fit=2]/viewrow:hidden group-data-[fit=3]/viewrow:hidden')
+          ? (first ? '' : on ? 'group-data-[fit=4]/viewrow:hidden' : 'group-data-[fit=2]/viewrow:hidden group-data-[fit=3]/viewrow:hidden group-data-[fit=4]/viewrow:hidden')
           : first ? ''
             : on ? 'group-data-[fit=4]/sortrow:hidden group-data-[fit=5]/sortrow:hidden'
               : 'group-data-[fit=2]/sortrow:hidden group-data-[fit=3]/sortrow:hidden group-data-[fit=4]/sortrow:hidden group-data-[fit=5]/sortrow:hidden';
         const item = (
           <ToggleGroupItem key={v} value={v} data-coll={v} aria-label={label} title={label}
             className={cn('relative z-1 h-auto min-w-0 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-transparent aria-pressed:text-foreground [&_svg:not([class*=\'size-\'])]:size-[13px]',
-              compact ? cn('flex-[1_1_auto] px-2', on && 'grow-2')
+              compact ? cn('flex-[1_1_auto] px-2 group-data-[fit=4]/viewrow:px-1', on && 'grow-2')
                 : 'group-data-[fit=2]/sortrow:px-2.5 group-data-[fit=3]/sortrow:px-2.5 group-data-[fit=4]/sortrow:px-2.5 group-data-[fit=5]/sortrow:px-2.5',
               on && 'on')}>
             {v !== 'all' && <span className="coll-ic inline-flex size-[13px] flex-[0_0_13px]"><Icon kind={v}/></span>}
             <span className={cn('coll-label', labelSteps)}>
               {shortL === full ? full : <>
-                <span className={cn('cl-full', compact && 'group-data-[fit=3]/viewrow:hidden')}>{full}</span>
-                <span className={cn('cl-short hidden', compact && 'group-data-[fit=3]/viewrow:inline')}>{shortL}</span>
+                <span className={cn('cl-full', compact && 'group-data-[fit=3]/viewrow:hidden group-data-[fit=4]/viewrow:hidden')}>{full}</span>
+                <span className={cn('cl-short hidden', compact && 'group-data-[fit=3]/viewrow:inline group-data-[fit=4]/viewrow:inline')}>{shortL}</span>
               </>}
             </span>
             {n != null && <CountBadge n={n} kind={v} on={on} appeared={!!before && !before[v] && n > 0}/>}

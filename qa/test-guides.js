@@ -373,7 +373,7 @@ const DATA = () => {
     next: (document.querySelector('.g-stops .g-stop.next') || { dataset: {} }).dataset.rowId || null,
     pill: !!document.querySelector('.guide-pill'),
     sw: document.querySelector('.g-switch') && document.querySelector('.g-switch').getAttribute('aria-checked'),
-    upcard: document.querySelectorAll('.un-gcard').length,
+    upcard: document.querySelectorAll('.spatial-overall .un-mrow').length,
   }));
   if (ph.sheet) err('phone: the sheet stayed open after picking a guide');
   if (!ph.head || !ph.pill) err(`phone: header ${ph.head}, pill ${ph.pill}`);
@@ -401,10 +401,10 @@ const DATA = () => {
   if (grid.cards || !grid.stops) err(`phone ?view=grid: ${JSON.stringify(grid)}, expected the guide's List`);
   await page.goto(URL + `?view=spatial&guide=${plan.id}`); await settle(page); await page.waitForTimeout(600);
   const chip = await page.evaluate(() => ({
-    pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.un-chip'),
+    pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.spatial-overall'),
     next: !!document.querySelector('.g-dock .g-dock-next'), seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen') }));
   if (!chip.pill) err('phone Spatial: no guide dock');
-  if (chip.chip) err('phone Spatial: the Up next chip shows beside the guide dock');
+  if (chip.chip) err('phone Spatial: the compact card shows beside the guide dock');
   if (nextExpected && !(chip.next && chip.seen)) err('phone Spatial: the dock does not offer the next stop with Seen');
   await finish('phone-grid', ctx, errors);
 

@@ -78,7 +78,7 @@ const STATE = () => {
     sheet: !!document.querySelector('.m-sheet'),
     sort: q.get('sort'), order: q.get('order'),
     view: q.get('view'),
-    upnext: !!document.querySelector('.un-strip, .un-mrow, .un-gcard, .un-chip, .un-card'),
+    upnext: !!document.querySelector('.un-mrow'),
     listTop: (document.querySelector('.dlist, .m-scrollarea') || { scrollTop: -1 }).scrollTop,
     camera: canvas ? canvas.style.transform : null,
     live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean),
