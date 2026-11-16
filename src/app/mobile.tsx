@@ -7,7 +7,7 @@
 // real ones.
 import React from 'react';
 import type { Title } from '../types/catalog';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import * as S from './shell';
 import { EmptyState, PhoneRow, GROUP, LIST } from './list-parts';
 
@@ -58,9 +58,15 @@ function useFitSteps(ref, max, deps) {
   const refit = React.useCallback(() => {
     const row = ref.current;
     if (!row || !row.clientWidth) return;
+    // Measured with transitions off: the buttons animate their padding
+    // (shadcn's transition-all), and a step's sizes read mid-animation made a
+    // row that doesn't fit look as if it did (390px, Portuguese, Watchlist on).
+    row.classList.add('fit-measure');
     let step = 0;
     for (; step < max; step++) { row.dataset.fit = String(step); if (!rowOverflows(row)) break; }
     row.dataset.fit = String(step);
+    void row.offsetWidth; // settle the chosen step before transitions return
+    row.classList.remove('fit-measure');
     setFit(step);
   }, [ref, max]);
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -13,6 +13,157 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 feature — Phone lists: swipe a row to mark it seen or add it to the Watchlist
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- On Titles and a guide's stops, a row slid right is marked seen and slid
+  left joins the Watchlist; on a title already in that state the swipe
+  undoes it ("Not seen", "Remove"). Past the threshold the action runs on
+  release with the usual toast, Undo and sync; short of it the row springs
+  back. A vertical drag scrolls, a canceled gesture never commits, and with
+  Reduce motion the row stays put. The details keep both buttons.
+- The auto-follow toast ("Following Infinity Saga · You marked a stop
+  seen") now undoes the mark as well as the follow; it used to keep the
+  mark, and Undo looked broken (Andre's video).
+- Verified: new `qa/test-swipe.js` with real touch input (both directions,
+  Undo from both toasts, the threshold, vertical scrolling, the spring back);
+  test-follow updated.
+
+## V5 design — Phone rows: Seen as the one button (direction B)
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Titles rows drop the rank, carry "Up next" at the start of the meta line
+  instead of a pill, show the score in place of the phase in a score order,
+  and keep Seen as the one button (Watchlist only where Seen can't be
+  offered, a title not out yet). Watchlist is a swipe to the left.
+- A guide's stops on phones follow suit, and the stop's note is two lines at
+  most, so a stop reads in about four lines at 390px.
+- Verified: test-swipe checks the rows; test-nextup and test-guides keep
+  their Up next hooks; screenshots at 390px.
+
+## V5 design — One type system: six roles and the art sizes
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Every font size is a role in `src/index.css` (`text-display`, `-title`,
+  `-heading`, `-body`, `-label`, `-caption`, in rem, so Text size and the
+  browser's default reach them) or a fixed art size (the canvas cards, poster
+  tags, the promo countdown). Tailwind's default scale is cleared.
+- `cn()` (`src/lib/utils.ts`) knows the size names, so a size next to a text
+  color is no longer dropped as a second color; every import goes through
+  `@/lib/utils`.
+- Rows of controls measure themselves with transitions off, so a padding
+  animation can't make a step that doesn't fit look as if it does.
+- The design.html phase labels use a dot beside plain text (Phase 4 measured
+  4.21:1 as colored text).
+- Verified: new `qa/test-typescale.js` (source scan, token list, every
+  visible text size on 11 screens); test-textsize and test-contrast.
+
+## V5 design — Red as the interface accent; Seen is one green
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Red is the one accent through tokens: `--primary` fills (buttons, Mark
+  seen, the radio and switch), `--brand` draws text, lines and rings (links,
+  the guide route, the Up next outline, focus), `--progress` colors every
+  progress bar and turns `--progress-done` once complete.
+- Seen is one green with three roles, as the red has: `--seen` (fills and
+  marks, the same in both themes), `--seen-foreground` (white on it, 4.76:1)
+  and `--seen-text`; the older `--status-seen`, `--status-seen-text` and
+  `--seen-mark` tokens are gone, and the confetti and share cards use it.
+- Verified: test-contrast (pairs updated), test-progress, test-cards,
+  test-themelab, test-share.
+
+## V5 feature — Sort menu: six sorts and an Order switch, shared with Titles
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- One row per sort with a line on what it's for, then an Order switch whose
+  labels follow the sort; choosing a sort applies its usual direction and
+  closes the menu. A bottom sheet on phones.
+- Connections and Titles share one sort, one set of filters and one status
+  filter: what is applied in one stays applied in the other.
+- Phone sheets grow with their content up to nearly the screen's height,
+  leaving a strip of the page above them.
+- Verified: test-nav (the sort and status carry across both ways),
+  test-dlist, test-nextup, test-urlstate.
+
+## V5 feature — Filters: one panel, with Status
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- One panel (popover on desktop, sheet on phones): Status, Phase as
+  multi-select chips (`phase=2,3`), Type, Budget, Released only, a live
+  "11 of 64 titles match", and "Show 11 titles" on phones.
+- Status shows the icons of All / Unseen / Watchlist / Seen and only the
+  picked option's word, so nothing truncates on a phone.
+- Verified: test-ctxfn2, test-empty, test-micro, test-release,
+  test-urlstate, test-fit.
+
+## V5 design — Status pills in every header; Titles loses its tabs row
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The Seen and Watchlist pills, with their counts, sit in the header of
+  every section on desktop and phone and filter in place; All and Unseen are
+  in Filters → Status. Titles' second row is gone.
+- "Mark what you've seen" is an icon button beside them, now a stack with a
+  check.
+- The desktop header fits by measuring (shorter sort name, counts only,
+  icon-only Account, narrower search, then Sort as its icon alone), from
+  900px, in both languages and at Large text; the phone row adds a step that
+  narrows the count pills (Portuguese at Large text, 320px).
+- Verified: test-nav, test-fit, test-segpill and the checks moved to
+  `qa/coll.js`.
+
+## V5 design — The seen mark: a filled green circle with a white check
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- On cards, rows, guide covers and stop badges, the picker and the Seen
+  button over a poster.
+- Verified: test-progress, test-cards, test-contrast.
+
+## V5 improvement — The All titles card and a guide's card share one design
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Desktop and phone, both cards: a mini header (the name, its count, the
+  stepper for a guide, then ×), a 4px bar, a rule, then the next title with
+  its poster, "Up next" or "Next", and ✓. A smaller corner radius, no extra
+  space above the header, the guide's name opens its page on desktop.
+- Verified: test-guidemode, test-guides, test-nextup, test-skip.
+
+## V5 fix — A selected title with a guide open no longer turns the canvas into its ring
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- A link with a title and a guide (or a title carried over from Titles)
+  keeps the guide's linear route: the ring layout and its fading need no
+  guide open, and the camera centers the selected title, left of the
+  details, instead of framing the guide's start.
+- Verified: in the browser at 1440px with `?title=black-panther&guide=infinity-saga`;
+  test-layers, test-align2, test-camera.
+
+## V5 design — Guides: no optional stops
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The 43 optional stops are gone from the 20 guides, and "Include optional"
+  with them; counts, segments and "Part of" count only the stops that
+  matter.
+- Verified: test-guides, test-gpage, test-promo, test-partof, test-share.
+
+## V5 maintenance — Batch 9 verification
+
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Full regress on the committed tree: all 68 check runs clean (63 check scripts in 65 runs plus the accessibility scan in English, Portuguese and English in the dark theme); the first run caught the header overflowing in Portuguese at Large text (900px desktop, 320px phone), fixed by the extra fit steps before this commit.
+- Limits: headless Chromium; the swipe was checked with protocol touch
+  input, not on an iPhone.
+
 ## V5 feature — Guides: the 20 new guides are live
 
 Recorded: 2026-11-16 09:21 EST (-0500). Pushed to `version/5.0` (V5 staging);

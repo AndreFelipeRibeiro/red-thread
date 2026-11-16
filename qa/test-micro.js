@@ -102,7 +102,7 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
       window.__frames = [];
       const t0 = performance.now();
       const tick = () => {
-        const b = document.querySelector('.tsa-btn.seen.pop'), c = document.querySelector('.ml-status .coll-count.seen');
+        const b = document.querySelector('.tsa-btn.seen.pop'), c = document.querySelector('.status-counts .coll-count.seen');
         const a = (el) => el ? { name: getComputedStyle(el).animationName, dur: parseFloat(getComputedStyle(el).animationDuration) } : null;
         window.__frames.push({ t: performance.now() - t0, pop: a(b), count: a(c), countCls: c ? c.className : '' });
         if (performance.now() - t0 < 1500) requestAnimationFrame(tick);
@@ -145,7 +145,7 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     expect(r.firstPaint === 0, `${label}: ${r.firstPaint} cards fade in on first paint`);
     // Type is one of the filters (Notion navigation: "Type moves into Filters").
     await page.click('.filters-pill'); await page.waitForTimeout(250);
-    await page.locator('.filters-pop .tb-type-controls .segmented button:nth-of-type(3)').click(); await page.waitForTimeout(900);
+    await page.locator('.filters-pop [data-type="series"]').click(); await page.waitForTimeout(900);
     // Every frame from the click on: Iron Man's opacity as it comes back.
     await page.evaluate((OPs) => {
       const op = eval('(' + OPs + ')');
@@ -153,8 +153,11 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
       const tick = () => { window.__f.push(op()); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, OP.toString());
-    await page.locator('.filters-pop .tb-type-controls .segmented button:nth-of-type(1)').click(); await page.waitForTimeout(1000);
+    await page.locator('.filters-pop [data-type="all"]').click(); await page.waitForTimeout(1000);
     await page.keyboard.press('Escape'); await page.waitForTimeout(250);
+    // Off the cards: once the popover closes, the pointer would rest on a
+    // card, and hovering a card dims the unrelated ones.
+    await page.mouse.move(5, 500); await page.waitForTimeout(300);
     const seen = (await page.evaluate(() => window.__f)).filter(Boolean);
     r.back = seen.find(f => f.enter && f.op > 0.05 && f.op < 0.9) || seen[0] || null;
     r.fadeFrames = seen.filter(f => f.op > 0.05 && f.op < 0.9).length;

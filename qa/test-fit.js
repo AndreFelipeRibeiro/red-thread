@@ -7,6 +7,7 @@
 // Count badges sit over their button's corner on purpose and don't count.
 const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const { chromium } = require('playwright');
+const { setColl } = require('./coll');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -79,12 +80,12 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
     // A row overflows when one of its controls runs past it (measured by box,
     // so count badges overhanging a button's corner don't count).
     const past = (inner, outer) => Math.max(inner.right - outer.right, outer.left - inner.left);
-    const rows = [...document.querySelectorAll('.tb-top-row, .ml-status, .ctx-float, .ctx-line, .ctx-pill, .m-searchrow, .m-toolrow, .m-listbar')]
+    const rows = [...document.querySelectorAll('.tb-top-row, .ctx-float, .ctx-line, .ctx-pill, .m-searchrow, .m-toolrow')]
       .filter(r => r.offsetParent).map(r => { const box = r.getBoundingClientRect(); return Math.max(0, ...[...r.children].filter(c => c.getClientRects().length).map(c => past(c.getBoundingClientRect(), box))); })
       .filter(d => d > 1).map(d => Math.round(d));
     const search = document.querySelector('.search-wrap, .m-searchbar');
     // overlapping toolbar controls
-    const els = [...document.querySelectorAll('.toolbar .segmented, .toolbar .coll-switch, .toolbar .filters-pill, .toolbar .search-wrap, .toolbar .acct-wrap, .toolbar .sort-menu')].map(e => e.getBoundingClientRect());
+    const els = [...document.querySelectorAll('.toolbar .segmented, .toolbar .status-counts, .toolbar .filters-pill, .toolbar .search-wrap, .toolbar .acct-wrap, .toolbar .sort-menu')].map(e => e.getBoundingClientRect());
     let overlaps = 0;
     for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) overlaps++; }
     return { offscreen: over, rowOverflow: rows, overlaps, searchW: search ? Math.round(search.getBoundingClientRect().width) : null, hScroll: document.documentElement.scrollWidth > innerWidth, tbH: (document.querySelector('.toolbar')||{}).offsetHeight,
@@ -97,16 +98,14 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
         const placed = (e) => { for (let a = e; a && a !== b; a = a.parentElement) if (getComputedStyle(a).position === 'absolute') return true; return false; };
         return [...b.querySelectorAll('*')].some(e => e.getClientRects().length && !placed(e) && !e.closest('[style*="position: absolute"]') && past(e.getBoundingClientRect(), box) > 1);
       }).map(b => (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30)),
-      // Both a full and a short label showing at once (the short one is only
-      // for the phone row's last step).
-      doubled: [...document.querySelectorAll('.coll-switch button')].filter(b => [...b.querySelectorAll('.cl-full, .cl-short')].filter(x => x.getClientRects().length).length > 1).length,
-      labels: [...document.querySelectorAll('.coll-switch .coll-label')].filter(l => l.offsetParent).map(l => l.innerText).join('/') };
+      // The Seen and Watchlist pills, on screen (Notion "Universal status pills").
+      pills: [...document.querySelectorAll('.status-counts [data-coll]')].filter(b => b.getClientRects().length).length };
   };
   for (const w of [900, 999, 1000, 1100, 1199, 1200, 1250, 1279, 1280, 1300, 1301, 1439, 1440, 1600, 1919, 1920, 2199, 2200, 2559, 2560]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
-    // My list: the header row plus the collection switch, which lives there.
+    // Titles: the header row, the status pills included.
     await page.goto('http://127.0.0.1:' + QA_PORT + '/?view=list'); await require('./ready').appReady(page);
-    if (MODE === 'watch') { await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(300); }
+    if (MODE === 'watch') { await setColl(page, 'watchlist'); await page.waitForTimeout(300); }
     out['d' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (MODE === 'watch' ? 'watch' : '') + (TEXT ? '-' + TEXT : '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
     await ctx.close();
@@ -114,7 +113,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
   for (const w of [320, 360, 375, 390, 430]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
-    if (MODE === 'watch') { await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(300); }
+    if (MODE === 'watch') { await setColl(page, 'watchlist'); await page.waitForTimeout(300); }
     out['m' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     await ctx.close();
   }
@@ -125,7 +124,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
     if (v.rowOverflow.length) failures.push(`${k}: a control runs ${v.rowOverflow.join(', ')}px past its row`);
     if (v.overlaps) failures.push(`${k}: ${v.overlaps} toolbar controls overlap`);
     if (v.hScroll) failures.push(`${k}: the page scrolls sideways`);
-    if (v.doubled) failures.push(`${k}: ${v.doubled} switch option(s) show both their full and short label`);
+    if (v.pills !== 2) failures.push(`${k}: ${v.pills} status pill(s) on screen, not 2`);
     if (v.clipped.length) failures.push(`${k}: label past its button: ${v.clipped.join(' | ')}`);
   }
   out.errors = failures;

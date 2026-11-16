@@ -29,7 +29,7 @@
 // `card-year`, `card-story`, `card-budget`, `card-acts`, `card-acts-tsa`,
 // `card-rating`…).
 import React, { useRef, useState } from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import type { Title } from '../types/catalog';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
@@ -50,7 +50,7 @@ const SHADOW = {
   hover: 'hover:shadow-[0_18px_36px_-12px_rgb(0_0_0/.55)] not-dark:hover:shadow-[0_16px_32px_-14px_rgb(0_0_0/.3)]',
   selected: 'shadow-[0_0_0_2px_var(--phase-color),0_20px_50px_-8px_color-mix(in_oklab,var(--phase-color)_70%,transparent)]',
   highlighted: 'shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_40%,transparent),0_16px_40px_-8px_color-mix(in_oklab,var(--foreground)_27%,transparent)] not-dark:shadow-[0_14px_34px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)]',
-  current: 'shadow-[0_0_0_3px_var(--cur-color,var(--primary)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--primary))_50%,transparent),0_24px_50px_-8px_rgba(0,0,0,.65)]',
+  current: 'shadow-[0_0_0_3px_var(--cur-color,var(--brand)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--brand))_50%,transparent),0_24px_50px_-8px_rgba(0,0,0,.65)]',
 };
 
 export interface CardProps {
@@ -112,7 +112,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (listed) border = 'border-[color-mix(in_oklab,var(--status-watch)_45%,var(--border))]';
   if (isCollDimmed) fade = 'opacity-26 saturate-30';
   if (skipped) border = 'border-dashed border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]';
-  if (isCurrent) { border = 'border-(--cur-color,var(--primary))'; shadow = SHADOW.current; z = 'z-28'; fade = 'filter-none'; lift = '[--lift:1.08] motion-reduce:[--lift:1]'; }
+  if (isCurrent) { border = 'border-(--cur-color,var(--brand))'; shadow = SHADOW.current; z = 'z-28'; fade = 'filter-none'; lift = '[--lift:1.08] motion-reduce:[--lift:1]'; }
   // The desktop ring's centre is the same card at the same size (Andre,
   // 2026-11-15); its outline and shadow mark it.
   if (isRingFocus && !touch) z = 'z-27';
@@ -194,11 +194,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
 // ground in both themes.
 function gnumClass(cls: string) {
   const k = new Set(cls.split(/\s+/));
-  const dashed = 'border-[1.5px] border-dashed bg-[rgba(10,12,20,.82)]';
-  return cn('card-gnum inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-[6px] text-[11.5px] font-bold tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+  const dashed = 'border-[1.5px] border-dashed bg-(--on-image-ground)';
+  return cn('card-gnum inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-[6px] text-card-meta font-bold tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
     cls,
     k.has('skip') ? cn(dashed, 'border-(--on-image-dim) text-(--on-image-muted)')
-      : k.has('done') ? 'border-[1.5px] border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472]'
+      : k.has('done') ? 'border-[1.5px] border-(--seen) bg-(--seen) text-(--seen-foreground)'
         : k.has('o') ? cn(dashed, 'border-(--on-image-dim) text-(--on-image)')
           : k.has('dest') ? cn(dashed, 'border-primary text-(--on-image)')
             : 'bg-primary text-primary-foreground');
@@ -218,7 +218,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
   const scoreKind = title && (facet === 'imdb' || facet === 'rt') && title[facet] != null ? facet : null;
   const score = scoreKind && title && (
     <span className={cn('card-score absolute z-3 shadow-[0_2px_8px_rgba(0,0,0,.45)]', pop ? 'bottom-2.5 left-2.5' : 'bottom-2 left-2')}>
-      <window.ScoreChip kind={scoreKind} title={title} compact className={cn('card-rating', pop ? 'text-[max(13px,0.8125rem)]' : 'text-[12px] [&_.tg]:text-[inherit]')}/>
+      <window.ScoreChip kind={scoreKind} title={title} compact className={cn('card-rating', pop ? 'text-card-meta-pop' : 'text-card-meta-lg [&_.tg]:text-[inherit]')}/>
     </span>
   );
   const right = cn('card-mark absolute right-2 z-3', corner, pop && 'right-2.5');
@@ -226,7 +226,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
     ? <span className={right}><span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-80')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span></span>
     : seen ? (
       <span className={right}>
-        <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+        <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_2px_8px_rgba(0,0,0,.45)]',
           pop ? 'size-[30px] [&_svg]:size-4' : 'size-[24px] [&_svg]:size-[13px]')} role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
       </span>
     ) : null;
@@ -236,7 +236,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
       {connections > 0 && (
         <span className={cn('card-conn-pill absolute left-2 z-3', corner, pop && 'left-2.5')}>
           <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-[rgba(10,12,20,.78)] font-semibold text-(--on-image) tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
-            pop ? 'h-[30px] px-2.5 text-[max(13px,0.8125rem)] [&_svg]:size-[13px]' : 'h-[24px] px-2 text-[11px] [&_svg]:size-[11px]')}
+            pop ? 'h-[30px] px-2.5 text-card-meta-pop [&_svg]:size-[13px]' : 'h-[24px] px-2 text-card-meta [&_svg]:size-[11px]')}
             role="img" aria-label={label} title={`${label} · ${tr('card.connectionsTip')}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
             {connections}
@@ -291,10 +291,10 @@ export function CardText({ title, skipped = false, query, matchedChars, pop = fa
     <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[5px] px-3.5 pt-2.5 pb-3' : fit ? 'gap-[3px] px-[11px] pt-[7px] pb-[5px]' : 'gap-[4px] px-[12px] pt-[8px] pb-[8px]')}>
       {/* Size and line height in one class: a font size after a separate
           leading class makes cn() drop the leading, and descenders clip. */}
-      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-[max(17px,1.0625rem)]/[1.3]' : fit ? 'text-[17px]/[1.2]' : 'text-[15px]/[1.3]', skipped && 'opacity-40')}>
+      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-card-title-pop/[1.3]' : fit ? 'text-card-title-lg/[1.2]' : 'text-card-title/[1.3]', skipped && 'opacity-40')}>
         <Highlight text={I18N.titleName(title)} query={query}/>
       </div>
-      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-[max(13px,0.8125rem)] leading-[1.35]' : fit ? 'text-[12px] leading-[1.3]' : 'text-[11px] leading-[1.35]', skipped && 'opacity-40')}>
+      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-card-meta-pop leading-[1.35]' : fit ? 'text-card-meta-lg leading-[1.3]' : 'text-card-meta leading-[1.35]', skipped && 'opacity-40')}>
         <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
         {(facet === 'year' || facet === 'imdb' || facet === 'rt') && <span className="flex-none whitespace-nowrap">{title.year}</span>}
         {facet === 'story' && title.story && <window.StoryYear title={title} className={cn('card-story min-w-0 text-[inherit] in-[.card]:text-[inherit] [&>svg]:size-[1em]')}/>}
@@ -303,7 +303,7 @@ export function CardText({ title, skipped = false, query, matchedChars, pop = fa
             separator to keep the line on one row. */}
         {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
         {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
-        {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-[9.5px] font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
+        {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-card-micro font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
       </div>
       <window.MatchBadge matchedChars={matchedChars} query={query} title={title}/>
     </div>

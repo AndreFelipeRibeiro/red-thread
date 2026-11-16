@@ -66,7 +66,7 @@ const reload = async page => { await page.reload(); await settle(page); };
     await page.screenshot({ path: 'shots/empty-desk.png' });
     await page.locator('.spatial-empty-btn').click(); await page.waitForTimeout(800);
     R.dAfter = { panel: await panel(page), cards: await page.locator('.canvas .card').count(), value: await box.inputValue() };
-    await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '1' }).first().click();
+    await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop [data-phase="1"]').click();
     await page.mouse.click(700, 120); await page.waitForTimeout(300);
     await box.fill('Endgame'); await box.press('Escape'); await page.waitForTimeout(500);
     R.dBoth = await panel(page);

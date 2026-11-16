@@ -4,7 +4,7 @@
 // - the Continue shelf lists the followed guides other than the hero (none
 //   with nothing else followed), and its Mark seen marks that guide's next stop;
 // - marking a stop seen inside an open guide follows it, with a toast whose
-//   Undo stops following and keeps the mark; marks in Titles never follow;
+//   Undo stops following and takes back the mark; marks in Titles never follow;
 // - the mark that finishes a followed guide stops following it;
 // - Titles' Up next is the focused guide's next stop, and the view's own
 //   order once nothing is followed;
@@ -100,7 +100,8 @@ const follow = (ids) => `localStorage.setItem('mcu.guidesFollowed.v1', JSON.stri
   await ctx.close();
 
   // 3. Auto-follow: a stop marked seen in the open guide follows it; the
-  //    toast says so; Undo stops following and keeps the mark.
+  //    toast says so; Undo stops following and takes back the mark (Andre,
+  //    2026-11-16: keeping it made Undo look broken).
   ({ ctx, page, errors } = await ctxPage(browser, DESK, seed({})));
   await page.goto(URL + '?view=list&guide=multiverse-saga'); await settle(page);
   await page.locator('.g-stop .tsa-btn').first().click(); await page.waitForTimeout(500);
@@ -110,7 +111,7 @@ const follow = (ids) => `localStorage.setItem('mcu.guidesFollowed.v1', JSON.stri
   await page.locator('.mcu-toast .mt-undo').click(); await page.waitForTimeout(300);
   r = await page.evaluate(() => ({ followed: window.MCU_GUIDE.isFollowed('multiverse-saga'), seen: Object.values(JSON.parse(localStorage.getItem('mcu.collection.v1')).states).filter(v => v === 'seen').length }));
   out.undo = r;
-  if (r.followed || r.seen !== 1) err(`Undo after auto-follow: ${JSON.stringify(r)}`);
+  if (r.followed || r.seen !== 0) err(`Undo after auto-follow: ${JSON.stringify(r)}`);
   // A mark in Titles (no guide open) never follows a guide.
   await page.goto(URL + '?view=list'); await settle(page);
   await page.locator('.dl-row .tsa-btn').first().click(); await page.waitForTimeout(400);

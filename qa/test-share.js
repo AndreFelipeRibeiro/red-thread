@@ -111,7 +111,8 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await reset(); await page.locator('.g-desk .g-head .g-share').click(); await copiedShown('guide card');
     goodLink(await clip(), '?guide=before-doomsday', 'desktop guide');
     await go(page, '?guide=before-doomsday');
-    expect(await page.locator('.g-module.spatial .gm-share').count() === 1, 'Spatial guide row: no Share');
+    // Share lives on the guide's page, not on the Spatial guide card (Andre, 2026-11-16).
+    expect(await page.locator('.g-module.spatial .gm-share').count() === 0, 'Spatial guide card still has Share');
 
     // My progress opens the share card (Share 2/3): the image, Download, Copy link.
     await page.locator('.acct-pill').click(); await page.waitForTimeout(400);

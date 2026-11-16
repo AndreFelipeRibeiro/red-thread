@@ -9,7 +9,7 @@
 // Hook classes kept for the app and the QA checks: `cb-step`, `cb-pos`,
 // `cb-close`, `cb-photo`, `cb-guide`, `cb-mode`, `char-banner`, `char-pill`,
 // `cp-*`, `pinned`.
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 
 const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
 
@@ -23,36 +23,62 @@ export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center jus
 
 // Desktop: the banner and the guide's module.
 export const STEP = 'cb-step inline-flex flex-none items-center gap-1';
-export const STEP_BTN = cn(OUTLINE, 'size-[max(34px,2.125rem)] text-xl');
-export const CLOSE = cn('cb-close', OUTLINE, 'size-[max(34px,2.125rem)] text-lg');
-export const POS = cn('cb-pos min-w-16 text-center text-(length:--fs-xs) whitespace-nowrap tabular-nums', DIM);
+export const STEP_BTN = cn(OUTLINE, 'size-[max(34px,2.125rem)] text-title');
+export const CLOSE = cn('cb-close', OUTLINE, 'size-[max(34px,2.125rem)] text-title');
+export const POS = cn('cb-pos min-w-16 text-center text-caption whitespace-nowrap tabular-nums', DIM);
 
 // Phones: the pill and the guide's dock take borderless circles.
 const ROUND = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 leading-none text-foreground outline-none active:bg-foreground/8 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35', PRESS);
 export const PILL_STEP = 'cb-step inline-flex flex-none items-center gap-0';
-export const PILL_BTN = cn(ROUND, 'size-[max(38px,2.375rem)] text-(length:--fs-2xl)');
+export const PILL_BTN = cn(ROUND, 'size-[max(38px,2.375rem)] text-title');
 /** The pill's close: the bar's end cap, behind a hairline. */
-export const PILL_CLOSE = cn('cb-close', ROUND, DIM, 'h-[max(38px,2.375rem)] w-10 rounded-l-none rounded-r-full border-l border-solid border-border text-lg');
+export const PILL_CLOSE = cn('cb-close', ROUND, DIM, 'h-[max(38px,2.375rem)] w-10 rounded-l-none rounded-r-full border-l border-solid border-border text-title');
 /** The dock's close: a circle like the stepper's. */
-export const DOCK_CLOSE = cn('cb-close', ROUND, DIM, 'size-[max(38px,2.375rem)] text-lg');
-export const PILL_POS = 'cb-pos min-w-[42px] text-center text-xs whitespace-nowrap tabular-nums text-foreground';
+export const DOCK_CLOSE = cn('cb-close', ROUND, DIM, 'size-[max(38px,2.375rem)] text-title');
+export const PILL_POS = 'cb-pos min-w-[42px] text-center text-label whitespace-nowrap tabular-nums text-foreground';
+
+// The floating progress card (Andre, 2026-11-16): the All titles card and an
+// open guide's card share one anatomy, on desktop (top right) and phones
+// (docked at the bottom). A mini header (the name, its count, the stepper for
+// a guide, then ×), the progress under it, a rule, then the next title: its
+// poster, a kicker ("Up next" or "Next"), the title and ✓.
+export const WIDGET = 'rounded-lg border border-border bg-background/95 pt-1.5 pr-1.5 pb-2.5 pl-[13px] text-foreground shadow-sm backdrop-blur-md';
+export const W_HEAD = 'w-head flex min-h-[max(30px,1.875rem)] items-center gap-2';
+export const W_NAME = 'min-w-0 truncate text-left text-body font-semibold tracking-tight';
+export const W_COUNT = 'flex-none text-caption font-semibold tabular-nums text-muted-foreground';
+export const W_FILL = 'flex-1';
+/** The header's icon buttons (‹ › ×): borderless circles, 30px on desktop,
+ *  40px on phones, where they reach past the row rather than make it taller
+ *  (Andre, 2026-11-16: no extra space above the name). */
+const W_TOUCH = 'in-[.app.touch]:-my-[5px] in-[.app.touch]:size-[max(40px,2.5rem)]';
+export const W_BTN = cn(ROUND, 'size-[max(30px,1.875rem)] text-title', W_TOUCH);
+export const W_CLOSE = cn('cb-close', ROUND, DIM, 'size-[max(30px,1.875rem)] text-heading in-[.app.touch]:text-title', W_TOUCH);
+export const W_BAR = 'mt-1 mr-[7px] block';
+export const W_RULE = 'w-rule my-2.5 mr-[7px] h-px bg-border';
+export const W_ROW = 'w-row flex items-center gap-2.5 pr-1';
+export const W_POSTER = 'h-[54px] w-9 flex-[0_0_36px] rounded-[5px]';
+export const W_TEXT = 'flex min-w-0 flex-1 flex-col gap-px rounded-md text-left';
+export const W_KICKER = 'truncate text-label font-medium text-muted-foreground';
+export const W_TITLE = 'truncate text-body font-semibold text-foreground';
+/** ✓: 38px on desktop, 44px on phones. */
+export const W_TSA = 'static flex-none flex-row [transform:none] [&_.tsa-btn]:size-[max(38px,2.375rem)] in-[.app.touch]:[&_.tsa-btn]:size-[max(44px,2.75rem)] [&_.tsa-btn.watch]:hidden [&_.tsa-gap]:hidden';
 
 /** The character's face, ringed in the character's colour. */
-export const PHOTO = 'cb-photo inline-flex flex-none items-center justify-center overflow-hidden rounded-full text-xs font-bold text-[#0a0c14] shadow-[0_0_0_2px_var(--char-color,var(--primary))] [&_img]:block [&_img]:size-full [&_img]:object-cover';
+export const PHOTO = 'cb-photo inline-flex flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold text-[#0a0c14] shadow-[0_0_0_2px_var(--char-color,var(--brand))] [&_img]:block [&_img]:size-full [&_img]:object-cover';
 
 /** A segmented group of plain buttons (`on` marks the chosen one) in the tab
  *  list's look; with a SegPill as its first child the pill carries the
  *  chosen look and slides. */
 export const SEGMENTED = 'segmented relative inline-flex flex-none items-stretch rounded-lg bg-muted p-[3px]';
-export const SEGMENT = 'relative z-1 flex cursor-pointer items-center rounded-md px-[13px] text-sm font-medium whitespace-nowrap text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 [&.on]:text-foreground';
+export const SEGMENT = 'relative z-1 flex cursor-pointer items-center rounded-md px-[13px] text-body font-medium whitespace-nowrap text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 [&.on]:text-foreground';
 
 // The pinned character's banner under the toolbar (desktop). It stops before
 // the open drawer, so the bar looks the same whether the character is hovered
 // or pinned.
-export const BANNER = 'char-banner flex flex-wrap items-center gap-3 border-b bg-muted/50 px-[22px] py-2 text-sm shadow-[inset_3px_0_0_var(--char-color,var(--primary))] in-[.app:not(.touch).drawer-open]:pr-[402px]';
-export const BANNER_WHO = 'cb-who mr-auto flex min-w-0 flex-col [&_b]:truncate [&_b]:text-base [&_b]:font-medium [&_b]:text-foreground';
-export const BANNER_SUB = 'cb-sub truncate text-(length:--fs-xs) text-muted-foreground';
-export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-[7px] px-3 text-sm whitespace-nowrap');
+export const BANNER = 'char-banner flex flex-wrap items-center gap-3 border-b bg-muted/50 px-[22px] py-2 text-body shadow-[inset_3px_0_0_var(--char-color,var(--brand))] in-[.app:not(.touch).drawer-open]:pr-[402px]';
+export const BANNER_WHO = 'cb-who mr-auto flex min-w-0 flex-col [&_b]:truncate [&_b]:text-heading [&_b]:font-medium [&_b]:text-foreground';
+export const BANNER_SUB = 'cb-sub truncate text-caption text-muted-foreground';
+export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-[7px] px-3 text-body whitespace-nowrap');
 
 // The pinned character on phones: a pill floating above the bottom bar. With
 // Share in it, the name gets back what
@@ -63,9 +89,9 @@ export const PILL_WHO = 'cp-who flex min-w-0 flex-auto items-center gap-[9px] pr
 export const PILL_PHOTO = cn(PHOTO, 'size-[38px] in-[.char-pill:has(.cb-share)]:size-[34px] group-data-[fit=1]/pill:size-[30px] group-data-[fit=2]/pill:size-[30px]');
 // The name fits by measuring (fitCharPill in app.tsx): tighter gaps and a
 // smaller photo first (data-fit 1), then two lines (2), never cut short.
-export const PILL_NAME = 'cp-name truncate text-sm font-medium text-foreground group-data-[fit=2]/pill:line-clamp-2 group-data-[fit=2]/pill:whitespace-normal';
-export const PILL_ACTOR = 'cp-actor truncate text-(length:--fs-xs) text-muted-foreground';
-export const PILL_GUIDE = cn('cp-guide', ROUND, 'size-[max(38px,2.375rem)] bg-[color-mix(in_oklab,var(--primary)_16%,transparent)] active:bg-[color-mix(in_oklab,var(--primary)_28%,transparent)]');
+export const PILL_NAME = 'cp-name truncate text-body font-medium text-foreground group-data-[fit=2]/pill:line-clamp-2 group-data-[fit=2]/pill:whitespace-normal';
+export const PILL_ACTOR = 'cp-actor truncate text-caption text-muted-foreground';
+export const PILL_GUIDE = cn('cp-guide', ROUND, 'size-[max(38px,2.375rem)] bg-[color-mix(in_oklab,var(--brand)_16%,transparent)] active:bg-[color-mix(in_oklab,var(--brand)_28%,transparent)]');
 /** Share in the pill: the stepper's borderless circle. */
 export const PILL_SHARE = 'cb-share size-[max(38px,2.375rem)] rounded-full border-0 bg-transparent shadow-none active:bg-foreground/8 dark:bg-transparent';
 export const BANNER_SHARE = 'cb-share size-[max(32px,2rem)]';

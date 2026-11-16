@@ -198,12 +198,12 @@ const CANVAS = () => {
       const next = (window.MCU_GUIDE.next(window.MCU_GUIDE.get('infinity-saga'), false, () => 'none') || {}).id;
       const card = document.querySelector(`.card[data-id="${next}"]`).getBoundingClientRect();
       const vp = document.querySelector('.viewport').getBoundingClientRect(), dock = document.querySelector('.g-dock').getBoundingClientRect();
-      return { next, sub: (document.querySelector('.g-dock .g-dock-sub') || {}).textContent, seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen'),
+      return { next, sub: (document.querySelector('.g-dock .g-dock-next .gm-ntitle') || {}).textContent, seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen'),
         segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-mrow'), meter: !!document.querySelector('.spatial-overall'),
         cx: Math.round(card.left + card.width / 2 - innerWidth / 2), inView: card.top >= vp.top && card.bottom <= dock.top + 1, readable: card.width >= 140 };
     });
     out.phoneDock = d;
-    expect(d.sub === 'Next: Iron Man' && d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
+    expect(d.sub === 'Iron Man' && d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
     expect(Math.abs(d.cx) < 4 && d.inView && d.readable, `phone guide not framed on its next stop: ${JSON.stringify(d)}`);
     // The zoom control rests hidden and shows while zooming (a double-tap here).
     const z0 = await page.evaluate(() => document.querySelector('.zoom-ctl').classList.contains('rest'));

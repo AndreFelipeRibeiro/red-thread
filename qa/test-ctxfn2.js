@@ -1,4 +1,5 @@
 const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
+const { setColl } = require('./coll');
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
@@ -14,18 +15,18 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   out.dInitial = await bar();
   await page.fill('.search-wrap input', 'man');
   // Type is in Filters; Explore has no collection switch (it lives in My list).
-  await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .tb-type-controls button').nth(1).click();
-  await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
+  await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop [data-type="film"]').click();
+  await page.locator('.filters-pop [data-phase="3"]').click();
   await page.keyboard.press('Escape'); await page.waitForTimeout(700);
   out.dFiltered = await bar();
   out.dUndimmedCards = await page.evaluate(() => document.querySelectorAll('.card:not(.coll-dim)').length);
   await page.locator('.ctx-chip', { hasText: 'Films' }).click(); await page.waitForTimeout(500);
   await page.click('.filters-pill:not(.g-btn)'); await page.waitForTimeout(250);
-  out.dAfterRemoveFilms = { ...(await bar()), filmsBtnOn: await page.locator('.filters-pop .tb-type-controls button.on').innerText() };
+  out.dAfterRemoveFilms = { ...(await bar()), filmsBtnOn: await page.locator('.filters-pop [data-type][aria-checked="true"]').innerText() };
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
   await page.locator('.ctx-float .ctx-clear').click(); await page.waitForTimeout(700);
   out.dAfterClearAll = { ...(await bar()), search: await page.inputValue('.search-wrap input') };
-  await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
+  await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop [data-phase="3"]').click();
   await page.keyboard.press('Escape'); await page.waitForTimeout(600);
   out.dSingleChip = await bar();
   await page.locator('.ctx-chip', { hasText: 'Phase 3' }).click(); await page.waitForTimeout(500);
@@ -39,7 +40,7 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   await page.fill('.m-searchbar input', 'man');
   await page.locator('.m-searchbar input').evaluate(el => el.blur());
-  await page.locator('.m-listbar .coll-switch button[data-coll="unseen"]').click(); await page.waitForTimeout(600);
+  await setColl(page, 'unseen'); await page.waitForTimeout(600);
   out.mFiltered = { ...(await line('.ctx-line')), rows: await page.locator('.m-lrow-open').count() };
   await page.locator('.ctx-line .ctx-clear').tap(); await page.waitForTimeout(600);
   out.mAfterClear = { ...(await line('.ctx-line')), search: await page.inputValue('.m-searchbar input') };

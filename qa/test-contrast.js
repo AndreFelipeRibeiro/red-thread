@@ -66,9 +66,9 @@ const TOKEN_PAIRS = [
   ['destructive', 'background'], ['destructive', 'card'],
   // Collection status as text, and the ink set on status and phase fills
   // (badges, the filter's phase buttons, the Seen and Watchlist buttons).
-  ['status-seen-text', 'background'], ['status-seen-text', 'card'],
+  ['seen-text', 'background'], ['seen-text', 'card'],
   ['status-watch', 'background'], ['status-watch', 'card'],
-  ['on-color', 'status-seen'], ['on-color', 'status-watch'],
+  ['seen-foreground', 'seen'], ['on-color', 'status-watch'],
   ['on-color', 'phase-1'], ['on-color', 'phase-2'], ['on-color', 'phase-3'],
   ['on-color', 'phase-4'], ['on-color', 'phase-5'], ['on-color', 'phase-6'],
 ];

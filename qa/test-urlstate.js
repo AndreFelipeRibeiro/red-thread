@@ -94,7 +94,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
   if ('order' in R.follow.sorted) errors.push('the default order for IMDb was written to the address; defaults stay out');
   await page.reload(); await require('./ready').appReady(page);
   R.follow.reloaded = await page.evaluate(() => ({
-    imdbOn: /^IMDb rating, highest first/.test((document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || ''),
+    imdbOn: /^IMDb rating · Highest first/.test((document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || ''),
     chips: [...document.querySelectorAll('.ctx-chip')].map(c => c.textContent.replace('×', '').trim()),
   }));
   if (!R.follow.reloaded.imdbOn || !R.follow.reloaded.chips.some(c => /Phase 3/.test(c))) errors.push(`a reload lost the state: ${JSON.stringify(R.follow.reloaded)}`);
@@ -162,7 +162,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
     const f = document.querySelector('button[aria-label*="Filters"], button[aria-label*="Filtros"]');
     if (!f) return { error: 'no phone Filters button' };
     f.click(); await new Promise(r => setTimeout(r, 900));
-    const chip = [...document.querySelectorAll('.m-chip')].find(c => c.textContent.trim() === '2');
+    const chip = document.querySelector('.m-sheet [data-phase="2"]');
     if (!chip) return { error: 'no Phase 2 chip' };
     chip.click(); await new Promise(r => setTimeout(r, 600));
     const close = document.querySelector('.m-sheet .m-sheet-close, .m-sheet button[aria-label*="Close"], .m-sheet button[aria-label*="Fechar"]');

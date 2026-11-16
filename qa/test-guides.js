@@ -80,7 +80,9 @@ const DATA = () => {
       if (!ids.has(s.id)) errs.push(`${g.id}: stop "${s.id}" is not a title`);
       if (stopIds.has(s.id)) errs.push(`${g.id}: stop "${s.id}" appears twice`);
       stopIds.add(s.id);
-      if (['essential', 'optional'].indexOf(s.weight) === -1) errs.push(`${g.id}/${s.id}: weight "${s.weight}"`);
+      // Every stop is essential since optional stops were dropped (Andre,
+      // 2026-11-16: a guide is the titles that matter for its storyline).
+      if (s.weight !== 'essential') errs.push(`${g.id}/${s.id}: weight "${s.weight}" (guides have no optional stops)`);
       langs.forEach(l => { if (!s.why || !s.why[l] || s.why[l].length < 8) errs.push(`${g.id}/${s.id}: no reason in ${l}`); });
       const t = window.TITLES.find(x => x.id === s.id);
       if (t && !g.order && t.release < last) errs.push(`${g.id}: ${s.id} is out of release order`);
@@ -340,7 +342,9 @@ const DATA = () => {
   const sp = await page.evaluate(() => ({
     badges: [...document.querySelectorAll('.card-gnum')].map(b => b.textContent),
     route: document.querySelectorAll('.guide-route path').length,
-    meter: (document.querySelector('.g-module.spatial .gm-meter') || {}).textContent || '',
+    // The meter is drawn (its count sits in the card's mini header since the
+    // compact card); it names its progress in aria-label.
+    meter: (() => { const m = document.querySelector('.g-module.spatial .gm-meter'); return m ? (m.getAttribute('aria-label') || m.textContent || '') : ''; })(),
     overall: !!document.querySelector('.spatial-overall'),
   }));
   out.spatial = sp;

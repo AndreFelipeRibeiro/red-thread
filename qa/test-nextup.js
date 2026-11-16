@@ -1,5 +1,6 @@
 const QA_PORT = +process.env.PORT || 8224; // regress/quick give each check its own port
 const { chromium } = require('playwright');
+const { setColl } = require('./coll');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -175,11 +176,11 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   //    Up next returns.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({})));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(700);
+  await setColl(page, 'watchlist'); await page.waitForTimeout(700);
   r = await page.evaluate(() => ({ upnext: !!document.querySelector('.un-mrow'), row: !!document.querySelector('.m-lrow.up-next') }));
   out.watchEmpty = r;
   if (r.upnext || r.row) err(`the empty Watchlist suggests something: ${JSON.stringify(r)}`);
-  await page.locator('.coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(700);
+  await setColl(page, 'all'); await page.waitForTimeout(700);
   if (!(await page.evaluate(() => !!document.querySelector('.spatial-overall .un-mrow')))) err('Up next did not come back on All');
   errors.forEach(e => err('watchlist console: ' + e));
   await ctx.close();
@@ -228,7 +229,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   // Titles has the compact card too (Notion "Titles 3/5"), bottom right: a
   // new visitor's Up next is the first title out.
   r = await page.evaluate(() => ({ title: (document.querySelector('.dlist .spatial-overall .un-title') || {}).textContent || null, region: !!document.querySelector('.dlist .spatial-overall section.un-mrow[aria-label]'),
-    pick: !!document.querySelector('.toolbar .ml-status .ml-pick') }));
+    pick: !!document.querySelector('.toolbar .ml-pick') }));
   if (r.title !== name(out.expect.release) || !r.region || !r.pick) err(`desktop List card, new visitor: ${JSON.stringify(r)}`);
   await page.goto(URL + '?view=spatial'); await settle(page);
   await page.locator('.spatial-overall .un-open').click(); await page.waitForTimeout(1500);
@@ -266,6 +267,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
         nearHead: box ? Math.round(box.top - dl.top) : null };
     });
     const pick = async (fn) => { await page.evaluate(fn); await page.waitForTimeout(1300); return mark(); };
+    const pickColl = async (k) => { await setColl(page, k); await page.waitForTimeout(1300); return mark(); };
     const firstUnseen = (list) => (list.find(t => !isSeen(t)) || {}).id;
     r = await mark();
     out.deskList = { release: r };
@@ -273,7 +275,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
     if (!r.pill || !r.bar || r.button !== 'Mark seen') err(`the Up next row lacks its pill, bar or "Mark seen": ${JSON.stringify(r)}`);
     if (!r.scrolled || !r.underHead || Math.abs(r.nearHead - 168) > 3) err(`the List did not open scrolled to Up next under the header: ${JSON.stringify(r)}`);
     // Orders come from the header's Sort menu, as on Connections.
-    r = await page.evaluate(async () => { document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(res => setTimeout(res, 300)); document.querySelector('.sort-menu-pop [data-sort="release"][data-dir="desc"]').click(); }).then(() => page.waitForTimeout(1300)).then(mark);
+    r = await page.evaluate(async () => { document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(res => setTimeout(res, 300)); document.querySelector('.sort-menu-pop [data-order="desc"]').click(); await new Promise(res => setTimeout(res, 200)); document.querySelector('.toolbar .sort-menu-trigger').click(); }).then(() => page.waitForTimeout(1300)).then(mark);
     out.deskList.newest = r;
     const newest = firstUnseen(byRelease.slice().reverse());
     if (r.ids.join() !== newest) err(`Release date, newest first: Up next ${r.ids.join()}, expected ${newest}`);
@@ -284,13 +286,13 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
     out.deskList.imdb = r;
     if (r.ids.join() !== firstUnseen(byImdb)) err(`IMDb: Up next ${r.ids.join()}, expected ${firstUnseen(byImdb)}`);
     r = await page.evaluate(async () => { document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(res => setTimeout(res, 300)); document.querySelector('.sort-menu-pop [data-sort="release"][data-dir="asc"]').click(); }).then(() => page.waitForTimeout(1300)).then(mark);
-    r = await pick(() => document.querySelector('.ml-status .coll-switch button[data-coll="watchlist"]').click());
+    r = await pickColl('watchlist');
     out.deskList.watchlist = r;
     const firstWatch = byRelease.find(t => watchIds.includes(t.id)).id;
     if (r.ids.join() !== firstWatch) err(`Watchlist tab: Up next ${r.ids.join()}, expected its first title ${firstWatch}`);
-    r = await pick(() => document.querySelector('.ml-status .coll-switch button[data-coll="seen"]').click());
+    r = await pickColl('seen');
     if (r.ids.length) err(`the Seen tab marks ${r.ids.join()} as Up next`);
-    r = await pick(() => document.querySelector('.ml-status .coll-switch button[data-coll="all"]').click());
+    r = await pickColl('all');
     // Marking it seen moves the mark to the next unseen title.
     await page.locator('.dl-table .dl-row.up-next .tsa-next').click(); await page.waitForTimeout(1200);
     r = await mark();
@@ -335,7 +337,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
     const row = await page.evaluate(() => (document.querySelector('.dl-table .dl-row.up-next') || { dataset: {} }).dataset.rowId || null);
     if (!r || !r.inList || r.next !== name(byRelease[6].id) || row !== byRelease[6].id) err(`Titles: the card says ${r && r.next} (in the list: ${r && r.inList}) and the list marks ${row}; expected ${byRelease[6].id}`);
     // ✕ dismisses the card, on both views, and the list still marks Up next.
-    await page.locator('.dlist .spatial-overall .un-mrow .un-hide').click(); await page.waitForTimeout(500);
+    await page.locator('.dlist .spatial-overall .un-hide').click(); await page.waitForTimeout(500);
     r = await page.evaluate(() => ({ card: !!document.querySelector('.spatial-overall'), row: (document.querySelector('.dl-table .dl-row.up-next') || { dataset: {} }).dataset.rowId || null }));
     out.widget.dismissed = r;
     if (r.card || r.row !== byRelease[6].id) err(`after ✕ in Titles: ${JSON.stringify(r)}`);
@@ -352,7 +354,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   await page.goto(URL + '?view=list'); await settle(page);
   r = await page.evaluate(() => { const t = document.querySelector('.spatial-overall .un-tag'); return { tag: t && t.textContent, tip: t && t.getAttribute('title'), hide: (document.querySelector('.spatial-overall .un-hide') || { getAttribute: () => null }).getAttribute('aria-label') }; });
   out.pt = r;
-  if (r.tag !== 'A seguir' || !/^A seguir · ordem de lançamento/.test(r.tip || '') || r.hide !== 'Ocultar A seguir por enquanto') err(`Portuguese reads "${r.tag}" / "${r.tip}" / "${r.hide}"`);
+  if (r.tag !== 'A seguir' || !/^A seguir · ordem de lançamento/.test(r.tip || '') || r.hide !== 'Ocultar este cartão por enquanto') err(`Portuguese reads "${r.tag}" / "${r.tip}" / "${r.hide}"`);
   await ctx.close();
 
   console.log(JSON.stringify(out, null, 1));

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import type { SharePayload } from './share';
 
 // The share card (Notion V4 Tasks, "Share 2/3"). A link can't carry someone's
@@ -69,10 +69,10 @@ function ShareImageBody({ req, touch }: { req: ShareImageRequest; touch: boolean
   };
   return (
     <div className="share-image flex flex-col gap-4 text-foreground">
-      <h2 id="share-image-title" className="share-image-title pr-9 text-lg font-semibold tracking-tight">{req.heading}</h2>
+      <h2 id="share-image-title" className="share-image-title pr-9 text-title font-semibold tracking-tight">{req.heading}</h2>
       <div className="share-image-frame mx-auto flex aspect-[4/5] h-[min(52vh,500px)] max-w-full items-center justify-center overflow-hidden rounded-xl border bg-muted [&_img]:block [&_img]:size-full [&_img]:object-contain" aria-busy={!url && !failed}>
         {url ? <img src={url} alt={req.alt} width={1080} height={1350}/>
-          : <span className="share-image-wait px-6 text-center text-sm text-muted-foreground" role="status">{tr(failed ? 'share.imageFailed' : 'share.imageLoading')}</span>}
+          : <span className="share-image-wait px-6 text-center text-body text-muted-foreground" role="status">{tr(failed ? 'share.imageFailed' : 'share.imageLoading')}</span>}
       </div>
       <div className="share-image-actions flex flex-wrap gap-2">
         {canShareFile && (

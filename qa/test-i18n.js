@@ -1,6 +1,7 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
 const QA_PORT = +process.env.PORT || 8186; // regress/quick give each check its own port
 const { chromium } = require('playwright');
+const { setColl } = require('./coll');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -86,9 +87,9 @@ const scan = (list) => (() => {
       await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan()));
       await page.locator('.sort-menu-pop [data-sort="title"][data-dir="asc"]').click(); await page.waitForTimeout(400);
       out[name].azFirst = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].slice(0, 4).map(e => e.textContent));
-      await page.locator('.coll-switch button[data-coll="watchlist"]').click(); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
+      await setColl(page, 'watchlist'); await page.waitForTimeout(300); texts.push(...await page.evaluate(scan()));
       await page.screenshot({ path: path.join(S, 'shots', 'pt-mobile-list.png') });
-      await page.locator('.coll-switch button[data-coll="all"]').click();
+      await setColl(page, 'all');
       await page.locator('.m-tab[data-section="explore"]').click(); await page.waitForTimeout(700); texts.push(...await page.evaluate(scan()));
     } else {
       await page.locator('.filters-pill:not(.g-btn)').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape');

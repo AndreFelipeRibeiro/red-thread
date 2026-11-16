@@ -14,13 +14,13 @@
 //
 // Class names the QA checks read are kept as hooks (`m-appbar`, `m-searchrow`,
 // `m-searchbar`, `m-search-btn`, `m-toolrow`, `m-fpill`, `m-fcount`, `m-tabs`,
-// `m-tab`, `m-listbar`, `on`, `m-chip`, `m-flab`, `m-apply`…).
+// `m-tab`, `on`, `m-chip`, `m-flab`, `m-apply`…).
 import React from 'react';
 import { flushSync } from 'react-dom';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { SortMenu, CollectionSwitch } from './header-controls';
+import { SortMenu, FiltersPanel, StatusCounts, PickerButton } from './header-controls';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
@@ -44,20 +44,19 @@ export interface MobileTopBarProps {
   onOpenAccount: () => void;
   onOpenSettings?: () => void;
   guideActive: boolean;
-  /** The header's second row: Titles' collection tabs (MyListBar), pinned
-   *  with the header as on desktop (Notion "Titles 4/5"). */
-  subNav?: React.ReactNode;
+  /** The status filter, for the Seen and Watchlist pills. */
+  collection: string;
+  setCollection: (v: string) => void;
 }
 
 // The phone header (Notion "Phone: bottom bar becomes Explore, My list and
 // Guides"): the wordmark, then search, Settings and Account as icon buttons;
 // under it one toolbar row for Explore and My list: Sort and Filters, plus
-// "Mark what you've seen" in Titles; then, in Titles, the status tabs
-// (`subNav`). Search opens in place of the toolbar row (the suggestions list
+// the Seen and Watchlist pills and "Mark what you've seen". Search opens in place of the toolbar row (the suggestions list
 // spans it) and a ✕ closes it; it stays open while there is text. Guides has
 // no toolbar row.
 // An open guide on the canvas dims Filters (GuideOff); Sort still arranges it.
-export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, guideActive, subNav }: MobileTopBarProps) {
+export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, guideActive, collection, setCollection }: MobileTopBarProps) {
   const { lang } = window.useI18n();
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState<HTMLDivElement | null>(null);
@@ -70,10 +69,14 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
   // its label doesn't fit (Portuguese, small phones, large text) it becomes
   // an icon button, its label kept for screen readers (step 1); at 320px the
   // row's gaps tighten too (step 2), and at a large text size Filters becomes
-  // an icon button as well (step 3; its name and count stay in aria-label).
-  const picker = section === 'mylist' && !!window.MCU_openPicker;
+  // an icon button as well (step 3; its name and count stay in aria-label);
+  // Sort keeps its icon (step 4), and the count pills narrow (step 5:
+  // Portuguese at Large text, 320px).
   const toolRow = React.useRef<HTMLDivElement | null>(null);
-  window.useFitSteps(toolRow, 4, [lang, section, sort, filterCount, picker, open]);
+  // The pills' counts widen the row once the collection loads, so the row
+  // fits again when they change.
+  const { progress } = window.useCollection() as unknown as { progress: { seenTotal: number; watchlist: number } };
+  window.useFitSteps(toolRow, 5, [lang, section, sort, filterCount, collection, open, progress.seenTotal, progress.watchlist]);
   // The field is drawn and focused inside the tap itself: iPhones only bring
   // up the keyboard for focus given during the gesture.
   const openSearch = () => {
@@ -90,7 +93,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
         <a className="m-brandrow flex min-w-0 flex-[1_1_auto] items-center gap-2.5 rounded-lg text-inherit no-underline outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-3 focus-visible:ring-ring/50"
           href="/" onClick={onHome} aria-label={tr('home.link')}>
           <span className="m-mark logo-mark h-[28px] w-[15px] flex-[0_0_15px]" aria-hidden="true"/>
-          <h1 className="m-btitle m-0 overflow-hidden text-[15px] leading-[1.15] font-semibold tracking-tight text-ellipsis whitespace-nowrap">
+          <h1 className="m-btitle m-0 overflow-hidden text-body leading-[1.15] font-semibold tracking-tight text-ellipsis whitespace-nowrap">
             <span className="logo-word h-[21px] w-[111px]" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span>
           </h1>
         </a>
@@ -110,34 +113,30 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
             {/* Drawn at 13px while the field's own font stays at least 16px, or
                 iPhones zoom the page when it takes focus (13.8px at Large;
                 Andre, 2026-11-02). */}
-            <div className="m-search-input relative h-6 min-w-0 flex-1 [&_input]:absolute [&_input]:inset-y-0 [&_input]:left-0 [&_input]:h-6 [&_input]:w-[123.076923%] [&_input]:origin-left [&_input]:scale-[.8125] [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-[length:max(16px,calc(var(--fs-base)*var(--fs-chrome-scale,1)))] [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
+            <div className="m-search-input relative h-6 min-w-0 flex-1 [&_input]:absolute [&_input]:inset-y-0 [&_input]:left-0 [&_input]:h-6 [&_input]:w-[123.076923%] [&_input]:origin-left [&_input]:scale-[.8125] [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-[length:max(16px,calc(var(--fs-heading)*var(--fs-chrome-scale,1)))] [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
               <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
                 ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={searchRow}/>
             </div>
           </div>
-          <Button variant="ghost" className="m-clear h-11 shrink-0 px-2.5 text-sm" onClick={() => { setSearch(''); setSearching(false); }}>{tr('search.done')}</Button>
+          <Button variant="ghost" className="m-clear h-11 shrink-0 px-2.5 text-body" onClick={() => { setSearch(''); setSearching(false); }}>{tr('search.done')}</Button>
         </div>
       ) : tools && (
-        <div ref={toolRow} className="m-toolrow group/toolrow flex min-w-0 items-center gap-2 data-[fit=2]:gap-1 data-[fit=3]:gap-1 data-[fit=4]:gap-1 data-[fit=4]:[&_.sort-menu-trigger]:gap-1.5 data-[fit=4]:[&_.sort-menu-trigger]:px-2.5 data-[fit=4]:[&_.sort-menu-trigger>svg:last-child]:hidden">
+        <div ref={toolRow} className="m-toolrow group/toolrow flex min-w-0 items-center gap-2 data-[fit=2]:gap-1 data-[fit=3]:gap-1 data-[fit=4]:gap-1 data-[fit=5]:gap-1 data-[fit=4]:[&_.sort-menu-trigger]:gap-1.5 data-[fit=5]:[&_.sort-menu-trigger]:gap-1.5 data-[fit=4]:[&_.sort-menu-trigger]:px-2.5 data-[fit=5]:[&_.sort-menu-trigger]:px-2.5 data-[fit=4]:[&_.sort-menu-trigger>svg:last-child]:hidden data-[fit=5]:[&_.sort-menu-trigger>svg:last-child]:hidden data-[fit=4]:[&_.sort-menu-label]:hidden data-[fit=5]:[&_.sort-menu-label]:hidden">
           <SortMenu sort={sort} sortDir={sortDir} onChange={(k, d) => { setSort(k); setSortDir(d); }} mobile/>
           <Off off={guideActive && section === 'explore'}>
-            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-xs text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0', filterCount && 'act bg-muted dark:bg-input/50')}
+            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-label text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=5]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0 group-data-[fit=5]/toolrow:px-0', filterCount && 'act bg-muted dark:bg-input/50')}
               onClick={onOpenFilters} aria-label={filterCount ? tr('filters.aria', { n: filterCount }) : tr('filters.title')} title={tr('filters.title')}>
               <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              <span className="group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only">{tr('filters.title')}</span>
-              {filterCount ? <span className="m-fcount absolute tabular-nums -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-primary px-1 text-xs font-bold text-primary-foreground">{filterCount}</span> : null}
+              <span className="group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only group-data-[fit=5]/toolrow:sr-only">{tr('filters.title')}</span>
+              {filterCount ? <span className="m-fcount absolute tabular-nums -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-primary px-1 text-label font-bold text-primary-foreground">{filterCount}</span> : null}
             </Button>
           </Off>
-          {picker && (
-            <Button variant="outline" className="m-pick ml-auto h-11 gap-1.5 px-3 text-xs font-medium text-(--status-seen-text) hover:text-(--status-seen-text) group-data-[fit=1]/toolrow:w-11 group-data-[fit=1]/toolrow:px-0 group-data-[fit=2]/toolrow:w-11 group-data-[fit=2]/toolrow:px-0 group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0"
-              onClick={() => window.MCU_openPicker && window.MCU_openPicker()} title={tr('picker.open')}>
-              <svg className="size-[15px]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>
-              <span className="group-data-[fit=1]/toolrow:sr-only group-data-[fit=2]/toolrow:sr-only group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only">{tr('picker.open')}</span>
-            </Button>
-          )}
+          {/* The Seen and Watchlist pills and "Mark what you've seen", in
+              every section (Notion "Universal status pills"). */}
+          <StatusCounts phone value={collection} onChange={setCollection}/>
+          <PickerButton phone/>
         </div>
       )}
-      {subNav}
     </div>
   );
 }
@@ -171,43 +170,14 @@ export function MobileNavBar({ section, onSection, onReselect }: { section: Phon
       <nav className="m-tabs relative z-30 flex flex-[0_0_auto] items-stretch border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,8px)] backdrop-blur-md" aria-label={tr('nav.aria')}>
         {(['explore', 'mylist', 'guides'] as PhoneSection[]).map((v) => (
           <button key={v} type="button" data-section={v} aria-current={section === v ? 'page' : undefined}
-            className={cn('m-tab flex min-h-[60px] flex-1 cursor-pointer flex-col items-center justify-center gap-[5px] border-0 bg-transparent px-0.5 pt-2.5 pb-2 text-[length:max(12px,calc(var(--fs-xs)*var(--fs-chrome-scale,1)))] leading-[1.3] font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [-webkit-tap-highlight-color:transparent]',
-              section === v && 'on text-primary')}
+            className={cn('m-tab flex min-h-[60px] flex-1 cursor-pointer flex-col items-center justify-center gap-[5px] border-0 bg-transparent px-0.5 pt-2.5 pb-2 text-[length:max(12px,calc(var(--fs-caption)*var(--fs-chrome-scale,1)))] leading-[1.3] font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [-webkit-tap-highlight-color:transparent]',
+              section === v && 'on text-(--brand)')}
             onClick={() => { if (section === v) { if (onReselect && onReselect(v)) return; if (v !== 'explore') scrollListToTop(); } else onSection(v); }}>
             <svg className="size-[22px]" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{NAV_ICONS[v]}</svg>
             {tr('nav.' + v)}
           </button>
         ))}
       </nav>
-    </div>
-  );
-}
-
-// My list's own bar on phones: the collection tabs, the header's second row
-// (Notion "Titles 4/5"; "Mark what you've seen" moved up into the toolbar
-// row). Hook: `m-listbar`.
-//
-// Portuguese labels are much longer than English ones (Notion "Top nav (PT) /
-// content overflowing"), so the row tries each step and keeps the first that
-// fits (useFitSteps), in any language and at any text size:
-//   0  every label;  1  (no change; the view menu's old step);  2  the switch
-//   shows only "All" and the selected option's label;  3  "Para ver" in place
-//   of "Para assistir" (Andre's approval);  4  tighter tabs, the selected
-//   one with its icon and count only (a large text size at 320px). The steps are CSS keyed on the row (group/viewrow).
-export function MyListBar({ collection, setCollection }: {
-  collection: string; setCollection: (v: string) => void;
-}) {
-  const { lang } = window.useI18n();
-  // The tabs' counts widen the row as the collection loads and changes (the
-  // row sits in the header now, mounted before the collection arrives), so
-  // they are measured again whenever the counts change.
-  const { states } = window.useCollection() as unknown as { states: Record<string, string> };
-  const counts = Object.values(states || {}).reduce((a, v) => a + (v === 'seen' ? 1 : v === 'watchlist' ? 1000 : 0), 0);
-  const row = React.useRef<HTMLDivElement | null>(null);
-  const fit = window.useFitSteps(row, 4, [lang, collection, counts]);
-  return (
-    <div ref={row} className="m-listbar group/viewrow flex min-w-0 items-center gap-2" data-fit={fit}>
-      <CollectionSwitch value={collection} onChange={setCollection} variant="compact" short={fit >= 3}/>
     </div>
   );
 }
@@ -221,12 +191,12 @@ function ChipGroup({ label, value, onChange, items }: {
 }) {
   return (
     <div className="mb-[17px]">
-      <div className="m-flab mb-[9px] text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="m-flab mb-[9px] text-label font-medium text-muted-foreground">{label}</div>
       <ToggleGroup value={[value]} onValueChange={(v: unknown[]) => { if (v.length) onChange(String(v[v.length - 1])); }}
         aria-label={label} className="flex w-auto flex-wrap gap-[7px]">
         {items.map((it) => (
           <ToggleGroupItem key={it.value} value={it.value} variant="outline" style={it.style}
-            className={cn('m-chip h-auto min-h-10 px-3.5 text-sm font-medium text-muted-foreground aria-pressed:text-foreground dark:aria-pressed:bg-input/50', value === it.value && 'on', it.className)}>
+            className={cn('m-chip h-auto min-h-10 px-3.5 text-body font-medium text-muted-foreground aria-pressed:text-foreground dark:aria-pressed:bg-input/50', value === it.value && 'on', it.className)}>
             {it.content}
           </ToggleGroupItem>
         ))}
@@ -236,6 +206,7 @@ function ChipGroup({ label, value, onChange, items }: {
 }
 
 export interface FilterSheetProps {
+  collectionFilter?: string; setCollectionFilter?: (v: string) => void;
   phaseFilter: string; setPhaseFilter: (v: string) => void;
   typeFilter: string; setTypeFilter: (v: string) => void;
   budgetFilter: string; setBudgetFilter: (v: string) => void;
@@ -245,36 +216,18 @@ export interface FilterSheetProps {
   onClear: () => void;
 }
 
-// The Filters sheet: the phone's Filters panel. The sheet frame (handle,
-// swipe, Back, focus trap) is the shared `Sheet` in mobile.tsx; the contents
-// are on the design system.
-export function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, onClose, showing, onClear }: FilterSheetProps) {
+// The Filters sheet: the phone's Filters panel, the same FiltersPanel as
+// desktop (Notion "Rethink the Filters menu", option A), its footer the
+// button that closes the sheet ("Show 11 titles"). The sheet frame (handle,
+// swipe, Back, focus trap) is the shared `Sheet` in mobile.tsx.
+export function FilterSheet({ collectionFilter, setCollectionFilter, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, onClose, showing }: FilterSheetProps) {
   const Sheet = window.Sheet;
-  const MPHASE_COLORS = window.MPHASE_COLORS as Record<string, string>;
+  const f = { collectionFilter, setCollectionFilter, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter };
   return (
     <Sheet onClose={onClose} tall label={tr('filters.title')}>
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <div className="text-lg font-semibold tracking-tight">{tr('filters.title')}</div>
-          <Button variant="ghost" className="-m-2 h-auto p-2 text-sm" onClick={onClear}>{tr('filters.clearAll')}</Button>
-        </div>
-        <ChipGroup label={tr('filters.phase')} value={phaseFilter} onChange={setPhaseFilter}
-          items={['all', '1', '2', '3', '4', '5', '6'].map((p) => ({
-            value: p,
-            content: p === 'all' ? tr('filters.all') : p,
-            className: 'ph min-w-[46px] justify-center font-semibold tabular-nums',
-            style: p !== 'all' && phaseFilter === p ? { background: MPHASE_COLORS[p], borderColor: MPHASE_COLORS[p], color: 'var(--on-color)' } : undefined,
-          }))}/>
-        <ChipGroup label={tr('filters.type')} value={typeFilter} onChange={setTypeFilter}
-          items={[['all', 'type.all'], ['film', 'type.films'], ['series', 'type.series']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-        <ChipGroup label={tr('filters.budget')} value={budgetFilter} onChange={setBudgetFilter}
-          items={[['all', 'filters.all'], ['low', 'budget.low'], ['mid', 'budget.mid'], ['high', 'budget.high'], ['mega', 'budget.mega']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-        <ChipGroup label={tr('filter.release')} value={releaseFilter} onChange={setReleaseFilter}
-          items={[['all', 'filter.release.all'], ['released', 'filter.release.released']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-        <Button className="m-apply mt-1 h-auto min-h-10 w-full" onClick={onClose}>{tr('filters.show', { n: showing })}</Button>
-      </div>
+      <FiltersPanel f={f} phone showing={showing} onDone={onClose}/>
     </Sheet>
   );
 }
 
-Object.assign(window, { MobileTopBar, MobileNavBar, MyListBar, FilterSheet });
+Object.assign(window, { MobileTopBar, MobileNavBar, FilterSheet });

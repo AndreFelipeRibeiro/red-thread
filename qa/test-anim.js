@@ -1,4 +1,5 @@
 const QA_PORT = +process.env.PORT || 8192; // regress/quick give each check its own port
+const { setColl } = require('./coll');
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
@@ -29,7 +30,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   // phone
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await page.waitForTimeout(1800);
-  const coll = async (k) => { await page.locator('.coll-switch button[data-coll="' + k + '"]').tap(); return probe(page); };
+  const coll = async (k) => { await setColl(page, k); return probe(page); };
   out.mSeen = await coll('seen'); await page.waitForTimeout(900); out.mSeenAfter = await settled(page);
   out.mRows = await page.locator('.m-lrow').count();
   out.mWatch = await coll('watchlist'); await page.waitForTimeout(900);
@@ -38,7 +39,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   // Spatial is the Explore tab, the List is My list (the Grid is gone).
   const phoneView = async (page, v) => {
     if (v === 'spatial') { await page.locator('.m-tab[data-section="explore"]').click(); return; }
-    if (!(await page.locator('.m-listbar').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
+    if (!(await page.locator('.m-tab.on[data-section="mylist"]').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
   };
   const view = async (label) => { await phoneView(page, label.toLowerCase()); return probe(page); };
   await page.screenshot({ path: path.join(S, 'shots', 'anim-m-mid.png') });
@@ -51,7 +52,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await page.waitForTimeout(1800);
   await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(800);
-  const dcoll = async (k) => { await page.locator('.coll-switch button[data-coll="' + k + '"]').click(); return probe(page); };
+  const dcoll = async (k) => { await setColl(page, k); return probe(page); };
   out.dUnseen = await dcoll('unseen'); await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(S, 'shots', 'anim-d-mid.png') });
   await page.waitForTimeout(800); out.dUnseenAfter = await settled(page);

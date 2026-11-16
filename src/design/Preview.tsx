@@ -65,8 +65,8 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
+        <h2 className="text-title font-semibold tracking-tight">{title}</h2>
+        {hint && <p className="text-body text-muted-foreground">{hint}</p>}
       </div>
       {children}
     </section>
@@ -84,14 +84,15 @@ function SpatialCard({ phase = 1, seen = false }) {
         <Clapperboard className="size-8 text-muted-foreground" aria-hidden="true" />
       </div>
       <div className="p-3 space-y-2">
-        <div
-          className="font-mono text-[10px] uppercase tracking-wider"
-          style={{ color: `var(--phase-${phase})` }}
-        >
+        {/* The phase as the app shows it: a dot in its color beside plain
+            text (phase colors are not text colors; Phase 4 on dark is
+            4.21:1). */}
+        <div className="flex items-center gap-1.5 font-mono text-caption uppercase tracking-wider text-muted-foreground">
+          <span className="size-2 rounded-full" style={{ background: `var(--phase-${phase})` }} aria-hidden="true" />
           Phase {phase}
         </div>
-        <div className="text-sm font-medium leading-tight">Iron Man</div>
-        <div className="font-mono text-xs text-muted-foreground">2008 · Film</div>
+        <div className="text-body font-medium leading-tight">Iron Man</div>
+        <div className="font-mono text-label text-muted-foreground">2008 · Film</div>
         <div className="flex gap-1 pt-1">
           <Button size="xs" variant={seen ? 'default' : 'outline'} className="flex-1">
             <Check aria-hidden="true" /> Seen
@@ -118,17 +119,17 @@ function DetailsDrawer() {
           </Badge>
           <Badge variant="secondary">Film</Badge>
         </div>
-        <CardTitle className="text-xl">Iron Man</CardTitle>
+        <CardTitle className="text-title">Iron Man</CardTitle>
         <CardDescription>2008 · Directed by Jon Favreau</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-body text-muted-foreground">
           A weapons manufacturer builds an armoured suit and changes course.
           The film that starts the whole chronology.
         </p>
         <Separator />
         <div className="space-y-2">
-          <div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <div className="font-mono text-label uppercase tracking-wider text-muted-foreground">
             Cast
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -138,7 +139,7 @@ function DetailsDrawer() {
           </div>
         </div>
         <Separator />
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-body">
           <span className="inline-flex items-center gap-1 font-mono">
             <Star className="size-3.5" aria-hidden="true" /> 7.9
           </span>
@@ -158,11 +159,11 @@ function PhoneSheet() {
     <div className="w-[320px] rounded-xl border bg-popover p-1 shadow-lg">
       <div className="mx-auto my-2 h-1 w-10 rounded-full bg-border" aria-hidden="true" />
       <div className="space-y-3 p-3">
-        <div className="text-sm font-semibold">Filters</div>
+        <div className="text-body font-semibold">Filters</div>
         <Separator />
         {['Released only', 'Hide seen', 'Group by phase'].map((label, i) => (
           <div key={label} className="flex items-center justify-between py-1">
-            <span className="text-sm">{label}</span>
+            <span className="text-body">{label}</span>
             <Switch defaultChecked={i === 0} aria-label={label} />
           </div>
         ))}
@@ -182,10 +183,10 @@ export default function Preview() {
             crowded control is worse than two rows. */}
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <div className="min-w-0 basis-full sm:basis-auto">
-            <h1 className="text-base font-semibold tracking-tight">
+            <h1 className="text-heading font-semibold tracking-tight">
               Red Thread — V4 design system
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-label text-muted-foreground">
               shadcn/ui on Base UI · Vega · Neutral
             </p>
           </div>
@@ -202,12 +203,12 @@ export default function Preview() {
             {SURFACE_TOKENS.map(([bg, fg]) => (
               <div key={bg} className="rounded-lg border overflow-hidden">
                 <div
-                  className="flex h-16 items-center justify-center text-xs font-mono"
+                  className="flex h-16 items-center justify-center text-label font-mono"
                   style={{ background: `var(--${bg})`, color: `var(--${fg})` }}
                 >
                   Aa
                 </div>
-                <div className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">
+                <div className="px-2 py-1.5 font-mono text-caption text-muted-foreground">
                   --{bg}
                 </div>
               </div>
@@ -223,7 +224,7 @@ export default function Preview() {
             {PHASES.map((n) => (
               <div key={n} className="rounded-lg border overflow-hidden">
                 <div className="h-12" style={{ background: `var(--phase-${n})` }} />
-                <div className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">
+                <div className="px-2 py-1.5 font-mono text-caption text-muted-foreground">
                   --phase-{n}
                 </div>
               </div>
@@ -251,7 +252,7 @@ export default function Preview() {
         >
           <div className="flex flex-wrap items-start gap-8">
             <div className="space-y-2">
-              <div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="font-mono text-label uppercase tracking-wider text-muted-foreground">
                 Spatial card
               </div>
               <div className="flex gap-3">
@@ -260,13 +261,13 @@ export default function Preview() {
               </div>
             </div>
             <div className="space-y-2">
-              <div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="font-mono text-label uppercase tracking-wider text-muted-foreground">
                 Details drawer
               </div>
               <DetailsDrawer />
             </div>
             <div className="space-y-2">
-              <div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="font-mono text-label uppercase tracking-wider text-muted-foreground">
                 Phone sheet
               </div>
               <PhoneSheet />

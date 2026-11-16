@@ -16,7 +16,7 @@
 // `m-fx`, `m-phase-divider`, `m-glabel`, `m-grid`, `m-list`…); they carry no
 // V3 styling here any more.
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import type { Title } from '../types/catalog';
@@ -36,8 +36,8 @@ type CollectionView = {
 };
 const useCollection = () => window.useCollection() as unknown as CollectionView;
 
-/** The type scale's 12px step (--fs-xs): Tailwind's text-xs reads --fs-sm. */
-export const XS = 'text-(length:--fs-xs) leading-[1.4]';
+/** The caption role (12px), with its line height. */
+export const XS = 'text-caption leading-[1.4]';
 /** A step between foreground and muted text (V3's "dim"); AA on every surface. */
 export const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
 /** A poster thumbnail: the art fills the box. */
@@ -57,7 +57,7 @@ export const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-
 // Andre, 2026-11-16: the pills were a bit large. One small size everywhere
 // (List rows and columns, the cards' covers, the details), at the 12px floor
 // and growing only with the Large text size; tighter padding.
-const SC_TEXT = 'text-[max(12px,0.6875rem)] leading-[1.25]';
+const SC_TEXT = 'text-caption leading-[1.25]';
 const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-white/14 bg-[rgb(10,12,20)] px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
 const TAG = 'tg rounded-[2px] px-[3px] py-0 font-extrabold tracking-[.2px]';
 
@@ -108,7 +108,7 @@ type ProgressProps = {
   band?: boolean; width?: number; action?: React.ReactNode;
 };
 
-const FILL = 'bg-(--pm,var(--brand))';
+const FILL = 'bg-(--pm,var(--progress))';
 
 /** One progress header for every surface that groups titles: desktop List
  *  (phase headers and Release phase dividers), phone List and Grid, guides
@@ -137,7 +137,7 @@ export function ProgressHeader({ label, color, seen, released, upcoming, band, w
   // a phase keeps its phase colour.
   const style: Record<string, string> = {};
   if (color) style['--pm'] = color;
-  else if (released > 0 && seen >= released) style['--pm'] = 'var(--status-seen)';
+  else if (released > 0 && seen >= released) style['--pm'] = 'var(--progress-done)';
   if (width) style['--pgw'] = width + 'px';
   const styleOrNull = Object.keys(style).length ? (style as React.CSSProperties) : undefined;
   const root = (done: boolean) => cn('pgh flex min-w-0 flex-col gap-1.5', band && 'band w-full gap-[5px]', done && 'done');
@@ -197,7 +197,7 @@ export function BulkHeaderAction({ ids, group }: { ids: string[]; group: string 
   if (!n) return null;
   const anySeen = ids.some(id => states[id] === 'seen');
   return (
-    <Button type="button" variant="outline" className={cn('pgh-action ml-auto h-[max(32px,2rem)] shrink-0 px-[11px] text-xs font-medium tracking-normal normal-case')}
+    <Button type="button" variant="outline" className={cn('pgh-action ml-auto h-[max(32px,2rem)] shrink-0 px-[11px] text-label font-medium tracking-normal normal-case')}
       onClick={() => requestBulk(ids, 'seen')} aria-label={tr('bulk.header.aria', { n, group })}>
       {anySeen ? tr('bulk.header.rest', { n }) : tr('bulk.header.all')}
     </Button>
@@ -227,15 +227,15 @@ export function MatchBadge({ matchedChars, query, title }: { matchedChars?: stri
   return (
     <div className="card-match mt-1.5 flex max-w-full items-center gap-[7px] rounded-md border border-[color-mix(in_oklab,var(--match-color)_40%,transparent)] bg-[color-mix(in_oklab,var(--match-color)_14%,transparent)] py-1 pr-[7px] pl-1 in-[.card]:mt-[7px]"
       style={{ '--match-color': c.color } as React.CSSProperties} title={matchedChars.map(mid => I.charName(mid)).join(', ')}>
-      <div className="card-match-portrait flex size-[22px] flex-[0_0_22px] items-center justify-center overflow-hidden rounded-full text-[8px] font-bold text-[#0a0c14] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
+      <div className="card-match-portrait flex size-[22px] flex-[0_0_22px] items-center justify-center overflow-hidden rounded-full text-card-micro font-bold text-[#0a0c14] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
         style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
         <window.Portrait url={portrait} alt={I.charName(id)} initials={c.initials}/>
       </div>
       <div className="card-match-text min-w-0 flex-1">
-        <div className={cn('card-match-char truncate font-semibold text-(--match-color) in-[.card]:text-[10px] [&_mark.hl]:decoration-(--match-color)', XS)}>
+        <div className={cn('card-match-char truncate font-semibold text-(--match-color) in-[.card]:text-card-micro [&_mark.hl]:decoration-(--match-color)', XS)}>
           <Highlight text={I.charName(id)} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}
         </div>
-        <div className={cn('card-match-actor mt-px truncate text-muted-foreground in-[.card]:text-[9px] [&_mark.hl]:font-bold [&_mark.hl]:text-(--match-color) [&_mark.hl]:decoration-(--match-color)', XS)}>
+        <div className={cn('card-match-actor mt-px truncate text-muted-foreground in-[.card]:text-card-micro [&_mark.hl]:font-bold [&_mark.hl]:text-(--match-color) [&_mark.hl]:decoration-(--match-color)', XS)}>
           <Highlight text={credited} query={query}/>
         </div>
       </div>
@@ -250,10 +250,10 @@ type EmptyProps = { title?: string; sub?: string; mark?: React.ReactNode; action
 export function EmptyState({ title, sub, mark, action, desktop = false }: EmptyProps & { desktop?: boolean }) {
   return (
     <div className={cn(desktop ? 'dl-empty px-5 py-20' : 'm-empty flex flex-1 flex-col items-center justify-center gap-1.5 px-[30px] py-10', 'text-center')}>
-      {!desktop && <div className="m-empty-mark text-4xl text-border" aria-hidden="true">{mark || '◍'}</div>}
-      <div className={cn(desktop ? 'dl-empty-t' : 'm-empty-t', 'text-base font-semibold text-foreground')}>{title || tr('empty.title')}</div>
-      <div className={cn(desktop ? 'dl-empty-s mt-1.5 text-sm' : 'm-empty-s text-xs', 'text-muted-foreground')}>{sub || tr('empty.sub')}</div>
-      {action && <Button type="button" variant="outline" className="empty-action mt-3.5 h-auto min-h-10 px-4 text-sm font-semibold" onClick={action.run}>{action.label}</Button>}
+      {!desktop && <div className="m-empty-mark text-display text-border" aria-hidden="true">{mark || '◍'}</div>}
+      <div className={cn(desktop ? 'dl-empty-t' : 'm-empty-t', 'text-heading font-semibold text-foreground')}>{title || tr('empty.title')}</div>
+      <div className={cn(desktop ? 'dl-empty-s mt-1.5 text-body' : 'm-empty-s text-label', 'text-muted-foreground')}>{sub || tr('empty.sub')}</div>
+      {action && <Button type="button" variant="outline" className="empty-action mt-3.5 h-auto min-h-10 px-4 text-body font-semibold" onClick={action.run}>{action.label}</Button>}
     </div>
   );
 }
@@ -273,7 +273,7 @@ export const LIST = 'm-list flex flex-col gap-[9px]';
 // Watchlist are buttons too and a nested <button> is invalid HTML.
 const SURFACE = 'rounded-xl border bg-card text-left text-card-foreground shadow-sm active:border-ring';
 const WATCH = 'watch border-[color-mix(in_oklab,var(--status-watch)_75%,transparent)]';
-const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--primary))]';
+const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--brand))]';
 
 type RowProps = {
   t: Title; rank: number | null; ranked: boolean; lead: 'rt' | 'imdb'; story?: boolean;
@@ -292,47 +292,49 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
   const I = I18N();
   const { PosterArt, StoryYear, ReleaseBadge } = window;
   const dot = <span className="m-dot size-[3px] flex-[0_0_3px] rounded-[2px] bg-muted-foreground"/>;
+  // Direction B (Andre, 2026-11-16: the rows were busy): no rank (the order
+  // says it), Up next as a word at the start of the meta line, the score
+  // being sorted by in that line in place of the phase, and Seen as the one
+  // button; Watchlist is a swipe to the left (SwipeRow) or in the details.
   return (
+    <window.SwipeRow title={t}>
     <div data-flip-id={t.id} data-row-id={t.id}
       className={cn('m-lrow relative flex min-h-[78px] w-full scroll-mt-3 scroll-mb-[calc(var(--dock-h,0px)+12px)] items-center gap-2 py-2 pr-2.5 pl-2', SURFACE,
         seen && 'seen', watch && WATCH, current && CURRENT,
         upNext && 'up-next border-[color-mix(in_oklab,var(--brand)_45%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_6%,var(--card))]')}>
       {upNext && <span className="m-next-bar absolute top-3 bottom-3 left-[-1px] w-[3px] animate-[un-in_260ms_ease_both] rounded-full bg-(--brand) motion-reduce:animate-none" aria-hidden="true"/>}
       <button className="m-lrow-open flex min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => onSelect(t.id)}>
-        {ranked && <div className="m-rank w-[22px] flex-[0_0_22px] text-center text-sm font-semibold tabular-nums text-muted-foreground">{rank}</div>}
         <div className={cn('m-lthumb relative h-[60px] w-10 flex-[0_0_40px] rounded-[5px]', THUMB)}>
           <PosterArt title={t}/>
           {seen && (
-            <span className="m-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_1px_4px_rgba(0,0,0,.45)] [&_svg]:size-2.5"
+            <span className="m-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_1px_4px_rgba(0,0,0,.45)] [&_svg]:size-2.5"
               role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
           )}
         </div>
         <div className="m-ltext flex min-w-0 flex-1 flex-col items-start">
-          {upNext && (
-            <span className="m-next-pill mb-1 animate-[un-in_260ms_ease_both] rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-xs font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">
-              {tr('upnext.label')}
-            </span>
-          )}
-          <div className="m-ltitle text-sm leading-[1.3] font-semibold tracking-tight"><Highlight text={I.titleName(t)} query={search}/></div>
+          <div className="m-ltitle text-body leading-[1.3] font-semibold tracking-tight"><Highlight text={I.titleName(t)} query={search}/></div>
+          {/* Like the cards, the meta line follows the sort: "Set in" in
+              Story order, the score in a score order. */}
           <div className={cn('m-lmeta mt-0.5 flex flex-wrap items-center gap-x-[7px] gap-y-1 tabular-nums text-muted-foreground', XS)}>
+            {upNext && <>
+              <span className="m-next-pill animate-[un-in_260ms_ease_both] font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">{tr('upnext.label')}</span>
+              {dot}
+            </>}
             <span>{t.year}</span>
             {dot}
-            <span style={{ color: phaseColor(t.phase) }}>{tr('phase.label', { n: t.phase })}</span>
+            {ranked
+              ? (t[lead] != null ? <ScoreChip kind={lead} title={t} compact className="m-score"/> : <span className="m-score">{tr('score.none')}</span>)
+              : <span style={{ color: phaseColor(t.phase) }}>{tr('phase.label', { n: t.phase })}</span>}
             {story && t.story && <>{dot}<StoryYear title={t}/></>}
             <ReleaseBadge title={t} className="m-lrelease ml-1.5"/>
           </div>
-          {/* Like the cards, the row follows the sort (Andre, 2026-11-16: the
-              rows were busy): "Set in" in Story order, and the score being
-              sorted by in a score order; year and phase always. */}
-          {ranked && (t[lead] != null
-            ? <ScoreChip kind={lead} title={t} className="m-score mt-1.5"/>
-            : <span className={cn('m-score mt-1.5 text-muted-foreground', XS)}>{tr('score.none')}</span>)}
           <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
         </div>
       </button>
       <window.TitleStatusActions title={t} upNext={upNext}
-        className="m-lrow-tsa static z-auto flex-none flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(40px,2.5rem)] [&_.tsa-btn_svg]:size-4 [&_.tsa-next]:px-0 [&_.tsa-lab]:hidden [&_.tsa-gap]:order-0"/>
+        className="m-lrow-tsa static z-auto flex-none flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(40px,2.5rem)] [&_.tsa-btn_svg]:size-4 [&_.tsa-next]:px-0 [&_.tsa-lab]:hidden [&_.tsa-gap]:hidden [&:has(.tsa-btn.seen:not(.tsa-gap))_.tsa-btn.watch]:hidden"/>
     </div>
+    </window.SwipeRow>
   );
 }
 

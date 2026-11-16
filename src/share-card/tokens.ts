@@ -79,7 +79,7 @@ export function cardColors(tokens: Tokens): CardColors {
     border: t('border'),
     brand: t('brand'),
     logo: t('logo'),
-    seen: t('status-seen'),
+    seen: t('seen'),
     phases: [1, 2, 3, 4, 5, 6].map((n) => t('phase-' + n)),
   };
 }

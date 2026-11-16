@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { setColl } = require('./coll');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -232,7 +233,7 @@ const grid = page => page.evaluate(() => ({
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.lang.v1','pt-BR');"));
   await page.goto(URL + '?view=list'); await settle(page);
   // The tab's name carries its count ("Vistos, 0"), so pick it by its hook.
-  await page.locator('.coll-switch button[data-coll="seen"]').first().click().catch(() => {});
+  await setColl(page, 'seen').catch(() => {});
   await page.waitForTimeout(500);
   const empty = page.locator('.m-empty .empty-action');
   if ((await empty.count()) !== 1) err('phone Seen empty state: no picker button');

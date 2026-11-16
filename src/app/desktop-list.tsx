@@ -6,16 +6,15 @@
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { EmptyState, ScoreChip, XS, THUMB } from './list-parts';
 
 // The desktop Titles list (Notion "Titles 1/5 (desktop): the order bar,
 // sortable columns and phase groups", revised after Andre's reviews on
 // 2026-11-15): your path through the catalogue in an order you choose. The
-// header is the same as on Connections (search, Sort, Filters); Titles adds a
-// second header row with the status tabs and "Mark what you've seen"
-// (TitlesSubNav, below). The list itself: a slim header row whose columns
+// header is the same as on Connections (search, Sort, Filters, the status
+// pills; Notion "Universal status pills", 2026-11-16). The list itself: a slim header row whose columns
 // sort with one click, then the rows; nothing in it is pinned. The compact
 // card (All titles and Up next) floats in its top-right corner, as on
 // Connections.
@@ -45,11 +44,11 @@ import { EmptyState, ScoreChip, XS, THUMB } from './list-parts';
 // scroll to Up next keep exact sizes; Settings' Text size still scales them.
 const SIZE = '[--dl-cols:2.25rem_minmax(0,1fr)_7rem_5.5rem_5.5rem_max(172px,10.75rem)] [--dl-gap:1rem]'
   + ' [--dl-poster-w:40px] [--dl-poster-h:60px] [--dl-row-h:76px] [--dl-head-h-min:max(40px,2.5rem)]'
-  + ' [--dl-title:var(--fs-base)] [--dl-meta:var(--fs-sm)] [--dl-fig:var(--fs-md)] [--dl-group:var(--fs-base)] [--dl-group-pt:1.25rem]'
+  + ' [--dl-title:var(--fs-heading)] [--dl-meta:var(--fs-label)] [--dl-fig:var(--fs-body)] [--dl-group:var(--fs-heading)] [--dl-group-pt:1.25rem]'
   + ' [--dl-chip-h:max(32px,2rem)] [--dl-ctl-h:max(36px,2.25rem)] [--dl-btn:max(34px,2.125rem)] [--dl-icon:15px]'
   + ' @min-[84rem]:[--dl-cols:2.75rem_minmax(0,1fr)_8.5rem_6.5rem_6.5rem_max(196px,12.25rem)] @min-[84rem]:[--dl-gap:1.5rem]'
   + ' @min-[84rem]:[--dl-poster-w:52px] @min-[84rem]:[--dl-poster-h:78px] @min-[84rem]:[--dl-row-h:96px] @min-[84rem]:[--dl-head-h-min:max(44px,2.75rem)]'
-  + ' @min-[84rem]:[--dl-title:var(--fs-lg)] @min-[84rem]:[--dl-meta:0.875rem] @min-[84rem]:[--dl-fig:var(--fs-base)] @min-[84rem]:[--dl-group:var(--fs-lg)] @min-[84rem]:[--dl-group-pt:1.75rem]'
+  + ' @min-[84rem]:[--dl-title:var(--fs-title)] @min-[84rem]:[--dl-meta:var(--fs-body)] @min-[84rem]:[--dl-fig:var(--fs-heading)] @min-[84rem]:[--dl-group:var(--fs-title)] @min-[84rem]:[--dl-group-pt:1.75rem]'
   + ' @min-[84rem]:[--dl-chip-h:max(40px,2.5rem)] @min-[84rem]:[--dl-ctl-h:max(44px,2.75rem)] @min-[84rem]:[--dl-btn:max(40px,2.5rem)] @min-[84rem]:[--dl-icon:17px]';
 const GRID = 'grid items-center grid-cols-(--dl-cols) gap-(--dl-gap)';
 // The list's width: the heading, the controls and the rows line up. As wide
@@ -212,7 +211,7 @@ function DlSortHeader({ col, label, end = false, sort, sortDir, setSort, setSort
       <button onClick={onClick} title={tr(active ? 'list.reverse' : 'list.sortBy', { label })}
         // Right-aligned columns put the arrow first, so the label lines up
         // with the figures under it.
-        className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group/sh h-[max(28px,1.75rem)] gap-1 px-1.5 text-xs', end && 'flex-row-reverse',
+        className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group/sh h-[max(28px,1.75rem)] gap-1 px-1.5 text-label', end && 'flex-row-reverse',
           active ? 'bg-muted font-semibold text-foreground' : 'font-medium text-muted-foreground')}>
         {label}
         <span className={cn('dl-arrow inline-block w-[1ch] text-center', XS, active ? 'text-(--brand)' : 'opacity-0 group-hover/sh:opacity-45')} aria-hidden="true">
@@ -220,26 +219,6 @@ function DlSortHeader({ col, label, end = false, sort, sortDir, setSort, setSort
         </span>
       </button>
     </span>
-  );
-}
-
-// Titles' second layer, under the header (Andre, 2026-11-15: the header is
-// the same on Connections and Titles, with Sort and Filters; Titles adds this
-// row): the status tabs, and "Mark what you've seen" for marking many at once.
-// Rendered by the toolbar, pinned with it. Hooks: `ml-status`, `ml-pick`.
-function TitlesSubNav({ collection, setCollection }) {
-  const tr = window.MCU_I18N.tr;
-  window.useI18n();
-  return (
-    <div className="ml-status flex min-w-0 flex-1 items-center gap-3">
-      <window.CollectionSwitch value={collection} onChange={setCollection}/>
-      <span className="flex-1"/>
-      {window.MCU_openPicker && (
-        <Button variant="ghost" size="sm" className="ml-pick h-9 gap-1.5 px-2.5 text-xs font-medium text-(--status-seen-text) hover:text-(--status-seen-text)" onClick={() => window.MCU_openPicker()}>
-          <svg className="size-[15px]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>{tr('picker.open')}
-        </Button>
-      )}
-    </div>
   );
 }
 
@@ -261,7 +240,7 @@ function GroupHeader({ g, prog, phone = false }) {
   return (
     <div role={phone ? undefined : 'row'} className={cn('dl-group', phone && 'm-ghead [.m-group:first-child>&]:-mt-1')}>
       <span role={phone ? undefined : 'cell'} className={cn('dl-group-head flex items-center gap-2.5 font-semibold text-foreground',
-        phone ? 'pt-5 pb-2.5 text-base' : 'pt-(--dl-group-pt) pb-2.5 text-(length:--dl-group)')}>
+        phone ? 'pt-5 pb-2.5 text-heading' : 'pt-(--dl-group-pt) pb-2.5 text-(length:--dl-group)')}>
         <span className="size-2 flex-[0_0_8px] rounded-full" style={{ background: g.color || 'var(--muted-foreground)' }} aria-hidden="true"/>
         <span className="dl-group-label whitespace-nowrap">{g.label}</span>
         {has && (
@@ -271,13 +250,13 @@ function GroupHeader({ g, prog, phone = false }) {
               // plain bar past 24), so a long phase doesn't push the count off.
               <span className="dl-group-marks seg flex h-1 items-center gap-[3px]" style={{ width: prog.released <= 8 ? prog.released * 15 - 3 : 120 }}>
                 {Array.from({ length: prog.released }, (_, i) => (
-                  <span key={i} className={cn('h-full min-w-0 flex-1 rounded-[1px]', i < prog.seen ? 'on bg-(--brand)' : 'bg-[color-mix(in_oklab,var(--muted-foreground)_32%,transparent)]')}/>
+                  <span key={i} className={cn('h-full min-w-0 flex-1 rounded-[1px]', i < prog.seen ? 'on bg-(--progress)' : 'bg-[color-mix(in_oklab,var(--muted-foreground)_32%,transparent)]')}/>
                 ))}
               </span>
             ) : (
-              <span className="dl-group-marks block h-1 w-[120px] overflow-hidden rounded-[1px] bg-muted"><span className="block h-full rounded-full bg-(--brand)" style={{ width: Math.round((prog.seen / prog.released) * 100) + '%' }}/></span>
+              <span className="dl-group-marks block h-1 w-[120px] overflow-hidden rounded-[1px] bg-muted"><span className="block h-full rounded-full bg-(--progress)" style={{ width: Math.round((prog.seen / prog.released) * 100) + '%' }}/></span>
             )}
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">{prog.seen}/{prog.released}</span>
+            <span className="text-label font-medium text-muted-foreground tabular-nums">{prog.seen}/{prog.released}</span>
           </span>
         )}
         {has && <span className="dl-group-count story-sr">{done ? tr('list.groupAll', { n: prog.released }) : tr('progress.seen', { seen: prog.seen, n: prog.released })}</span>}
@@ -339,9 +318,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
       {!titles.length ? (
         <EmptyState desktop title={empty && empty.title} sub={empty && empty.sub} action={empty && empty.action}/>
       ) : (
-        <div className={cn('dl-table text-sm text-muted-foreground', WIDTH)} role="table" aria-label={tr('view.list')}
+        <div className={cn('dl-table text-body text-muted-foreground', WIDTH)} role="table" aria-label={tr('view.list')}
           ref={tableRef} onKeyDown={onTableKey}>
-          <div className={cn(GRID, 'dl-row dl-head h-(--dl-head-h-min) border-b text-xs @min-[84rem]:text-sm')} role="row">
+          <div className={cn(GRID, 'dl-row dl-head h-(--dl-head-h-min) border-b text-label @min-[84rem]:text-body')} role="row">
             <span className="dl-h c-rank text-right tabular-nums" role="columnheader"><span aria-hidden="true">#</span><span className="story-sr">{tr('list.col.rank')}</span></span>
             <DlSortHeader col="title" label={tr('list.col.title')} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             <DlSortHeader col="release" label={tr('list.col.release')} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
@@ -370,8 +349,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                     <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
                       className={cn(GRID, 'dl-row relative -mx-3 cursor-pointer scroll-mt-[168px] scroll-mb-3 border-b border-border/70 px-3 transition-[background-color,opacity] duration-150 hover:bg-muted/50', ROW_SIZE,
                         seen && 'seen', isNext && 'up-next bg-[color-mix(in_oklab,var(--brand)_7%,transparent)] hover:bg-[color-mix(in_oklab,var(--brand)_11%,transparent)]',
-                        openId === t.id && 'on bg-muted shadow-[inset_3px_0_0_var(--primary)] hover:bg-muted', dim && 'dim opacity-35')}>
-                      <span className="c-rank text-right text-xs tabular-nums text-muted-foreground" role="cell">
+                        openId === t.id && 'on bg-muted shadow-[inset_3px_0_0_var(--brand)] hover:bg-muted', dim && 'dim opacity-35')}>
+                      <span className="c-rank text-right text-label tabular-nums text-muted-foreground" role="cell">
                         {/* Up next's red edge, inside the first cell so every
                             row keeps the same cells for ↑ ↓. It comes in with
                             Up next's own motion when Up next moves here. */}
@@ -385,7 +364,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                         <span className={cn('dl-thumb relative block rounded-[5px]', THUMB_SIZE, THUMB)}>
                           <PosterArt title={t}/>
                           {seen && (
-                            <span className="dl-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_1px_4px_rgba(0,0,0,.45)] @min-[84rem]:size-5 [&_svg]:size-2.5 @min-[84rem]:[&_svg]:size-3"
+                            <span className="dl-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_1px_4px_rgba(0,0,0,.45)] @min-[84rem]:size-5 [&_svg]:size-2.5 @min-[84rem]:[&_svg]:size-3"
                               role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
                           )}
                         </span>
@@ -396,7 +375,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                               <window.Highlight text={I.titleName(t)} query={search}/>
                             </button>
                             {isNext && (
-                              <span className="dl-next-pill flex-none animate-[un-in_260ms_ease_both] rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-xs font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">
+                              <span className="dl-next-pill flex-none animate-[un-in_260ms_ease_both] rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-label font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">
                                 {tr('upnext.label')}
                               </span>
                             )}
@@ -411,7 +390,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                       <span className="c-imdb flex justify-end" role="cell">{t.imdb != null ? <ScoreChip kind="imdb" title={t} className="w-max"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
                       <span className="c-rt flex justify-end" role="cell">{t.rt != null ? <ScoreChip kind="rt" title={t} className="w-max"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
                       <span className="c-actions flex justify-end" role="cell" onClick={e => e.stopPropagation()}>
-                        <window.TitleStatusActions title={t} upNext={isNext} className="dl-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-(--dl-btn) [&_.tsa-btn:not(.tsa-next)_svg]:size-(--dl-icon) [&_.tsa-next]:h-(--dl-btn) @min-[84rem]:[&_.tsa-next]:text-sm [&_.tsa-gap]:order-0"/>
+                        <window.TitleStatusActions title={t} upNext={isNext} className="dl-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-(--dl-btn) [&_.tsa-btn:not(.tsa-next)_svg]:size-(--dl-icon) [&_.tsa-next]:h-(--dl-btn) @min-[84rem]:[&_.tsa-next]:text-body [&_.tsa-gap]:order-0"/>
                       </span>
                     </div>
                   );
@@ -425,7 +404,6 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   );
 }
 window.DesktopList = DesktopList;
-window.TitlesSubNav = TitlesSubNav;
 // The phone List groups and heads its rows the same way (mobile.tsx).
 window.MCU_listGroups = dlGroups;
 window.ListGroupHeader = GroupHeader;
@@ -434,4 +412,4 @@ window.ListGroupHeader = GroupHeader;
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { useRowKeys, DesktopList, TitlesSubNav, dlGroups, GroupHeader };
+export { useRowKeys, DesktopList, dlGroups, GroupHeader };

@@ -6,7 +6,7 @@
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import React from 'react';
-import { cn } from 'cn';
+import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 // contents Buttons on the panel. Hook classes kept for the app and the QA
 // checks: `acct-*`, `sync-*`, `m-acct`, `coll-ic`, `signed-in`, `open`.
 const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
-const XS = 'text-(length:--fs-xs)';
+const XS = 'text-caption';
 const SPIN = 'border-2 border-input border-t-muted-foreground animate-[tsa-spin_700ms_linear_infinite] motion-reduce:animate-none';
 
 // Auth state machine, session provider and account surfaces.
@@ -266,7 +266,7 @@ function Avatar({ profile, size }) {
   if (profile && profile.avatar) {
     return <img className="acct-avatar block shrink-0 rounded-full bg-muted object-cover" style={style} src={profile.avatar} alt="" referrerPolicy="no-referrer"/>;
   }
-  return <span className={cn('acct-avatar fallback flex shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold', DIM)} style={style} aria-hidden="true">{profile ? profile.initials : '?'}</span>;
+  return <span className={cn('acct-avatar fallback flex shrink-0 items-center justify-center rounded-full bg-muted text-label font-semibold', DIM)} style={style} aria-hidden="true">{profile ? profile.initials : '?'}</span>;
 }
 
 function PersonIcon() {
@@ -300,11 +300,11 @@ function PickIcon() {
 }
 
 const STAT = 'acct-stat flex-1 rounded-lg bg-muted px-2.5 py-[9px]';
-const STAT_N = 'block text-lg font-bold tabular-nums in-[.m-sheet]:text-xl';
-const STAT_L = 'mt-0.5 block text-xs leading-[1.3] text-muted-foreground';
-const LINK = 'h-8 px-2.5 text-sm font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(38px,2.375rem)] in-[.m-sheet]:px-3 in-[.m-sheet]:text-xs';
+const STAT_N = 'block text-title font-bold tabular-nums';
+const STAT_L = 'mt-0.5 block text-label leading-[1.3] text-muted-foreground';
+const LINK = 'h-8 px-2.5 text-body font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(38px,2.375rem)] in-[.m-sheet]:px-3 in-[.m-sheet]:text-label';
 const COLL_IC = 'coll-ic inline-flex size-[13px] flex-[0_0_13px] [&_svg]:size-full';
-const ACTION = 'acct-action h-9 w-full text-xs font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(46px,2.875rem)] in-[.m-sheet]:text-sm';
+const ACTION = 'acct-action h-9 w-full text-label font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(46px,2.875rem)] in-[.m-sheet]:text-body';
 const ERROR = cn('acct-error rounded-lg border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_8%,transparent)] px-[9px] py-2 leading-[1.4] text-destructive', XS);
 
 // The Account menu holds only account things: who is signed in, the
@@ -319,27 +319,27 @@ function AccountPanel({ onClose, onAbout }) {
   const signedIn = status === 'signed_in';
 
   return (
-    <div className="acct-panel flex flex-col gap-[13px] text-sm in-[.m-sheet]:gap-[15px]">
+    <div className="acct-panel flex flex-col gap-[13px] text-body in-[.m-sheet]:gap-[15px]">
       {signedIn && profile ? (
         <div className="acct-id flex items-center gap-[11px]">
           <Avatar profile={profile} size={40}/>
           <div className="acct-id-text min-w-0">
-            <div className="acct-name truncate text-sm font-medium">{profile.name}</div>
-            {profile.email && <div className="acct-email mt-0.5 truncate text-xs text-muted-foreground">{profile.email}</div>}
+            <div className="acct-name truncate text-body font-medium">{profile.name}</div>
+            {profile.email && <div className="acct-email mt-0.5 truncate text-label text-muted-foreground">{profile.email}</div>}
           </div>
         </div>
       ) : (
         <div className="acct-id guest flex items-center gap-[11px]">
           <div className="acct-id-text min-w-0">
-            <div className="acct-name truncate text-sm font-medium">{tr('account.notSignedIn')}</div>
-            <div className="acct-email mt-0.5 text-xs text-muted-foreground">
+            <div className="acct-name truncate text-body font-medium">{tr('account.notSignedIn')}</div>
+            <div className="acct-email mt-0.5 text-label text-muted-foreground">
               {tr(syncAvailable ? 'account.savedSync' : 'account.savedNoSync')}
             </div>
           </div>
         </div>
       )}
 
-      {collectionLoading ? <div className="acct-note text-xs leading-[1.45] text-muted-foreground" role="status">{tr(syncError ? 'account.collectionUnavailable' : 'account.loading')}</div> : (
+      {collectionLoading ? <div className="acct-note text-label leading-[1.45] text-muted-foreground" role="status">{tr(syncError ? 'account.collectionUnavailable' : 'account.loading')}</div> : (
       <div className="acct-stats flex gap-2.5">
         <div className={STAT}>
           <b className={STAT_N}>{progress.seenReleased}</b>
@@ -368,7 +368,7 @@ function AccountPanel({ onClose, onAbout }) {
       {error && <div className={ERROR} role="status">{error}</div>}
 
       {!syncAvailable && (
-        <div className="acct-note text-xs leading-[1.45] text-muted-foreground">
+        <div className="acct-note text-label leading-[1.45] text-muted-foreground">
           {tr('account.unavailable', { reason: '' })}
           {window.mcuSupabase && <Button variant="outline" className={cn(ACTION, 'mt-2')} onClick={() => window.location.reload()}>{tr('account.retryConnection')}</Button>}
         </div>
@@ -388,7 +388,7 @@ function AccountPanel({ onClose, onAbout }) {
       {/* App-level links, for guests too. A future Settings entry joins About here. */}
       {onAbout && (
         <div className="acct-foot mt-0.5 flex gap-1.5 border-t pt-2.5">
-          <Button variant="ghost" className={cn('acct-foot-link h-auto gap-[7px] px-0.5 py-1 text-xs font-normal hover:bg-transparent hover:text-foreground in-[.m-sheet]:min-h-[max(40px,2.5rem)] in-[.m-sheet]:text-sm', DIM)} onClick={() => { if (onClose) onClose(); onAbout(); }}>
+          <Button variant="ghost" className={cn('acct-foot-link h-auto gap-[7px] px-0.5 py-1 text-label font-normal hover:bg-transparent hover:text-foreground in-[.m-sheet]:min-h-[max(40px,2.5rem)] in-[.m-sheet]:text-body', DIM)} onClick={() => { if (onClose) onClose(); onAbout(); }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.2"/></svg>
             {tr('about.link')}
           </Button>
@@ -456,15 +456,18 @@ function AccountButton({ onAbout }) {
   return (
     <div className="acct-wrap relative ml-auto shrink-0">
       <Popover open={open} onOpenChange={setOpen}>
+        {/* Below 1100px, or at the header row's fit step 2 (toolbar.tsx), the
+            pill keeps its icon; the name stays in the tooltip and aria-label. */}
         <PopoverTrigger aria-label={label} title={label}
-          className={cn(buttonVariants({ variant: 'outline' }), 'acct-pill relative h-[max(44px,2.75rem)] max-w-44 min-w-24 gap-2 px-3 font-medium',
+          className={cn(buttonVariants({ variant: 'outline' }),
+            'acct-pill relative h-[max(44px,2.75rem)] max-w-44 min-w-24 gap-2 px-3 font-medium max-[1100px]:min-w-0 max-[1100px]:px-2.5 group-data-[fit=2]/toprow:min-w-0 group-data-[fit=2]/toprow:px-2.5 group-data-[fit=3]/toprow:min-w-0 group-data-[fit=4]/toprow:min-w-0 group-data-[fit=3]/toprow:px-2.5 group-data-[fit=4]/toprow:px-2.5',
             open && 'open bg-muted dark:bg-input/50', signedIn && 'signed-in')}>
           {status === 'initializing'
             ? <span className={cn('acct-dot loading block size-[13px] shrink-0 rounded-full', SPIN)} aria-hidden="true"/>
             : signedIn
               ? <Avatar profile={profile} size={26}/>
               : <PersonIcon/>}
-          <span className="acct-nav-label min-w-0 truncate text-xs">{visibleLabel}</span>
+          <span className="acct-nav-label min-w-0 truncate text-label max-[1100px]:hidden group-data-[fit=2]/toprow:hidden group-data-[fit=3]/toprow:hidden group-data-[fit=4]/toprow:hidden">{visibleLabel}</span>
           {!syncAvailable && status !== 'initializing' && <span className="acct-off absolute right-[3px] bottom-[3px] size-2 rounded-full border-2 border-background bg-muted-foreground" aria-hidden="true"/>}
         </PopoverTrigger>
         <PopoverContent align="end" sideOffset={9} className="acct-pop w-[268px] gap-0 p-3.5" aria-label={tr('account.title')}>
@@ -503,7 +506,7 @@ function AccountSheet({ onClose, onAbout }) {
   return (
     <Sheet onClose={onClose} label={window.MCU_I18N.tr('account.title')}>
       <div className="m-sh-head mb-4 flex items-center justify-between">
-        <div className="m-sh-title text-lg font-semibold tracking-tight">{window.MCU_I18N.tr('account.title')}</div>
+        <div className="m-sh-title text-title font-semibold tracking-tight">{window.MCU_I18N.tr('account.title')}</div>
       </div>
       <AccountPanel onClose={onClose} onAbout={onAbout}/>
     </Sheet>
