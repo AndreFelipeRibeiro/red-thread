@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 design — Guides: a page with a hero and shelves, and moving between guides (Guides 1/4 and 3/4)
 
-Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - **The Guides page (1/4):** a hero for the guide in focus (a followed guide
   leading to a release in the next 60 days, else the most recent one you
@@ -52,7 +53,8 @@ Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 fix — Titles: switching tabs no longer flashes unstyled rows
 
-Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
 
 - On desktop, rows leaving the list during the tab-switch animation are
   copies in a layer under the scroll area; since Titles 1/5 the list's sizes
