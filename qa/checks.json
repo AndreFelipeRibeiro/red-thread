@@ -20,7 +20,7 @@
     "src/app/theme-lab.tsx": ["test-themelab"],
     "src/app/app.tsx": ["test-nav", "test-micro", "test-segpill", "test-stepzoom", "test-textsize", "test-share", "test-settings", "test-threads", "test-logo", "test-back", "test-guidemode", "test-panel", "test-esc", "test-escpin", "test-urlstate", "test-home", "test-refocus", "test-listkeys", "test-layers", "test-camera"],
     "src/app/mobile.tsx": ["test-retap", "test-textsize", "test-share", "test-settings", "test-logo", "test-back", "test-guidemode", "test-v2", "test-panel", "test-details", "test-mviewport", "test-align2", "test-progress"],
-    "src/app/desktop-list.tsx": ["test-nav", "test-textsize", "test-dlist", "test-bulk", "test-listkeys", "test-progress"],
+    "src/app/desktop-list.tsx": ["test-nav", "test-textsize", "test-dlist", "test-bulk", "test-listkeys", "test-progress", "test-home", "test-unreleased", "test-layers", "test-anim", "test-contrast", "test-nextup"],
     "src/data/guides.ts": ["test-guides", "test-promo", "test-partof", "test-skip"],
     "src/app/guides-ui.tsx": ["test-nav", "test-share", "test-guidemode", "test-guides", "test-promo", "test-partof", "test-details", "test-skip"],
     "src/app/picker.tsx": ["test-picker", "test-welcome"],

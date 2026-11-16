@@ -66,9 +66,9 @@ const BUTTONS = (sel) => {
   const w = watch && watch.getBoundingClientRect();
   return { seen: !!seen, seenOn: !!(seen && seen.classList.contains('on')), watch: !!watch, gap: !!gap, watchX: w ? Math.round(w.left) : null };
 };
-// "All titles 0/60": the meter's released count.
+// "All titles 0/60": the compact card's released count.
 const RELEASED = () => {
-  const c = document.querySelector('.dl-phase-divider.lead .pgh-count, .dl-overall-cell .pgh-count');
+  const c = document.querySelector('.spatial-overall .pgh-count');
   return c ? Number(c.textContent.split('/')[1]) : null;
 };
 

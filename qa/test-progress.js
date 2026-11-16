@@ -100,10 +100,24 @@ const readCanvas = (page) => page.evaluate(() => ({
   // titles meter), so look for a meter inside it, not the box itself.
   overall: !!document.querySelector('.spatial-overall .pgh'),
 }));
+// The desktop List groups by itself (Notion "Titles 1/5"): Release date and
+// Phase by phase, Story order by era, each group header with its own
+// progress; the column sorts (Title, IMDb, RT) are one flat list. The
+// catalogue-wide count is the heading's (the progress widget, Titles 3/5).
 const readDeskList = (page) => page.evaluate(() => ({
-  phaseMeters: document.querySelectorAll('.dl-phase-divider:not(.overall) .pgh-bar').length,
-  overall: !!document.querySelector('.dl-phase-divider.overall'),
+  groups: document.querySelectorAll('.dl-group').length,
+  meters: document.querySelectorAll('.dl-group .dl-group-marks').length,
+  phases: [...document.querySelectorAll('.dl-group-label')].filter(b => /^Phase \d/.test(b.textContent.trim())).length,
 }));
+const checkDeskList = (sort, got, errors) => {
+  const flat = sort === 'title' || sort === 'imdb' || sort === 'rt';
+  const ok = flat ? got.groups === 0
+    : sort === 'chrono' ? got.groups >= 5 && got.phases === 0 && got.meters === got.groups
+    : got.groups === 6 && got.phases === 6 && got.meters === 6;
+  if (!ok) errors.push(`desktop List in ${sort} order shows ${JSON.stringify(got)}`);
+};
+// Titles sorts from the header's Sort menu, as Connections does.
+const deskListSort = (page, key) => deskSort(page, key);
 const readPhone = (page) => page.evaluate(() => ({
   phaseMeters: document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar').length,
   overall: !!document.querySelector('.m-phase-divider.overall'),
@@ -135,36 +149,34 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   }
   await deskView(page, 'List');
   for (const sort of SORTS) {
-    await deskSort(page, DESK_SORT[sort]);
+    await deskListSort(page, sort);
     const got = await readDeskList(page);
     R.rule['desktop list ' + sort] = got;
-    checkRule('desktop List', sort, got, errors);
+    checkDeskList(sort, got, errors);
   }
 
   // ---- The numbers, in By Phase -------------------------------------------
-  await deskSort(page, DESK_SORT.phase);
+  await deskListSort(page, 'phase');
   const dividers = () => page.evaluate(() =>
-    [...document.querySelectorAll('.dl-table .dl-phase-divider:not(.overall) .pgh')].map(p => ({
-      label: p.querySelector('.pgh-label').textContent.trim(),
-      count: (p.querySelector('.pgh-count') || {}).textContent,
-      up: (p.querySelector('.pgh-up') || {}).textContent || null,
-      sr: (p.querySelector('.story-sr') || {}).textContent.trim(),
+    [...document.querySelectorAll('.dl-group-head')].map(b => ({
+      label: (b.querySelector('.dl-group-label') || b).textContent.trim(),
+      count: (b.querySelector('.dl-group-count') || {}).textContent || null,
     })));
   R.start = await dividers();
-  if (R.start.length !== 6) errors.push(`expected 6 phase dividers in By Phase, got ${R.start.length}`);
-  // Nothing seen yet: an empty track and 0/N, not a hidden header.
-  if (R.start[0] && R.start[0].count !== '0/6') errors.push(`Phase 1 opened at "${R.start[0].count}", expected 0/6`);
-  // The denominator counts released titles only. Phase 6 has unreleased ones,
-  // so its total must be smaller than its number of titles, and it must say so.
+  if (R.start.length !== 6) errors.push(`expected 6 phase headers in By Phase, got ${R.start.length}`);
+  // Nothing seen yet: an empty track and "0 of 6 seen", not a hidden header.
+  if (R.start[0] && R.start[0].count !== '0 of 6 seen') errors.push(`Phase 1 opened at "${R.start[0].count}", expected 0 of 6 seen`);
+  // The denominator counts released titles only: Phase 6 has unreleased ones,
+  // so its total must be smaller than its number of titles.
   R.phase6 = R.start[5] || null;
-  if (!R.phase6) errors.push('no Phase 6 divider');
+  if (!R.phase6) errors.push('no Phase 6 header');
   else {
-    if (!R.phase6.up) errors.push('Phase 6 has unreleased titles but shows no "+N" hint');
-    const total = Number((R.phase6.count || '').split('/')[1]);
+    const total = Number(((R.phase6.count || '').match(/of (\d+)/) || [])[1]);
     const inCatalog = await page.evaluate(() => window.TITLES.filter(t => t.phase === 6).length);
     if (!(total < inCatalog)) errors.push(`Phase 6 counts ${total} of ${inCatalog} titles; unreleased ones should be left out`);
   }
-  // Marking a title seen moves its phase's count, live.
+  // Marking a title seen moves its phase's count, live, in words (colour and
+  // digits alone are not the signal).
   await page.evaluate(async () => {
     const first = window.TITLES.filter(t => t.phase === 1)[0];
     const row = document.querySelector(`[data-row-id="${first.id}"]`);
@@ -173,128 +185,71 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     await new Promise(r => setTimeout(r, 900));
   });
   R.afterMark = (await dividers())[0];
-  if (!R.afterMark || R.afterMark.count !== '1/6') {
-    errors.push(`after marking one title Phase 1 reads "${R.afterMark && R.afterMark.count}", expected 1/6`);
-  }
-  if (!/1 of 6|1 de 6/.test((R.afterMark && R.afterMark.sr) || '')) {
-    errors.push(`the spoken form reads "${R.afterMark && R.afterMark.sr}" — colour and digits must not be the only signal`);
+  if (!R.afterMark || R.afterMark.count !== '1 of 6 seen') {
+    errors.push(`after marking one title Phase 1 reads "${R.afterMark && R.afterMark.count}", expected 1 of 6 seen`);
   }
   // The collection tab must NOT feed the fraction. On the Seen tab only seen
   // titles are listed, so a count taken from the visible set would read 1/1.
   await page.evaluate(async () => {
-    const b = [...document.querySelectorAll('button')].find(x => /^(Seen|Vistos)$/i.test(x.textContent.trim()));
+    const b = document.querySelector('.ml-status .coll-switch button[data-coll="seen"]');
     if (b) b.click();
     await new Promise(r => setTimeout(r, 1200));
   });
   R.onSeenTab = (await dividers())[0] || null;
-  if (R.onSeenTab && R.onSeenTab.count !== '1/6') {
-    errors.push(`the Seen tab changed Phase 1 to "${R.onSeenTab.count}"; the collection tab must not feed its own numbers`);
+  if (!R.onSeenTab || R.onSeenTab.count !== '1 of 6 seen') {
+    errors.push(`the Seen tab changed Phase 1 to "${R.onSeenTab && R.onSeenTab.count}"; the collection tab must not feed its own numbers`);
   }
   await page.evaluate(async () => {
-    const b = [...document.querySelectorAll('button')].find(x => /^(All|Todos)$/i.test(x.textContent.trim()));
+    const b = document.querySelector('.ml-status .coll-switch button[data-coll="all"]');
     if (b) b.click();
     await new Promise(r => setTimeout(r, 1000));
   });
-  // A text search narrows the catalog, so the headers stand down entirely.
+  // A text search narrows the catalog, so the counts stand down entirely
+  // (the groups stay, without numbers).
   await page.fill('.search-wrap input', 'iron');
   await page.waitForTimeout(900);
-  R.duringSearch = (await dividers()).length;
-  if (R.duringSearch !== 0) errors.push(`${R.duringSearch} dividers survived a text search; they should be hidden`);
+  R.duringSearch = (await dividers()).filter(d => d.count).length;
+  if (R.duringSearch !== 0) errors.push(`${R.duringSearch} group counts survived a text search; they should be hidden`);
   await page.fill('.search-wrap input', '');
   await page.waitForTimeout(900);
-  R.afterSearch = (await dividers()).length;
-  if (R.afterSearch !== 6) errors.push(`dividers did not come back after the search (${R.afterSearch})`);
+  R.afterSearch = (await dividers()).filter(d => d.count).length;
+  if (R.afterSearch !== 6) errors.push(`group counts did not come back after the search (${R.afterSearch})`);
 
-  // The whole-catalogue meter counts the same way, over everything released.
-  await deskSort(page, DESK_SORT.release);
+  // The catalogue-wide count (the compact card in Titles) counts the same
+  // way, over everything released.
+  await deskListSort(page, 'release');
   R.overallList = await page.evaluate(() => {
-    const el = document.querySelector('.dl-phase-divider.overall');
-    if (!el) return null;
+    const el = document.querySelector('.dlist .spatial-overall .pgh-count');
     const released = window.TITLES.filter(t => window.MCU_isReleased(t)).length;
-    return { count: (el.querySelector('.pgh-count') || {}).textContent || null, released };
+    return { text: el ? el.textContent : null, released };
   });
-  if (!R.overallList) errors.push('no All titles meter in the desktop List in Release order');
-  else if (R.overallList.count !== `1/${R.overallList.released}`) {
-    errors.push(`the All titles meter reads "${R.overallList.count}"; with one title seen it should be 1/${R.overallList.released}`);
+  if (R.overallList.text !== `1/${R.overallList.released}`) {
+    errors.push(`the All titles card in Titles reads "${R.overallList.text}"; with one title seen it should be 1/${R.overallList.released}`);
   }
 
-  // ---- The desktop phase divider pins (By Phase) ---------------------------
-  await deskSort(page, DESK_SORT.phase);
-  R.deskSticky = await page.evaluate(async () => {
+  // ---- Nothing in the List pins (By Phase) ----------------------------------
+  // Andre's review (2026-11-15): the column headers and group headings scroll
+  // with the list; the status tabs are the header's second row; the compact
+  // card stays in the list's top-right corner.
+  await deskListSort(page, 'phase');
+  R.deskScroll = await page.evaluate(async () => {
     const dl = document.querySelector('.dlist');
-    const c = dl.getBoundingClientRect();
-    const head = document.querySelector('.dl-head');
-    // Far enough that the first meter has pinned under My list's title and
-    // collection tabs.
-    dl.scrollTop = 600;
-    await new Promise((r) => setTimeout(r, 500));
-    const d = document.querySelector('.dl-phase-divider');
-    const cs = getComputedStyle(d);
-    const r = d.getBoundingClientRect();
-    const headTop = Math.round(head.getBoundingClientRect().top - c.top);
+    const sticky = ['.dl-head', '.dl-group'].filter(sel => { const e = document.querySelector(sel); return e && getComputedStyle(e).position === 'sticky'; });
     dl.scrollTop = 3000;
-    await new Promise((r2) => setTimeout(r2, 600));
-    const all = [...document.querySelectorAll('.dl-phase-divider')];
-    const tops = all.map((x) => Math.round(x.getBoundingClientRect().top - c.top));
-    // The meter on top at this depth: the last one pinned in the top slot,
-    // which paints over the earlier ones there.
-    const pinned = all.filter((x, i) => Math.abs(tops[i]) <= 1);
-    const hit = document.elementFromPoint(c.left + 60, c.top + 8);
-    const onTop = !!(hit && pinned.length && hit.closest('.dl-phase-divider') === pinned[pinned.length - 1]);
-    dl.scrollTop = 0;
-    return {
-      pinnedTop: Math.round(r.top - c.top), pinnedBottom: Math.round(r.bottom - c.top), headTop, onTop,
-      position: cs.position, transform: cs.transform,
-      flipId: d.getAttribute('data-flip-id'),
-      opaque: cs.backgroundColor,
-      rowgroups: document.querySelectorAll('[role="rowgroup"]').length,
-    };
-  });
-  {
-    const d = R.deskSticky;
-    if (d.position !== 'sticky') errors.push(`the desktop phase divider is ${d.position}, not sticky`);
-    // The meters sit above the column headers (user decision, 2026-10-29):
-    // the phase meter pins at the top and the headers pin right beneath it.
-    if (Math.abs(d.pinnedTop) > 1) errors.push(`the pinned phase meter sits at ${d.pinnedTop}, not at the top of the List`);
-    if (Math.abs(d.headTop - d.pinnedBottom) > 1) errors.push(`the column headers start at ${d.headTop} but the phase meter above them ends at ${d.pinnedBottom}`);
-    if (d.transform && d.transform !== 'none') errors.push(`the desktop divider carries ${d.transform}; it must stay out of the reorder animation`);
-    if (d.flipId) errors.push('the desktop sticky divider has a data-flip-id again');
-    if (/rgba\(0, 0, 0, 0\)|transparent/.test(d.opaque)) errors.push('the pinned divider is transparent, so rows show through it');
-    // One rowgroup per phase is what bounds each sticky divider.
-    if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
-    if (!d.onTop) errors.push('deep in the List, the current phase meter is not the one showing in the top slot');
-  }
-
-  // The All titles header pins too, in every order but By Phase. It once sat in
-  // a rowgroup of its own, which was both invalid ARIA and its whole sticky
-  // container, so it scrolled away with the first rows.
-  await deskSort(page, DESK_SORT.release);
-  R.overallSticky = await page.evaluate(async () => {
-    const dl = document.querySelector('.dlist');
-    const c = dl.getBoundingClientRect();
-    const head = document.querySelector('.dl-head');
-    const ov = document.querySelector('.dl-phase-divider.overall');
-    if (!ov) return { error: 'no All titles header in Release order' };
-    dl.scrollTop = 2500;
     await new Promise((r) => setTimeout(r, 600));
-    const out = {
-      top: Math.round(ov.getBoundingClientRect().top - c.top),
-      bottom: Math.round(ov.getBoundingClientRect().bottom - c.top),
-      headTop: Math.round(head.getBoundingClientRect().top - c.top),
-      role: ov.getAttribute('role'),
-      parentRole: ov.parentElement.getAttribute('role'),
-    };
+    const card = document.querySelector('.dlist .spatial-overall');
+    const out = { sticky, tabs: !!document.querySelector('.toolbar .tb-sub-row .coll-switch'),
+      card: card ? Math.round(card.getBoundingClientRect().top - dl.getBoundingClientRect().top) : null,
+      rowgroups: document.querySelectorAll('.dl-table > [role="rowgroup"]').length };
     dl.scrollTop = 0;
     return out;
   });
   {
-    const o = R.overallSticky;
-    if (o.error) errors.push(o.error);
-    else {
-      if (Math.abs(o.top) > 1) errors.push(`after scrolling, the All titles meter sits at ${o.top}, not pinned at the top of the List`);
-      if (Math.abs(o.headTop - o.bottom) > 1) errors.push(`after scrolling, the column headers start at ${o.headTop}, not right under the All titles meter (${o.bottom})`);
-      if (o.role !== 'row' || o.parentRole !== 'table') errors.push(`the All titles header is a ${o.role} inside a ${o.parentRole}; it must be a row owned by the table`);
-    }
+    const d = R.deskScroll;
+    if (d.sticky.length) errors.push(`still pinned in the List: ${d.sticky.join(', ')}`);
+    if (!d.tabs) errors.push('the status tabs are not the header\'s second row');
+    if (d.card !== 14) errors.push(`the compact card is not in the list's top-right corner after scrolling (${d.card})`);
+    if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
   }
 
   // ---- The canvas ---------------------------------------------------------

@@ -48,7 +48,9 @@ export const TSA_SPIN = 'tsa-spin pointer-events-none absolute -top-[5px] -right
 //
 // `variant` is 'overlay' (icon-only, sits on a poster) or 'inline' (icon plus
 // text label, for drawers and sheets where there is room).
-export function TitleStatusActions({ title, variant = 'overlay', className }: { title: Title; variant?: 'overlay' | 'inline'; className?: string }) {
+// `upNext`: the title is Up next (the desktop List's marked row, Notion
+// "Titles 2/5"): while it is unseen, Seen is a filled red "Mark seen" button.
+export function TitleStatusActions({ title, variant = 'overlay', className, upNext = false }: { title: Title; variant?: 'overlay' | 'inline'; className?: string; upNext?: boolean }) {
   const { states, statusOf, pendingOf, errorOf, toggleSeen, toggleWatchlist, loading } = window.useCollection() as unknown as {
     states: unknown; statusOf: (id: string) => string; pendingOf: (id: string) => boolean; errorOf: (id: string) => string | null;
     toggleSeen: (id: string) => void; toggleWatchlist: (id: string) => void; loading: boolean;
@@ -108,6 +110,9 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
     size, onPoster && GLASS, on && (onPoster && kind === 'seen' ? ON_GLASS_SEEN : ON[kind]), busy && 'opacity-75', error && 'border-destructive dark:border-destructive',
     kind === 'seen' ? '[--pop:var(--status-seen)]' : '[--pop:var(--status-watch)]', kind, on && 'on', pop === kind && cn('pop', inline ? POP_INLINE : POP));
   const spinner = <span className={TSA_SPIN} aria-hidden="true"/>;
+  // Up next's call to action: the label and the brand fill, until it is seen.
+  const markNext = upNext && !seen && !inline;
+  const NEXT = 'tsa-next h-[max(34px,2.125rem)] w-auto gap-1.5 border-(--brand) bg-(--brand) px-3 text-xs font-semibold text-(--brand-foreground) hover:bg-(--brand)/90 hover:text-(--brand-foreground) dark:border-(--brand) dark:bg-(--brand) dark:hover:bg-(--brand)/90 [&_svg]:size-[13px]';
 
   // `flex!`: the hook class `inline` is also Tailwind's display utility.
   // A host's own utilities in `className` win over the defaults here (they are
@@ -124,7 +129,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
       {!offerSeen && !inline && <span className={cn('tsa-btn seen tsa-gap pointer-events-none invisible order-2 flex', size)} aria-hidden="true"/>}
       {offerSeen && <Button
         variant="outline"
-        className={btn('seen', seen)}
+        className={cn(btn('seen', seen), markNext && NEXT)}
         onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring' || e.animationName === 'tsa-halo') setPop(null); }}
         disabled={loading}
         aria-busy={loading || busy}
@@ -136,7 +141,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className }: { 
       >
         <window.CheckIcon/>
         {spinOn === 'seen' && spinner}
-        {inline && <span className="tsa-lab">{tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
+        {(inline || markNext) && <span className="tsa-lab">{tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
       </Button>}
       <Button
         variant="outline"

@@ -154,6 +154,9 @@
          designer's red in both themes (--logo, styles.css .logo-mark): a
          logo is not text, so it needs no lighter dark-theme variant. */
       --brand: oklch(0.55 0.2 27);
+      /* Ink on a brand fill (Up next's "Mark seen"): light on the light
+         theme's deeper red, dark on the dark theme's lighter one (AA). */
+      --brand-foreground: oklch(0.985 0 0);
       --logo: #c41e3a;
       --background: oklch(1 0 0);
       --foreground: oklch(0.145 0 0);
@@ -214,6 +217,7 @@
       --status-watch: #d4a05a;
       --on-color: oklch(0.145 0 0);
       --brand: oklch(0.68 0.17 23);
+      --brand-foreground: oklch(0.145 0 0);
       --logo: #c41e3a;
       --background: oklch(0.145 0 0);
       --foreground: oklch(0.985 0 0);

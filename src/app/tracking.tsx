@@ -661,16 +661,19 @@ function useCollection() {
 }
 
 // ---------------------------------------------------------------------------
-// Up next: the earliest released title not marked seen
+// Up next: the first released title not marked seen, in the current order
 // ---------------------------------------------------------------------------
 //
-// One rule, shared by every surface and by Guides later. No React and no DOM,
-// so it can be checked on its own. `titles` arrive already narrowed to the
-// scope (Watchlist, a pinned character, the type/phase/budget filters, or a
-// guide). `order` is 'release' or 'chrono', always earliest first, or one of
-// the list orders 'title', 'imdb' and 'rt', which follow the list's own
-// direction (`dir`): on those, Up next is the first unseen title of the list
-// the visitor is looking at (user decision, 2026-10-29).
+// One rule, shared by every surface (Notion "Titles 2/5": the widget, the
+// desktop List's marked row, the phone, Connections and guides all read it).
+// No React and no DOM, so it can be checked on its own. `titles` arrive
+// already narrowed to the scope (a pinned character, the type/phase/budget
+// filters, or a guide). `order` and `dir` are the list's own sort and
+// direction (release, chrono, phase, title, imdb, rt), so Up next is the
+// first unseen title of the list the visitor is looking at, whichever way it
+// runs: Release date, newest first suggests the newest one you haven't seen.
+// `ordered` keeps the titles as given (a guide's stops). `skipped`: titles
+// to pass over (none today).
 //
 // Returns one of:
 //   { kind: 'next', title, rank, released }  rank = place among released titles in scope
@@ -688,9 +691,8 @@ function nextUp(titles, statusOf, opts) {
   const skipped = o.skipped || new Set();
   if (!titles || !titles.length) return { kind: 'empty' };
   const sortBy = window.sortTitles || ((list) => list.slice());
-  const listOrder = o.order === 'title' || o.order === 'imdb' || o.order === 'rt';
   // `ordered`: the titles are already in their order (a guide's stops).
-  const ordered = o.ordered ? titles.slice() : sortBy(titles, listOrder ? o.order : (o.order === 'chrono' ? 'chrono' : 'release'), listOrder && o.dir === 'desc' ? 'desc' : 'asc');
+  const ordered = o.ordered ? titles.slice() : sortBy(titles, o.order || 'release', o.dir === 'desc' ? 'desc' : 'asc');
   const released = ordered.filter((t) => isReleased(t));
   const unseen = released.filter((t) => statusOf(t.id) !== 'seen');
   const pick = unseen.find((t) => !skipped.has(t.id));
@@ -701,6 +703,16 @@ function nextUp(titles, statusOf, opts) {
   const upcoming = sortBy(titles.filter((t) => !isReleased(t)), 'release', 'asc')[0] || null;
   if (!released.length) return upcoming ? { kind: 'notOut', upcoming } : { kind: 'empty' };
   return upcoming ? { kind: 'caughtUp', upcoming } : { kind: 'allSeen' };
+}
+
+// Up next for a tab of the list: the Watchlist tab looks at the watchlist
+// alone (its first title in the order), the Seen tab has none (null), and
+// All and Unseen look at everything in scope. The one selector app.tsx calls,
+// so the desktop List, the phone and the canvas never disagree.
+function selectUpNext({ titles, statusOf, collection, order, dir, skipped }) {
+  if (collection === 'seen') return null;
+  const list = collection === 'watchlist' ? titles.filter((t) => statusOf(t.id) === 'watchlist') : titles;
+  return nextUp(list, statusOf, { order, dir, skipped });
 }
 
 // ---------------------------------------------------------------------------
@@ -793,6 +805,7 @@ Object.assign(window, {
   MCU_canMarkSeen: (title) => canMarkSeen(title),
   MCU_bulkTargets: bulkTargets,
   MCU_nextUp: nextUp,
+  MCU_selectUpNext: selectUpNext,
   onBulkConfirm,
   TSA_MIN_SCALE,
   // status-actions.tsx reports each toggle through it.
@@ -806,5 +819,5 @@ Object.assign(window, {
 export { CollectionProvider, useCollection,
   matchesCollection, collectionEmptyCopy, COLLECTION_OPTIONS, CollectionIcon,
   releasedCount, todayISO, onStatusChange, CheckIcon,
-  BookmarkIcon, bulkTargets as MCU_bulkTargets, nextUp as MCU_nextUp,
+  BookmarkIcon, bulkTargets as MCU_bulkTargets, nextUp as MCU_nextUp, selectUpNext as MCU_selectUpNext,
   onBulkConfirm, TSA_MIN_SCALE, emitStatusChange as MCU_emitStatusChange };

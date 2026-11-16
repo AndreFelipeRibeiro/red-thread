@@ -231,12 +231,15 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   if (r !== 'ok') err(`320px card: ${r}`);
   await ctx.close();
 
-  // 12. Desktop: the List strip, and the Spatial meter row that selects the
-  //     card and opens the drawer.
+  // 12. Desktop: the compact card in Titles and on Connections, whose Up next
+  //     selects the card and opens the drawer.
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs({})));
   await page.goto(URL + '?view=list'); await settle(page);
-  r = await page.evaluate(() => ({ title: (document.querySelector('.un-strip .un-title') || {}).textContent, region: !!document.querySelector('section.un-strip[aria-label]') }));
-  if (r.title !== name(out.expect.release) || !r.region) err(`desktop List strip: ${JSON.stringify(r)}`);
+  // Titles has the compact card too (Notion "Titles 3/5"), bottom right: a
+  // new visitor's Up next is the first title out.
+  r = await page.evaluate(() => ({ title: (document.querySelector('.dlist .spatial-overall .un-title') || {}).textContent || null, region: !!document.querySelector('.dlist .spatial-overall section.un-mrow[aria-label]'),
+    pick: !!document.querySelector('.toolbar .ml-status .ml-pick') }));
+  if (r.title !== name(out.expect.release) || !r.region || !r.pick) err(`desktop List card, new visitor: ${JSON.stringify(r)}`);
   await page.goto(URL + '?view=spatial'); await settle(page);
   await page.locator('.spatial-overall .un-open').click(); await page.waitForTimeout(1500);
   r = await page.evaluate(() => ({ drawer: (document.querySelector('.drawer.open .td-title') || {}).textContent,
@@ -246,6 +249,113 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   if (r.row) err('the meter row should stand down while a title is selected');
   errors.forEach(e => err('desktop console: ' + e));
   await ctx.close();
+
+  // 12b. The desktop List marks Up next in its row (Notion "Titles 2/5"):
+  //      the first released, unseen title of the list in its own order and
+  //      direction and tab; none on Seen; never a title not out yet. The list
+  //      opens scrolled to it, just under the pinned header, and marking it
+  //      seen moves the mark on.
+  {
+    const seenIds = byRelease.slice(0, 8).map(t => t.id);
+    const watchIds = [byRelease[20].id, byRelease[14].id];
+    const states = Object.fromEntries(seenIds.map(id => [id, 'seen']).concat(watchIds.map(id => [id, 'watchlist'])));
+    const isSeen = (t) => seenIds.includes(t.id);
+    ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs(states)));
+    await page.goto(URL + '?view=list'); await settle(page); await page.waitForTimeout(800);
+    const mark = () => page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.dl-table .dl-row.up-next')];
+      const r = rows[0];
+      const dl = document.querySelector('.dlist').getBoundingClientRect();
+      const head = document.querySelector('.dl-head').getBoundingClientRect();
+      const box = r && r.getBoundingClientRect();
+      return { ids: rows.map(x => x.dataset.rowId), pill: !!(r && r.querySelector('.dl-next-pill')), bar: !!(r && r.querySelector('.dl-next-bar')),
+        button: r ? (r.querySelector('.tsa-next') || {}).textContent || null : null, scrolled: document.querySelector('.dlist').scrollTop > 0,
+        underHead: box ? box.top >= head.bottom - 1 && box.bottom <= dl.bottom : null,
+        // Nothing in the list is pinned; the row lands below the compact card
+        // in the top-right corner (its scroll margin, 168px).
+        nearHead: box ? Math.round(box.top - dl.top) : null };
+    });
+    const pick = async (fn) => { await page.evaluate(fn); await page.waitForTimeout(1300); return mark(); };
+    const firstUnseen = (list) => (list.find(t => !isSeen(t)) || {}).id;
+    r = await mark();
+    out.deskList = { release: r };
+    if (r.ids.join() !== firstUnseen(byRelease)) err(`desktop List, release order: Up next ${r.ids.join()}, expected ${firstUnseen(byRelease)}`);
+    if (!r.pill || !r.bar || r.button !== 'Mark seen') err(`the Up next row lacks its pill, bar or "Mark seen": ${JSON.stringify(r)}`);
+    if (!r.scrolled || !r.underHead || Math.abs(r.nearHead - 168) > 3) err(`the List did not open scrolled to Up next under the header: ${JSON.stringify(r)}`);
+    // Orders come from the header's Sort menu, as on Connections.
+    r = await page.evaluate(async () => { document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(res => setTimeout(res, 300)); document.querySelector('.sort-menu-pop [data-sort="release"][data-dir="desc"]').click(); }).then(() => page.waitForTimeout(1300)).then(mark);
+    out.deskList.newest = r;
+    const newest = firstUnseen(byRelease.slice().reverse());
+    if (r.ids.join() !== newest) err(`Release date, newest first: Up next ${r.ids.join()}, expected ${newest}`);
+    r = await page.evaluate(async () => { document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(res => setTimeout(res, 300)); document.querySelector('.sort-menu-pop [data-sort="chrono"][data-dir="asc"]').click(); }).then(() => page.waitForTimeout(1300)).then(mark);
+    out.deskList.story = r;
+    if (r.ids.join() !== firstUnseen(byStory)) err(`Story order: Up next ${r.ids.join()}, expected ${firstUnseen(byStory)}`);
+    r = await pick(() => document.querySelector('.dl-head .c-imdb button').click());
+    out.deskList.imdb = r;
+    if (r.ids.join() !== firstUnseen(byImdb)) err(`IMDb: Up next ${r.ids.join()}, expected ${firstUnseen(byImdb)}`);
+    r = await page.evaluate(async () => { document.querySelector('.toolbar .sort-menu-trigger').click(); await new Promise(res => setTimeout(res, 300)); document.querySelector('.sort-menu-pop [data-sort="release"][data-dir="asc"]').click(); }).then(() => page.waitForTimeout(1300)).then(mark);
+    r = await pick(() => document.querySelector('.ml-status .coll-switch button[data-coll="watchlist"]').click());
+    out.deskList.watchlist = r;
+    const firstWatch = byRelease.find(t => watchIds.includes(t.id)).id;
+    if (r.ids.join() !== firstWatch) err(`Watchlist tab: Up next ${r.ids.join()}, expected its first title ${firstWatch}`);
+    r = await pick(() => document.querySelector('.ml-status .coll-switch button[data-coll="seen"]').click());
+    if (r.ids.length) err(`the Seen tab marks ${r.ids.join()} as Up next`);
+    r = await pick(() => document.querySelector('.ml-status .coll-switch button[data-coll="all"]').click());
+    // Marking it seen moves the mark to the next unseen title.
+    await page.locator('.dl-table .dl-row.up-next .tsa-next').click(); await page.waitForTimeout(1200);
+    r = await mark();
+    out.deskList.afterMark = r;
+    const second = byRelease.filter(t => !isSeen(t))[1].id;
+    if (r.ids.join() !== second) err(`after marking Up next seen, the mark is on ${r.ids.join()}, expected ${second}`);
+    if (unreleased.some(t => r.ids.includes(t.id))) err('an unreleased title is Up next');
+    errors.forEach(e => err('desktop List console: ' + e));
+    await ctx.close();
+  }
+
+  // 12c. The compact card (Notion "Titles 3/5", after Andre's review), on
+  //      Connections and in Titles: "All titles 5/60 +N" and Up next; ✓ marks
+  //      seen and Up next moves on; ✕ dismisses the card for the visit on
+  //      both views, while the list keeps marking Up next; a reload brings it
+  //      back.
+  {
+    const seenIds = byRelease.slice(0, 5).map(t => t.id);
+    const states = Object.fromEntries(seenIds.map(id => [id, 'seen']));
+    const notOut = T.length - byRelease.length;
+    ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs(states)));
+    await page.goto(URL + '?view=spatial'); await settle(page); await page.waitForTimeout(600);
+    const card = () => page.evaluate(() => {
+      const c = document.querySelector('.spatial-overall');
+      if (!c) return null;
+      const cur = c.querySelector('.un-mrow .un-slide > :not(.un-leave) .un-title');
+      return { text: c.innerText.replace(/\s+/g, ' '), next: cur ? cur.textContent : null, inList: !!c.closest('.dlist') };
+    });
+    r = await card();
+    out.widget = { start: r };
+    if (!r) err('no compact card on desktop Connections');
+    else {
+      if (!r.text.includes(`${seenIds.length}/${byRelease.length}`) || !r.text.includes(`+${notOut}`)) err(`the compact card should read ${seenIds.length}/${byRelease.length} and +${notOut}: ${r.text}`);
+      if (r.next !== name(byRelease[5].id)) err(`the card's Up next is ${r.next}, expected ${name(byRelease[5].id)}`);
+    }
+    await page.locator('.spatial-overall .un-mrow .tsa-btn.seen').click(); await page.waitForTimeout(900);
+    r = await card(); out.widget.marked = r;
+    if (!r || r.next !== name(byRelease[6].id)) err(`after ✓ the card's Up next is ${r && r.next}, expected ${name(byRelease[6].id)}`);
+    // Titles: the same card, bottom right, with the same Up next as the list.
+    await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(1200);
+    r = await card(); out.widget.titles = r;
+    const row = await page.evaluate(() => (document.querySelector('.dl-table .dl-row.up-next') || { dataset: {} }).dataset.rowId || null);
+    if (!r || !r.inList || r.next !== name(byRelease[6].id) || row !== byRelease[6].id) err(`Titles: the card says ${r && r.next} (in the list: ${r && r.inList}) and the list marks ${row}; expected ${byRelease[6].id}`);
+    // ✕ dismisses the card, on both views, and the list still marks Up next.
+    await page.locator('.dlist .spatial-overall .un-mrow .un-hide').click(); await page.waitForTimeout(500);
+    r = await page.evaluate(() => ({ card: !!document.querySelector('.spatial-overall'), row: (document.querySelector('.dl-table .dl-row.up-next') || { dataset: {} }).dataset.rowId || null }));
+    out.widget.dismissed = r;
+    if (r.card || r.row !== byRelease[6].id) err(`after ✕ in Titles: ${JSON.stringify(r)}`);
+    await page.locator('.nav-tabs button', { hasText: 'Connections' }).click(); await page.waitForTimeout(1200);
+    if (await card()) err('the dismissed card came back on Connections');
+    await page.reload(); await settle(page); await page.waitForTimeout(600);
+    if (!(await card())) err('a reload did not bring the card back');
+    errors.forEach(e => err('card console: ' + e));
+    await ctx.close();
+  }
 
   // 13. Portuguese.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({}) + "localStorage.setItem('mcu.lang.v1','pt-BR');"));

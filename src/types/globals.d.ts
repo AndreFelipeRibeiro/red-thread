@@ -164,6 +164,7 @@ declare global {
     CARD_SIZE: SpatialCardModule['CARD_SIZE'];
     Segmented: ToolbarModule['Segmented'];
     SECTIONS: ToolbarModule['SECTIONS'];
+    FiltersMenu: ToolbarModule['FiltersMenu'];
     SyncStatus: Tracking['SyncStatus'];
     SeenMarker: StatusActions['SeenMarker'];
     TSA_SPIN: StatusActions['TSA_SPIN'];
@@ -174,6 +175,7 @@ declare global {
     TSA_MIN_SCALE: Tracking['TSA_MIN_SCALE'];
     MCU_isReleased: Tracking['MCU_isReleased'];
     MCU_nextUp: Tracking['MCU_nextUp'];
+    MCU_selectUpNext: Tracking['MCU_selectUpNext'];
     MCU_canMarkSeen: Tracking['MCU_canMarkSeen'];
     MCU_bulkTargets: Tracking['MCU_bulkTargets'];
     matchesCollection: Tracking['matchesCollection'];
@@ -254,6 +256,7 @@ declare global {
 
     DesktopList: DesktopList['DesktopList'];
     useRowKeys: DesktopList['useRowKeys'];
+    TitlesSubNav: DesktopList['TitlesSubNav'];
     /** Keeps focus on a row as the List reorders; assigned inline. */
     MCU_followRowFocus(toRow: unknown): void;
 
@@ -261,7 +264,6 @@ declare global {
     UpNextHide: UpNext['UpNextHide'];
     UpNextState: UpNext['UpNextState'];
     UpNextCard: UpNext['UpNextCard'];
-    UpNextStrip: UpNext['UpNextStrip'];
     UpNextMeterRow: UpNext['UpNextMeterRow'];
     UpNextChip: UpNext['UpNextChip'];
     UpNextNote: UpNext['UpNextNote'];

@@ -460,8 +460,7 @@ rules carry over unchanged.
     `app.tsx`), so mouse and touch users never see a ring they didn't cause.
   - Escape closes the nearest layer first: search suggestions, then menus and
     popovers, then dialogs and phone sheets, then the pair view, then the
-    desktop List's bulk selection, then the details, then the pinned character
-    or performer. Never close two layers
+    details, then the pinned character or performer. Never close two layers
     with one press. The details and the pin share one listener for that reason:
     two listeners both see the same press, and React re-renders between them,
     so the second acts on state the first just cleared.

@@ -115,6 +115,13 @@ function sortDirectionLabels(sort, short = false) {
 }
 window.sortDirectionLabels = sortDirectionLabels;
 
+// The phrase naming the order Up next follows ("release order", "newest
+// first", "highest IMDb first"…), for its tag.
+function upNextOrderKey(sort, dir) {
+  if ((sort === 'release' || sort === 'chrono') && dir === 'asc') return 'upnext.order.' + sort;
+  return 'upnext.order.' + sort + '.' + dir;
+}
+
 function sortTitles(list, sort, dir = 'asc') {
   const mul = dir === 'desc' ? -1 : 1;
   return list.slice().sort((a, b) => {
@@ -174,6 +181,9 @@ function chronoEras(titles) {
   });
   return out;
 }
+// The desktop Titles list groups Story order by these same eras (Notion
+// "Titles 1/5"), so its headers match the canvas's band labels.
+window.MCU_storyEras = { eraOf: chronoEras, storyYear, starts: ERA_STARTS };
 
 function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   const ordered = sortTitles(titles, sort, dir);
@@ -1251,6 +1261,11 @@ function App() {
   // nothing stored, so a reload brings it back.
   const [upHidden, setUpHidden] = useState(false);
   const hideUpNext = () => setUpHidden(true);
+  // The desktop compact card's ✕ (Connections and Titles): hides the card
+  // for this visit, the way the canvas's card always did (Andre,
+  // 2026-11-15). Unlike `upHidden` it leaves Up next itself alone, so the
+  // list still marks its row.
+  const [cardHidden, setCardHidden] = useState(false);
   const upNextData = useMemo(() => {
     if (upHidden || !collectionReady) return null;
     // An open guide scopes Up next to its stops, in guide order.
@@ -1265,16 +1280,14 @@ function App() {
     if (budgetFilter !== 'all') list = list.filter(t => budgetMatches(t, budgetFilter));
     if (pinnedTitleIds) list = list.filter(t => pinnedTitleIds.has(t.id));
     const watchScope = collectionFilter === 'watchlist';
-    if (watchScope) list = list.filter(t => statusOf(t.id) === 'watchlist');
-    // Release and Phase are release order and Chrono story order, earliest
-    // first whatever the list's direction. A-Z, IMDb and RT follow the list
-    // itself, in its direction, so the suggestion is the first unseen title of
-    // the list on screen. The card names the order it used.
-    const order = sort === 'chrono' ? 'chrono' : (sort === 'title' || sort === 'imdb' || sort === 'rt') ? sort : 'release';
-    const result = window.MCU_nextUp(list, statusOf, { order, dir: sortDir });
+    // One rule for every surface (MCU_selectUpNext, tracking.tsx): the first
+    // released, unseen title in the list's own order and direction, in the
+    // tab (Watchlist: its first title), less this session's skips. The card
+    // names the order it used.
+    const result = window.MCU_selectUpNext({ titles: list, statusOf, collection: collectionFilter, order: sort, dir: sortDir });
     const who = pinnedActor || (highlightedChar ? I18N.charName(highlightedChar) : null);
     const lead = watchScope ? tr('upnext.fromWatchlist') : who ? tr('upnext.forChar', { name: who }) : tr('upnext.label');
-    const parts = [tr('upnext.order.' + order + (order === 'release' || order === 'chrono' ? '' : '.' + sortDir))];
+    const parts = [tr(upNextOrderKey(sort, sortDir))];
     if (typeFilter !== 'all') parts.push(tr(typeFilter === 'film' ? 'type.films' : 'type.series'));
     if (phaseFilter !== 'all') parts.push(tr('phase.label', { n: phaseFilter }));
     if (budgetFilter !== 'all') parts.push(tr('budget.' + budgetFilter));
@@ -2208,6 +2221,16 @@ function App() {
   // Desktop Spatial shows it as a row in the floating meter, which (like the
   // meter) stands down while a title is selected.
   const upNextInMeter = !isTouch && !guide && !!upNext && upNext.result.kind === 'next';
+  // The compact card on desktop (Connections, top right; Titles, bottom
+  // right): All titles with its bar, and Up next with ✓ and ✕. ✕ hides the
+  // card for this visit. In By Phase there is no All titles meter (the phase
+  // headings carry it), so the card is Up next alone.
+  const compactCard = !isTouch && !cardHidden && ((viewProgress && viewProgress.all) || upNextInMeter) ? (inList) => (
+    <window.SpatialOverall touch={false} floating={!inList}>
+      {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
+      {upNextInMeter && <window.UpNextMeterRow info={{ ...upNext, onHide: () => setCardHidden(true) }}/>}
+    </window.SpatialOverall>
+  ) : null;
 
   // A character picked from the search suggestions opens the character view
   // (photo, Their titles / All titles, stepper) rather than a text search, as
@@ -2274,6 +2297,8 @@ function App() {
     } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
   };
   const showInExplore = (id) => goSection('explore', { select: id, force: true });
+  // The progress widget's counts open Titles on that tab (Notion "Titles 3/5").
+
   // Phones: My list's collection tabs, at the top of the list.
   const myListBar = isTouch ? (
     <window.MyListBar collection={collectionFilter} setCollection={setCollectionFilter}/>
@@ -3105,13 +3130,16 @@ function App() {
       {/* Phones show an open guide's progress in its dock instead. */}
       {/* An open guide carries its progress in its own module (desktop) or
           dock (phones). */}
-      {!selectedId && !guide && ((viewProgress && viewProgress.all) || upNextInMeter) && (
-        <window.SpatialOverall touch={isTouch}>
-          {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
-          {/* Desktop only: phones get a chip above the gesture hint. */}
-          {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
-        </window.SpatialOverall>
-      )}
+      {/* The compact card (Andre, 2026-11-15: the progress widget's bigger
+          card was too much for the canvas). Its × skips Up next for the
+          session. */}
+      {!selectedId && !guide && (isTouch
+        ? viewProgress && viewProgress.all && (
+          <window.SpatialOverall touch>
+            <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>
+          </window.SpatialOverall>
+        )
+        : compactCard && compactCard(false))}
       {guide && !isTouch && guideModule('spatial')}
       {focusPop}
     </div>
@@ -3244,6 +3272,8 @@ function App() {
         releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
         search={search} setSearch={setSearch}
         guideId={guideId}
+        // Titles' second layer: the status tabs and "Mark what you've seen".
+        subNav={desktopView === 'list' && !guide && !guidesPage ? <window.TitlesSubNav collection={collectionFilter} setCollection={setCollectionFilter}/> : null}
       />
 
       {/* An open guide shows its own module instead: at the top of the List,
@@ -3269,7 +3299,10 @@ function App() {
         : desktopView === 'list' && guidesPage
         ? <window.GuidesPage onPick={(id) => openGuide(id)}/>
         : desktopView === 'list'
-        ? <window.DesktopList upNext={upNext} myList={{ collection: collectionFilter, setCollection: setCollectionFilter }} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
+        ? <window.DesktopList upNext={upNext} titles={visible} floatingCard={compactCard && compactCard(true)}
+            myList={{ collection: collectionFilter, setCollection: setCollectionFilter,
+              filters: { phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter } }}
+            groupProgress={groupProgress} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={toggleDetails}
             onFollow={(id, n, total) => {
@@ -3279,7 +3312,10 @@ function App() {
               const t = n && window.TITLES.find(x => x.id === id);
               if (t) setListAnnounce(tr('list.stepPos', { title: I18N.titleName(t), n, total }));
             }}
-            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
+            // "64 titles" says something only when a search or a filter
+            // narrows the list (the tabs carry their own counts).
+            header={search.trim() || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all' ? contextSummary('float', true) : null}
+            empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 
       {hoveredConnection && (

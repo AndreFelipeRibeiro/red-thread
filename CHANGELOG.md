@@ -13,6 +13,47 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Titles: one header, a quieter list and Up next (Titles 1/5–3/5)
+
+Recorded: 2026-11-15 19:54 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- **Header (1/5):** Titles uses the same header as Connections (search, the
+  Sort menu, Filters, settings, profile) plus a second row with the status
+  tabs (no divider after All) and "Mark what you've seen". The list's column
+  headers (#, Title, Released, IMDb, RT) sort with one click and reverse with
+  a second; they and the Sort menu are one state, kept in the address.
+- **List (1/5):** groups by phase (Release date, Phase) or in-story era (Story
+  order) as plain headings with a mark per released title and "4/6"; the
+  column sorts are one flat ranked list. Rows show the poster, the title with
+  its phase and setting, the year, the IMDb and RT chips, Seen and Watchlist;
+  seen titles keep full strength with a check on the poster's corner. The
+  Type, Phase, Set in, Budget and Characters columns, row checkboxes and the
+  bulk bar are gone (marking many at once is "Mark what you've seen"). Two
+  sizes by the list's own width (Regular, and Large from 84rem), up to
+  1480px wide. "64 titles" shows only when a search or filter narrows it.
+- **Up next (2/5):** one rule for every surface, `MCU_selectUpNext`: the first
+  released, unseen title in the list's own order and direction, tab and
+  filters (none on Seen; the Watchlist tab's first title). The Titles row gets
+  a red edge, an "Up next" pill and a filled red "Mark seen"
+  (`--brand-foreground` added for AA on the red), and the list opens with it
+  in view.
+- **The compact card (3/5):** "All titles 43/60 +4", its bar, and Up next with
+  ✓ and ✕, top right on both Connections and Titles; ✕ hides it for the visit
+  without removing the list's Up next mark. The larger progress widget, its
+  strip and scrolling bar were built and removed in review.
+- Escape no longer has a bulk-selection layer (AGENTS.md updated).
+- Verified: `npm run typecheck`; checks updated and added for the new list,
+  order, groups, Up next and the card (`test-dlist`, `test-progress`,
+  `test-nextup`, `test-bulk`, `test-nav`, `test-listkeys`, `test-home`,
+  `test-unreleased`, `test-textsize`, `test-themelab`, `test-anim`,
+  `test-refocus`); `a11y-scan` in English, Portuguese and dark; full
+  `qa/regress.sh` on the final tree, 62 check runs clean. Looked at in the
+  browser at 1280 (with and without the drawer), 1440 and 1920, dark and
+  light, English and Portuguese, and with the Theme lab presets.
+- Limits: not checked in Safari or on a phone; the phone's version is Titles
+  4/5. The card can cover the top rows' buttons on the right in Titles (it
+  floats; ✕ hides it).
+
 ## V5 design — A shorter card: connections in the corner
 
 Recorded: 2026-11-15 16:48 EST (-0500). Pushed to `version/5.0` (V5 staging).

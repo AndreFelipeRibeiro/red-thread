@@ -58,8 +58,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   `?view=grid` links open the List). Rows place IMDb and Rotten Tomatoes
   numeric badges together beneath their phase/budget metadata, with rank
   numbers when sorting by rating.
-- One Sort menu holds every sort in both directions as plain phrases
-  ("Release date, oldest first"). In Spatial, connection lines and
+- On Connections and on phones, one Sort menu holds every sort in both
+  directions as plain phrases ("Release date, oldest first"); desktop Titles
+  sorts from its own order bar and column headers (below). In Spatial, connection lines and
   row labels wait for the cards to finish moving after a new layout (row labels
   also after a selection closes), then fade back in. The List and Spatial use
   the same order; unrated titles stay last for either rating direction.
@@ -121,10 +122,26 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   pops its check and ticks the Seen / Watchlist counters; cards a filter
   brings back fade in; Up next slides to the next title; a pinned
   character's thread draws itself along their titles.
-- Desktop has Spatial and List views (switch at the end of the sort row). The
-  List is one row per title with sortable column headers (title, phase, release,
-  in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
-  cast drawer, which sits below the toolbar. Columns drop as the List narrows.
+- Desktop Titles is your path through the catalogue in an order you choose.
+  Its header is the same as on Connections (search, Sort, Filters), with a
+  second row for the status tabs and "Mark what you've seen". Below it, a
+  slim header row (#, Title, Released, IMDb, RT) sorts with one click and
+  reverses with a second; it and the Sort menu are one state with the
+  address's `sort` and `order`. Release date and Phase group the rows by
+  phase, Story order by in-story era, and each heading shows one small mark
+  per released title, filled when seen ("4/6"). The column sorts are one flat
+  ranked list. Rows show the poster, the title with its phase and setting,
+  the year, the IMDb and RT chips, Seen and Watchlist; a seen title keeps
+  full strength and carries the cards' seen mark in its poster's corner. "64
+  titles" appears only when a search or filter narrows the list. A row opens
+  the details drawer. The list sizes itself to its own width in two steps:
+  Regular, and Large from 84rem (1344px), with bigger posters, type and rows.
+  The column is up to 1480px wide.
+- Up next (the first released, unseen title in the order, tab and filters)
+  is marked in its Titles row with a red edge, an "Up next" pill and a filled
+  "Mark seen", and the list opens with that row in view. The compact card
+  ("All titles 43/60 +4" and Up next with ✓ and ✕) sits in the top-right
+  corner on both Connections and Titles; ✕ hides it until the next visit.
 - Cast drawer on desktop; List and Spatial views with detail sheets on mobile.
 - Details read the same on desktop and phones: poster beside the phase, type,
   year, title, release date and story timeframe; then IMDb and RT scores
@@ -278,14 +295,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Back returns to where you were; Cmd/Ctrl-click opens a new tab.
 - In desktop Spatial, Tab reaches each card (then its Seen and Watchlist
   buttons) and Enter opens it; a card tabbed to off-screen glides into view.
-- In the desktop List, ↑ ↓ move between rows keeping the column (checkbox,
-  title, Seen, Watchlist) and Home / End jump to the first and last row; with a
+- In the desktop List, ↑ ↓ move between rows keeping the column (title,
+  Seen, Watchlist) and Home / End jump to the first and last row; with a
   title's details open the details follow, also when it was opened with the
   mouse (↑ ↓ then move from the open title). ← → then step to the previous or
   next title in the order shown, wrapping at the ends, and a screen reader
   hears the title and its position. A pinned character or an open guide keeps
   stepping through its own titles. A row scrolled into view always clears the
-  pinned meter and column headers.
+  pinned controls, column headers and group header.
 - On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
   whole columns and the next column and row peeking past the right and bottom
   edges, so it's clear the canvas pans; the first row sits below the count pill.
@@ -323,15 +340,13 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
-- Marking many at once. Every progress header, on phones and in the desktop
-  List, offers "Mark all seen" or "Mark 4 more seen" (each phase in By Phase,
-  All titles in every other order). In the desktop List you can also tick rows
-  (Shift-click for a range, a phase header's box for that phase in By Phase,
-  the column header box for everything shown) and use the bar that appears:
-  Mark as seen, Add to Watchlist, or Mark as unseen under More. Unreleased titles are never marked
-  seen in bulk, anything over 20 titles (and any Mark as unseen) asks first, and
-  the toast's Undo puts every title back as it was, a replaced watchlist
-  included. Escape clears the selection before it closes the details.
+- Marking many at once. On desktop, "Mark what you've seen" opens the poster
+  picker (the List's row checkboxes and bulk bar were removed with Notion
+  "Titles 1/5"). On phones every progress header offers "Mark all seen" or
+  "Mark 4 more seen" (each phase in By Phase, All titles in every other
+  order). Unreleased titles are never marked seen in bulk, anything over 20
+  titles asks first, and the toast's Undo puts every title back as it was, a
+  replaced watchlist included.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
   syncs the collection across devices. Merge precedence is seen > watchlist > none.
   A signed-out guest (when sign-in is available) is reminded once, right after
@@ -609,7 +624,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
 | `src/app/guides-ui.tsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
 | `src/app/picker.tsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
-| `src/app/desktop-list.tsx` | Desktop List view: grouped rows, sortable column headers, status actions |
+| `src/app/desktop-list.tsx` | Desktop Titles list: the order bar, sortable column headers, foldable phase and era groups, status actions |
 | `src/app/search-suggest.tsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `src/app/poster.tsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `src/index.css` | The design tokens: shadcn's CSS variables with a light `:root` block and a `.dark` block, the phase colours as `--phase-1`…`--phase-6` in both, and the Tailwind entry, with classes generated only from the files listed with `@source`; plus the keyframes and the few page-level rules (page background, search highlights, logo masks, Reduce motion). The app and `design.html` both load it. Every surface is styled on its components; V3's `styles.css` and `styles-mobile.css` are gone (shadcn pass, 2026-11-14) |

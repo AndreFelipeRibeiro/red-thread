@@ -76,10 +76,15 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
 
 /** The meter over the whole catalogue (every order but By Phase), with Up
  *  next under it on desktop; top-right on desktop, across the top on phones. */
-export function SpatialOverall({ touch, children }: { touch: boolean; children: React.ReactNode }) {
+// `floating`: placed top right of the canvas. Off, the host places it (the
+// desktop Titles list keeps it in its bottom-right corner, Notion "Titles
+// 3/5").
+export function SpatialOverall({ touch, floating = true, children }: { touch: boolean; floating?: boolean; children: React.ReactNode }) {
   return (
-    <div className={cn('spatial-overall pointer-events-none absolute z-40 rounded-xl px-[13px] pt-[8px] pb-[9px] text-sm font-semibold tracking-tight text-foreground', FLOAT,
-      touch ? 'top-[62px] right-3 left-3.5 w-auto' : 'top-3.5 right-4 w-[300px]')}>
+    <div className={cn('spatial-overall pointer-events-none z-40 rounded-xl px-[13px] pt-[8px] pb-[9px] text-sm font-semibold tracking-tight text-foreground', FLOAT,
+      // Desktop: the same card and the floating chrome's small shadow, on
+      // Connections and in Titles.
+      !floating ? 'w-[300px]' : touch ? 'absolute top-[62px] right-3 left-3.5 w-auto' : 'absolute top-3.5 right-4 w-[300px]')}>
       {children}
     </div>
   );

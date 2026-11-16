@@ -51,7 +51,8 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.screenshot({ path: path.join(S, 'shots', 'anim-d-mid.png') });
   await page.waitForTimeout(800); out.dUnseenAfter = await settled(page);
   out.dAll = await dcoll('all'); await page.waitForTimeout(900);
-  out.dSortImdb = await (async () => { await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250); await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); return probe(page); })(); await page.waitForTimeout(900);
+  // Titles sorts from its own column headers (Notion "Titles 1/5").
+  out.dSortImdb = await (async () => { await page.locator('.dl-head .c-imdb button').click(); return probe(page); })(); await page.waitForTimeout(900);
   out.dHeader = await (async () => { await page.locator('.dl-head button', { hasText: 'Title' }).first().click(); return probe(page); })(); await page.waitForTimeout(900);
   // scrolled list: ghosts must sit where rows were
   await page.locator('.dlist').evaluate(el => el.scrollTop = 1500); await page.waitForTimeout(300);

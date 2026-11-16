@@ -1,7 +1,8 @@
 // The desktop header: one row (Notion "Desktop: navigation for Explore, My
 // list and Guides"): the wordmark, the three sections as tabs, search with a
 // "/" shortcut, Sort and Filters (not in Guides; Type is one of the filters),
-// then sync, Settings and Account. The collection switch lives in My list.
+// then sync, Settings and Account. On Titles a second row holds the status
+// tabs and "Mark what you've seen".
 // Built on the design system (Notion "shadcn pass 1/5"): this file is listed
 // with `@source` in src/index.css.
 //
@@ -71,6 +72,8 @@ export interface ToolbarProps {
   budgetFilter: string; setBudgetFilter: Setter;
   releaseFilter: string; setReleaseFilter: Setter;
   search: string; setSearch: Setter;
+  /** Titles' second row (the status tabs and "Mark what you've seen"). */
+  subNav?: React.ReactNode;
 }
 
 // The app's three sections (Notion "Desktop: navigation for Explore, My list
@@ -96,20 +99,80 @@ function useSlashToSearch(input: () => HTMLInputElement | null) {
   }, []);
 }
 
-export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, section, onSection, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, search, setSearch }: ToolbarProps) {
+type FilterProps = {
+  phaseFilter: string; setPhaseFilter: Setter;
+  typeFilter: string; setTypeFilter: Setter;
+  budgetFilter: string; setBudgetFilter: Setter;
+  releaseFilter: string; setReleaseFilter: Setter;
+  className?: string;
+};
+
+// Filters: one popover with the catalogue filters (phase, type, budget,
+// released). In the header on Connections; beside the status tabs in Titles
+// (Notion "Titles 1/5"). Hooks: `filters-pill`, `filters-pop`, `fcount`.
+export function FiltersMenu({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, className }: FilterProps) {
   window.useI18n();
-  const searchRef = useRef<HTMLDivElement | null>(null);
-  useSlashToSearch(() => searchRef.current && searchRef.current.querySelector('input'));
   // Type joined the catalogue filters (Notion navigation: "Type moves into
   // Filters"), so it counts with them.
   const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
+  const PHASE_COLORS = window.PHASE_COLORS as Record<string, string>;
+  return (
+    <div className={cn('filters-pop-wrap relative shrink-0', className)}>
+      <Popover>
+        {/* The trigger is the popover's own button in the outline
+            button's look: Base UI needs the real element as its anchor,
+            which <Button> (no forwarded ref) cannot hand over. */}
+        <PopoverTrigger className={cn(buttonVariants({ variant: 'outline' }), 'filters-pill h-10 gap-2 px-3.5 text-xs max-[1000px]:px-[11px]', activeFilters && 'active')}
+          aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+          <span className="filters-label max-[1280px]:hidden">{tr('filters.title')}</span>
+          {activeFilters ? <span className="fcount inline-flex tabular-nums h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground">{activeFilters}</span> : null}
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={9} className="filters-pop w-max max-w-[min(88vw,760px)] items-start gap-3 px-4 py-3.5">
+          <FilterGroup label={tr('filters.phase')}>
+            <Segmented value={phaseFilter} onChange={setPhaseFilter}
+              items={['all', '1', '2', '3', '4', '5', '6'].map((p) => ({
+                value: p,
+                content: p === 'all' ? tr('filters.all') : p,
+                // A chosen phase takes its phase colour, as before.
+                style: p !== 'all' && phaseFilter === p ? { background: PHASE_COLORS[p], color: 'var(--on-color)' } : undefined,
+              }))}/>
+          </FilterGroup>
+          <FilterGroup label={tr('filters.type')}>
+            <div className="tb-type-controls flex">
+              <Segmented value={typeFilter} onChange={setTypeFilter}
+                items={[['all', 'type.all'], ['film', 'type.films'], ['series', 'type.series']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
+            </div>
+          </FilterGroup>
+          <FilterGroup label={tr('filters.budget')}>
+            <Segmented value={budgetFilter} onChange={setBudgetFilter}
+              items={[['all', 'filters.all'], ['low', 'budget.low'], ['mid', 'budget.mid'], ['high', 'budget.high'], ['mega', 'budget.mega']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
+          </FilterGroup>
+          {/* Released only sits with the other catalogue filters rather
+              than in the toolbar, so the navigation does not grow. */}
+          <FilterGroup label={tr('filter.release')}>
+            <Segmented value={releaseFilter} onChange={setReleaseFilter}
+              items={[['all', 'filter.release.all'], ['released', 'filter.release.released']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
+          </FilterGroup>
+          {activeFilters > 0 && (
+            <Button variant="link" size="sm" className="pop-clear h-auto px-0 text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}>{tr('filters.clear')}</Button>
+          )}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, section, onSection, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, search, setSearch, subNav }: ToolbarProps) {
+  window.useI18n();
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  useSlashToSearch(() => searchRef.current && searchRef.current.querySelector('input'));
   // An open guide shows only its own stops: on the canvas, Sort still
   // arranges it while the filters are dimmed with a tooltip (GuideOff) and
   // kept for when it closes. The Guides section has no sort or filters.
   const guideOn = !!guideId;
-  const inGuides = section === 'guides';
   const Off = window.GuideOff;
-  const PHASE_COLORS = window.PHASE_COLORS as Record<string, string>;
   return (
     <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col border-b border-border bg-background/95 px-[22px] py-2.5 backdrop-blur-md max-[1560px]:px-4" role="banner">
       <div className="tb-row tb-top-row flex min-w-0 items-center gap-3 max-[1100px]:gap-2">
@@ -128,60 +191,19 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
             items={SECTIONS.map((v) => ({ value: v, content: tr('nav.' + v), className: 'px-4 text-sm max-[1560px]:px-3.5 max-[1000px]:px-2.5' }))}/>
         </nav>
         <div className="min-w-0 flex-1"/>
-        {/* Search, then Sort and Filters for Explore and My list. */}
+        {/* Search, then (on Connections) Sort and Filters. */}
         <div ref={searchRef} className="search-wrap relative flex h-10 w-[300px] min-w-[180px] shrink items-center gap-2 rounded-md border border-input bg-transparent px-3 text-muted-foreground shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 max-[1280px]:w-[240px] [&_input]:min-w-0 [&_input]:flex-1 [&_input]:border-0 [&_input]:bg-transparent [&_input]:text-sm [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
           <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
           <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
             ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={null}/>
           <kbd className="search-kbd shrink-0 rounded-[5px] border border-border px-1.5 font-sans text-xs leading-[18px] text-muted-foreground" aria-hidden="true" title={tr('search.slash')}>/</kbd>
         </div>
-        {!inGuides && <div className="tb-sort-control flex min-w-0 shrink-0 items-center [&_.sort-menu-trigger]:h-10">
+        {/* Sort and Filters on Connections and Titles (not Guides): the same
+            top layer on both (Andre, 2026-11-15). */}
+        {section !== 'guides' && <div className="tb-sort-control flex min-w-0 shrink-0 items-center [&_.sort-menu-trigger]:h-10">
           <window.SortMenu sort={sort} sortDir={sortDir} onChange={(k: string, d: string) => { setSort(k); setSortDir(d); }}/>
         </div>}
-        {!inGuides && <Off off={guideOn}><div className="filters-pop-wrap relative shrink-0">
-          <Popover>
-            {/* The trigger is the popover's own button in the outline
-                button's look: Base UI needs the real element as its anchor,
-                which <Button> (no forwarded ref) cannot hand over. */}
-            <PopoverTrigger className={cn(buttonVariants({ variant: 'outline' }), 'filters-pill h-10 gap-2 px-3.5 text-xs max-[1000px]:px-[11px]', activeFilters && 'active')}
-              aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              <span className="filters-label max-[1280px]:hidden">{tr('filters.title')}</span>
-              {activeFilters ? <span className="fcount inline-flex tabular-nums h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground">{activeFilters}</span> : null}
-            </PopoverTrigger>
-            <PopoverContent align="end" sideOffset={9} className="filters-pop w-max max-w-[min(88vw,760px)] items-start gap-3 px-4 py-3.5">
-              <FilterGroup label={tr('filters.phase')}>
-                <Segmented value={phaseFilter} onChange={setPhaseFilter}
-                  items={['all', '1', '2', '3', '4', '5', '6'].map((p) => ({
-                    value: p,
-                    content: p === 'all' ? tr('filters.all') : p,
-                    // A chosen phase takes its phase colour, as before.
-                    style: p !== 'all' && phaseFilter === p ? { background: PHASE_COLORS[p], color: 'var(--on-color)' } : undefined,
-                  }))}/>
-              </FilterGroup>
-              <FilterGroup label={tr('filters.type')}>
-                <div className="tb-type-controls flex">
-                  <Segmented value={typeFilter} onChange={setTypeFilter}
-                    items={[['all', 'type.all'], ['film', 'type.films'], ['series', 'type.series']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-                </div>
-              </FilterGroup>
-              <FilterGroup label={tr('filters.budget')}>
-                <Segmented value={budgetFilter} onChange={setBudgetFilter}
-                  items={[['all', 'filters.all'], ['low', 'budget.low'], ['mid', 'budget.mid'], ['high', 'budget.high'], ['mega', 'budget.mega']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-              </FilterGroup>
-              {/* Released only sits with the other catalogue filters rather
-                  than in the toolbar, so the navigation does not grow. */}
-              <FilterGroup label={tr('filter.release')}>
-                <Segmented value={releaseFilter} onChange={setReleaseFilter}
-                  items={[['all', 'filter.release.all'], ['released', 'filter.release.released']].map(([v, k]) => ({ value: v, content: tr(k) }))}/>
-              </FilterGroup>
-              {activeFilters > 0 && (
-                <Button variant="link" size="sm" className="pop-clear h-auto px-0 text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}>{tr('filters.clear')}</Button>
-              )}
-            </PopoverContent>
-          </Popover>
-        </div></Off>}
+        {section !== 'guides' && <Off off={guideOn}><FiltersMenu {...{ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter }}/></Off>}
         {guideOn && section === 'explore' && <window.GuideOffHint/>}
         <div className="tb-end flex flex-[0_0_auto] items-center gap-2 [&_.settings-btn]:size-10">
           <window.SyncStatus/>
@@ -190,8 +212,11 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
           <window.AccountButton onAbout={onAbout}/>
         </div>
       </div>
+      {/* Titles' second layer: the status tabs and "Mark what you've seen",
+          pinned with the header (Andre, 2026-11-15). */}
+      {subNav && <div className="tb-row tb-sub-row mt-2.5 -mb-0.5 flex min-w-0 items-center gap-3 border-t border-border pt-2.5">{subNav}</div>}
     </div>
   );
 }
 
-Object.assign(window, { Toolbar, Segmented, SECTIONS });
+Object.assign(window, { Toolbar, Segmented, SECTIONS, FiltersMenu });

@@ -207,7 +207,8 @@ export function CollectionSwitch({ value, onChange, variant = 'toolbar', short =
             {n != null && <CountBadge n={n} kind={v} on={on} appeared={!!before && !before[v] && n > 0}/>}
           </ToggleGroupItem>
         );
-        return first ? <React.Fragment key={v}>{item}<span className="coll-div my-2 w-px flex-none bg-[color-mix(in_oklab,var(--foreground)_18%,transparent)]" aria-hidden="true"/></React.Fragment> : item;
+        // No divider after All (Andre, 2026-11-15: the tabs read as one set).
+        return item;
       })}
     </ToggleGroup>
   );

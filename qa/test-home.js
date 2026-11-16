@@ -3,8 +3,8 @@
 // - From a guide, a pinned character with details open, and a search with
 //   filters and the Watchlist tab, on desktop and phone: the logo clears them
 //   all, puts the sort back to Release (earliest first) and keeps the view.
-// - Spatial frames the map again; the List scrolls to the top and its bulk
-//   selection clears; Up next comes back; "Back to the start" is announced.
+// - Spatial frames the map again; the List scrolls to the top; Up next comes
+//   back; "Back to the start" is announced.
 // - The address becomes "/" as one history step and Back restores what was
 //   there; the collection and the remembered-guide memory are as decided.
 // - It is a real link (href "/", an accessible name, reachable with Tab and
@@ -79,7 +79,6 @@ const STATE = () => {
     sort: q.get('sort'), order: q.get('order'),
     view: q.get('view'),
     upnext: !!document.querySelector('.un-strip, .un-mrow, .un-gcard, .un-chip, .un-card'),
-    checked: document.querySelectorAll('.dl-row[data-row-id] .dl-check:checked').length,
     listTop: (document.querySelector('.dlist, .m-scrollarea') || { scrollTop: -1 }).scrollTop,
     camera: canvas ? canvas.style.transform : null,
     live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean),
@@ -102,13 +101,12 @@ const STATE = () => {
     expect(s.live.includes('Back to the start'), `${where}: no announcement (${JSON.stringify(s.live)})`);
   };
 
-  // ---- Desktop List: a search, filters, the Watchlist tab, a selection ------
+  // ---- Desktop List: a search, filters, the Watchlist tab ------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'imdb', sortDir: 'asc' });
     await page.goto(URL + '?view=list&sort=imdb&order=asc&type=film&phase=3'); await settle(page);
     await page.fill('.search-wrap input', 'man'); await page.waitForTimeout(400);
     await page.keyboard.press('Escape');
-    await page.locator('.dl-row[data-row-id] .dl-check').first().check();
     await page.locator('.dl-row[data-row-id] .dl-open').first().click(); await page.waitForTimeout(700);
     // The link itself.
     const link = await page.evaluate(() => { const a = document.querySelector('.toolbar a.brand'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label'), h1: !!a.querySelector('h1') }; });
@@ -120,7 +118,6 @@ const STATE = () => {
     const after = await page.evaluate(STATE);
     out.deskAfter = after;
     firstState(after, 'desktop List', 'list');
-    expect(after.checked === 0, `desktop List: ${after.checked} rows still selected`);
     expect(after.listTop === 0, `desktop List: not scrolled to the top (${after.listTop})`);
     expect(after.collection === before.collection, 'desktop List: the collection changed');
     expect(await page.evaluate(() => document.activeElement && document.activeElement.matches('a.brand')), 'desktop: focus left the logo');

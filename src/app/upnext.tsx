@@ -9,9 +9,10 @@
 //   info.watchScope  true on the Watchlist tab
 //   info.onOpen(id), info.onHide(), info.onShowAll()
 //
-// Each surface places these pieces its own way (phone List row and Grid card,
-// desktop List strip, desktop Spatial meter row, phone Spatial chip), but the
-// words and actions are the same everywhere. Seen and Watchlist reuse
+// Each surface places these pieces its own way (phone List card, the desktop
+// compact card's row on Connections and in Titles, phone Spatial chip), but
+// the words and actions are the same everywhere. The desktop List's strip was
+// retired with Notion "Titles 3/5". Seen and Watchlist reuse
 // TitleStatusActions, so marking goes through the usual toast, Undo and sync.
 //
 // On the design system (Notion "shadcn pass 2/5"): this file is listed with
@@ -214,38 +215,8 @@ function UpNextCard({ info }: { info: UpNextWithTitle }) {
   );
 }
 
-// Desktop List: a strip above the list, which does not fold seen titles, so
-// the suggestion can be far down the table.
-function UpNextStrip({ info }: { info: UpNextInfo }) {
-  const PosterArt = window.PosterArt;
-  const r = info.result;
-  if (r.kind !== 'next') return <div className={WRAP}><UpNextState info={info} strip/></div>;
-  const t = r.title;
-  return (
-    <div className={WRAP}>
-      <section className={cn('un-card un-strip flex items-center gap-4 px-3.5 py-3 shadow-none', CARD)} aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
-        <div className="un-strip-label flex-[0_0_128px] text-xs leading-[1.5] font-medium text-foreground [&_span]:block [&_span]:text-muted-foreground" title={untr('upnext.rule')}>{info.lead}<span>{info.detail}</span></div>
-        <UpNextSlide id={t.id} className="un-strip-body flex min-w-0 flex-1 items-center gap-2.5">
-          <button type="button" className={cn(OPEN, 'flex-1')} onClick={() => info.onOpen(t.id)}>
-            <span className={cn('un-sposter h-[72px] w-12 flex-[0_0_48px] rounded-md', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
-            <span className="un-stext min-w-0">
-              <span className={TITLE}>{UpNI18N.titleName(t)}</span>
-              <span className={META}>
-                {UpNI18N.upper(untr(t.type === 'film' ? 'type.film.one' : 'type.series.one'))} · <span style={{ color: window.MPHASE_COLORS[t.phase] }}>{UpNI18N.upper(untr('phase.label', { n: t.phase }))}</span> · {t.year} · {untr('upnext.rank', { n: r.rank, total: r.released })}
-              </span>
-              <UpNextNote title={t}/>
-            </span>
-          </button>
-          <UpNextStatus info={info} title={t} variant="inline" className="mt-0 flex-nowrap"/>
-          <UpNextConnections info={info} title={t} className="flex-none"/>
-          <UpNextHide info={info} className="size-[max(34px,2.125rem)] basis-[34px]"/>
-        </UpNextSlide>
-      </section>
-    </div>
-  );
-}
-
-// Desktop Spatial: one row inside the floating All titles meter.
+// Desktop: one row inside the compact All titles card, on Connections (top
+// right) and in Titles (bottom right; Notion "Titles 3/5").
 function UpNextMeterRow({ info }: { info: UpNextInfo }) {
   const PosterArt = window.PosterArt;
   const r = info.result;
@@ -300,14 +271,11 @@ function UpNextChip({ info }: { info: UpNextInfo }) {
 // The title and the meta line, as every layout sets them.
 const TITLE = 'un-title block text-base leading-[1.25] font-semibold tracking-tight text-foreground';
 const META = 'un-meta mt-1 block text-xs text-muted-foreground tabular-nums';
-// The desktop List's strip, centred over the table.
-const WRAP = 'un-strip-wrap mx-auto mb-3.5 max-w-[1480px]';
 
-Object.assign(window, { UpNextTag, UpNextHide, UpNextState, UpNextCard, UpNextStrip, UpNextMeterRow, UpNextChip, UpNextNote });
+Object.assign(window, { UpNextTag, UpNextHide, UpNextState, UpNextCard, UpNextMeterRow, UpNextChip, UpNextNote });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { UpNextTag, UpNextHide, UpNextState, UpNextCard, UpNextStrip,
-  UpNextMeterRow, UpNextChip, UpNextNote };
+export { UpNextTag, UpNextHide, UpNextState, UpNextCard, UpNextMeterRow, UpNextChip, UpNextNote };

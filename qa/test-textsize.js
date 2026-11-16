@@ -244,7 +244,8 @@ const SCAN = () => {
   }
 
   // ---- The desktop List keeps every cell inside its column -----------------
-  // (columns are in rem and drop earlier when the text is bigger)
+  // (columns are in rem: #, Title, Released, IMDb, RT and the actions since
+  // Notion "Titles 1/5", none of which drop)
   for (const lang of ['en', 'pt-BR']) for (const size of ['', 'large']) for (const w of [1024, 1280, 1440]) {
     const { ctx, page } = await open({ viewport: { width: w, height: 700 } }, `localStorage.setItem('mcu.lang.v1', '${lang}');` + (size ? `localStorage.setItem('mcu.textSize.v1', '${size}');` : ''));
     await go(page, '?view=list');
@@ -262,7 +263,7 @@ const SCAN = () => {
     expect(!r.bad.length, `List ${lang} ${size || 'default'} ${w}px: content past its column: ${r.bad.join(', ')}`);
     await ctx.close();
   }
-  expect(out['list en default 1280'] === 12 && out['list pt-BR default 1280'] === 12, 'List at 1280px, default size: not all 12 columns');
+  expect(out['list en default 1280'] === 6 && out['list pt-BR default 1280'] === 6, 'List at 1280px, default size: not all 6 columns');
 
   // ---- Desktop at 200% zoom: a 720px-wide layout ---------------------------
   for (const lang of ['en', 'pt-BR']) {

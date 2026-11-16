@@ -41,7 +41,7 @@ const STATE = () => ({
   gallery: document.querySelectorAll('.g-page .g-row').length,
   guideList: !!document.querySelector('.g-desk'),
   canvas: !!document.querySelector('.viewport'),
-  myList: !!document.querySelector('.ml-title'),
+  myList: !!document.querySelector('.toolbar .tb-sub-row .ml-status .coll-switch'),
   old: ['.tb-sort-row', '.tb-view-switch', '.g-btn', '.toolbar .tb-type-controls'].filter(s => document.querySelector(s)),
 });
 
@@ -66,6 +66,8 @@ const STATE = () => ({
     s = await page.evaluate(STATE);
     out.myList = s;
     expect(s.tab === 'Titles' && s.myList && s.myColl && s.coll === 1 && /view=list/.test(s.url), `My list: ${JSON.stringify(s)}`);
+    // Titles has the same header as Connections (Andre, 2026-11-15).
+    expect(s.sortShown && s.filtersShown, `Titles: the header should carry Sort and Filters, as on Connections: ${JSON.stringify(s)}`);
     // The status tabs, in their order (the designs' To watch rename was tried
     // and reverted, 2026-11-15; Notion "Rename the top-level sections").
     const tabs = await page.evaluate(() => [...document.querySelectorAll('.ml-status .coll-switch button')].map(b => b.dataset.coll + ':' + (b.querySelector('.cl-full, .coll-label') || b).textContent.trim()));
@@ -83,12 +85,12 @@ const STATE = () => ({
         unreleasedRows: rows.filter(id => byId[id] && !window.MCU_isReleased(byId[id])), divider: !!document.querySelector('.ml-status .coll-div') };
     });
     out.counts = counts;
-    expect(counts.all === counts.total && counts.seen === 2 && counts.unseen === counts.released - 2 && counts.watchlist === 0 && counts.divider,
-      `tab counts or divider: ${JSON.stringify(counts)}`);
+    expect(counts.all === counts.total && counts.seen === 2 && counts.unseen === counts.released - 2 && counts.watchlist === 0 && !counts.divider,
+      // No divider after All since 2026-11-15 (Andre: the tabs read as one set).
+      `tab counts, or a divider came back: ${JSON.stringify(counts)}`);
     expect(!counts.unreleasedRows.length, `Unseen lists titles not released yet: ${counts.unreleasedRows.join()}`);
     await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
-    await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
-    await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click(); await page.waitForTimeout(400);
+    await page.locator('.dl-head .c-imdb button').click(); await page.waitForTimeout(400);
     await page.locator('.ml-status .coll-switch button[data-coll="seen"]').click(); await page.waitForTimeout(400);
     await TAB(page, 'Connections'); await page.waitForTimeout(900);
     s = await page.evaluate(STATE);
@@ -101,10 +103,10 @@ const STATE = () => ({
     expect(/sort=imdb/.test(s.url) && /Seen/.test(collOn || ''), `My list did not keep its sort and collection: ${JSON.stringify(out.myListAgain)}`);
 
     // "/" puts the cursor in search.
-    await page.locator('.ml-title').click();
+    await page.locator('.ml-status').click({ position: { x: 600, y: 10 } });
     await page.keyboard.press('/'); await page.waitForTimeout(100);
     expect(await page.evaluate(() => !!document.activeElement.closest('.search-wrap')), '"/" did not focus search');
-    await page.keyboard.press('Escape'); await page.locator('.ml-title').click();
+    await page.keyboard.press('Escape'); await page.locator('.ml-status').click({ position: { x: 600, y: 10 } });
 
     // See connections from the details.
     await page.locator('.ml-status .coll-switch button[data-coll="all"]').click(); await page.waitForTimeout(400);
@@ -135,7 +137,8 @@ const STATE = () => ({
     out.myListClosesGuide = s;
     expect(s.tab === 'Titles' && s.myList && !/guide=/.test(s.url), `My list with a guide open: ${JSON.stringify(s)}`);
     // The Account menu holds account things only (Notion "Take the collection
-    // filters out of the Account menu"); "Mark what you've seen" is in My list.
+    // filters out of the Account menu"); "Mark what you've seen" is in My list,
+    // in the progress widget's strip since Notion "Titles 3/5".
     expect(await page.locator('.ml-status .ml-pick').count() === 1, 'My list has no "Mark what you\'ve seen"');
     await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
     const acct = await page.evaluate(() => { const p = document.querySelector('.acct-panel'); return p && { links: !!p.querySelector('.acct-links, .acct-pick'), text: p.innerText }; });
@@ -157,19 +160,21 @@ const STATE = () => ({
     await ctx.close();
   }
 
-  // One header row from 900px, in both languages.
+  // The header's top row stays one line from 900px, in both languages, and
+  // so does Titles' second row (the status tabs, since Andre's review on
+  // 2026-11-15).
   for (const lang of ['en', 'pt-BR']) {
     for (const w of [900, 1000, 1280, 1440]) {
       const { ctx, page } = await ctxPage(browser, { viewport: { width: w, height: 800 } }, { ...prefs, desktopView: 'list' }, {}, `localStorage.setItem('mcu.lang.v1','${lang}');`);
       await page.goto(URL); await settle(page);
       const f = await page.evaluate(() => {
-        const row = document.querySelector('.tb-top-row');
-        const tb = document.querySelector('.toolbar').getBoundingClientRect();
-        return { h: Math.round(tb.height), overflow: row.scrollWidth > row.clientWidth + 1,
+        const row = document.querySelector('.tb-top-row'), sub = document.querySelector('.tb-sub-row');
+        return { h: Math.round(row.getBoundingClientRect().height), sub: sub ? Math.round(sub.getBoundingClientRect().height) : null,
+          overflow: row.scrollWidth > row.clientWidth + 1 || !!(sub && sub.scrollWidth > sub.clientWidth + 1),
           off: [...document.querySelectorAll('.toolbar button, .toolbar input')].filter(b => { const r = b.getBoundingClientRect(); return r.width && (r.right > innerWidth + 0.5 || r.left < -0.5); }).length };
       });
       out[`fit ${lang} ${w}`] = f;
-      expect(f.h <= 70 && !f.overflow && f.off === 0, `header at ${w}px (${lang}): ${JSON.stringify(f)}`);
+      expect(f.h <= 48 && f.sub !== null && f.sub <= 56 && !f.overflow && f.off === 0, `header at ${w}px (${lang}): ${JSON.stringify(f)}`);
       await ctx.close();
     }
   }

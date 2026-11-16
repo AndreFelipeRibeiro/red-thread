@@ -26,7 +26,9 @@ const VARS = () => {
   const cs = getComputedStyle(document.documentElement);
   return { bg: cs.getPropertyValue('--background').trim(), primary: cs.getPropertyValue('--primary').trim(), radius: cs.getPropertyValue('--radius').trim(),
     spacing: cs.getPropertyValue('--spacing').trim(), style: !!document.getElementById('theme-lab-style'), btn: !!document.querySelector('.theme-lab-btn'), panel: !!document.querySelector('.theme-lab'),
-    title: (() => { const t = document.querySelector('.ml-title'); return t ? getComputedStyle(t).fontFamily : null; })() };
+    // A display-type target: Up next's title in the compact card (Titles has
+    // no page heading since Notion "Titles 3/5").
+    title: (() => { const t = document.querySelector('.spatial-overall .un-title'); return t ? getComputedStyle(t).fontFamily : null; })() };
 };
 const pick = (page, sel, value) => page.evaluate(([s, v]) => {
   const el = document.querySelector(`[data-tl="${s}"]`);
@@ -56,7 +58,8 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     await ctx.close();
   }
   for (const scheme of ['dark', 'light']) {
-    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 1440, height: 900 }, colorScheme: scheme }, prefs, {}, 'window.__THEME_LAB = true;');
+    // One title seen, so the card has an Up next (its title takes display type).
+    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 1440, height: 900 }, colorScheme: scheme }, prefs, { 'iron-man': 'seen' }, 'window.__THEME_LAB = true;');
     await page.goto(URL); await settle(page);
     const base = await page.evaluate(VARS);
     out[scheme + ' default'] = base;

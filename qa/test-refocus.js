@@ -193,7 +193,7 @@ const CAMERA = (id) => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release', sortDir: 'asc' }, states);
     await page.goto(URL + '?view=list'); await settle(page);
-    await page.locator('.un-strip .un-open').focus();
+    await page.locator('.dlist .spatial-overall .un-open').focus();
     await page.keyboard.press('Enter'); await page.waitForTimeout(900);
     await page.keyboard.press('Escape'); await page.waitForTimeout(150);
     const flash = await page.evaluate(() => !!document.querySelector('.dl-row[data-row-id="she-hulk"].refocus-flash'));
