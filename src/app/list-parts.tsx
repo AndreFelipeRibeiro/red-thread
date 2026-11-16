@@ -54,20 +54,24 @@ export const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-
 // The chip is opaque so the yellow and red read the same on a poster, a List
 // row or a light card (a translucent chip over a light row put the red score
 // at 2.85:1; on rgb(10,12,20) every rating colour is 5.9:1 or better).
-const CHIP = 'm-sc flex flex-none items-center gap-1 rounded-[4px] border border-white/14 bg-[rgb(10,12,20)] px-1.5 py-[3px] font-bold whitespace-nowrap tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
-const TAG = 'tg rounded-[2px] px-[3px] py-px font-extrabold tracking-[.2px]';
+// Andre, 2026-11-16: the pills were a bit large. One small size everywhere
+// (List rows and columns, the cards' covers, the details), at the 12px floor
+// and growing only with the Large text size; tighter padding.
+const SC_TEXT = 'text-[max(12px,0.6875rem)] leading-[1.25]';
+const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-white/14 bg-[rgb(10,12,20)] px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
+const TAG = 'tg rounded-[2px] px-[3px] py-0 font-extrabold tracking-[.2px]';
 
 export function ScoreChip({ kind, title, compact = false, className }: { kind: 'imdb' | 'rt'; title: Title; compact?: boolean; className?: string }) {
   const value = kind === 'imdb' ? title.imdb : title.rt;
   if (value == null) return null;
-  const pad = compact && 'px-[5px] py-[2.5px]';
+  const pad = compact && 'px-[4px] py-[1.5px]';
   return kind === 'imdb' ? (
-    <div className={cn(CHIP, XS, 'imdb text-[#f5c518]', pad, className)} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
-      <span className={cn(TAG, XS, 'imdb-tag bg-[#f5c518] text-black')}>IMDb</span>{value.toFixed(1)}
+    <div className={cn(CHIP, SC_TEXT, 'imdb text-[#f5c518]', pad, className)} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
+      <span className={cn(TAG, 'imdb-tag bg-[#f5c518] text-black')}>IMDb</span>{value.toFixed(1)}
     </div>
   ) : (
-    <div className={cn(CHIP, XS, 'rt text-[#fa5c3c]', pad, className)} title={tr('score.rt')}>
-      <span className={cn(TAG, XS, 'rt-tag bg-[#cc2a0a] text-white')}>RT</span>{value}%
+    <div className={cn(CHIP, SC_TEXT, 'rt text-[#fa5c3c]', pad, className)} title={tr('score.rt')}>
+      <span className={cn(TAG, 'rt-tag bg-[#cc2a0a] text-white')}>RT</span>{value}%
     </div>
   );
 }
@@ -77,7 +81,7 @@ export function ScoreChip({ kind, title, compact = false, className }: { kind: '
 export function ScoreBadges({ title, lead, compact, className }: { title: Title; lead?: 'rt' | 'imdb'; compact?: boolean; className?: string }) {
   const wrap = cn('m-scores flex gap-[5px]', compact && 'compact pointer-events-none absolute right-[7px] bottom-[7px] left-[7px] z-2 flex-wrap items-end gap-1', className);
   if (title.imdb == null && title.rt == null) {
-    return <div className={wrap}><div className={cn(CHIP, XS, 'none font-medium text-(--on-image-muted) not-dark:text-muted-foreground', compact && 'px-[5px] py-[2.5px]')}>{tr('score.none')}</div></div>;
+    return <div className={wrap}><div className={cn(CHIP, SC_TEXT, 'none font-medium text-(--on-image-muted) not-dark:text-muted-foreground', compact && 'px-[5px] py-[2.5px]')}>{tr('score.none')}</div></div>;
   }
   const imdb = <ScoreChip key="i" kind="imdb" title={title} compact={compact}/>;
   const rt = <ScoreChip key="r" kind="rt" title={title} compact={compact}/>;
@@ -272,7 +276,7 @@ const WATCH = 'watch border-[color-mix(in_oklab,var(--status-watch)_75%,transpar
 const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--primary))]';
 
 type RowProps = {
-  t: Title; rank: number | null; ranked: boolean; lead: 'rt' | 'imdb';
+  t: Title; rank: number | null; ranked: boolean; lead: 'rt' | 'imdb'; story?: boolean;
   seen: boolean; watch: boolean; current: boolean; upNext?: boolean;
   matchedChars?: string[] | null; search?: string; onSelect: (id: string) => void;
 };
@@ -284,7 +288,7 @@ type RowProps = {
  *  strength, as on desktop (Andre, 2026-11-15: no dimming; the mark and the
  *  green check say it). Up next gets the desktop row's red edge, its pill and
  *  the filled red check (icon only here: the pill names it). */
-export function PhoneRow({ t, rank, ranked, lead, seen, watch, current, upNext = false, matchedChars, search, onSelect }: RowProps) {
+export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, current, upNext = false, matchedChars, search, onSelect }: RowProps) {
   const I = I18N();
   const { PosterArt, StoryYear, ReleaseBadge } = window;
   const dot = <span className="m-dot size-[3px] flex-[0_0_3px] rounded-[2px] bg-muted-foreground"/>;
@@ -314,10 +318,15 @@ export function PhoneRow({ t, rank, ranked, lead, seen, watch, current, upNext =
             <span>{t.year}</span>
             {dot}
             <span style={{ color: phaseColor(t.phase) }}>{tr('phase.label', { n: t.phase })}</span>
-            {t.story && <>{dot}<StoryYear title={t}/></>}
+            {story && t.story && <>{dot}<StoryYear title={t}/></>}
             <ReleaseBadge title={t} className="m-lrelease ml-1.5"/>
           </div>
-          <ScoreBadges title={t} lead={lead} className="mt-1.5 flex-row flex-wrap items-center gap-x-3 gap-y-1.5"/>
+          {/* Like the cards, the row follows the sort (Andre, 2026-11-16: the
+              rows were busy): "Set in" in Story order, and the score being
+              sorted by in a score order; year and phase always. */}
+          {ranked && (t[lead] != null
+            ? <ScoreChip kind={lead} title={t} className="m-score mt-1.5"/>
+            : <span className={cn('m-score mt-1.5 text-muted-foreground', XS)}>{tr('score.none')}</span>)}
           <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
         </div>
       </button>

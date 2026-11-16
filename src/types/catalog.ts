@@ -83,6 +83,11 @@ export interface Guide {
   blurb: Localized;
   /** Shown once the guide is complete; absent on the evergreen collections. */
   done?: Localized;
+  /** A draft awaiting Andre's approval: shown only in development and on
+   *  Vercel previews (src/data/guides.ts). */
+  draft?: boolean;
+  /** The shelf a guide moves to once the drafts are approved. */
+  draftGroup?: string;
   stops: GuideStop[];
   /** Set when the guide is not tied to an upcoming release. */
   evergreen?: boolean;
@@ -105,6 +110,11 @@ export interface Media {
   actors: Record<string, string>;
   ratings: Record<string, unknown>;
   local_posters: Record<string, string>;
+  /** Title id to the official poster's dominant colour ("#rrggbb"), from
+   *  tools/poster-colors.cjs; the Monogram fallback's colour. */
+  poster_color?: Record<string, string>;
+  /** The plain most common colour, kept for comparison. */
+  poster_color_raw?: Record<string, string>;
 }
 
 /** One service offering a title in one country. */

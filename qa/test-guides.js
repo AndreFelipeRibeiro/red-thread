@@ -62,7 +62,7 @@ const DATA = () => {
   const ids = new Set(window.TITLES.map(t => t.id));
   const seenIds = new Set();
   const langs = ['en', 'pt-BR'];
-  const groups = ['coming', 'stories', 'characters', 'animation'];
+  const groups = ['coming', 'stories', 'characters', 'teams', 'corners', 'animation'];
   (window.GUIDES || []).forEach(g => {
     if (seenIds.has(g.id)) errs.push(`guide id ${g.id} is used twice`);
     seenIds.add(g.id);
@@ -115,6 +115,17 @@ const DATA = () => {
   data.errs.forEach(e => err('data: ' + e));
   out.guides = data.guides;
   if (!data.guides.length) err('no guides loaded');
+  // The drafts awaiting approval (Guides 4/4) follow the same rules; they
+  // only show where QA or a preview asks for them.
+  {
+    const d = await ctxPage(browser, DESKTOP, seedJs({}) + 'window.__GUIDE_DRAFTS = true;');
+    await d.page.goto(URL + '?view=list'); await settle(d.page);
+    const dd = await d.page.evaluate(DATA);
+    dd.errs.forEach(e => err('draft data: ' + e));
+    out.draftGuides = dd.guides.length;
+    if (dd.guides.length <= data.guides.length) err('the drafts did not load with window.__GUIDE_DRAFTS');
+    await d.ctx.close();
+  }
 
   // The guide under test: the first event guide, else the first one. Its
   // expectations, worked out from the data and today's date.

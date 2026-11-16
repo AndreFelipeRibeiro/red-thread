@@ -154,7 +154,21 @@ export interface Preferences {
   region: string;
   motion: Motion;
   celebrations: boolean;
+  /** Followed guides (Guides 2/4), most recent activity last: [{ id, at }]. */
+  guidesFollowed: FollowedGuide[];
 }
+interface FollowedGuide { id: string; at: number }
+interface FollowedStore {
+  followedList(): FollowedGuide[];
+  setFollowedList(list: unknown): void;
+  onFollowed(fn: () => void): () => void;
+}
+// guides-ui.tsx publishes the store on MCU_GUIDE; read through this narrow
+// shape rather than widening GuideRuntime's catch-all.
+const followedStore = (): FollowedStore | null => {
+  const g = window.MCU_GUIDE as unknown as Partial<FollowedStore> | undefined;
+  return g && typeof g.followedList === 'function' ? g as FollowedStore : null;
+};
 
 function snapshot(): Preferences {
   return {
@@ -163,6 +177,7 @@ function snapshot(): Preferences {
     region: window.MCU_region.get(),
     motion,
     celebrations,
+    guidesFollowed: followedStore()?.followedList() ?? [],
   };
 }
 
@@ -174,12 +189,15 @@ function applyPreferences(p: Partial<Preferences>) {
   if (typeof p.region === 'string' && /^[A-Z]{2}$/.test(p.region)) window.MCU_region.set(p.region);
   if (p.motion === 'auto' || p.motion === 'reduced') setMotion(p.motion);
   if (typeof p.celebrations === 'boolean') setCelebrations(p.celebrations);
+  if (Array.isArray(p.guidesFollowed)) followedStore()?.setFollowedList(p.guidesFollowed);
 }
 
 // Every change, whichever store it lives in, as one subscription. The
 // snapshot is cached by its JSON so useSyncExternalStore sees a stable value.
 function subscribeAll(fn: () => void): () => void {
   const offs = [subscribeTheme(fn), window.MCU_I18N.subscribe(fn), window.MCU_region.subscribe(fn)];
+  const store = followedStore();
+  if (store) offs.push(store.onFollowed(fn));
   localListeners.add(fn);
   return () => { offs.forEach((off) => off()); localListeners.delete(fn); };
 }

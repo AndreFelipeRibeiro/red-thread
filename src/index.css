@@ -44,6 +44,7 @@
 @source "./app/seg-pill.tsx";
 @source "./app/guides-ui.tsx";
 @source "./app/theme-lab.tsx";
+@source "./app/poster.tsx";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -52,6 +53,12 @@
    setting them. The values are unchanged. */
 @theme {
     --font-sans: 'Inter Variable', sans-serif;
+    /* The display face (Notion "Replace the poster fallback art": the
+       Monogram's initials). Instrument Serif, the first serif in the default
+       theme; until it is self-hosted (@fontsource/instrument-serif, awaiting
+       approval to add the package) Georgia stands in. The Theme lab's display
+       choice overrides it. */
+    --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
     /* Tailwind's spacing unit grows with Text size and never shrinks below its
        default (Andre: controls should grow with their text, and touch targets
        stay at least their default size at Small). The V3 stylesheets size
@@ -334,13 +341,18 @@
     html[data-text-size="large"] { font-size: 106.25%; }
   }
   /* Phones (the layout under 900px, as useDevice() in app.tsx decides) set
-     body text a step smaller: 14px instead of 15 (Andre, 2026-11-02). The
-     phone's chrome, the bottom nav and the search field, grows only half as
-     much as the text at Large: --fs-chrome-scale takes 112.5% back to
-     106.25%. */
+     body text a step smaller: 14px instead of 15 (Andre, 2026-11-02), and
+     read a step larger overall (Andre, 2026-11-16, Notion "Phone text sizes:
+     today's Default becomes Small, Large becomes Default, and a new Large"):
+     Small is 100% (the old Default), Default 112.5% (the old Large), Large a
+     new 125%. The phone's chrome, the bottom nav and the search field, grows
+     only half as much as the text: --fs-chrome-scale takes 112.5% back to
+     106.25%, and 125% back to 112.5%. */
   @media (max-width: 899px) {
     :root { --fs-md: 0.875rem; --fs-chrome-scale: 1; }
-    html[data-text-size="large"] { --fs-chrome-scale: calc(17 / 18); }
+    html:not([data-text-size]), html[data-text-size="default"] { font-size: 112.5%; --fs-chrome-scale: calc(17 / 18); }
+    html[data-text-size="small"] { font-size: 100%; --fs-chrome-scale: 1; }
+    html[data-text-size="large"] { font-size: 125%; --fs-chrome-scale: 0.9; }
   }
 }
 /* Keyframes the converted header controls name in their animate-[…] classes

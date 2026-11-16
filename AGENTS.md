@@ -433,8 +433,9 @@ rules carry over unchanged.
   everywhere, numbers included: no monospace is left in the UI, and figures
   that need to line up (counts, ratings, budgets, table columns) use tabular
   figures (`tabular-nums`) instead (Andre's decision, 2026-11-14, replacing
-  the system monospace of 2026-11-01). Bebas Neue appears only in the generated
-  poster art. Logo: two SVG files, each drawn as a CSS mask so the next
+  the system monospace of 2026-11-01). The poster fallback's initials use
+  the display face, `--font-display` (Instrument Serif; the first serif in
+  the default theme). Logo: two SVG files, each drawn as a CSS mask so the next
   version is a file swap. `src/assets/logo-mark.svg` is the mark (today the
   work-in-progress push pin), painted with `--logo` (the designer's red, the
   same in both themes; `.logo-mark` in `src/index.css`) everywhere the mark

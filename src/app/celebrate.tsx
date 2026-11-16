@@ -192,8 +192,13 @@ function StatusToast({ touch }) {
 
   const undo = () => {
     if (!toast) return;
+    // Auto-follow (Guides 2/4): Undo stops following; the seen mark stays.
+    if (toast.autoFollow) { window.MCU_GUIDE.unfollow(toast.autoFollow); setToast(null); return; }
     if (toast.bulk) undoMany(toast.prev);
     else setStatus(toast.title.id, toast.from);
+    // The mark that finished a followed guide stopped following it; undoing
+    // the mark follows it again.
+    if (toast.finishedGuide) window.MCU_GUIDE.follow(toast.finishedGuide);
     setToast(null);
   };
 
@@ -201,10 +206,13 @@ function StatusToast({ touch }) {
   if (toast) {
     const I = window.MCU_I18N;
     const m = toast.milestone;
+    const followed = !m && toast.autoFollow ? window.MCU_GUIDE.get(toast.autoFollow) : null;
     const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase })
+      : followed ? tr('toast.followed', { name: window.MCU_GUIDE.short(followed) })
       : toast.to === 'mixed' ? tr('toast.bulk.mixed', { s: toast.seenIds.length, u: toast.unseenIds.length })
       : toast.bulk ? tr('toast.bulk.' + toast.to, { n: toast.ids.length }) : I.titleName(toast.title);
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
+      : followed ? tr('toast.followedSub')
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
       <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-sm text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
@@ -216,7 +224,8 @@ function StatusToast({ touch }) {
           {m ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>
         <span className="mt-text flex min-w-0 flex-auto flex-col"><b className="truncate text-sm font-semibold">{head}</b><span className={cn('text-(length:--fs-xs)', TOAST_DIM)}>{sub}</span></span>
-        <Button variant="outline" size="sm" className="mt-undo h-auto min-h-[max(32px,2rem)] flex-none px-3 text-xs font-semibold" onClick={undo}>{tr('toast.undo')}</Button>
+        <Button variant="outline" size="sm" className="mt-undo h-auto min-h-[max(32px,2rem)] flex-none px-3 text-xs font-semibold" onClick={undo}
+          aria-label={followed ? tr('toast.followedUndo', { name: window.MCU_GUIDE.short(followed) }) : undefined}>{tr('toast.undo')}</Button>
         {/* A milestone can be shared (Notion "Share 1/3"); Undo stays first. */}
         {m && <window.ShareButton iconOnly size={15} className="mt-share size-[max(32px,2rem)]" label={tr('share.toastLabel', { what: head })}
           payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}

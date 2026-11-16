@@ -42,3 +42,4 @@ qa/.cache/
 # V4 build step (Vite): installed packages and the built site.
 node_modules/
 dist/
+tools/poster-colors-report.html

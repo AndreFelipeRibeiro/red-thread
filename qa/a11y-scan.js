@@ -5,9 +5,13 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
 const NOWELCOME = "try { localStorage.setItem('mcu.welcome.v1', 'test'); } catch (e) {}";
 const PORT = +process.env.PORT || 8282;
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+// The poster fallback (Monogram, src/app/poster.tsx) is left out: it is an
+// image named after its title (role="img"), and its initials and year are
+// aria-hidden artwork drawn in the poster's own colours, like a real poster's
+// pixels, not text to read (Notion "Replace the poster fallback art").
 const scan = async (page, name, out) => {
   await page.addScriptTag({ content: AXE });
-  const r = await page.evaluate(async () => { const res = await axe.run(document, { resultTypes: ['violations'] }); return res.violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length, help: v.help, sample: v.nodes.slice(0, 3).map(n => n.target.join(' ') + (n.any[0] ? ' :: ' + n.any[0].message.slice(0, 120) : '')) })); });
+  const r = await page.evaluate(async () => { const res = await axe.run({ include: [['html']], exclude: [['.poster-mono']] }, { resultTypes: ['violations'] }); return res.violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length, help: v.help, sample: v.nodes.slice(0, 3).map(n => n.target.join(' ') + (n.any[0] ? ' :: ' + n.any[0].message.slice(0, 120) : '')) })); });
   out[name] = r;
 };
 (async () => {

@@ -13,6 +13,124 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 feature — Guides: following, the Continue shelf and Up next from your guide (Guides 2/4)
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- **Continue:** under the hero, a shelf of the other guides you follow that
+  are unfinished, each with its next stop's poster, "Up next" and Mark seen;
+  Manage (a popover on desktop, a sheet on phones) changes which you follow.
+- **Following by doing:** marking a stop seen inside a guide follows it, with
+  a toast and Undo (Undo stops following and keeps the mark); finishing a
+  guide stops following it (Undo on that mark follows it again).
+- **Up next:** with no tab, character or filter narrowing the view, Up next on
+  Connections and Titles is the next essential stop of the guide in focus.
+- **Synced:** followed guides are part of the account's preferences, so they
+  follow you across devices when signed in.
+- Verified: new `qa/test-follow.js`; test-gpage updated; the full regress.
+
+## V5 feature — Guides: 20 new draft guides, hidden on production (Guides 4/4)
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- Characters (11), teams (Guardians, Thunderbolts, the next generation),
+  corners of the universe (cosmic, street-level, mystic), stories (the
+  Infinity Stones, Thanos) and an event guide before Secret Wars, so every
+  shelf holds at least 4. The Avengers move to teams and the animated
+  series to corners with them.
+- Drafts until Andre approves them: shown only on localhost and Vercel
+  previews (or with `window.__GUIDE_DRAFTS`), never on redthread.tv, and no
+  link previews are generated for them.
+- Verified: test-guides checks the drafts' data and that production hides
+  them; the full regress.
+
+## V5 fix — Connections: an opened guide lands at a readable zoom
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- Opening a guide on desktop Connections framed its whole route at about 17%;
+  it now opens on the next stop at the reading zoom (about 70%), below the
+  guide bar.
+- Verified: test-guidemode and test-stepzoom; the full regress.
+
+## V5 design — Guides review: Show all, the guide dock and bar, the promotion
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- **Show all on phones:** two guide cards a row (one under 360px), not three;
+  a narrow card stacks its status row and drops the posters' year chips.
+- **The guide's dock (phones) and bar (desktop):** the Up next card's border
+  and small shadow; the next stop's poster in the dock; red progress
+  segments like every other meter; ✓ with the camera on another stop glides
+  back to the stop being marked, without opening its details.
+- **Picked for you:** the square before "Guide · Picked for you" is white, so
+  it reads on every guide colour; the phone drawer is taller and drops the
+  names under the covers; at Large the dated tile shows month and day only.
+- Verified: test-gpage now opens Show all at 320–430px; screenshots at 390×664
+  (Default and Large) and 1440px; the full regress.
+
+## V5 design — Fallback posters: initials on a colour, and each poster's colour
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- A missing or broken poster shows the title's initials in the display face
+  and its year (the generated shapes are gone), as an image named after the
+  title. Colours: nine muted hues, fixed per title and never the same as its
+  release-order neighbour; dark, a deep field; light, a near-white tile with
+  coloured initials and a hairline edge (initials at 3.4–3.9:1, above the 3:1
+  for large text and graphics).
+- `tools/poster-colors.cjs` extracts every official poster's main colour into
+  the media data (`poster_color`); a poster's box shows it while loading.
+- The dark zoom control is opaque, so a card under it never shows through.
+- Verified: new `qa/test-monogram.js` (the initials of all 64 titles, the
+  hues); test-img and test-contrast; the full regress.
+
+## V5 design — Cards and Titles follow the sort; Up next stands out
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- **Cards:** the meta line shows the year (Release, A–Z, By Phase, IMDb and
+  Tomatometer), where it is set (Story order) or the budget (Budget filter);
+  in a score sort the score sits on the poster's bottom-left corner. The
+  card keeps its size.
+- **Up next on Connections:** the card the Up next card (or a guide's dock)
+  names has a red outline.
+- **Phone canvas cards:** a 17px title and 12px year line in the same card.
+- **Titles:** smaller IMDb and RT pills everywhere; phone rows show "Set in"
+  only in Story order and the sorted score only in a score sort; section
+  headings show a short segmented bar instead of dots.
+- Verified: test-cards (every sort, the outline, phone text); test-progress;
+  the full regress.
+
+## V5 improvement — Phone text sizes: Default is bigger, Large is new
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- Phones: Small is the old Default (16px), Default the old Large (18px) and
+  Large a new 20px. Desktop unchanged. The character pill and the phone
+  toolbar tighten step by step when a name or label would not fit.
+- Verified: test-textsize with the new sizes; test-fit at 320px; the full
+  regress.
+
+## V5 fix — Phones at Large text: Titles no longer pushes the header off screen
+
+Recorded: 2026-11-16 08:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
+
+- Titles brought Up next into view with `scrollIntoView`, which on iOS Safari
+  also scrolls the page; at Large the whole app slid up under the address
+  bar. Rows now scroll only inside their list, and the page is held at the
+  top unless a text field has focus.
+- Verified: new `qa/test-pagescroll.js`; the full regress. Not yet tried on
+  an iPhone (desktop Chromium can't reproduce the page scroll).
+
 ## V5 design — Guides: a page with a hero and shelves, and moving between guides (Guides 1/4 and 3/4)
 
 Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging);

@@ -53,6 +53,9 @@ const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
+  // A 1×1 PNG for "served" mode, built here (the img-ok.png fixture this read
+  // was never in the repo).
+  const IMG_OK = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
   const browser = await chromium.launch();
   const R = {};
   for (const mode of ['blocked', 'served']) {
@@ -62,12 +65,12 @@ const reload = async page => { await page.reload(); await settle(page); };
       await page.route(/image\.tmdb\.org|\.(jpg|png|webp)(\?|$)/, route => {
         const u = route.request().url(); hits[u] = (hits[u] || 0) + 1;
         if (mode === 'served' && u.startsWith('http://127.0.0.1') && !/tmdb/.test(u)) return route.continue();
-        return mode === 'served' ? route.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync('img-ok.png') }) : route.abort();
+        return mode === 'served' ? route.fulfill({ status: 200, contentType: 'image/png', body: IMG_OK }) : route.abort();
       });
       await go(page); await page.waitForTimeout(4000);
       const poster = await page.evaluate(() => ({
         imgs: document.querySelectorAll('.poster-image-wrap img').length,
-        generated: [...document.querySelectorAll('.card-poster > svg, .m-lthumb > svg, .m-pw > svg')].length,
+        generated: [...document.querySelectorAll('.card-poster > .poster-mono, .m-lthumb > .poster-mono, .m-pw > .poster-mono')].length,
         broken: [...document.querySelectorAll('img')].filter(i => i.complete && i.naturalWidth === 0 && i.getAttribute('src')).length,
       }));
       // Open details for the first title.

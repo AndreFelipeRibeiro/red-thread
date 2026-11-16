@@ -130,6 +130,8 @@ export function labCSS(s: LabState): string {
   if (radius != null) root['--radius'] = radius + 'rem';
   if (s.density !== 1) root['--spacing'] = `calc(max(0.25rem, 4px) * ${s.density})`;
   if (s.sans && s.sans !== 'Inter') root['--font-sans'] = STACK[s.sans];
+  // The display choice also sets the token the poster fallback reads.
+  if (s.display && s.display !== 'None') root['--font-display'] = STACK[s.display];
   let css = block('html:root', root) + block('html.dark', p.dark);
   if (s.display && s.display !== 'None') {
     css += `${DISPLAY_TARGETS} { font-family: ${STACK[s.display]}; font-weight: 400; letter-spacing: -0.01em; }\n`;

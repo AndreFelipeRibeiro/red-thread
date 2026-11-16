@@ -73,7 +73,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
   // an icon button as well (step 3; its name and count stay in aria-label).
   const picker = section === 'mylist' && !!window.MCU_openPicker;
   const toolRow = React.useRef<HTMLDivElement | null>(null);
-  window.useFitSteps(toolRow, 3, [lang, section, sort, filterCount, picker, open]);
+  window.useFitSteps(toolRow, 4, [lang, section, sort, filterCount, picker, open]);
   // The field is drawn and focused inside the tap itself: iPhones only bring
   // up the keyboard for focus given during the gesture.
   const openSearch = () => {
@@ -89,7 +89,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
       <div className="m-appbar-top flex items-center justify-between gap-2">
         <a className="m-brandrow flex min-w-0 flex-[1_1_auto] items-center gap-2.5 rounded-lg text-inherit no-underline outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-3 focus-visible:ring-ring/50"
           href="/" onClick={onHome} aria-label={tr('home.link')}>
-          <span className="m-mark logo-mark h-7 w-[15px] flex-[0_0_15px]" aria-hidden="true"/>
+          <span className="m-mark logo-mark h-[28px] w-[15px] flex-[0_0_15px]" aria-hidden="true"/>
           <h1 className="m-btitle m-0 overflow-hidden text-[15px] leading-[1.15] font-semibold tracking-tight text-ellipsis whitespace-nowrap">
             <span className="logo-word h-[21px] w-[111px]" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span>
           </h1>
@@ -118,21 +118,21 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
           <Button variant="ghost" className="m-clear h-11 shrink-0 px-2.5 text-sm" onClick={() => { setSearch(''); setSearching(false); }}>{tr('search.done')}</Button>
         </div>
       ) : tools && (
-        <div ref={toolRow} className="m-toolrow group/toolrow flex min-w-0 items-center gap-2 data-[fit=2]:gap-1 data-[fit=3]:gap-1">
+        <div ref={toolRow} className="m-toolrow group/toolrow flex min-w-0 items-center gap-2 data-[fit=2]:gap-1 data-[fit=3]:gap-1 data-[fit=4]:gap-1 data-[fit=4]:[&_.sort-menu-trigger]:gap-1.5 data-[fit=4]:[&_.sort-menu-trigger]:px-2.5 data-[fit=4]:[&_.sort-menu-trigger>svg:last-child]:hidden">
           <SortMenu sort={sort} sortDir={sortDir} onChange={(k, d) => { setSort(k); setSortDir(d); }} mobile/>
           <Off off={guideActive && section === 'explore'}>
-            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-xs text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0', filterCount && 'act bg-muted dark:bg-input/50')}
+            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-xs text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0', filterCount && 'act bg-muted dark:bg-input/50')}
               onClick={onOpenFilters} aria-label={filterCount ? tr('filters.aria', { n: filterCount }) : tr('filters.title')} title={tr('filters.title')}>
               <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-              <span className="group-data-[fit=3]/toolrow:sr-only">{tr('filters.title')}</span>
+              <span className="group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only">{tr('filters.title')}</span>
               {filterCount ? <span className="m-fcount absolute tabular-nums -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-primary px-1 text-xs font-bold text-primary-foreground">{filterCount}</span> : null}
             </Button>
           </Off>
           {picker && (
-            <Button variant="outline" className="m-pick ml-auto h-11 gap-1.5 px-3 text-xs font-medium text-(--status-seen-text) hover:text-(--status-seen-text) group-data-[fit=1]/toolrow:w-11 group-data-[fit=1]/toolrow:px-0 group-data-[fit=2]/toolrow:w-11 group-data-[fit=2]/toolrow:px-0 group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0"
+            <Button variant="outline" className="m-pick ml-auto h-11 gap-1.5 px-3 text-xs font-medium text-(--status-seen-text) hover:text-(--status-seen-text) group-data-[fit=1]/toolrow:w-11 group-data-[fit=1]/toolrow:px-0 group-data-[fit=2]/toolrow:w-11 group-data-[fit=2]/toolrow:px-0 group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0"
               onClick={() => window.MCU_openPicker && window.MCU_openPicker()} title={tr('picker.open')}>
               <svg className="size-[15px]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><path d="m14 18 2 2 4-4"/></svg>
-              <span className="group-data-[fit=1]/toolrow:sr-only group-data-[fit=2]/toolrow:sr-only group-data-[fit=3]/toolrow:sr-only">{tr('picker.open')}</span>
+              <span className="group-data-[fit=1]/toolrow:sr-only group-data-[fit=2]/toolrow:sr-only group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only">{tr('picker.open')}</span>
             </Button>
           )}
         </div>
