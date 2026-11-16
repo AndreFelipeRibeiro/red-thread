@@ -34,8 +34,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   details glides the camera back to where you were.
 - Three sections: **Connections** (the Spatial canvas), **Titles** (the List,
   with the All | Unseen, Watchlist, Seen tabs, each with its count; Unseen
-  counts released titles only, so it matches "44 of 60 seen") and **Guides** (a gallery of
-  the guides, then the open guide). Explore and My list each keep their own
+  counts released titles only, so it matches "44 of 60 seen") and **Guides** (the
+  Guides page, then the open guide). Explore and My list each keep their own
   sort and filters. Titles' heading carries the progress ("44 of 60 seen", a bar
   and the share). On desktop they are tabs in one header row: the wordmark,
   the tabs, search ("/" focuses it), Sort and Filters (Type is inside Filters),
@@ -162,6 +162,18 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   and says so in one line. It is the compact card's second row (above) and
   is marked in its own row in Titles; with nothing to suggest (all caught up,
   the Seen tab) the card shows progress alone.
+- The Guides page opens with a hero for the guide in focus: a followed guide
+  leading to a release in the next 60 days, else the most recent one you
+  follow; with none, the guide the promotion rules pick, shown not started.
+  Its stops sit on a thread (seen ones dimmed with the seen mark, the next one
+  larger with "Mark seen", or "Start guide" when not followed, attached to it,
+  and an event guide's destination last with its date). Below, shelves of
+  guide cards (4 across on desktop, sideways on phones; "See all" and ‹ ›
+  past 4); a shelf needs at least 4 guides, so smaller groups share one. Each
+  card shows three posters, its name and size, and a status row: a progress
+  bar only for a guide you follow, "2 of 6 seen" with "+ Follow" otherwise,
+  "✓ All 10 seen" once finished. Followed guides are kept on the device
+  (`mcu.guidesFollowed.v1`); the old remembered guide becomes the first one.
 - Phone Spatial opens on your Up next title once you've marked anything
   seen: each order (and Recenter) centres it at a readable zoom above the
   docked card, at one card size in every order. A first visit, or one with everything
@@ -185,8 +197,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   order with the next one marked, Spatial dims the rest and draws the route
   between its numbered cards (an arrow on an event guide's destination), the
   stepper walks the stops and then an event guide's destination, Up next
-  suggests the next stop, seen stops shrink to compact rows (a small poster
-  and the title, Seen and Watchlist) in their place, Escape or × closes
+  suggests the next stop, Escape, "‹ Guides" or the Guides tab closes
   it (closing is how to see every title again: a guide shows only its own),
   any unseen stop can be skipped from the List, the Grid, the details or a
   Spatial card (it stays listed, minimized, with Unskip, but
@@ -194,15 +205,21 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   guide on the device; marking it seen brings it back),
   the controls it doesn't use are dimmed with a tooltip and kept for when it
   closes (Filters, type and collection always; the layout tabs and Order
-  outside Spatial), Spatial lays out every stop whatever the filters; on
-  desktop one module carries the guide (in the List a card above the stops:
-  the guide and its blurb, the progress segments, the next stop with Seen
-  and Open, Include optional, Mark N more seen, the stepper and ×; in
-  Spatial one row floating over the canvas), green once complete; on
-  phones the top bar shortens and the sort tabs slide away while it is open,
-  one dock at the bottom carries the guide, its next stop (with Seen), its
-  progress and the stepper (the List keeps its last card clear of it), and
-  Spatial opens on the next stop,
+  outside Spatial), Spatial lays out every stop whatever the filters. In
+  Guides an open guide is a page of its own: "‹ Guides" (back to the list,
+  where it was scrolled), the kicker ("Event guide · Dec 18 · 33 days to
+  go"), the title as a switcher (the guides you follow with their progress,
+  then the others, then All guides: a dropdown on desktop, a bottom sheet on
+  phones), the blurb, progress with Mark N more seen, Following / Follow,
+  Share and Include optional (kept per guide for the visit); an event
+  guide's "Where it leads" (the destination and its Watchlist) sits in the
+  right column on desktop and after the stops on phones. Its stops are the
+  Titles list in the guide's order: number, poster with the seen mark,
+  title, one meta line with the reason, Seen and Watchlist, and the next
+  stop with the red edge, "Up next" pill and filled check. On Connections
+  one row floats over the canvas on desktop, and on phones one dock at the
+  bottom carries the guide, its next stop (with Seen), its progress and the
+  stepper, and the canvas opens on the next stop,
   and `?guide=` shares it. The guide you are following reopens when you come
   back to the home page (until you close or finish it). Returning visitors
   are offered one guide they haven't finished, once per guide on each device:

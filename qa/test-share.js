@@ -108,7 +108,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     goodLink(await clip(), '?char=peggy', 'desktop character');
 
     await go(page, '?guide=before-doomsday&view=list');
-    await reset(); await page.locator('.g-module .gm-share').click(); await copiedShown('guide card');
+    await reset(); await page.locator('.g-desk .g-head .g-share').click(); await copiedShown('guide card');
     goodLink(await clip(), '?guide=before-doomsday', 'desktop guide');
     await go(page, '?guide=before-doomsday');
     expect(await page.locator('.g-module.spatial .gm-share').count() === 1, 'Spatial guide row: no Share');
@@ -173,7 +173,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
       localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states }));
     });
     await go(page, '?guide=before-doomsday&view=list');
-    await page.locator('.g-module .gm-share').click();
+    await page.locator('.g-desk .g-head .g-share').click();
     await cardOpen(page, 'finished guide', /^A Red Thread card: Catch up before Avengers: Doomsday, complete$/);
     await reset(); await page.locator('.share-image-actions button', { hasText: 'Copy link' }).click(); await copiedShown('guide card');
     goodLink(await clip(), '?guide=before-doomsday', 'desktop finished guide');
@@ -256,7 +256,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await go(page, '?char=peggy');
     expect(await page.locator('.char-banner.pinned').count() === 1, 'link: ?char=peggy did not pin Peggy Carter');
     await go(page, '?guide=before-doomsday');
-    expect(await page.locator('.g-module').count() === 1, 'link: ?guide=before-doomsday did not open the guide');
+    expect(await page.locator('.g-module, .g-desk .g-head').count() === 1, 'link: ?guide=before-doomsday did not open the guide');
     await ctx.close();
   }
 

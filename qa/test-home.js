@@ -73,7 +73,7 @@ const STATE = () => {
     coll: coll ? coll.textContent.trim() : null,
     chips: document.querySelectorAll('.ctx-chip').length,
     pinned: !!document.querySelector('.char-banner.pinned, .char-pill'),
-    guide: !!document.querySelector('.guide-banner, .g-pill, .g-scroll'),
+    guide: !!document.querySelector('.guide-banner, .g-pill, .g-scroll, .g-desk .g-head'),
     drawer: !!document.querySelector('.drawer.open'),
     sheet: !!document.querySelector('.m-sheet'),
     sort: q.get('sort'), order: q.get('order'),

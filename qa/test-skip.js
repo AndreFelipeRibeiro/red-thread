@@ -76,24 +76,32 @@ async function ctxPage(browser, opts, { seen = [], skips = null, lang = 'en' } =
 // existed and still read only the phone markup, so on desktop it found nothing
 // and reported `count null` / `meter: null / null` / `bulk action reads "null"`
 // as though the guide were broken. Updated 2026-10-31; the app was right.
+// Since Notion "Guides 3/4" the open guide's header (desktop and phone) reads
+// "1 of 5 stops · 3 optional · 1 skipped" in one line (.g-meter .pgh-count):
+// `count` is normalised to "1/5" and `skipNote` is that line when it names a
+// skipped stop. There is no stepper in the list any more; the Spatial pill
+// keeps one.
 const STATE = () => {
   const a = document.activeElement;
+  const line = (document.querySelector('.g-meter .pgh-count, .gm-count') || {}).textContent || null;
+  const m = line && /^(\d+)(?:\/| of | de )(\d+)/.exec(line);
   return {
     skipped: [...document.querySelectorAll('.g-stop.skipped, .g-card.skipped')].map(e => e.getAttribute('data-row-id')),
-    count: (document.querySelector('.g-meter .pgh-count, .gm-count') || {}).textContent || null,
+    count: m ? m[1] + '/' + m[2] : line,
     // Desktop joins the optional and skipped notes into one line, so this is a
     // substring test at the call sites, not an equality one.
-    skipNote: (document.querySelector('.g-meter .g-skip-count, .gm-notes') || {}).textContent || null,
+    skipNote: (document.querySelector('.g-meter .g-skip-count, .gm-notes') || {}).textContent || (line && /skipped|pulad/.test(line) ? line : null),
     next: (document.querySelector('.g-stop.next, .g-card.next') || { getAttribute: () => null }).getAttribute('data-row-id'),
     bulk: (document.querySelector('.g-meter .pgh-action, .gm-foot .pgh-action, .g-meter button') || {}).textContent || null,
-    stops: (document.querySelector('.guide-banner .cb-pos, .g-pill .cb-pos, .g-pill [aria-live]') || {}).textContent || null,
+    stops: (document.querySelector('.guide-banner .cb-pos, .g-pill .cb-pos, .g-pill [aria-live]') || {}).textContent
+      || (document.querySelector('.g-desk') ? document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest):not(.skipped)').length + ' stops' : null),
     // The control by its hook class (shadcn-styled buttons carry many classes).
     focus: a ? (['g-unskip', 'g-skip'].find(c => a.classList && a.classList.contains(c)) || a.className || a.tagName) + '@' + ((a.closest && a.closest('[data-row-id]')) ? a.closest('[data-row-id]').getAttribute('data-row-id') : '') : null,
     live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean),
     stored: localStorage.getItem('mcu.guideSkips.v1'),
     // Complete: phones say so in a .g-ready line; the desktop card says it by
     // turning green (.done) and showing where the guide leads instead.
-    ready: !!document.querySelector('.g-ready, .g-module.done'),
+    ready: !!document.querySelector('.g-ready, .g-module.done, .g-kind.done'),
   };
 };
 

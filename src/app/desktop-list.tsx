@@ -58,6 +58,10 @@ const WIDTH = cn('mx-auto w-full max-w-[1480px]', SIZE);
 const ROW_SIZE = 'min-h-(--dl-row-h) py-2';
 const THUMB_SIZE = 'h-(--dl-poster-h) w-(--dl-poster-w) flex-[0_0_var(--dl-poster-w)]';
 const FIG = 'text-(length:--dl-fig) tabular-nums';
+// The reorder animation's leaving copies sit in a layer under the scroll area,
+// outside the table that sets the sizes: they take the `--dl-*` values along
+// (or they flash unstyled, full-size posters and all, on a tab switch).
+const FLIP_OPTS = { inside: true, vars: { from: '.dl-table', names: [...new Set(SIZE.match(/--dl-[a-z-]+/g))] } };
 
 // Column key -> sort mode it drives.
 const DL_SORT_FOR = { title: 'title', release: 'release', imdb: 'imdb', rt: 'rt' };
@@ -291,7 +295,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   const groups = dlGroups(titles, sort);
   // Rows glide to their new places when the order or tab changes (the same
   // animation as the phone List).
-  const flipRef = window.useReorderAnimation(orderKey, { inside: true });
+  const flipRef = window.useReorderAnimation(orderKey, FLIP_OPTS);
 
   // Up next (Notion "Titles 2/5"): the first released, unseen title in this
   // order, tab and filters (MCU_selectUpNext, through app.tsx), marked in its

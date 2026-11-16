@@ -59,6 +59,9 @@ const scan = async (page, name, out) => {
   x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'}, '?guide=before-doomsday');
   await scan(x.page, 'phone guide', out);
   await x.ctx.close();
+  x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'}, '?view=guides');
+  await scan(x.page, 'phone guides page', out);
+  await x.ctx.close();
   x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'});
   await scan(x.page, 'phone list', out);
   await x.page.locator('.m-lrow-open').nth(2).tap(); await x.page.waitForTimeout(900);

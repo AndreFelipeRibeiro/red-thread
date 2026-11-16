@@ -331,7 +331,7 @@ const COVER = (id) => {
       };
     });
     // Mouse open, focus on the page: ↓ follows from the open stop.
-    await page.locator(`.g-stop[data-row-id="${stops[1]}"] .g-col`).first().click();
+    await page.locator(`.g-stop[data-row-id="${stops[1]}"] .g-numcell`).first().click();
     await page.waitForTimeout(400);
     await page.locator(`.g-stop[data-row-id="${stops[1]}"] .g-open`).click();
     await page.waitForTimeout(700);
