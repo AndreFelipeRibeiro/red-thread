@@ -205,6 +205,14 @@ function playFlip(root, prev, opts = {}) {
     ? { position: 'absolute', left: '0px', top: root.scrollTop + 'px', width: root.clientWidth + 'px', height: root.clientHeight + 'px' }
     : { left: view.left + 'px', top: view.top + 'px', width: view.width + 'px', height: view.height + 'px' };
   Object.assign(layer.style, at);
+  // `vars`: custom properties the copies' styles read from an element below
+  // the root (the desktop List's sizes, `--dl-*`, set on its table), copied
+  // onto the layer with their current values, so a leaving row keeps its
+  // columns and poster size instead of flashing unstyled.
+  if (opts.vars) {
+    const src = root.querySelector(opts.vars.from);
+    if (src) { const cs = getComputedStyle(src); opts.vars.names.forEach(n => layer.style.setProperty(n, cs.getPropertyValue(n))); }
+  }
   const anims = leaving.map(([id, ghost]) => {
     const old = prev.rects.get(id);
     const to = next.get(id);

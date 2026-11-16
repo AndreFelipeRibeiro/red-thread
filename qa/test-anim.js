@@ -8,13 +8,18 @@ const probe = (page) => page.evaluate(() => new Promise(res => requestAnimationF
   const anims = document.getAnimations().filter(a => a.playState === 'running');
   const flips = anims.filter(a => a.id === 'm-flip').length;
   const layer = document.querySelector('.m-flip-layer');
-  let ghostCols = null, liveCols = null;
+  let ghostCols = null, liveCols = null, ghostThumb = null, liveThumb = null;
   if (layer && layer.firstElementChild && layer.firstElementChild.classList.contains('dl-row')) {
-    ghostCols = getComputedStyle(layer.firstElementChild).gridTemplateColumns.split(' ').length;
+    ghostCols = getComputedStyle(layer.firstElementChild).gridTemplateColumns;
     const live = document.querySelector('.dl-table .dl-row:not(.dl-head)');
-    liveCols = live && getComputedStyle(live).gridTemplateColumns.split(' ').length;
+    liveCols = live && getComputedStyle(live).gridTemplateColumns;
+    // The copies keep the List's sizes (its --dl-* variables), or they flash
+    // unstyled with full-size posters (Andre, 2026-11-15). A copy leaving with
+    // nowhere to go shrinks a little (scale .97), so posters get 4px of slack.
+    const gt = layer.firstElementChild.querySelector('.dl-thumb'), lt = live && live.querySelector('.dl-thumb');
+    ghostThumb = gt && Math.round(gt.getBoundingClientRect().width); liveThumb = lt && Math.round(lt.getBoundingClientRect().width);
   }
-  res({ flips, ghosts: layer ? layer.childElementCount : 0, layerIn: layer ? layer.parentElement.className.split(' ')[0] : null, ghostCols, liveCols });
+  res({ flips, ghosts: layer ? layer.childElementCount : 0, layerIn: layer ? layer.parentElement.className.split(' ')[0] : null, ghostCols, liveCols, ghostThumb, liveThumb });
 }, 60))));
 const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector('.m-flip-layer'), running: document.getAnimations().filter(a => a.playState === 'running' && a.id === 'm-flip').length }));
 (async () => {
@@ -57,6 +62,10 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   // scrolled list: ghosts must sit where rows were
   await page.locator('.dlist').evaluate(el => el.scrollTop = 1500); await page.waitForTimeout(300);
   out.dScrolled = await dcoll('seen'); await page.waitForTimeout(900); out.dScrolledAfter = await settled(page);
+  ['dUnseen', 'dAll', 'dSortImdb', 'dHeader', 'dScrolled'].forEach(k => {
+    const r = out[k];
+    if (r && r.ghostCols != null && (r.ghostCols !== r.liveCols || Math.abs(r.ghostThumb - r.liveThumb) > 4)) errors.push(k + ': a leaving row lost the List sizes: ' + JSON.stringify(r));
+  });
   out.dErrors = errors; await ctx.close();
   console.log(JSON.stringify(out, null, 0));
   await browser.close(); server.close();

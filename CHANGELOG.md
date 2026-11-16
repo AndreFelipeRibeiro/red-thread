@@ -13,6 +13,18 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 fix — Titles: switching tabs no longer flashes unstyled rows
+
+Recorded: 2026-11-15 22:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- On desktop, rows leaving the list during the tab-switch animation are
+  copies in a layer under the scroll area; since Titles 1/5 the list's sizes
+  are `--dl-*` variables on the table, so the copies lost them and showed
+  full-size posters and collapsed columns for half a second (Andre's
+  recording). The layer now carries those values.
+- Verified: frozen mid-animation, the copies match the live rows at both size
+  steps; `qa/test-anim.js` now fails if they don't; the full regress.
+
 ## V5 design — Phone Titles: the desktop list's rules, and one card above the bottom bar (Titles 4/5)
 
 Recorded: 2026-11-15 20:39 EST (-0500). Pushed to `version/5.0` (V5 staging);
