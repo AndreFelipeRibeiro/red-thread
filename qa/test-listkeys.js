@@ -4,8 +4,9 @@
 //   wrap at the ends and announce the position;
 // - ↑ ↓ move focus to the same control in the row above or below, Home / End
 //   to the first and last row, and the details follow when they are open;
-// - a pinned character keeps its own stepping; typing, modifier keys, Space,
-//   Shift-click ranges and the Escape order are unchanged;
+// - a pinned character keeps its own stepping; typing, modifier keys and the
+//   Escape order are unchanged (the List has no row checkboxes since Notion
+//   "Titles 1/5", so one Escape closes the details);
 // - a row stepped to never sits under the pinned meter or column headers.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const { chromium } = require('playwright');
@@ -187,25 +188,21 @@ const COVER = (id) => {
     await ctx.close();
   }
 
-  // ---- 3. ↑ ↓ Home End, Space, Shift-click, Escape --------------------------
+  // ---- 3. ↑ ↓ Home End, Escape ----------------------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
     await page.goto(URL + '?view=list'); await require('./ready').appReady(page);
     let s = await snap(page);
     const rows = s.rows;
-    // Checkbox column, details closed: focus moves, nothing opens.
-    await page.focus(`.dl-row[data-row-id="${rows[2]}"] .dl-check`);
+    // Title column, details closed: focus moves, nothing opens.
+    await page.focus(`.dl-row[data-row-id="${rows[2]}"] .dl-open`);
     await press(page, 'ArrowDown');
     s = await snap(page);
-    expect(s.focusRow === rows[3] && /c-check/.test(s.focusCell || ''), `↓ on a checkbox: focus ${s.focusRow} ${s.focusCell}`);
+    expect(s.focusRow === rows[3] && /c-title/.test(s.focusCell || ''), `↓ on a title: focus ${s.focusRow} ${s.focusCell}`);
     expect(!s.drawer, '↓ with details closed opened them');
     await press(page, 'ArrowUp'); await press(page, 'ArrowUp');
     s = await snap(page);
     expect(s.focusRow === rows[1], `↑↑ focus ${s.focusRow}, expected ${rows[1]}`);
-    // Space still ticks the checkbox.
-    await press(page, 'Space');
-    let checked = await page.evaluate(() => [...document.querySelectorAll('.dl-row[data-row-id] .dl-check')].filter(c => c.checked).map(c => c.closest('[data-row-id]').getAttribute('data-row-id')));
-    expect(checked.length === 1 && checked[0] === rows[1], `Space ticked ${JSON.stringify(checked)}`);
     // Seen column: the first status button moves to the same button.
     await page.focus(`.dl-row[data-row-id="${rows[4]}"] .c-actions button`);
     await press(page, 'ArrowDown');
@@ -256,7 +253,7 @@ const COVER = (id) => {
     s = await snap(page);
     expect(s.drawer === rows[6], `↓ inside the details stepped to ${s.drawer}`);
     // At the first row, ↑ stops.
-    await page.locator(`.dl-row[data-row-id="${rows[0]}"] .c-type`).click();
+    await page.locator(`.dl-row[data-row-id="${rows[0]}"] .c-release`).click();
     await page.waitForTimeout(600);
     await page.evaluate(() => document.activeElement && document.activeElement.blur());
     await press(page, 'ArrowUp');
@@ -267,20 +264,10 @@ const COVER = (id) => {
     await press(page, 'Enter', 900);
     s = await snap(page);
     expect(s.drawer === rows[9] && s.focusInDrawer, `Enter: details ${s.drawer}, focus in details ${s.focusInDrawer}`);
-    // Shift-click range.
-    await page.locator(`.dl-row[data-row-id="${rows[10]}"] .dl-check`).click();
-    await page.locator(`.dl-row[data-row-id="${rows[13]}"] .dl-check`).click({ modifiers: ['Shift'] });
-    await page.waitForTimeout(300);
-    checked = await page.evaluate(() => [...document.querySelectorAll('.dl-row[data-row-id] .dl-check')].filter(c => c.checked).length);
-    expect(checked === 5, `Shift-click range: ${checked} checked, expected 5 (1 + 4)`);
-    // Escape: the selection first, then the details.
-    await press(page, 'Escape');
-    s = await snap(page);
-    checked = await page.evaluate(() => [...document.querySelectorAll('.dl-row[data-row-id] .dl-check')].filter(c => c.checked).length);
-    expect(checked === 0 && !!s.drawer, `Escape 1: ${checked} checked, details ${s.drawer}`);
+    // Escape: no selection layer any more, so one press closes the details.
     await press(page, 'Escape', 700);
     s = await snap(page);
-    expect(!s.drawer, `Escape 2: details still ${s.drawer}`);
+    expect(!s.drawer, `Escape: details still ${s.drawer}`);
     errors.push(...e);
     await ctx.close();
   }

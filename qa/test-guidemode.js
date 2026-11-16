@@ -1,20 +1,21 @@
 // An open guide sets aside the view options it doesn't use (V3 Tasks, "Guide
 // disables other view options"):
-// - desktop: the Guides button shows as on and is named after the guide; in
-//   the List the layout tabs, Order, Filters, type and collection switches are
-//   dimmed and inert (aria-disabled, a tooltip, a described-by hint) while
-//   search and the view switch stay live; a click on one changes nothing;
-// - desktop Spatial: the layout tabs and Order come back on, Filters, type and
-//   collection stay off; with Series set, every stop of a film guide is still
-//   laid out and lit, and the count summary is hidden;
-// - closing the guide brings Series back and every control on again;
-// - phones: the bar shortens (Filters and the collection row fold away, the
-//   view menu sits beside search; Order dimmed outside Spatial), the sort tabs
-//   slide away, the List's last card scrolls clear of the dock, the dock's
-//   arrows reach the destination, and closing brings it all back; in Spatial the dock shows the
-//   next stop with Seen (no meter or Up next card), the next stop is framed at
-//   a readable size, and the zoom control rests hidden until a double-tap;
-//   Portuguese hint.
+// - desktop: a guide in the list is the Guides tab (Notion "Desktop:
+//   navigation for Explore, My list and Guides"), which shows no Sort or
+//   Filters; search stays live;
+// - desktop Explore: Sort is on and arranges the guide, Filters is dimmed and
+//   inert (aria-disabled, a tooltip, a described-by hint), a click on it opens
+//   nothing; every stop of the guide is laid out and lit, and the count
+//   summary is hidden;
+// - closing the guide brings every control on again, and My list kept the
+//   link's Series filter;
+// - phones: a guide in the list is the Guides tab, with no toolbar row; the
+//   last card scrolls clear of the dock, the dock's arrows reach the
+//   destination, and closing brings the gallery back (My list has its row);
+//   on the Explore canvas Sort is on and Filters dimmed with the hint, the dock
+//   shows the next stop with Seen (no meter or Up next card), the next stop is
+//   framed at a readable size, and the zoom control rests hidden until a
+//   double-tap.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8236; // regress/quick give each check its own port
 const { chromium } = require('playwright');
@@ -81,17 +82,17 @@ const OFF = (sels) => {
   });
   return r;
 };
-const DESK_SELS = {
-  sort: '.tb-sort-controls button', order: '.tb-order-control button', filters: '.filters-pop-wrap > .filters-pill',
-  type: '.tb-type-controls button', collection: '.tb-sort-row .coll-switch button', view: '.tb-view-switch button',
-};
-const PHONE_SELS = { order: '.m-searchrow .sort-order:not(.view-menu) button', filters: '.m-fpill', collection: '.m-viewrow .coll-switch button' };
-// The phone sort tabs slide out of view during a guide (inert, aria-hidden).
-const TABS_AWAY = () => { const f = document.querySelector('.m-sort-footer'); return !!f && f.classList.contains('away') && f.hasAttribute('inert') && f.getBoundingClientRect().top >= innerHeight - 1; };
+// Desktop (Notion "Desktop: navigation for Explore, My list and Guides"): the
+// guide's list is the Guides tab, which has no Sort or Filters; on the Explore
+// canvas Sort still arranges the guide and Filters is dimmed.
+const DESK_SELS = { sort: '.tb-sort-control .sort-menu-trigger', filters: '.filters-pop-wrap > .filters-pill', tabs: '.nav-tabs button' };
+// The phone's toolbar row (Notion "Phone: bottom bar becomes Explore, My list
+// and Guides"): Sort and Filters, under the header.
+const PHONE_SELS = { sort: '.m-toolrow .sort-menu-trigger', filters: '.m-toolrow .m-fpill' };
 const CANVAS = () => {
   const cards = [...document.querySelectorAll('.card')].filter(c => c.querySelector('.card-gnum'));
   return { stops: cards.length, dimmed: cards.filter(c => c.classList.contains('dimmed') || c.classList.contains('coll-dim')).length,
-    films: cards.filter(c => /FILM/.test((c.querySelector('.type-badge') || {}).textContent || '')).length,
+    films: cards.filter(c => (window.TITLES.find(t => t.id === c.dataset.id) || {}).type === 'film').length,
     summary: !!document.querySelector('.ctx-float, .ctx-pill') };
 };
 
@@ -108,72 +109,55 @@ const CANVAS = () => {
     await page.goto(URL + '?view=list&type=series&guide=infinity-saga'); await appReady(page);
     let s = await page.evaluate(OFF, DESK_SELS);
     out.deskList = s;
-    expect(s.sort === 'off' && s.order === 'off' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop List: ${JSON.stringify(s)}`);
-    expect(s.view === 'on', 'desktop List: the view switch is off');
-    const b = await page.evaluate(() => { const g = document.querySelector('.g-btn'); const h = document.getElementById('guide-off-hint');
-      return { on: g.classList.contains('on'), name: g.getAttribute('aria-label'), hint: h && h.textContent,
-        title: document.querySelector('.tb-type-controls button').getAttribute('title'),
-        search: !document.querySelector('.search-wrap input').disabled }; });
-    out.deskButton = b;
-    expect(b.on && b.name === 'Guides, The Infinity Saga essentials open', `Guides button: ${JSON.stringify(b)}`);
-    expect(b.hint === HINT && b.title === HINT, `hint: ${JSON.stringify(b)}`);
-    expect(b.search, 'search is disabled in a guide');
-    // A click on a dimmed control changes nothing, by mouse or keyboard.
-    await page.locator('.tb-type-controls button', { hasText: 'Films' }).click({ force: true });
-    await page.locator('.tb-sort-controls button').nth(1).focus(); await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
-    const kept = await page.evaluate(() => ({ type: (document.querySelector('.tb-type-controls button.on') || {}).textContent,
-      sort: (document.querySelector('.tb-sort-controls button.on .lg') || {}).textContent, url: location.search }));
-    out.deskKept = kept;
-    expect(kept.type === 'Series' && kept.sort === 'Release' && /type=series/.test(kept.url), `a dimmed control acted: ${JSON.stringify(kept)}`);
+    const tabOn = () => page.evaluate(() => (document.querySelector('.nav-tabs button.on') || {}).textContent);
+    expect(s.sort === 'missing' && s.filters === 'missing' && s.tabs === 'on', `desktop Guides tab: ${JSON.stringify(s)}`);
+    expect(await tabOn() === 'Guides', 'a guide in the list is not the Guides tab');
+    expect(await page.evaluate(() => !document.querySelector('.search-wrap input').disabled), 'search is disabled in a guide');
 
-    // Spatial: the layout tabs and Order come back; the whole guide is laid out.
-    await page.locator('.tb-view-switch button').first().click(); await page.waitForTimeout(1200);
+    // Explore: Sort arranges the guide; Filters is dimmed and does nothing.
+    await page.locator('.nav-tabs button', { hasText: 'Connections' }).click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
     out.deskSpatial = s;
-    expect(s.sort === 'on' && s.order === 'on' && s.filters === 'off' && s.type === 'off' && s.collection === 'off', `desktop Spatial: ${JSON.stringify(s)}`);
+    expect(s.sort === 'on' && s.filters === 'off', `desktop Explore: ${JSON.stringify(s)}`);
+    const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
+    expect(hint === HINT, `hint: ${hint}`);
+    await page.locator('.filters-pop-wrap > .filters-pill').click({ force: true }); await page.waitForTimeout(300);
+    expect(!(await page.locator('.filters-pop').count()), 'a dimmed Filters opened');
     let c = await page.evaluate(CANVAS);
     out.deskCanvas = c;
-    expect(c.stops === 10 && c.dimmed === 0 && c.films >= 9, `Spatial with Series set: ${JSON.stringify(c)}`);
+    expect(c.stops === 10 && c.dimmed === 0 && c.films >= 9, `Explore with a guide: ${JSON.stringify(c)}`);
     expect(!c.summary, 'the count summary shows during a guide');
-    await page.locator('.tb-sort-controls button').nth(1).click(); await page.waitForTimeout(400);
-    const sortNow = await page.evaluate(() => (document.querySelector('.tb-sort-controls button.on .lg') || {}).textContent);
-    expect(sortNow === 'Chronological', `a layout tab did not work in Spatial: ${sortNow}`);
+    await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
+    await page.locator('.sort-menu-pop [data-sort="chrono"][data-dir="asc"]').click(); await page.waitForTimeout(400);
+    const sortNow = await page.evaluate(() => (document.querySelector('.sort-menu-trigger') || {}).textContent);
+    expect(/^Story order/.test(sortNow || ''), `Sort did not work in Explore: ${sortNow}`);
 
-    // Closing the guide: Series is back and every control is on.
+    // Closing the guide: every control is on again; My list kept the link's
+    // Series filter (each section keeps its own).
     await page.locator('.guide-banner .cb-close, .cb-close').first().click(); await page.waitForTimeout(1200);
     s = await page.evaluate(OFF, DESK_SELS);
-    c = await page.evaluate(CANVAS);
-    const after = await page.evaluate(() => ({ type: (document.querySelector('.tb-type-controls button.on') || {}).textContent,
-      chip: (document.querySelector('.ctx-float .ctx-count') || {}).textContent, gbtn: document.querySelector('.g-btn').classList.contains('on'),
-      title: document.querySelector('.filters-pop-wrap > .filters-pill').getAttribute('title') }));
+    const after = await page.evaluate(() => ({ title: document.querySelector('.filters-pop-wrap > .filters-pill').getAttribute('title') }));
+    await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(900);
+    after.url = await page.evaluate(() => location.search);
     out.deskClosed = { s, after };
     expect(Object.values(s).every(v => v === 'on'), `after closing, controls still off: ${JSON.stringify(s)}`);
-    expect(after.type === 'Series' && /24 of 64/.test(after.chip || '') && !after.gbtn && after.title === 'Filters', `after closing: ${JSON.stringify(after)}`);
+    expect(after.title === 'Filters' && /type=series/.test(after.url) && !/guide=/.test(after.url), `after closing: ${JSON.stringify(after)}`);
     errors.push(...e);
     await ctx.close();
   }
 
-  // ---- Phone: List, then Spatial; Portuguese ---------------------------------
-  // A guide shortens the phone bar: Filters and the collection row fold away
-  // (inert), and the view menu sits beside search; Order stays, dimmed outside
-  // Spatial. The guide's dock replaces the meter, Up next and the old pill.
-  const BAR = () => {
-    const ok = (sel) => { const el = document.querySelector(sel); return !!el && el.hasAttribute('inert') && el.getAttribute('aria-hidden') === 'true'; };
-    return { short: !!document.querySelector('.m-appbar.guide'), filtersAway: ok('.m-fslot'), rowAway: ok('.m-row3'),
-      viewBeside: !!document.querySelector('.m-searchrow .m-vslot .view-menu'), row3H: Math.round(document.querySelector('.m-row3').getBoundingClientRect().height) };
-  };
+  // ---- Phone: the Guides tab, then Explore; Portuguese ----------------------
+  // A guide in the list is the Guides tab: no toolbar row. On the canvas
+  // (Explore) Sort stays on and Filters is dimmed. The guide's dock replaces
+  // the meter, Up next and the old pill.
+  const BAR = () => ({ toolrow: !!document.querySelector('.m-toolrow'), tab: (document.querySelector('.m-tab.on') || { dataset: {} }).dataset.section || null,
+    gallery: document.querySelectorAll('.g-page .g-row').length });
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'pt-BR' });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(700);
-    let s = await page.evaluate(OFF, { order: PHONE_SELS.order });
     let b = await page.evaluate(BAR);
-    out.phoneList = { s, b };
-    expect(s.order === 'off', `phone List, Order: ${JSON.stringify(s)}`);
-    expect(b.short && b.filtersAway && b.rowAway && b.viewBeside && b.row3H === 0, `phone List, short bar: ${JSON.stringify(b)}`);
-    expect(await page.evaluate(TABS_AWAY), 'phone List: the sort tabs did not slide away during the guide');
-    const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
-    expect(hint === 'Não se aplica a um guia. Feche o guia para usar.', `pt-BR hint: ${hint}`);
+    out.phoneList = { b };
+    expect(!b.toolrow && b.tab === 'guides', `phone guide list: ${JSON.stringify(b)}`);
     // Scrolled to the end, the destination card sits wholly above the dock.
     const clear = await page.evaluate(async () => {
       const sa = document.querySelector('.m-scrollarea'); sa.scrollTop = 1e6;
@@ -192,25 +176,26 @@ const CANVAS = () => {
     expect(atDest.cur && /Aonde leva/.test(atDest.pos), `phone List: the arrows did not reach the destination: ${JSON.stringify(atDest)}`);
     await page.locator('.g-dock .cb-step button').last().tap(); await page.waitForTimeout(150);
     expect(!(await page.locator('.g-stop.dest.current').count()), 'phone List: the arrows did not wrap past the destination');
-    await page.locator('.m-fpill').tap({ force: true }).catch(() => {}); await page.waitForTimeout(400);
-    expect(!(await page.locator('.m-sheet').count()), 'the folded-away Filters button opened its sheet');
-    // Closing the guide brings the full bar and the sort tabs back.
+    // Closing the guide brings the Guides gallery back.
     await page.locator('.guide-pill .cb-close').tap(); await page.waitForTimeout(900);
     b = await page.evaluate(BAR);
-    const back = await page.evaluate(() => { const f = document.querySelector('.m-sort-footer'); return { tabs: !!f && !f.classList.contains('away') && !f.hasAttribute('inert'), views: document.querySelectorAll('.view-menu').length }; });
-    out.phoneClosed = { b, back };
-    expect(!b.short && !b.filtersAway && !b.rowAway && !b.viewBeside && b.row3H > 30 && back.tabs && back.views === 1, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);
+    out.phoneClosed = { b };
+    expect(b.tab === 'guides' && b.gallery >= 5 && !b.toolrow, `phone, guide closed: ${JSON.stringify(out.phoneClosed)}`);
+    // My list: the toolbar row is back, with Portuguese labels.
+    await page.locator('.m-tab[data-section="mylist"]').tap(); await page.waitForTimeout(700);
+    b = await page.evaluate(BAR);
+    expect(b.toolrow && b.tab === 'mylist', `phone My list: ${JSON.stringify(b)}`);
     errors.push(...e);
     await ctx.close();
   }
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'en' });
     await page.goto(URL + '?view=spatial&type=series&guide=infinity-saga'); await appReady(page); await page.waitForTimeout(900);
-    const s = await page.evaluate(OFF, { order: PHONE_SELS.order });
+    const s = await page.evaluate(OFF, PHONE_SELS);
     const b = await page.evaluate(BAR);
-    out.phoneSpatial = { s, b };
-    expect(s.order === 'on' && b.short && b.filtersAway && b.rowAway, `phone Spatial: ${JSON.stringify(out.phoneSpatial)}`);
-    expect(await page.evaluate(TABS_AWAY), 'phone Spatial: the sort tabs did not slide away during the guide');
+    const hint = await page.evaluate(() => (document.getElementById('guide-off-hint') || {}).textContent);
+    out.phoneSpatial = { s, b, hint };
+    expect(s.sort === 'on' && s.filters === 'off' && b.tab === 'explore' && hint === HINT, `phone Explore: ${JSON.stringify(out.phoneSpatial)}`);
     const c = await page.evaluate(CANVAS);
     out.phoneCanvas = c;
     expect(c.stops === 10 && c.dimmed === 0 && !c.summary, `phone Spatial with Series set: ${JSON.stringify(c)}`);
@@ -220,7 +205,7 @@ const CANVAS = () => {
       const card = document.querySelector(`.card[data-id="${next}"]`).getBoundingClientRect();
       const vp = document.querySelector('.viewport').getBoundingClientRect(), dock = document.querySelector('.g-dock').getBoundingClientRect();
       return { next, sub: (document.querySelector('.g-dock .g-dock-sub') || {}).textContent, seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen'),
-        segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-chip'), meter: !!document.querySelector('.spatial-overall'),
+        segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-mrow'), meter: !!document.querySelector('.spatial-overall'),
         cx: Math.round(card.left + card.width / 2 - innerWidth / 2), inView: card.top >= vp.top && card.bottom <= dock.top + 1, readable: card.width >= 140 };
     });
     out.phoneDock = d;

@@ -68,7 +68,7 @@ function GeneratedPoster({ title }: { title: Title }) {
   const dark = darken(accent, 0.55);
   const mid = darken(accent, 0.25);
   const light = lighten(accent, 0.3);
-  const W = 200, H = 280;
+  const W = 200, H = 300; // 2:3, the poster box everywhere
   const gid = 'g_' + title.id.replace(/[^a-z0-9]/gi, '');
 
   const initial = title.title.split(/[: ]/)[0].slice(0, 1).toUpperCase();

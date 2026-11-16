@@ -1,10 +1,22 @@
 // A title's card on the Spatial canvas (Notion "shadcn pass 2/5: Spatial
-// canvas, cards and threads").
+// canvas, cards and threads"; simplified in Notion "Simplify the Spatial
+// cards"; made one design in Notion "Cards: one card design at rest, selected
+// and on the phone"; Andre's review, 2026-11-15): the whole poster, its art
+// untouched, with how many titles it connects to in its top-left corner and
+// one status mark in its top-right corner (a check in a circle once seen, or
+// in a guide the stop's mark); under it the title and one meta line (phase
+// dot · year · "Series").
+// What else a card shows by sort and filter is its own ticket (Notion "Cards
+// show what the current sort and filters are about"). Selected, it is
+// the same card at the same size, outlined in its phase colour; Seen,
+// Watchlist and the scores are in the details beside it. The phone's selected
+// card (FocusPop in mobile.tsx) is this card, larger. Hover only lifts it.
 //
 // Moved out of app.tsx so it can be built on the design system: this file is
-// listed with `@source` in src/index.css. Same marks, same places, same size:
-// the canvas lays cards out from CARD_SIZE, so nothing here changes the card's
-// width, height, padding or the poster's ratio.
+// listed with `@source` in src/index.css. The canvas lays cards out from
+// CARD_SIZE (rows, threads, hit areas, zoom-to-fit), so the card's height is
+// set here once: the poster is shown whole at 2:3 (Notion "Show posters
+// uncropped at their standard 2:3 ratio"), the text block below it.
 //
 // Rules the canvas keeps (AGENTS.md, "Spatial canvas performance"): no
 // will-change, no 3D transform and no backdrop-filter on a card or anything in
@@ -13,22 +25,19 @@
 //
 // Class names the canvas code, the Escape ladder and the QA checks read are
 // kept as hooks (`card` and its state classes, `card-open`, `card-poster`,
-// `card-badges`, `badge`, `type-badge`, `phase-badge`, `card-gnum`,
-// `rating-row`, `card-rating`, `card-meta`, `card-title`, `card-year`…); they
-// carry no V3 styling any more.
+// `card-gnum`, `card-phase`, `card-seen`, `card-meta`, `card-title`,
+// `card-year`, `card-story`, `card-budget`, `card-acts`, `card-acts-tsa`,
+// `card-rating`…).
 import React, { useRef, useState } from 'react';
 import { cn } from 'cn';
-import { Badge } from '@/components/ui/badge';
 import type { Title } from '../types/catalog';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
-/** The card's size on the canvas, in canvas pixels. The layout reads it. */
-export const CARD_SIZE = { w: 170, h: 270 };
-
-// The dark chips that sit on a poster (badges, ratings): the poster is an
-// image in both themes, so they stay dark with light text (--on-image).
-const ON_POSTER = 'border border-[#ffffff20] bg-[rgba(10,12,20,0.7)] text-(--on-image)';
+/** The card's size on the canvas, in canvas pixels. The layout reads it.
+ *  168px inside the border, so the 2:3 poster is 168 × 252 and the text
+ *  block below gets 76px: two lines of title and one meta line. */
+export const CARD_SIZE = { w: 170, h: 330 };
 
 // Layout moves (AGENTS.md, "Motion"), then the state fades.
 const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms,visibility_0s]';
@@ -37,7 +46,8 @@ const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_22
 const SHADOW = {
   base: 'shadow-sm not-dark:shadow-[0_1px_2px_rgb(0_0_0/.05),0_10px_24px_-14px_rgb(0_0_0/.22)]',
   drag: 'shadow-[0_24px_50px_-8px_rgba(0,0,0,0.6),0_0_0_1px_var(--phase-color)]',
-  hover: 'hover:shadow-[0_16px_40px_-8px_color-mix(in_oklab,var(--phase-color)_60%,transparent),0_0_0_1px_var(--phase-color),0_0_30px_-4px_color-mix(in_oklab,var(--phase-color)_40%,transparent)]',
+  // Hover is a slight lift, nothing more.
+  hover: 'hover:shadow-[0_18px_36px_-12px_rgb(0_0_0/.55)] not-dark:hover:shadow-[0_16px_32px_-14px_rgb(0_0_0/.3)]',
   selected: 'shadow-[0_0_0_2px_var(--phase-color),0_20px_50px_-8px_color-mix(in_oklab,var(--phase-color)_70%,transparent)]',
   highlighted: 'shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_40%,transparent),0_16px_40px_-8px_color-mix(in_oklab,var(--foreground)_27%,transparent)] not-dark:shadow-[0_14px_34px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)]',
   current: 'shadow-[0_0_0_3px_var(--cur-color,var(--primary)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--primary))_50%,transparent),0_24px_50px_-8px_rgba(0,0,0,.65)]',
@@ -68,14 +78,14 @@ export interface CardProps {
   guideSkip?: { state: string } | null;
   onGuideSkip?: () => void;
   entering?: boolean;
+  /** Titles this one is joined to by a thread (shared characters). */
+  connections?: number;
   /** The phone's canvas (`.app.touch`): tap, not drag. */
   touch?: boolean;
 }
 
-export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, touch = false }: CardProps) {
+export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false }: CardProps) {
   const I18N = window.MCU_I18N;
-  // mobile.tsx is not typed yet: Highlight returns text or marked pieces.
-  const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
   // cards fade softly when a filter changes"); the canvas's first cards don't.
@@ -85,9 +95,6 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   const status = statusOf(title.id);
   const seen = status === 'seen', listed = status === 'watchlist';
   const skipped = !!guideSkip && guideSkip.state === 'skipped';
-  // Below TSA_MIN_SCALE the toggles are rendered smaller than a usable hit
-  // target, so they withdraw and the seen state reads as a static marker only.
-  const showActions = (scale || 1) >= window.TSA_MIN_SCALE;
 
   // The states, resolved in the order they override each other (later wins):
   // dragging, hover, selected, highlighted, dimmed, watchlisted, collection
@@ -102,19 +109,20 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (isCollDimmed) fade = 'opacity-26 saturate-30';
   if (skipped) border = 'border-dashed border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]';
   if (isCurrent) { border = 'border-(--cur-color,var(--primary))'; shadow = SHADOW.current; z = 'z-28'; fade = 'filter-none'; lift = '[--lift:1.08] motion-reduce:[--lift:1]'; }
-  // The desktop ring's centre is drawn larger, so the eye lands on it first.
-  if (isRingFocus && !touch) { lift = '[--lift:1.18]'; z = 'z-27'; }
+  // The desktop ring's centre is the same card at the same size (Andre,
+  // 2026-11-15); its outline and shadow mark it.
+  if (isRingFocus && !touch) z = 'z-27';
   const stateOwnsBorder = isSelected || isHighlighted || listed || skipped || isCurrent;
   const stateOwnsShadow = isSelected || isHighlighted || isCurrent;
-  const hover = cn(!stateOwnsBorder && 'hover:border-(--phase-color)', !stateOwnsShadow && SHADOW.hover,
+  const hover = cn(!stateOwnsShadow && SHADOW.hover,
     !(isSelected || isHighlighted || isCurrent || (isRingFocus && !touch)) && 'hover:z-20',
-    !(isDimmed || isCollDimmed || isCurrent) && 'hover:brightness-110');
+    !(isCurrent || (isRingFocus && !touch) || isDragging || touch) && 'hover:[--lift:1.025] motion-reduce:hover:[--lift:1]');
 
   return (
     <div
       data-id={title.id}
       onAnimationEnd={enter ? (e) => { if (e.animationName === 'card-enter') setEnter(false); } : undefined}
-      className={cn('card absolute top-0 left-0 flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground',
+      className={cn('card group/card absolute top-0 left-0 flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground',
         touch ? 'cursor-pointer' : isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isDragging ? '[transition:box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms]' : MOVE,
         border, shadow, z, fade, lift, hover,
@@ -155,96 +163,105 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         // first, so Tab reaches the card before its Seen/Watchlist buttons;
         // it covers the card for the focus ring but lets pointer clicks
         // through to the card's own handler. Enter or Space opens it.
-        <button type="button" className="card-open pointer-events-none absolute inset-0 z-4 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset" aria-label={I18N.titleName(title)}
+        <button type="button" className="card-open pointer-events-none absolute inset-0 z-4 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset" aria-label={I18N.titleName(title)}
           onFocus={() => onFocusCard && onFocusCard(title.id)}
           onClick={(e) => { e.stopPropagation(); onClick(); }}/>
       )}
-      <div className={cn('card-poster relative min-h-0 w-full flex-[1_1_auto] overflow-hidden bg-muted',
-        // Seen: a wash over the poster art only, under the badges, and the art
-        // desaturated (a backdrop filter here cost a GPU layer per card).
-        seen && 'after:pointer-events-none after:absolute after:inset-0 after:z-1 after:bg-[rgba(10,12,20,0.34)] after:content-[\'\'] [&>:first-child]:saturate-35',
-        // A skipped guide stop dims everything but its Skipped tag and Unskip.
-        skipped && '[&>:not(.card-badges):not(.card-skipover)]:opacity-30')}>
+      <div className={cn('card-poster relative aspect-[2/3] w-full flex-none overflow-hidden bg-muted',
+        // Seen: the art dimmed and desaturated, the quiet half of the seen
+        // mark (a backdrop filter here cost a GPU layer per card).
+        skipped && '[&>:first-child]:opacity-30')}>
         <window.PosterArt title={title}/>
-        <div className="card-badges absolute top-[10px] right-[10px] left-[10px] z-2 flex items-start justify-between gap-[6px]">
-          {/* An open guide numbers its stops on the canvas (a check once
-              seen, + for optional, an arrow for the destination): the badge
-              sits under the type label, which always shows. */}
-          <span className="card-badges-start inline-flex min-w-0 flex-col items-start gap-[6px]">
-            <Badge className={cn('badge type-badge h-auto rounded-md px-[7px] py-[4px] text-[10px] font-semibold tracking-wide', ON_POSTER, skipped && 'opacity-30')}>
-              {I18N.upper(window.typeLabel(title.type))}
-            </Badge>
-            {guideBadge && <span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-30')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>}
-            {/* Skip a guide stop, under its number, once the card is large
-                enough for buttons. */}
-            {showActions && guideSkip && guideSkip.state === 'can' && <window.GuideSkipControl guide={guide} info={guideSkip} className="card-skipctl [&_.g-skip]:size-6 [&_.g-skip]:basis-6 [&_.g-skip]:bg-[color-mix(in_oklab,var(--background)_82%,transparent)] [&_.g-skip]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]" onDone={onGuideSkip}/>}
-          </span>
-          <Badge className={cn('badge phase-badge h-auto rounded-md border-transparent px-[7px] py-[4px] text-[10px] font-bold tracking-wide', skipped && 'opacity-30')}
-            style={{ background: phaseColor, color: 'var(--on-color)' }}>{I18N.upper(tr('phase.label', { n: title.phase }))}</Badge>
-        </div>
-        {/* A skipped stop: a "Skipped" tag and Unskip, centred on the poster,
-            in place of Seen and Watchlist. */}
-        {showActions && skipped && (
-          <div className="card-skipover pointer-events-none absolute inset-0 z-5 flex flex-col items-center justify-center gap-[10px] [&_.g-skipctl]:pointer-events-auto">
-            <span className="card-skiptag rounded-[6px] border border-dashed border-(--on-image-dim) bg-[rgba(10,12,20,.85)] px-[9px] py-[4px] text-[10px] font-bold tracking-[1.2px] text-(--on-image) uppercase" aria-hidden="true">{tr('guide.skippedTag')}</span>
-            <window.GuideSkipControl guide={guide} info={guideSkip} className="card-unskipctl [&_.g-unskip]:min-h-[38px] [&_.g-unskip]:rounded-[10px] [&_.g-unskip]:border-muted-foreground [&_.g-unskip]:bg-[color-mix(in_oklab,var(--background)_94%,transparent)] [&_.g-unskip]:px-5 [&_.g-unskip]:text-[12.5px] [&_.g-unskip]:shadow-[0_6px_18px_rgba(0,0,0,.45)] [&_.g-unskip]:hover:bg-muted" onDone={onGuideSkip}/>
-          </div>
-        )}
-        {showActions
-          ? !skipped && <window.TitleStatusActions title={title} variant="overlay" className="card-tsa [&_.tsa-btn]:size-8"/>
-          : <span className="card-seen-mark absolute top-1/2 right-[8px] z-3 -translate-y-1/2"><window.SeenMarker seen={seen}/></span>}
-        <div className={cn('rating-row absolute bottom-[10px] left-[10px] z-2 flex items-center gap-[5px]', touch && 'hidden')}>
-          {title.imdb != null && (
-            <div className={cn(RATING, 'imdb text-[#f5c518]')} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
-              <span className="imdb-tag rounded-[2px] bg-[#f5c518] px-[3px] py-px text-[8.5px] font-extrabold tracking-[.2px] text-black">IMDb</span>
-              {title.imdb.toFixed(1)}
-            </div>
-          )}
-          {title.rt != null && (
-            <div className={cn(RATING, 'rt text-[#fa5c3c]')} title={tr('score.rt')}>
-              <span className="rt-tag rounded-[2px] bg-[#cc2a0a] px-[3px] py-px text-[8.5px] font-extrabold tracking-[.2px] text-white">RT</span>
-              {title.rt}%
-            </div>
-          )}
-        </div>
+        <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections}/>
       </div>
-      {/* Every footer reserves room for a two-line title plus the year and
-          story rows, so posters, badges and buttons sit at the same height on
-          every card. */}
-      {/* A seen card fades its title only: the year and budget are muted
-          already, and fading them too took them under AA (3.4:1). */}
-      <div className={cn('card-meta min-h-[92px] flex-none px-[14px] pt-[12px] pb-[14px]', seen && '[&_.card-title]:opacity-82', skipped && 'opacity-30')}>
-        <div className="card-title line-clamp-2 text-[13px] leading-[1.25] font-semibold tracking-tight text-pretty"><Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
-        <div className="card-year mt-[4px] flex items-center justify-between gap-[8px] text-[11px] text-muted-foreground tabular-nums">
-          <span>{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>
-          {title.budget != null && (
-            <span className="card-budget text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))] opacity-75">{I18N.budget(title.budget)}</span>
-          )}
-        </div>
-        <window.StoryYear title={title} className="card-story mt-[3px] flex"/>
-        <window.MatchBadge matchedChars={matchedChars} query={searchQuery} title={title}/>
-      </div>
+      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars}/>
     </div>
   );
 }
 
-// A score on the poster: a brand tag (black on IMDb yellow, white on RT red at
-// 5.4:1) and the score, on an opaque dark chip so it reads the same over any
-// art; in the light theme the chip takes the card's colour.
-const RATING = 'card-rating flex items-center gap-[4px] rounded-[4px] border border-[#ffffff20] bg-[rgb(10,12,20)] px-[7px] py-[3px] text-[10px] font-bold tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
-
-// A guide stop's number on the card, under the type label: filled while
-// ahead, green once seen, dashed for an optional stop, the destination and a
-// skipped stop. `cls` is the guide's own state list ("o done", "dest"…).
+// The card's one status mark, in the poster's top-right corner (Andre,
+// 2026-11-15): a check in a circle once seen; in a guide, the stop's own mark
+// in its place (the number, a ✓ once seen, + for an optional stop, → for the
+// destination, – when skipped). It sits on the art, so it carries its own dark
+// ground in both themes.
 function gnumClass(cls: string) {
   const k = new Set(cls.split(/\s+/));
-  const dashed = 'border-[1.5px] border-dashed bg-[rgba(10,12,20,.88)]';
-  return cn('card-gnum relative z-3 inline-flex h-[22px] min-w-[22px] flex-none items-center justify-center rounded-[11px] px-[5px] text-[11px] font-extrabold tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.5)]',
+  const dashed = 'border-[1.5px] border-dashed bg-[rgba(10,12,20,.82)]';
+  return cn('card-gnum inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-[6px] text-[11.5px] font-bold tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
     cls,
     k.has('skip') ? cn(dashed, 'border-(--on-image-dim) text-(--on-image-muted)')
-      : k.has('o') ? (k.has('done') ? 'border-[1.5px] border-solid border-[#5fa856] bg-[#5fa856] text-[#0a0c14]' : cn(dashed, 'border-(--on-image-dim) text-(--on-image)'))
-        : k.has('dest') ? cn(dashed, 'border-primary text-(--on-image)')
-          : k.has('done') ? 'bg-[#5fa856] text-[#0a0c14]' : 'bg-primary text-[#0a0c14]');
+      : k.has('done') ? 'border-[1.5px] border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472]'
+        : k.has('o') ? cn(dashed, 'border-(--on-image-dim) text-(--on-image)')
+          : k.has('dest') ? cn(dashed, 'border-primary text-(--on-image)')
+            : 'bg-primary text-primary-foreground');
 }
 
-Object.assign(window, { SpatialCard, CARD_SIZE });
+type GuideBadge = { cls: string; label: string; text: string } | null | undefined;
+
+/** The poster's corner marks; `pop` is the phone's larger card. Top left: how
+ *  many titles it connects to (the titles that share a character with it,
+ *  the same ones its ring shows). Top right: the seen check, or a guide
+ *  stop's mark in its place. */
+export function CardMark({ seen, guideBadge, skipped = false, connections = 0, pop = false }: { seen: boolean; guideBadge?: GuideBadge; skipped?: boolean; connections?: number; pop?: boolean }) {
+  const corner = pop ? 'top-2.5' : 'top-2';
+  const right = cn('card-mark absolute right-2 z-3', corner, pop && 'right-2.5');
+  const status = guideBadge
+    ? <span className={right}><span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-80')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span></span>
+    : seen ? (
+      <span className={right}>
+        <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+          pop ? 'size-[30px] [&_svg]:size-4' : 'size-[24px] [&_svg]:size-[13px]')} role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
+      </span>
+    ) : null;
+  const label = tr('card.connections', { n: connections });
+  return (
+    <>
+      {connections > 0 && (
+        <span className={cn('card-conn-pill absolute left-2 z-3', corner, pop && 'left-2.5')}>
+          <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-[rgba(10,12,20,.78)] font-semibold text-(--on-image) tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+            pop ? 'h-[30px] px-2.5 text-[max(13px,0.8125rem)] [&_svg]:size-[13px]' : 'h-[24px] px-2 text-[11px] [&_svg]:size-[11px]')}
+            role="img" aria-label={label} title={`${label} · ${tr('card.connectionsTip')}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
+            {connections}
+          </span>
+        </span>
+      )}
+      {status}
+    </>
+  );
+}
+
+/** The card's text, on the canvas and in the phone's selected card (`pop`):
+ *  the title, then one meta line: phase dot · year · "Series" (a title not out
+ *  yet adds its release badge). What else it shows by sort and filter is
+ *  Notion "Cards show what the current sort and filters are about". */
+export function CardText({ title, skipped = false, query, matchedChars, pop = false }: {
+  title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; pop?: boolean;
+}) {
+  const I18N = window.MCU_I18N;
+  const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
+  const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
+  const dot = <span className="card-sep flex-none text-muted-foreground/60" aria-hidden="true">·</span>;
+  const upcoming = !window.MCU_isReleased(title);
+  return (
+    <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[5px] px-3.5 pt-2.5 pb-3' : 'gap-[4px] px-[12px] pt-[8px] pb-[8px]')}>
+      {/* Size and line height in one class: a font size after a separate
+          leading class makes cn() drop the leading, and descenders clip. */}
+      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-[max(17px,1.0625rem)]/[1.3]' : 'text-[15px]/[1.3]', skipped && 'opacity-40')}>
+        <Highlight text={I18N.titleName(title)} query={query}/>
+      </div>
+      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-[max(13px,0.8125rem)] leading-[1.35]' : 'text-[11px] leading-[1.35]', skipped && 'opacity-40')}>
+        <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
+        <span className="flex-none whitespace-nowrap">{title.year}</span>
+        {/* A title not out yet carries its badge too, so it drops the
+            separator to keep the line on one row. */}
+        {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
+        {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
+        {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-[9.5px] font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
+      </div>
+      <window.MatchBadge matchedChars={matchedChars} query={query} title={title}/>
+    </div>
+  );
+}
+
+Object.assign(window, { SpatialCard, CARD_SIZE, CardText, CardMark });

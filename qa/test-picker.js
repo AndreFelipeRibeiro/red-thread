@@ -150,16 +150,9 @@ const grid = page => page.evaluate(() => ({
   const [a, b] = p1, c = p2[0];
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs({ [a]: 'seen', [b]: 'seen', [c]: 'watchlist' })));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
-  // The button's two lines keep clear of its edges (Notion V4 Tasks, "Account
-  // menu: Mark what you've seen text sits too close to the button's edges").
-  const pad = await page.evaluate(() => {
-    const btn = document.querySelector('.acct-pick'), t = btn.querySelector('.acct-pick-text');
-    const r = btn.getBoundingClientRect(), q = t.getBoundingClientRect();
-    return { top: Math.round(q.top - r.top), bottom: Math.round(r.bottom - q.bottom) };
-  });
-  if (!(pad.top >= 6 && pad.bottom >= 6)) err(`account menu: "Mark what you've seen" text sits ${pad.top}px / ${pad.bottom}px from the button's edges`);
-  await page.locator('.acct-pick').click(); await page.waitForTimeout(600);
+  // "Mark what you've seen" lives in My list (Notion "Take the collection
+  // filters out of the Account menu").
+  await page.locator('.ml-pick').click(); await page.waitForTimeout(600);
   g = await grid(page);
   if (g.on.sort().join() !== [a, b].sort().join()) err(`later: ${g.on.join()} start ticked, expected ${a},${b}`);
   const lab = await page.locator(`[data-pick="${a}"]`).getAttribute('aria-label');
@@ -183,12 +176,10 @@ const grid = page => page.evaluate(() => ({
   st = await saved(page);
   if (st[a] !== 'seen' || st[b] !== 'seen' || st[c] !== 'watchlist') err(`later Undo: ${JSON.stringify(st)}`);
   // Closing: with no changes × closes at once; with changes it asks.
-  await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
-  await page.locator('.acct-pick').click(); await page.waitForTimeout(500);
+  await page.locator('.ml-pick').click(); await page.waitForTimeout(500);
   await page.locator('.pk-dialog .about-x').click(); await page.waitForTimeout(300);
   if (await page.locator('.pk').count()) err('close: × with no changes did not close');
-  await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
-  await page.locator('.acct-pick').click(); await page.waitForTimeout(500);
+  await page.locator('.ml-pick').click(); await page.waitForTimeout(500);
   await page.locator(`[data-pick="${p2[1]}"]`).click();
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
   g = await grid(page);
@@ -214,8 +205,7 @@ const grid = page => page.evaluate(() => ({
   // Back with nothing picked closes it.
   await page.goBack(); await page.waitForTimeout(500);
   if (await page.locator('.pk').count()) err('phone: Back with nothing picked did not close');
-  await page.locator('.m-acct').click(); await page.waitForTimeout(500);
-  await page.locator('.acct-pick').click(); await page.waitForTimeout(600);
+  await page.locator('.m-pick').click(); await page.waitForTimeout(600);
   await page.locator(`[data-pick="${p1[0]}"]`).click();
   // Back with a pick asks, and the sheet stays (and keeps a Back entry).
   await page.goBack(); await page.waitForTimeout(500);
@@ -228,8 +218,7 @@ const grid = page => page.evaluate(() => ({
   st = await saved(page);
   if (st[p1[0]] !== 'seen' || await page.locator('.pk').count()) err('phone: saving from the prompt did not save and close');
   // The footer stays in reach while scrolling.
-  await page.locator('.m-acct').click(); await page.waitForTimeout(500);
-  await page.locator('.acct-pick').click(); await page.waitForTimeout(600);
+  await page.locator('.m-pick').click(); await page.waitForTimeout(600);
   await page.evaluate(() => { const b = document.querySelector('.pk-sheet .m-sheet-body'); b.scrollTop = b.scrollHeight / 2; });
   await page.waitForTimeout(200);
   const foot = await page.evaluate(() => { const f = document.querySelector('.pk-foot').getBoundingClientRect(); return f.bottom <= innerHeight + 1 && f.top < innerHeight; });
@@ -242,7 +231,8 @@ const grid = page => page.evaluate(() => ({
   // The Seen tab's empty state offers the picker.
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.lang.v1','pt-BR');"));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.getByRole('button', { name: /^Vistos?$/ }).first().click().catch(() => {});
+  // The tab's name carries its count ("Vistos, 0"), so pick it by its hook.
+  await page.locator('.coll-switch button[data-coll="seen"]').first().click().catch(() => {});
   await page.waitForTimeout(500);
   const empty = page.locator('.m-empty .empty-action');
   if ((await empty.count()) !== 1) err('phone Seen empty state: no picker button');

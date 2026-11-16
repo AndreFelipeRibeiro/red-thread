@@ -58,6 +58,7 @@ import './app/account';
 import './app/about';
 import './app/search-suggest';
 import './app/mobile';
+import './app/theme-lab'; // the dev-only Theme lab (renders nothing in production)
 import './app/desktop-list';
 import './app/upnext';
 import './app/watch';

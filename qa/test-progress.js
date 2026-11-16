@@ -55,42 +55,39 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // two tabs used to repeat each other; now they do different jobs.
 const SORTS = ['release', 'chrono', 'phase', 'title', 'imdb', 'rt'];
 const expectFor = (sort) => (sort === 'phase' ? { phaseMeters: 6, overall: false } : { phaseMeters: 0, overall: true });
-// Desktop sort buttons carry a long and a short label ("▤ReleaseRelease"), so
-// match the long one as a substring, inside the toolbar (the List's column
-// headers include "Released").
-const DESK_SORT = { release: 'Release', chrono: 'Chronological', phase: 'By Phase', title: 'A–Z', imdb: 'IMDb Rating', rt: 'Tomatometer' };
-// Phone sort tabs read "◫Phase" and so on: match the end of their text.
-const PHONE_SORT = { release: 'Release', chrono: 'Chrono', phase: 'Phase', title: 'A–Z', imdb: 'IMDb', rt: 'RT' };
-
-const deskSort = (page, label) => page.evaluate(async (l) => {
-  const b = [...document.querySelectorAll('.toolbar button')].find(x => x.textContent.replace(/\s+/g, ' ').includes(l));
+// Sorts are picked from the Sort menu by key, each in its usual direction
+// (Notion "Merge sort and order into one Sort menu").
+const DESK_SORT = { release: 'release', chrono: 'chrono', phase: 'phase', title: 'title', imdb: 'imdb', rt: 'rt' };
+const PHONE_SORT = DESK_SORT;
+const USUAL_DIR = { release: 'asc', chrono: 'asc', phase: 'asc', title: 'asc', imdb: 'desc', rt: 'desc' };
+const pickSort = (page, key, wait) => page.evaluate(async ([k, d, w]) => {
+  const t = document.querySelector('.sort-menu-trigger');
+  if (!t) return false;
+  t.click();
+  await new Promise(r => setTimeout(r, 300));
+  const b = document.querySelector(`.sort-menu-pop [data-sort="${k}"][data-dir="${d}"]`);
   if (b) b.click();
-  await new Promise(r => setTimeout(r, 1800));
+  await new Promise(r => setTimeout(r, w));
   return !!b;
-}, label);
+}, [key, USUAL_DIR[key], wait]);
+const deskSort = (page, key) => pickSort(page, key, 1800);
+// Spatial and List are the Explore and My list tabs (Notion "Desktop:
+// navigation for Explore, My list and Guides").
 const deskView = (page, name) => page.evaluate(async (n) => {
-  const b = [...document.querySelectorAll('button')].find(x => new RegExp('(^|[^a-z])' + n + '$', 'i').test(x.textContent.trim()));
+  const label = n === 'Spatial' ? 'Connections' : n === 'List' ? 'Titles' : n;
+  const b = [...document.querySelectorAll('.nav-tabs button')].find(x => x.textContent.trim() === label);
   if (b) b.click();
   await new Promise(r => setTimeout(r, 1800));
   return !!b;
 }, name);
-const phoneSort = (page, label) => page.evaluate(async (l) => {
-  const b = [...document.querySelectorAll('.m-tab')].find(x => x.textContent.replace(/\s+/g, '').endsWith(l));
-  if (b) b.click();
-  await new Promise(r => setTimeout(r, 2200));
-  return !!b;
-}, label);
+const phoneSort = (page, key) => pickSort(page, key, 2200);
+// Phones: Spatial is the Explore tab, the List is My list (Notion "Phone:
+// bottom bar becomes Explore, My list and Guides"; the Grid is gone).
 const phoneView = (page, name) => page.evaluate(async (n) => {
-  const chip = [...document.querySelectorAll('button')]
-    .find(b => /^[☰▦◈]\s*(List|Lista|Grid|Grade|Spatial|Espacial)$/.test(b.textContent.trim()));
-  if (!chip) return 'no view chip';
-  if (chip.textContent.trim().endsWith(n)) return 'ok';
-  chip.click();
-  await new Promise(r => setTimeout(r, 700));
-  const opt = [...document.querySelectorAll('button, [role="option"], li')]
-    .find(e => e !== chip && e.textContent.trim().endsWith(n));
-  if (!opt) return 'no ' + n + ' option';
-  opt.click();
+  const tab = (v) => document.querySelector(`.m-tab[data-section="${v}"]`);
+  if (!tab('explore')) return 'no bottom bar';
+  if (/Spatial|Espacial/.test(n)) { tab('explore').click(); await new Promise(r => setTimeout(r, 2200)); return 'ok'; }
+  if (!document.querySelector('.m-listbar')) { tab('mylist').click(); await new Promise(r => setTimeout(r, 700)); }
   await new Promise(r => setTimeout(r, 2200));
   return 'ok';
 }, name);
@@ -103,13 +100,32 @@ const readCanvas = (page) => page.evaluate(() => ({
   // titles meter), so look for a meter inside it, not the box itself.
   overall: !!document.querySelector('.spatial-overall .pgh'),
 }));
+// The desktop List groups by itself (Notion "Titles 1/5"): Release date and
+// Phase by phase, Story order by era, each group header with its own
+// progress; the column sorts (Title, IMDb, RT) are one flat list. The
+// catalogue-wide count is the heading's (the progress widget, Titles 3/5).
 const readDeskList = (page) => page.evaluate(() => ({
-  phaseMeters: document.querySelectorAll('.dl-phase-divider:not(.overall) .pgh-bar').length,
-  overall: !!document.querySelector('.dl-phase-divider.overall'),
+  groups: document.querySelectorAll('.dl-group').length,
+  meters: document.querySelectorAll('.dl-group .dl-group-marks').length,
+  phases: [...document.querySelectorAll('.dl-group-label')].filter(b => /^Phase \d/.test(b.textContent.trim())).length,
 }));
-const readPhone = (page) => page.evaluate(() => ({
-  phaseMeters: document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar').length,
-  overall: !!document.querySelector('.m-phase-divider.overall'),
+const checkDeskList = (sort, got, errors) => {
+  const flat = sort === 'title' || sort === 'imdb' || sort === 'rt';
+  const ok = flat ? got.groups === 0
+    : sort === 'chrono' ? got.groups >= 5 && got.phases === 0 && got.meters === got.groups
+    : got.groups === 6 && got.phases === 6 && got.meters === 6;
+  if (!ok) errors.push(`desktop List in ${sort} order shows ${JSON.stringify(got)}`);
+};
+// Titles sorts from the header's Sort menu, as Connections does.
+const deskListSort = (page, key) => deskSort(page, key);
+// The phone List follows the desktop List (Notion "Titles 4/5"): the same
+// group headings with their marks, and All titles in the compact card docked
+// above the bottom bar (none in By Phase, where the headings carry it).
+const readPhoneList = (page) => page.evaluate(() => ({
+  groups: document.querySelectorAll('.m-scrollarea .m-ghead').length,
+  meters: document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-marks').length,
+  phases: [...document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-label')].filter(b => /^Phase \d/.test(b.textContent.trim())).length,
+  overall: !!document.querySelector('.spatial-overall.docked .pgh'),
 }));
 const checkRule = (where, sort, got, errors) => {
   const want = expectFor(sort);
@@ -138,36 +154,34 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   }
   await deskView(page, 'List');
   for (const sort of SORTS) {
-    await deskSort(page, DESK_SORT[sort]);
+    await deskListSort(page, sort);
     const got = await readDeskList(page);
     R.rule['desktop list ' + sort] = got;
-    checkRule('desktop List', sort, got, errors);
+    checkDeskList(sort, got, errors);
   }
 
   // ---- The numbers, in By Phase -------------------------------------------
-  await deskSort(page, DESK_SORT.phase);
+  await deskListSort(page, 'phase');
   const dividers = () => page.evaluate(() =>
-    [...document.querySelectorAll('.dl-table .dl-phase-divider:not(.overall) .pgh')].map(p => ({
-      label: p.querySelector('.pgh-label').textContent.trim(),
-      count: (p.querySelector('.pgh-count') || {}).textContent,
-      up: (p.querySelector('.pgh-up') || {}).textContent || null,
-      sr: (p.querySelector('.story-sr') || {}).textContent.trim(),
+    [...document.querySelectorAll('.dl-group-head')].map(b => ({
+      label: (b.querySelector('.dl-group-label') || b).textContent.trim(),
+      count: (b.querySelector('.dl-group-count') || {}).textContent || null,
     })));
   R.start = await dividers();
-  if (R.start.length !== 6) errors.push(`expected 6 phase dividers in By Phase, got ${R.start.length}`);
-  // Nothing seen yet: an empty track and 0/N, not a hidden header.
-  if (R.start[0] && R.start[0].count !== '0/6') errors.push(`Phase 1 opened at "${R.start[0].count}", expected 0/6`);
-  // The denominator counts released titles only. Phase 6 has unreleased ones,
-  // so its total must be smaller than its number of titles, and it must say so.
+  if (R.start.length !== 6) errors.push(`expected 6 phase headers in By Phase, got ${R.start.length}`);
+  // Nothing seen yet: an empty track and "0 of 6 seen", not a hidden header.
+  if (R.start[0] && R.start[0].count !== '0 of 6 seen') errors.push(`Phase 1 opened at "${R.start[0].count}", expected 0 of 6 seen`);
+  // The denominator counts released titles only: Phase 6 has unreleased ones,
+  // so its total must be smaller than its number of titles.
   R.phase6 = R.start[5] || null;
-  if (!R.phase6) errors.push('no Phase 6 divider');
+  if (!R.phase6) errors.push('no Phase 6 header');
   else {
-    if (!R.phase6.up) errors.push('Phase 6 has unreleased titles but shows no "+N" hint');
-    const total = Number((R.phase6.count || '').split('/')[1]);
+    const total = Number(((R.phase6.count || '').match(/of (\d+)/) || [])[1]);
     const inCatalog = await page.evaluate(() => window.TITLES.filter(t => t.phase === 6).length);
     if (!(total < inCatalog)) errors.push(`Phase 6 counts ${total} of ${inCatalog} titles; unreleased ones should be left out`);
   }
-  // Marking a title seen moves its phase's count, live.
+  // Marking a title seen moves its phase's count, live, in words (colour and
+  // digits alone are not the signal).
   await page.evaluate(async () => {
     const first = window.TITLES.filter(t => t.phase === 1)[0];
     const row = document.querySelector(`[data-row-id="${first.id}"]`);
@@ -176,126 +190,71 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     await new Promise(r => setTimeout(r, 900));
   });
   R.afterMark = (await dividers())[0];
-  if (!R.afterMark || R.afterMark.count !== '1/6') {
-    errors.push(`after marking one title Phase 1 reads "${R.afterMark && R.afterMark.count}", expected 1/6`);
-  }
-  if (!/1 of 6|1 de 6/.test((R.afterMark && R.afterMark.sr) || '')) {
-    errors.push(`the spoken form reads "${R.afterMark && R.afterMark.sr}" — colour and digits must not be the only signal`);
+  if (!R.afterMark || R.afterMark.count !== '1 of 6 seen') {
+    errors.push(`after marking one title Phase 1 reads "${R.afterMark && R.afterMark.count}", expected 1 of 6 seen`);
   }
   // The collection tab must NOT feed the fraction. On the Seen tab only seen
   // titles are listed, so a count taken from the visible set would read 1/1.
   await page.evaluate(async () => {
-    const b = [...document.querySelectorAll('button')].find(x => /^(Seen|Vistos)$/i.test(x.textContent.trim()));
+    const b = document.querySelector('.ml-status .coll-switch button[data-coll="seen"]');
     if (b) b.click();
     await new Promise(r => setTimeout(r, 1200));
   });
   R.onSeenTab = (await dividers())[0] || null;
-  if (R.onSeenTab && R.onSeenTab.count !== '1/6') {
-    errors.push(`the Seen tab changed Phase 1 to "${R.onSeenTab.count}"; the collection tab must not feed its own numbers`);
+  if (!R.onSeenTab || R.onSeenTab.count !== '1 of 6 seen') {
+    errors.push(`the Seen tab changed Phase 1 to "${R.onSeenTab && R.onSeenTab.count}"; the collection tab must not feed its own numbers`);
   }
   await page.evaluate(async () => {
-    const b = [...document.querySelectorAll('button')].find(x => /^(All|Todos)$/i.test(x.textContent.trim()));
+    const b = document.querySelector('.ml-status .coll-switch button[data-coll="all"]');
     if (b) b.click();
     await new Promise(r => setTimeout(r, 1000));
   });
-  // A text search narrows the catalog, so the headers stand down entirely.
+  // A text search narrows the catalog, so the counts stand down entirely
+  // (the groups stay, without numbers).
   await page.fill('.search-wrap input', 'iron');
   await page.waitForTimeout(900);
-  R.duringSearch = (await dividers()).length;
-  if (R.duringSearch !== 0) errors.push(`${R.duringSearch} dividers survived a text search; they should be hidden`);
+  R.duringSearch = (await dividers()).filter(d => d.count).length;
+  if (R.duringSearch !== 0) errors.push(`${R.duringSearch} group counts survived a text search; they should be hidden`);
   await page.fill('.search-wrap input', '');
   await page.waitForTimeout(900);
-  R.afterSearch = (await dividers()).length;
-  if (R.afterSearch !== 6) errors.push(`dividers did not come back after the search (${R.afterSearch})`);
+  R.afterSearch = (await dividers()).filter(d => d.count).length;
+  if (R.afterSearch !== 6) errors.push(`group counts did not come back after the search (${R.afterSearch})`);
 
-  // The whole-catalogue meter counts the same way, over everything released.
-  await deskSort(page, DESK_SORT.release);
+  // The catalogue-wide count (the compact card in Titles) counts the same
+  // way, over everything released.
+  await deskListSort(page, 'release');
   R.overallList = await page.evaluate(() => {
-    const el = document.querySelector('.dl-phase-divider.overall');
-    if (!el) return null;
+    const el = document.querySelector('.dlist .spatial-overall .pgh-count');
     const released = window.TITLES.filter(t => window.MCU_isReleased(t)).length;
-    return { count: (el.querySelector('.pgh-count') || {}).textContent || null, released };
+    return { text: el ? el.textContent : null, released };
   });
-  if (!R.overallList) errors.push('no All titles meter in the desktop List in Release order');
-  else if (R.overallList.count !== `1/${R.overallList.released}`) {
-    errors.push(`the All titles meter reads "${R.overallList.count}"; with one title seen it should be 1/${R.overallList.released}`);
+  if (R.overallList.text !== `1/${R.overallList.released}`) {
+    errors.push(`the All titles card in Titles reads "${R.overallList.text}"; with one title seen it should be 1/${R.overallList.released}`);
   }
 
-  // ---- The desktop phase divider pins (By Phase) ---------------------------
-  await deskSort(page, DESK_SORT.phase);
-  R.deskSticky = await page.evaluate(async () => {
+  // ---- Nothing in the List pins (By Phase) ----------------------------------
+  // Andre's review (2026-11-15): the column headers and group headings scroll
+  // with the list; the status tabs are the header's second row; the compact
+  // card stays in the list's top-right corner.
+  await deskListSort(page, 'phase');
+  R.deskScroll = await page.evaluate(async () => {
     const dl = document.querySelector('.dlist');
-    const c = dl.getBoundingClientRect();
-    const head = document.querySelector('.dl-head');
-    dl.scrollTop = 260;
-    await new Promise((r) => setTimeout(r, 500));
-    const d = document.querySelector('.dl-phase-divider');
-    const cs = getComputedStyle(d);
-    const r = d.getBoundingClientRect();
-    const headTop = Math.round(head.getBoundingClientRect().top - c.top);
+    const sticky = ['.dl-head', '.dl-group'].filter(sel => { const e = document.querySelector(sel); return e && getComputedStyle(e).position === 'sticky'; });
     dl.scrollTop = 3000;
-    await new Promise((r2) => setTimeout(r2, 600));
-    const all = [...document.querySelectorAll('.dl-phase-divider')];
-    const tops = all.map((x) => Math.round(x.getBoundingClientRect().top - c.top));
-    // The meter on top at this depth: the last one pinned in the top slot,
-    // which paints over the earlier ones there.
-    const pinned = all.filter((x, i) => Math.abs(tops[i]) <= 1);
-    const hit = document.elementFromPoint(c.left + 60, c.top + 8);
-    const onTop = !!(hit && pinned.length && hit.closest('.dl-phase-divider') === pinned[pinned.length - 1]);
-    dl.scrollTop = 0;
-    return {
-      pinnedTop: Math.round(r.top - c.top), pinnedBottom: Math.round(r.bottom - c.top), headTop, onTop,
-      position: cs.position, transform: cs.transform,
-      flipId: d.getAttribute('data-flip-id'),
-      opaque: cs.backgroundColor,
-      rowgroups: document.querySelectorAll('[role="rowgroup"]').length,
-    };
-  });
-  {
-    const d = R.deskSticky;
-    if (d.position !== 'sticky') errors.push(`the desktop phase divider is ${d.position}, not sticky`);
-    // The meters sit above the column headers (user decision, 2026-10-29):
-    // the phase meter pins at the top and the headers pin right beneath it.
-    if (Math.abs(d.pinnedTop) > 1) errors.push(`the pinned phase meter sits at ${d.pinnedTop}, not at the top of the List`);
-    if (Math.abs(d.headTop - d.pinnedBottom) > 1) errors.push(`the column headers start at ${d.headTop} but the phase meter above them ends at ${d.pinnedBottom}`);
-    if (d.transform && d.transform !== 'none') errors.push(`the desktop divider carries ${d.transform}; it must stay out of the reorder animation`);
-    if (d.flipId) errors.push('the desktop sticky divider has a data-flip-id again');
-    if (/rgba\(0, 0, 0, 0\)|transparent/.test(d.opaque)) errors.push('the pinned divider is transparent, so rows show through it');
-    // One rowgroup per phase is what bounds each sticky divider.
-    if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
-    if (!d.onTop) errors.push('deep in the List, the current phase meter is not the one showing in the top slot');
-  }
-
-  // The All titles header pins too, in every order but By Phase. It once sat in
-  // a rowgroup of its own, which was both invalid ARIA and its whole sticky
-  // container, so it scrolled away with the first rows.
-  await deskSort(page, DESK_SORT.release);
-  R.overallSticky = await page.evaluate(async () => {
-    const dl = document.querySelector('.dlist');
-    const c = dl.getBoundingClientRect();
-    const head = document.querySelector('.dl-head');
-    const ov = document.querySelector('.dl-phase-divider.overall');
-    if (!ov) return { error: 'no All titles header in Release order' };
-    dl.scrollTop = 2500;
     await new Promise((r) => setTimeout(r, 600));
-    const out = {
-      top: Math.round(ov.getBoundingClientRect().top - c.top),
-      bottom: Math.round(ov.getBoundingClientRect().bottom - c.top),
-      headTop: Math.round(head.getBoundingClientRect().top - c.top),
-      role: ov.getAttribute('role'),
-      parentRole: ov.parentElement.getAttribute('role'),
-    };
+    const card = document.querySelector('.dlist .spatial-overall');
+    const out = { sticky, tabs: !!document.querySelector('.toolbar .tb-sub-row .coll-switch'),
+      card: card ? Math.round(card.getBoundingClientRect().top - dl.getBoundingClientRect().top) : null,
+      rowgroups: document.querySelectorAll('.dl-table > [role="rowgroup"]').length };
     dl.scrollTop = 0;
     return out;
   });
   {
-    const o = R.overallSticky;
-    if (o.error) errors.push(o.error);
-    else {
-      if (Math.abs(o.top) > 1) errors.push(`after scrolling, the All titles meter sits at ${o.top}, not pinned at the top of the List`);
-      if (Math.abs(o.headTop - o.bottom) > 1) errors.push(`after scrolling, the column headers start at ${o.headTop}, not right under the All titles meter (${o.bottom})`);
-      if (o.role !== 'row' || o.parentRole !== 'table') errors.push(`the All titles header is a ${o.role} inside a ${o.parentRole}; it must be a row owned by the table`);
-    }
+    const d = R.deskScroll;
+    if (d.sticky.length) errors.push(`still pinned in the List: ${d.sticky.join(', ')}`);
+    if (!d.tabs) errors.push('the status tabs are not the header\'s second row');
+    if (d.card !== 14) errors.push(`the compact card is not in the list's top-right corner after scrolling (${d.card})`);
+    if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
   }
 
   // ---- The canvas ---------------------------------------------------------
@@ -389,18 +348,23 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   // ---- Phone: the rule in every view and order ----------------------------
   const { page: m } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.signInNudge.v1','2');");
   await go(m);
-  for (const view of ['Grid', 'List', 'Spatial']) {
+  for (const view of ['List', 'Spatial']) {
     const sw = await phoneView(m, view);
     if (sw !== 'ok') { errors.push(`could not reach the phone ${view}: ${sw}`); continue; }
     for (const sort of SORTS) {
       await phoneSort(m, PHONE_SORT[sort]);
-      const got = view === 'Spatial' ? await readCanvas(m) : await readPhone(m);
+      const got = view === 'Spatial' ? await readCanvas(m) : await readPhoneList(m);
       R.rule['phone ' + view.toLowerCase() + ' ' + sort] = got;
-      checkRule('phone ' + view, sort, got, errors);
+      if (view === 'Spatial') checkRule('phone ' + view, sort, got, errors);
+      else {
+        checkDeskList(sort, got, errors);
+        if (got.overall !== expectFor(sort).overall) errors.push(`phone List in ${sort} order ${got.overall ? 'shows' : 'has no'} All titles in the docked card`);
+      }
     }
   }
-  // Phone canvas: the meter takes its own row, clear of the count pill and the
-  // zoom control, and the first band pill stays on screen below it.
+  // Phone canvas: the card docked at the bottom stays clear of the count pill
+  // and the zoom control, and the first band pill and cards stay on screen
+  // above it.
   R.phoneCanvas = {};
   for (const sort of ['release', 'chrono', 'phase', 'title']) {
     await phoneSort(m, PHONE_SORT[sort]);
@@ -426,71 +390,25 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     if (c.cardOnMeter) errors.push(`on a phone the first cards sit under the All titles meter (${sort})`);
   }
 
-  // ---- Phone: Grid and List are the same component (By Phase) -------------
-  const readDividers = (pg) => pg.evaluate(() => {
-    const d = [...document.querySelectorAll('.m-phase-divider.sticky:not(.overall)')];
-    const cs = d.length ? getComputedStyle(d[0]) : null;
-    const lab = d.length ? d[0].querySelector('.pgh-label') : null;
-    return {
-      n: d.length, blocks: document.querySelectorAll('.m-gblock').length,
-      segs: document.querySelectorAll('.m-phase-divider .pgh-seg').length,
-      position: cs && cs.position, top: cs && cs.top,
-      labelSize: lab && getComputedStyle(lab).fontSize,
-    };
-  });
-  await phoneSort(m, PHONE_SORT.phase);
-  await phoneView(m, 'Grid');
-  R.gridPhase = await readDividers(m);
-  // The sticky divider pins flush to the top of the scroll area, and stays out
-  // of the reorder animation: a transform on a sticky element left it hanging.
-  R.gridSticky = await m.evaluate(async () => {
-    const sa = document.querySelector('.m-scrollarea');
-    const d = document.querySelector('.m-phase-divider.sticky');
-    if (!sa || !d) return null;
-    sa.scrollTop = 700;
-    await new Promise(r => setTimeout(r, 500));
-    const out = {
-      pinnedOffset: Math.round(d.getBoundingClientRect().top - sa.getBoundingClientRect().top),
-      transform: getComputedStyle(d).transform, flipId: d.getAttribute('data-flip-id'),
-    };
-    sa.scrollTop = 0;
-    return out;
-  });
-  if (!R.gridSticky) errors.push('no sticky divider in the phone Grid');
-  else {
-    if (Math.abs(R.gridSticky.pinnedOffset) > 1) errors.push(`the pinned Grid divider sits ${R.gridSticky.pinnedOffset}px from the top of the scroll area, not flush`);
-    if (R.gridSticky.transform !== 'none') errors.push(`the sticky divider carries ${R.gridSticky.transform}; it must stay out of the reorder animation`);
-    if (R.gridSticky.flipId) errors.push('the sticky divider has a data-flip-id again');
-  }
+  // ---- Phone: the List in By Phase: one heading per phase, with its marks ---
+  // Plain headings (no sticky dividers, no folding; Notion "Titles 4/5"): one
+  // mark per released title, as many filled as are seen.
   await phoneView(m, 'List');
-  R.listPhase = await readDividers(m);
-  if (R.gridPhase.n !== 6) errors.push(`the Grid in By Phase shows ${R.gridPhase.n} phase dividers, expected 6`);
-  if (R.listPhase.n !== 6) errors.push(`the List in By Phase shows ${R.listPhase.n} phase dividers, expected 6`);
-  ['position', 'top', 'labelSize'].forEach((k) => {
-    if (R.gridPhase[k] !== R.listPhase[k]) errors.push(`the List divider's ${k} is ${R.listPhase[k]} but the Grid's is ${R.gridPhase[k]}; they must be the same component`);
+  await phoneSort(m, PHONE_SORT.phase);
+  R.listPhase = await m.evaluate(() => {
+    const heads = [...document.querySelectorAll('.m-scrollarea .m-ghead')];
+    const st = JSON.parse(localStorage.getItem('mcu.collection.v1') || '{"states":{}}').states;
+    return heads.map(h => {
+      const marks = [...h.querySelectorAll('.dl-group-marks > span')];
+      return { label: h.querySelector('.dl-group-label').textContent.trim(), marks: marks.length,
+        filled: marks.filter(x => /bg-\(--brand\)/.test(x.className)).length,
+        sticky: getComputedStyle(h).position === 'sticky' };
+    }).concat([{ seenTotal: Object.values(st).filter(v => v === 'seen').length }]);
   });
-  if (R.listPhase.position !== 'sticky') errors.push(`the List divider is ${R.listPhase.position}, not sticky`);
-  if (R.listPhase.segs !== R.gridPhase.segs) errors.push(`the List draws ${R.listPhase.segs} segments but the Grid draws ${R.gridPhase.segs}`);
-  if (!R.listPhase.segs) errors.push('the meter has no segments');
-
-  // The meter fills when its header comes into view, so the progress is
-  // something you watch happen rather than something already sitting there.
-  R.reveal = await m.evaluate(async () => {
-    const lit = () => [...document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar')].map((b) => b.classList.contains('lit'));
-    const sa = document.querySelector('.m-scrollarea');
-    sa.scrollTop = 0;
-    await new Promise((r) => setTimeout(r, 600));
-    const atTop = lit();
-    sa.scrollTop = sa.scrollHeight;
-    await new Promise((r) => setTimeout(r, 1400));
-    return { atTop, atBottom: lit(), scrolled: sa.scrollTop > 0 };
-  });
-  if (!R.reveal.scrolled) errors.push('the List did not scroll, so the reveal was never exercised');
-  else {
-    if (!R.reveal.atTop[0]) errors.push('the first meter never filled, though its header starts on screen');
-    if (R.reveal.atTop[R.reveal.atTop.length - 1]) errors.push('the last meter was already full before it was scrolled to');
-    if (!R.reveal.atBottom[R.reveal.atBottom.length - 1]) errors.push('the last meter did not fill after being scrolled to');
-  }
+  const heads = R.listPhase.slice(0, -1);
+  if (heads.length !== 6) errors.push(`the List in By Phase shows ${heads.length} phase headings, expected 6`);
+  if (heads.some(h => h.sticky)) errors.push('a phone List heading is sticky again');
+  if (heads.some(h => !h.marks)) errors.push(`a phase heading has no marks: ${JSON.stringify(heads)}`);
 
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));

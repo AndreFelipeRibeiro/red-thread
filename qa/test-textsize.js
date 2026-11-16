@@ -87,7 +87,7 @@ const SCAN = () => {
   // ---- The floor, at the default size --------------------------------------
   for (const [label, opts, pages] of [
     ['desktop', DESK, ['', '?view=list', '?title=iron-man', '?guide=before-doomsday&view=list']],
-    ['phone', PHONE, ['', '?view=grid', '?title=iron-man', '?guide=before-doomsday&view=list']],
+    ['phone', PHONE, ['', '?title=iron-man', '?guide=before-doomsday&view=list']],
   ]) {
     const { ctx, page } = await open(opts);
     for (const q of pages) {
@@ -226,22 +226,26 @@ const SCAN = () => {
     for (const size of ['', 'large', 'small']) {
       const { ctx, page } = await open(PHONE, size ? `localStorage.setItem('mcu.textSize.v1', '${size}');` : '');
       await go(page, '?view=list');
+      await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
       const m = await page.evaluate(() => {
         const f = s => parseFloat(getComputedStyle(document.querySelector(s)).fontSize);
         const inp = document.querySelector('.m-searchbar input');
         const scale = inp.getBoundingClientRect().height / inp.offsetHeight;
-        return { root: f('html'), body: f('.m-ltitle'), nav: f('.m-tab'), font: f('.m-searchbar input'), shown: +(f('.m-searchbar input') * scale).toFixed(2) };
+        // nav: the bottom bar's labels, when the phone has one (the sort tabs
+        // went into the Sort menu; the next bottom bar is the navigation's).
+        return { root: f('html'), body: f('.m-ltitle'), nav: document.querySelector('.m-tab') ? f('.m-tab') : null, font: f('.m-searchbar input'), shown: +(f('.m-searchbar input') * scale).toFixed(2) };
       });
       const w = want[size];
       out['phone ' + (size || 'default')] = m;
-      expect(m.root === w.root && m.body === w.body && m.nav === w.nav && Math.abs(m.shown - w.shown) < 0.05, `phone ${size || 'default'}: ${JSON.stringify(m)}, expected ${JSON.stringify(w)}`);
+      expect(m.root === w.root && m.body === w.body && (m.nav === null || m.nav === w.nav) && Math.abs(m.shown - w.shown) < 0.05, `phone ${size || 'default'}: ${JSON.stringify(m)}, expected ${JSON.stringify(w)}`);
       expect(m.font >= 16, `phone ${size || 'default'}: the search field's font is ${m.font}px; under 16px iPhones zoom in on focus`);
       await ctx.close();
     }
   }
 
   // ---- The desktop List keeps every cell inside its column -----------------
-  // (columns are in rem and drop earlier when the text is bigger)
+  // (columns are in rem: #, Title, Released, IMDb, RT and the actions since
+  // Notion "Titles 1/5", none of which drop)
   for (const lang of ['en', 'pt-BR']) for (const size of ['', 'large']) for (const w of [1024, 1280, 1440]) {
     const { ctx, page } = await open({ viewport: { width: w, height: 700 } }, `localStorage.setItem('mcu.lang.v1', '${lang}');` + (size ? `localStorage.setItem('mcu.textSize.v1', '${size}');` : ''));
     await go(page, '?view=list');
@@ -259,7 +263,7 @@ const SCAN = () => {
     expect(!r.bad.length, `List ${lang} ${size || 'default'} ${w}px: content past its column: ${r.bad.join(', ')}`);
     await ctx.close();
   }
-  expect(out['list en default 1280'] === 12 && out['list pt-BR default 1280'] === 12, 'List at 1280px, default size: not all 12 columns');
+  expect(out['list en default 1280'] === 6 && out['list pt-BR default 1280'] === 6, 'List at 1280px, default size: not all 6 columns');
 
   // ---- Desktop at 200% zoom: a 720px-wide layout ---------------------------
   for (const lang of ['en', 'pt-BR']) {

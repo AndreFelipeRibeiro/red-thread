@@ -148,22 +148,21 @@ const DATA = () => {
   // ---- Desktop: menu, banner, List view ----
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs(seed1)));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.g-btn').click(); await page.waitForTimeout(300);
+  // The Guides tab's gallery (Notion "Desktop: navigation for Explore, My list
+  // and Guides") lists every guide, grouped.
+  await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(500);
   const menu = await page.evaluate(() => ({
-    rows: document.querySelectorAll('.g-pop .g-row').length,
-    groups: [...document.querySelectorAll('.g-pop .g-group-h')].map(h => h.textContent),
-    expanded: document.querySelector('.g-btn').getAttribute('aria-expanded'),
+    rows: document.querySelectorAll('.g-page .g-row').length,
+    groups: [...document.querySelectorAll('.g-page .g-group-h')].map(h => h.textContent),
+    url: location.search,
   }));
   out.menu = menu;
-  if (menu.rows !== data.guides.length) err(`desktop menu lists ${menu.rows} guides, expected ${data.guides.length}`);
-  if (menu.expanded !== 'true') err('desktop Guides button does not report aria-expanded=true while open');
-  await page.keyboard.press('Escape'); await page.waitForTimeout(200);
-  if (await page.locator('.g-pop').count()) err('Escape did not close the Guides popover');
-  await page.locator('.g-btn').click(); await page.waitForTimeout(300);
-  await page.locator('.g-pop .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
+  if (menu.rows !== data.guides.length) err(`desktop Guides lists ${menu.rows} guides, expected ${data.guides.length}`);
+  if (!/view=guides/.test(menu.url)) err('the Guides tab is not in the address: ' + menu.url);
+  await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
   const desk = await page.evaluate(() => ({
     url: new URLSearchParams(location.search).get('guide'),
-    pop: !!document.querySelector('.g-pop'),
+    pop: !!document.querySelector('.g-page'),
     banner: !!document.querySelector('.guide-banner'),
     charBanner: !!document.querySelector('.char-banner:not(.guide-banner)'),
     rows: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.dataset.rowId),
@@ -179,7 +178,7 @@ const DATA = () => {
   }));
   out.desk = { rows: desk.rows.length, next: desk.next, dest: desk.dest };
   if (desk.url !== plan.id) err(`desktop: address says guide=${desk.url}, expected ${plan.id}`);
-  if (desk.pop) err('desktop: the popover stayed open after picking a guide');
+  if (desk.pop) err('desktop: the gallery stayed after picking a guide');
   if (!desk.banner) err('desktop: no guide banner');
   if (desk.charBanner) err('desktop: a character banner shows beside the guide');
   if (desk.rows.join(',') !== plan.ess.join(',')) err(`desktop List rows ${desk.rows.join(',')} ≠ essential stops ${plan.ess.join(',')}`);
@@ -361,13 +360,12 @@ const DATA = () => {
   // ---- Phone ----
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs(seed1)));
   await page.goto(URL + '?view=list'); await settle(page);
-  await page.locator('.m-gbtn').click(); await page.waitForTimeout(500);
-  const sheet = await page.evaluate(() => ({ rows: document.querySelectorAll('.m-sheet .g-row').length }));
-  if (sheet.rows !== data.guides.length) err(`phone sheet lists ${sheet.rows} guides, expected ${data.guides.length}`);
-  await page.goBack(); await page.waitForTimeout(500);
-  if (await page.locator('.m-sheet').count()) err('phone: Back did not close the Guides sheet');
-  await page.locator('.m-gbtn').click(); await page.waitForTimeout(500);
-  await page.locator('.m-sheet .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
+  // The Guides tab in the bottom bar (Notion "Phone: bottom bar becomes
+  // Explore, My list and Guides") shows the gallery.
+  await page.locator('.m-tab[data-section="guides"]').click(); await page.waitForTimeout(500);
+  const sheet = await page.evaluate(() => ({ rows: document.querySelectorAll('.g-page .g-row').length }));
+  if (sheet.rows !== data.guides.length) err(`phone Guides lists ${sheet.rows} guides, expected ${data.guides.length}`);
+  await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
   const ph = await page.evaluate(() => ({
     sheet: !!document.querySelector('.m-sheet'),
     head: !!document.querySelector('.g-head'),
@@ -375,7 +373,7 @@ const DATA = () => {
     next: (document.querySelector('.g-stops .g-stop.next') || { dataset: {} }).dataset.rowId || null,
     pill: !!document.querySelector('.guide-pill'),
     sw: document.querySelector('.g-switch') && document.querySelector('.g-switch').getAttribute('aria-checked'),
-    upcard: document.querySelectorAll('.un-gcard').length,
+    upcard: document.querySelectorAll('.spatial-overall .un-mrow').length,
   }));
   if (ph.sheet) err('phone: the sheet stayed open after picking a guide');
   if (!ph.head || !ph.pill) err(`phone: header ${ph.head}, pill ${ph.pill}`);
@@ -388,24 +386,25 @@ const DATA = () => {
     const n = await page.evaluate(() => ({ rows: document.querySelectorAll('.g-stops .g-stop[data-row-id]:not(.dest)').length, sw: document.querySelector('.g-switch').getAttribute('aria-checked') }));
     if (n.rows !== plan.all.length || n.sw !== 'true') err(`phone: with optional on, ${n.rows} rows (expected ${plan.all.length}), switch ${n.sw}`);
   }
-  // The pill's ×: closes the guide and the normal List comes back.
+  // The pill's ×: closes the guide and the Guides gallery comes back (Notion
+  // "Phone: bottom bar becomes Explore, My list and Guides").
   await page.locator('.guide-pill .cb-close').click(); await page.waitForTimeout(500);
-  const closed = await page.evaluate(() => ({ g: !!document.querySelector('.g-head'), pill: !!document.querySelector('.guide-pill'), list: !!document.querySelector('.m-scrollarea') }));
-  if (closed.g || closed.pill || !closed.list) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
+  const closed = await page.evaluate(() => ({ g: !!document.querySelector('.g-head'), pill: !!document.querySelector('.guide-pill'), gallery: document.querySelectorAll('.g-page .g-row').length }));
+  if (closed.g || closed.pill || !closed.gallery) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
   await finish('phone', ctx, errors);
 
-  // Phone Grid and Spatial: cards, and the guide's dock carrying the next stop
+  // Phone: an old Grid link opens the guide's List; Spatial: the guide's dock carrying the next stop
   // (the separate Up next chip steps aside while a guide is open).
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs(seed1)));
   await page.goto(URL + `?view=grid&guide=${plan.id}`); await settle(page);
-  const cards = await page.locator('.g-grid .g-card').count();
-  if (cards !== plan.ess.length) err(`phone Grid: ${cards} cards, expected ${plan.ess.length}`);
+  const grid = await page.evaluate(() => ({ cards: document.querySelectorAll('.g-grid, .g-card').length, stops: document.querySelectorAll('.g-stop').length }));
+  if (grid.cards || !grid.stops) err(`phone ?view=grid: ${JSON.stringify(grid)}, expected the guide's List`);
   await page.goto(URL + `?view=spatial&guide=${plan.id}`); await settle(page); await page.waitForTimeout(600);
   const chip = await page.evaluate(() => ({
-    pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.un-chip'),
+    pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.spatial-overall'),
     next: !!document.querySelector('.g-dock .g-dock-next'), seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen') }));
   if (!chip.pill) err('phone Spatial: no guide dock');
-  if (chip.chip) err('phone Spatial: the Up next chip shows beside the guide dock');
+  if (chip.chip) err('phone Spatial: the compact card shows beside the guide dock');
   if (nextExpected && !(chip.next && chip.seen)) err('phone Spatial: the dock does not offer the next stop with Seen');
   await finish('phone-grid', ctx, errors);
 

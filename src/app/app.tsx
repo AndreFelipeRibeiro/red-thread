@@ -115,6 +115,13 @@ function sortDirectionLabels(sort, short = false) {
 }
 window.sortDirectionLabels = sortDirectionLabels;
 
+// The phrase naming the order Up next follows ("release order", "newest
+// first", "highest IMDb first"…), for its tag.
+function upNextOrderKey(sort, dir) {
+  if ((sort === 'release' || sort === 'chrono') && dir === 'asc') return 'upnext.order.' + sort;
+  return 'upnext.order.' + sort + '.' + dir;
+}
+
 function sortTitles(list, sort, dir = 'asc') {
   const mul = dir === 'desc' ? -1 : 1;
   return list.slice().sort((a, b) => {
@@ -174,13 +181,21 @@ function chronoEras(titles) {
   });
   return out;
 }
+// The desktop Titles list groups Story order by these same eras (Notion
+// "Titles 1/5"), so its headers match the canvas's band labels.
+window.MCU_storyEras = { eraOf: chronoEras, storyYear, starts: ERA_STARTS };
 
 function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   const ordered = sortTitles(titles, sort, dir);
   const positions = {};
   let layoutBands = [];
   const colW = CARD_W + 60;
-  const rowH = CARD_H + 70;
+  // Rows in the grid orders leave room under each card for the arcs that join
+  // neighbours on a row and their name labels (ARC_MAX + a label), so neither
+  // reaches the next row (Notion "Show posters uncropped": the cards grew).
+  const rowH = CARD_H + 110;
+  // The timelines' staircase keeps the spacing it had.
+  const bandH = (CARD_H + 70) * 1.25;
 
   if (sort === 'phase') {
     // Group by phase into vertical lanes
@@ -228,7 +243,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
     ordered.forEach((t, i) => {
       const x = 80 + i * (CARD_W * 1.15);
       const row = chrono ? eraOf[t.id] : t.phase - 1;
-      const y = 80 + row * (rowH * 1.25);
+      const y = 80 + row * bandH;
       positions[t.id] = { x, y };
       const b = bands[row] || (bands[row] = { row, x, y, years: [] });
       if (x < b.x) b.x = x;
@@ -271,7 +286,7 @@ const keepFocusOnStep = () => {
   drawerStepTimer = setTimeout(() => { drawerStepFocus = false; }, 1000);
 };
 
-function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search }) {
+function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search, onShowInExplore }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
   // the last title while it slides away. Switching titles swaps the content.
   const [title, setTitle] = useState(current);
@@ -318,6 +333,8 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     <window.DrawerFrame asideRef={asideRef} scrollRef={scrollRef} open={open} onClose={onClose}
       onSlid={() => { if (!current) setTitle(null); }}>
       <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
+        // From My list and Guides: the title on the Explore canvas.
+        onExplore={onShowInExplore ? () => onShowInExplore(title.id) : null}
         cast={<window.DrawerCast title={title} activeChar={activeChar} activeChars={activeChars} search={search}
           onCharacterClick={onCharacterClick} onCharacterHover={onCharacterHover}/>}/>
     </window.DrawerFrame>
@@ -343,7 +360,29 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route, drawChar }) {
+// How many titles each title is connected to: the titles that share at least
+// one character with it (matched on the character's core identity), which is
+// exactly the set its connections ring shows when it is selected (relatedIds),
+// so the card's number and the ring always agree (Andre, 2026-11-15).
+function connectionCounts(titles) {
+  const byPrime = {};
+  titles.forEach(t => t.cast.forEach(c => {
+    const p = primeOf(c);
+    (byPrime[p] || (byPrime[p] = new Set())).add(t.id);
+  }));
+  const out = {};
+  titles.forEach(t => {
+    const near = new Set();
+    t.cast.forEach(c => byPrime[primeOf(c)].forEach(id => { if (id !== t.id) near.add(id); }));
+    out[t.id] = near.size;
+  });
+  return out;
+}
+
+// How far below a row the arc joining two of its cards may dip (see control()).
+const ARC_MAX = 80;
+
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination, in place of the character threads. A single path in the
   // existing layer, so the canvas performance rules hold.
@@ -418,7 +457,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     const x2 = p2.x + CARD_W/2, y2 = p2.y + CARD_H/2;
     const dx = x2 - x1, dy = y2 - y1;
     if (!straight && Math.abs(dy) < CARD_H * 0.5) {
-      const depth = CARD_H / 2 + 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04);
+      // The arc's lowest point sits this far below the cards, at most ARC_MAX,
+      // so it stays in the gap above the next row.
+      const depth = CARD_H / 2 + Math.min(ARC_MAX, 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04));
       return { x1, y1, x2, y2, cx: (x1 + x2) / 2, cy: Math.max(y1, y2) + depth * 2 };
     }
     const dist = Math.hypot(dx, dy) || 1;
@@ -442,8 +483,10 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     };
   }
 
-  // Card rectangles, so labels can avoid sitting on a card.
-  const cardRects = visibleTitles.filter(t => !avoidIds || avoidIds.has(t.id)).map(t => positions[t.id]).filter(Boolean)
+  // Card rectangles, so labels can avoid sitting on a card: every card on
+  // screen, dimmed ones included (a name over a faded card's text still reads
+  // as clutter); a connections ring hides the rest, so only its cards count.
+  const cardRects = visibleTitles.filter(t => !shownIds || shownIds.has(t.id)).map(t => positions[t.id]).filter(Boolean)
     .map(p => ({ x0: p.x - 6, y0: p.y - 6, x1: p.x + CARD_W + 6, y1: p.y + CARD_H + 6 }));
   const coveredBy = (x, y, w, h) => cardRects.find(r => x + w / 2 > r.x0 && x - w / 2 < r.x1 && y + h / 2 > r.y0 && y - h / 2 < r.y1);
   // Best spot for a label near point(t0) on its curve: the closest point along
@@ -601,6 +644,15 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     }
     if (!moved) break;
   }
+  // Pushing labels apart can move one onto a card: step it just above or
+  // below that card, whichever is nearer and free.
+  labels.forEach(l => {
+    const r = coveredBy(l.x, l.y, l.w, l.h);
+    if (!r) return;
+    const spots = [r.y1 + l.h / 2 + 2, r.y0 - l.h / 2 - 2].filter(y => !coveredBy(l.x, y, l.w, l.h))
+      .sort((a, b) => Math.abs(a - l.y) - Math.abs(b - l.y));
+    if (spots.length) l.y = spots[0];
+  });
 
   const labelEls = labels.map(l => (
     <g key={'lbl_' + l.key} style={{pointerEvents:'none'}}>
@@ -645,11 +697,18 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 // unknown values fall back to those defaults.
 const PREFS_KEY = 'mcu.prefs.v1';
 const PREFS_VERSION = 1;
-const VIEW_MODE_VALUES = ['list', 'grid', 'spatial'];
+// 'grid' (the phone's old Grid) is read as the List, for saved links.
+const VIEW_MODE_VALUES = ['list', 'spatial'];
 const DESKTOP_VIEW_VALUES = ['spatial', 'list'];
 
+// A sort saved for one desktop section ({ sort, sortDir }), or null.
+function validSort(x) {
+  if (!x || !Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, x.sort)) return null;
+  return { sort: x.sort, sortDir: x.sortDir === 'asc' || x.sortDir === 'desc' ? x.sortDir : DEFAULT_SORT_DIR[x.sort] };
+}
+
 function readDisplayPrefs() {
-  const prefs = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+  const prefs = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release, guidesPage: false, sections: {} };
   let parsed = null;
   try {
     parsed = JSON.parse(window.localStorage.getItem(PREFS_KEY) || 'null');
@@ -662,6 +721,10 @@ function readDisplayPrefs() {
   if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, parsed.sort)) {
     prefs.sort = parsed.sort;
     prefs.sortDir = parsed.sortDir === 'asc' || parsed.sortDir === 'desc' ? parsed.sortDir : DEFAULT_SORT_DIR[parsed.sort];
+  }
+  prefs.guidesPage = parsed.guidesPage === true && prefs.desktopView === 'list';
+  if (parsed.sections && typeof parsed.sections === 'object') {
+    ['explore', 'list'].forEach(k => { const v = validSort(parsed.sections[k]); if (v) prefs.sections[k] = v; });
   }
   return prefs;
 }
@@ -678,7 +741,7 @@ function readURLState() {
   let q;
   try { q = new URLSearchParams(window.location.search); } catch (e) { return out; }
   out.any = URL_KEYS.some(k => q.has(k));
-  const v = q.get('view'); if (VIEW_MODE_VALUES.indexOf(v) !== -1) out.view = v;
+  const v = q.get('view'); if (v === 'grid') out.view = 'list'; else if (VIEW_MODE_VALUES.indexOf(v) !== -1 || v === 'guides') out.view = v;
   const s = q.get('sort'); if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, s)) out.sort = s;
   const o = q.get('order'); if (o === 'asc' || o === 'desc') out.order = o;
   const ph = q.get('phase'); if (/^[1-6]$/.test(ph || '')) out.phase = ph;
@@ -720,8 +783,11 @@ function App() {
   // same to everyone. An address with none of our keys uses the saved prefs.
   const [initialPrefs] = useState(() => {
     if (!urlAtLoad.any) return readDisplayPrefs();
-    const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
-    if (urlAtLoad.view) { p.viewMode = urlAtLoad.view; p.desktopView = urlAtLoad.view === 'grid' ? 'list' : urlAtLoad.view; }
+    const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release, guidesPage: urlAtLoad.view === 'guides', sections: {} };
+    if (urlAtLoad.view) {
+      const v = urlAtLoad.view === 'guides' ? 'list' : urlAtLoad.view;
+      p.viewMode = v; p.desktopView = v;
+    }
     if (urlAtLoad.sort) { p.sort = urlAtLoad.sort; p.sortDir = DEFAULT_SORT_DIR[urlAtLoad.sort]; }
     if (urlAtLoad.order) p.sortDir = urlAtLoad.order;
     return p;
@@ -750,11 +816,30 @@ function App() {
   // has its own choice (Spatial by default, or List) so the two never fight.
   const [viewMode, setViewMode] = useState(initialPrefs.viewMode);
   const [desktopView, setDesktopView] = useState(initialPrefs.desktopView);
+  // Desktop sections (Notion "Desktop: navigation for Explore, My list and
+  // Guides"): Explore is the Spatial canvas, My list the List, and Guides
+  // either the gallery of guides (guidesPage) or the open guide's own list.
+  // Explore and My list each keep their own sort and filters: what one section
+  // leaves behind is parked here and comes back when it is shown again. The
+  // collection filter (Unseen, Seen, Watchlist) belongs to My list only.
+  const [guidesPage, setGuidesPage] = useState(!!initialPrefs.guidesPage);
+  const sectionStore = useRef(null);
+  if (!sectionStore.current) {
+    const blank = (x) => ({ ...(x || { sort: 'release', sortDir: DEFAULT_SORT_DIR.release }), phase: 'all', type: 'all', budget: 'all', release: 'all', collection: 'all' });
+    const sec = initialPrefs.sections || {};
+    sectionStore.current = { explore: blank(sec.explore), list: blank(sec.list) };
+  }
   const prefsLoaded = useRef(false);
   useEffect(() => {
     if (!prefsLoaded.current) { prefsLoaded.current = true; return; }
-    writeDisplayPrefs({ viewMode, desktopView, sort, sortDir });
-  }, [viewMode, desktopView, sort, sortDir]);
+    const st = sectionStore.current;
+    const here = (isTouch ? viewMode === 'spatial' : desktopView === 'spatial') ? 'explore' : 'list';
+    const sections = {
+      explore: here === 'explore' ? { sort, sortDir } : { sort: st.explore.sort, sortDir: st.explore.sortDir },
+      list: here === 'list' ? { sort, sortDir } : { sort: st.list.sort, sortDir: st.list.sortDir },
+    };
+    writeDisplayPrefs({ viewMode, desktopView, sort, sortDir, guidesPage, sections });
+  }, [viewMode, desktopView, sort, sortDir, guidesPage]);
   const [drawerId, setDrawerId] = useState(null);
   const drawerIdRef = useRef(null);
   drawerIdRef.current = drawerId;
@@ -1172,12 +1257,15 @@ function App() {
   // character and the type, phase and budget filters. Search does not narrow
   // it: the card hides while typing instead of jumping about. It waits for the
   // collection to load, so a signed-in visitor never sees Iron Man flash up
-  // before their own collection arrives. Its × hides it for now: plain state,
-  // nothing stored, so a reload brings it back.
-  const [upHidden, setUpHidden] = useState(false);
-  const hideUpNext = () => setUpHidden(true);
+  // before their own collection arrives.
+  //
+  // The compact card's ✕ (Connections and Titles, desktop and phones) hides
+  // the card for this visit (Andre, 2026-11-15): plain state, nothing stored,
+  // so a reload brings it back. It leaves Up next itself alone, so the list
+  // still marks its row.
+  const [cardHidden, setCardHidden] = useState(false);
   const upNextData = useMemo(() => {
-    if (upHidden || !collectionReady) return null;
+    if (!collectionReady) return null;
     // An open guide scopes Up next to its stops, in guide order.
     if (guide) {
       const result = window.MCU_nextUp(guideStepTitles, statusOf, { ordered: true });
@@ -1190,22 +1278,20 @@ function App() {
     if (budgetFilter !== 'all') list = list.filter(t => budgetMatches(t, budgetFilter));
     if (pinnedTitleIds) list = list.filter(t => pinnedTitleIds.has(t.id));
     const watchScope = collectionFilter === 'watchlist';
-    if (watchScope) list = list.filter(t => statusOf(t.id) === 'watchlist');
-    // Release and Phase are release order and Chrono story order, earliest
-    // first whatever the list's direction. A-Z, IMDb and RT follow the list
-    // itself, in its direction, so the suggestion is the first unseen title of
-    // the list on screen. The card names the order it used.
-    const order = sort === 'chrono' ? 'chrono' : (sort === 'title' || sort === 'imdb' || sort === 'rt') ? sort : 'release';
-    const result = window.MCU_nextUp(list, statusOf, { order, dir: sortDir });
+    // One rule for every surface (MCU_selectUpNext, tracking.tsx): the first
+    // released, unseen title in the list's own order and direction, in the
+    // tab (Watchlist: its first title), less this session's skips. The card
+    // names the order it used.
+    const result = window.MCU_selectUpNext({ titles: list, statusOf, collection: collectionFilter, order: sort, dir: sortDir });
     const who = pinnedActor || (highlightedChar ? I18N.charName(highlightedChar) : null);
     const lead = watchScope ? tr('upnext.fromWatchlist') : who ? tr('upnext.forChar', { name: who }) : tr('upnext.label');
-    const parts = [tr('upnext.order.' + order + (order === 'release' || order === 'chrono' ? '' : '.' + sortDir))];
+    const parts = [tr(upNextOrderKey(sort, sortDir))];
     if (typeFilter !== 'all') parts.push(tr(typeFilter === 'film' ? 'type.films' : 'type.series'));
     if (phaseFilter !== 'all') parts.push(tr('phase.label', { n: phaseFilter }));
     if (budgetFilter !== 'all') parts.push(tr('budget.' + budgetFilter));
     const scoped = watchScope || !!pinnedTitleIds || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
     return { result, lead, detail: parts.join(' · '), scoped, watchScope };
-  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, upHidden, collectionStates, lang, guide, guideStepTitles]);
+  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, collectionStates, lang, guide, guideStepTitles]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1248,6 +1334,9 @@ function App() {
   // under the rings), and the lines are drawn among the ring's titles alone.
   const ringIds = !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
   const lineTitles = useMemo(() => ringIds ? filtered.filter(t => ringIds.has(t.id)) : filtered, [filtered, ringIds]);
+  // Counted over what the filters show (not the ring), so a card's number
+  // holds while you move around a selection.
+  const connCounts = useMemo(() => connectionCounts(filtered), [filtered]);
 
   // Hover-focus is separate: used only for dimming/labels, not reflow.
   const hoverFocusId = hoveredTitle || selectedId;
@@ -1290,6 +1379,10 @@ function App() {
       const ringCaps = compact ? [5, 9, 14, 20] : [6, 10, 16, 22];
       const ringRadii = compact ? [340, 600, 860, 1120] : [480, 800, 1120, 1440];
       const placed = { [focusId]: { x: cx, y: cy } };
+      // The rings are ellipses, flatter than circles; they were tuned for a
+      // 270px card, so their height grows with the card's (Notion "Show
+      // posters uncropped": cards are taller), or neighbours overlap.
+      const squash = 0.7 * CARD_H / 270;
       let idx = 0;
       for (let ring = 0; ring < ringCaps.length && idx < scored.length; ring++) {
         const cap = Math.min(ringCaps[ring], scored.length - idx);
@@ -1298,10 +1391,32 @@ function App() {
           const angle = (k / cap) * Math.PI * 2 + (ring % 2) * (Math.PI / cap);
           placed[scored[idx].id] = {
             x: cx + Math.cos(angle) * r,
-            y: cy + Math.sin(angle) * r * 0.7,
+            y: cy + Math.sin(angle) * r * squash,
           };
           idx++;
         }
+      }
+      // Neighbouring rings can still bring two cards together where one's
+      // angle meets the other's: push the outer one away from the centre
+      // until they clear (a few passes settle every ring).
+      // The centre card counts as an obstacle but never moves.
+      const ids = Object.keys(placed);
+      const gapX = CARD_W + 28, gapY = CARD_H + 28;
+      for (let pass = 0; pass < 12; pass++) {
+        let moved = false;
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = placed[ids[i]], b = placed[ids[j]];
+            if (Math.abs(a.x - b.x) >= gapX || Math.abs(a.y - b.y) >= gapY) continue;
+            const da = Math.hypot(a.x - cx, a.y - cy), db = Math.hypot(b.x - cx, b.y - cy);
+            const o = da > db ? a : b, d = Math.max(da, db) || 1;
+            if (o === placed[focusId]) continue;
+            const need = Math.min(gapX - Math.abs(a.x - b.x), gapY - Math.abs(a.y - b.y)) + 4;
+            o.x += (o.x - cx) / d * need; o.y += (o.y - cy) / d * need;
+            moved = true;
+          }
+        }
+        if (!moved) break;
       }
       focusLayout = placed;
     }
@@ -1325,7 +1440,7 @@ function App() {
   // or viewport to disturb. Derived from `ordered` so the canvas keeps every card.
   const visible = useMemo(() => {
     if (collectionFilter === 'all') return ordered;
-    return ordered.filter(t => window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter));
+    return ordered.filter(t => window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t));
   }, [ordered, collectionFilter, collectionStates]);
 
   // Only speak in collection terms when the collection filter is what emptied
@@ -1386,7 +1501,7 @@ function App() {
     if (collectionFilter !== 'all' && !guide) {
       const s = new Set();
       filtered.forEach(t => {
-        if (window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter)) s.add(t.id);
+        if (window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t)) s.add(t.id);
       });
       sets.push(s);
     }
@@ -1549,7 +1664,10 @@ function App() {
     // top-right corner there, out of the way). Phone: the count pill and zoom
     // control share the first row, so the meter takes a row of its own beneath
     // them in every order but By Phase.
-    const chromeTop = isTouch ? (sort === 'phase' ? 44 : 113) : 52;
+    // Phones: the count pill at the top of the canvas (the All titles meter
+    // that sat under it moved into the card docked at the bottom; Notion
+    // "Titles 4/5").
+    const chromeTop = isTouch ? 44 : 52;
 
     // The scale this sort opens at with no filter applied. Used as the yardstick
     // below: framing a match set is only an improvement if it doesn't mean
@@ -1583,8 +1701,8 @@ function App() {
     }
 
     // Phones, once you've started (at least one title Seen): each order opens
-    // on your Up next title, centred between the top chrome and the Up next
-    // bar at the phone's reading zoom (the same in every order), its
+    // on your Up next title, centred between the top chrome and the compact
+    // card docked at the bottom, at the phone's reading zoom (the same in every order), its
     // neighbours peeking in. A dimming filter
     // frames its matches instead (below), and first-time visitors and anyone
     // caught up keep the bird's-eye view of the order's start.
@@ -1593,8 +1711,9 @@ function App() {
     const up = upStop && basePositions[upStop];
     if (up) {
       const scale = phoneReadScale(rect.width);
-      const chip = viewportRef.current.parentNode && viewportRef.current.parentNode.querySelector('.un-chip');
-      const cr = chip && chip.getBoundingClientRect();
+      const dock = viewportRef.current.closest('.m-main');
+      const card = dock && dock.querySelector('.spatial-overall.docked');
+      const cr = card && card.getBoundingClientRect();
       const bottom = cr && cr.height ? cr.top - rect.top - 8 : rect.height - 14;
       const top = chromeTop;
       const v = {
@@ -2076,8 +2195,7 @@ function App() {
   const upNext = upNextData && {
     ...upNextData,
     onOpen: openUpNext,
-    onHide: hideUpNext,
-    onShowAll: () => setCollectionFilter('all'),
+    onHide: () => setCardHidden(true),
   };
   // Announce a new suggestion politely once the previous one was marked seen
   // (the toast already announces the mark itself).
@@ -2096,9 +2214,20 @@ function App() {
     }
   }, [upNextId]);
   const upAnnouncer = <div className="story-sr" aria-live="polite">{upAnnounce}</div>;
-  // Desktop Spatial shows it as a row in the floating meter, which (like the
-  // meter) stands down while a title is selected.
-  const upNextInMeter = !isTouch && !guide && !!upNext && upNext.result.kind === 'next';
+  // Up next is a row in the compact card, which stands down while a title is
+  // selected on Connections.
+  const upNextInMeter = !guide && !!upNext && upNext.result.kind === 'next';
+  // The compact card, the same card in the same place on Connections and in
+  // Titles: top right on desktop, docked above the bottom bar on phones
+  // (Notion "Titles 4/5"). All titles with its bar, and Up next with ✓ and ✕.
+  // ✕ hides the card for this visit. In By Phase there is no All titles meter
+  // (the phase headings carry it), so the card is Up next alone.
+  const compactCard = !cardHidden && ((viewProgress && viewProgress.all) || upNextInMeter) ? (inList) => (
+    <window.SpatialOverall touch={isTouch} floating={!inList}>
+      {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
+      {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
+    </window.SpatialOverall>
+  ) : null;
 
   // A character picked from the search suggestions opens the character view
   // (photo, Their titles / All titles, stepper) rather than a text search, as
@@ -2131,9 +2260,53 @@ function App() {
     setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
     setDesktopView(v);
   };
+  // The section shown, and moving between them (see sectionStore). Phones
+  // use the same three (Notion "Phone: bottom bar becomes Explore, My list
+  // and Guides"): Explore is Spatial, My list the List.
+  const spatialNow = isTouch ? viewMode === 'spatial' : desktopView === 'spatial';
+  const section = spatialNow ? 'explore' : (guide || guidesPage) ? 'guides' : 'mylist';
+  const slotOf = (s) => (s === 'explore' ? 'explore' : 'list');
+  const goSection = (next, opts) => {
+    if (next === section && !(opts && opts.force)) return;
+    const from = slotOf(section), to = slotOf(next);
+    if (from !== to) {
+      const st = sectionStore.current;
+      st[from] = { sort, sortDir, phase: phaseFilter, type: typeFilter, budget: budgetFilter, release: releaseFilter, collection: collectionFilter };
+      const n = st[to];
+      setSort(n.sort); setSortDir(n.sortDir);
+      setPhaseFilter(n.phase); setTypeFilter(n.type); setBudgetFilter(n.budget); setReleaseFilter(n.release);
+      setCollectionFilter(to === 'explore' ? 'all' : n.collection);
+    }
+    // My list is the person's own list: an open guide closes (it stays one
+    // click away in Guides).
+    if (next === 'mylist' && guideId) closeGuide();
+    setGuidesPage(next === 'guides');
+    if (isTouch) {
+      if (next === 'explore') setViewMode('spatial');
+      else { setViewMode('list'); setSelectedId(null); }
+      return;
+    }
+    if (opts && opts.select) {
+      // "Show in Explore": that title, selected on the canvas.
+      setDrawerId(opts.select);
+      setSelectedId(opts.select);
+      setDesktopView('spatial');
+    } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
+  };
+  const showInExplore = (id) => goSection('explore', { select: id, force: true });
+  // The progress widget's counts open Titles on that tab (Notion "Titles 3/5").
+
+  // Phones: My list's collection tabs, the header's second row (pinned with
+  // it, as on desktop; Notion "Titles 4/5").
+  const myListBar = isTouch ? (
+    <window.MyListBar collection={collectionFilter} setCollection={setCollectionFilter}/>
+  ) : null;
   // `showing` is overridable because the Spatial canvas counts what is actually
   // on it: selecting a card fades every unconnected title out, so the pill has
   // to follow the ring rather than keep reporting the whole filtered set.
+  // "64 titles" and its chips show in Titles only when a search or a filter
+  // narrows the list (Notion "Titles 1/5"); the tabs already count the rest.
+  const narrowed = !!search.trim() || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all';
   const contextSummary = (variant, inList, showing) => (
     <ContextSummary variant={variant} inList={inList}
       showing={showing == null ? visible.length : showing} total={window.TITLES.length}
@@ -2223,15 +2396,20 @@ function App() {
     setPair(null);
     if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
     setGuideId(id);
+    // The open guide is what the Guides tab shows; closing it brings the
+    // gallery back (closeGuide).
+    setGuidesPage(false);
     setGuideOptional(false);
     setStepId(startAt || null);
-    setUpHidden(false);
     if (isTouch) setDrawerId(null);
   };
   const closeGuide = (opts) => {
     if (guideId && !(opts && opts.fromURL)) window.MCU_GUIDE.forget(guideId);
     setGuideId(null);
     setStepId(null);
+    // A guide closed from its list stays in the Guides tab, on the gallery of
+    // guides (desktop and phones).
+    if (guideId && (isTouch ? viewMode !== 'spatial' : desktopView === 'list')) setGuidesPage(true);
   };
   // Opening a guide (or showing its optional stops) in Spatial frames its
   // titles once the dimming has applied; nothing on the canvas moves. It waits
@@ -2326,7 +2504,7 @@ function App() {
   const urlTitle = urlChar ? (stepId || drawerId) : drawerId;
   const urlParams = () => {
     const p = {};
-    const view = isTouch ? viewMode : desktopView;
+    const view = section === 'guides' && !guideId ? 'guides' : isTouch ? viewMode : desktopView;
     if (view !== (isTouch ? 'list' : 'spatial')) p.view = view;
     if (sort !== 'release') p.sort = sort;
     if (sortDir !== DEFAULT_SORT_DIR[sort]) p.order = sortDir;
@@ -2391,12 +2569,15 @@ function App() {
     setStepId(null);
     setGuideId(null);
     if (window.MCU_GUIDE) window.MCU_GUIDE.forget();
+    // The section not shown loses its parked filters and sort too.
+    const st = sectionStore.current, other = desktopView === 'spatial' ? 'list' : 'explore';
+    st[other] = { sort: 'release', sortDir: DEFAULT_SORT_DIR.release, phase: 'all', type: 'all', budget: 'all', release: 'all', collection: 'all' };
     setSearch('');
     setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all');
     setCollectionFilter('all');
     setSort('release'); setSortDir(DEFAULT_SORT_DIR.release);
     setSheet(null); setAboutOpen(false); setWelcome(false); setPickerOpen(false); setPromo(null);
-    setUpHidden(false);
+    setCardHidden(false);
     window.dispatchEvent(new Event('mcu:home'));
     homePendingRef.current = true;
     setHomeAnnounce('');
@@ -2434,7 +2615,7 @@ function App() {
     if (urlAtLoad.title || urlAtLoad.char) applyURLSubject(urlAtLoad);
   }, []);
   useEffect(() => { writeURLState(urlParams()); },
-    [isTouch, viewMode, desktopView, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId]);
+    [isTouch, viewMode, desktopView, guidesPage, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId]);
   // Back and Forward restore the title and the character, never the filters:
   // closing the phone filter sheet is itself a step back in history, and
   // restoring filters there would undo the choices just made in it. A step
@@ -2787,7 +2968,8 @@ function App() {
         x={view.x + (p.x + CARD_W/2) * view.scale}
         y={view.y + (p.y + CARD_H/2) * view.scale}
         onOpenCast={() => setDrawerId(selectedId)}
-        guide={guide} guideSkip={guideSkipInfo ? guideSkipInfo[t.id] : null} onGuideSkip={onCanvasSkip}
+        guide={guide} guideSkip={guideSkipInfo ? guideSkipInfo[t.id] : null} guideBadge={guideBadges ? guideBadges[t.id] : null} onGuideSkip={onCanvasSkip}
+        connections={connCounts[t.id] || 0}
       />
     );
   })();
@@ -2874,7 +3056,7 @@ function App() {
           focusId={pair ? null : hoverFocusId}
           pair={pair}
           onPickConnection={pickConnection}
-          avoidIds={labelAvoidIds}
+          shownIds={ringIds}
           route={guide ? { ids: guideStepTitles.map(t => t.id), target: guide.target } : null}
         />
         {filtered.map(t => {
@@ -2891,12 +3073,13 @@ function App() {
           const isHighlighted = pair ? !!inPair : (charHL || (hoverFocusId === t.id) || !!onLine);
           // Visual only — the card stays in the layout so nothing reflows.
           const isCollDimmed = collectionFilter !== 'all' && !guide
-            && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter);
+            && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t);
           return (
             <Card
               key={t.id}
               entering={cardsShownRef.current}
               title={t}
+              connections={connCounts[t.id] || 0}
               pos={positions[t.id] || {x:0,y:0}}
               onClick={() => onCardTap(t.id)}
               onHover={isTouch ? (() => {}) : setHoveredTitle}
@@ -2941,23 +3124,24 @@ function App() {
           with it — exactly the cards left standing on the canvas. */}
       {/* The summary describes filters an open guide sets aside, so it waits. */}
       {!guide && contextSummary(isTouch ? 'pill' : 'float', false, ringIds ? ringIds.size : null)}
-      {/* Every order but By Phase carries one meter over the whole catalogue.
-          It stands down with the band labels whenever a title is selected,
-          since the canvas is then showing one ring. */}
-      {/* Phones show an open guide's progress in its dock instead. */}
-      {/* An open guide carries its progress in its own module (desktop) or
-          dock (phones). */}
-      {!selectedId && !guide && ((viewProgress && viewProgress.all) || upNextInMeter) && (
-        <window.SpatialOverall touch={isTouch}>
-          {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
-          {/* Desktop only: phones get a chip above the gesture hint. */}
-          {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
-        </window.SpatialOverall>
-      )}
+      {/* The compact card (All titles and Up next; Andre, 2026-11-15: the
+          progress widget's bigger card was too much for the canvas). It
+          stands down while a title is selected, since the canvas is then
+          showing one ring, and while a guide is open (the guide carries its
+          own progress). Its ✕ hides it for the visit. Phones dock it above
+          the bottom bar instead (below). */}
+      {!selectedId && !guide && !isTouch && compactCard && compactCard(false)}
       {guide && !isTouch && guideModule('spatial')}
       {focusPop}
     </div>
   );
+
+  // Phones: the compact card docked above the bottom bar, on Connections and
+  // in Titles (Notion "Titles 4/5"; Andre chose the dock over the top so it is
+  // within thumb reach). A pinned character's or guide's pill takes that
+  // place, and the card stands down while a title is selected on Connections.
+  const phoneCard = isTouch && !guide && !charPill && !guidesPage && compactCard
+    && (viewMode === 'list' || (viewMode === 'spatial' && !selectedId && filtered.length > 0)) ? compactCard(false) : null;
 
   if (isTouch) {
     return (
@@ -2967,37 +3151,30 @@ function App() {
         {themeAnnouncer}
         <window.MobileTopBar
           onHome={onHomeClick}
-          device={device}
-          viewMode={viewMode} setViewMode={(v) => {
-            if (v !== viewMode && v !== 'spatial' && viewMode !== 'spatial') window.captureViewFlip();
-            setViewMode(v);
-            if (v !== 'spatial') setSelectedId(null);
-          }}
+          section={section}
           search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson}
           onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
-          sort={sort} sortDir={sortDir} setSortDir={setSortDir}
+          sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
           onOpenSettings={() => setSheet('settings')}
-          onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
-          collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
+          guideActive={!!guide}
+          subNav={!guide && !guidesPage && viewMode === 'list' ? myListBar : null}
         />
-        <div role="main" className={`${S.M_MAIN}${charPill || guide ? ' has-pill' : ''}`}
+        <div role="main" className={`${S.M_MAIN}${charPill || guide || phoneCard ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {guide && viewMode !== 'spatial' && (
             <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
               currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
           )}
-          {!guide && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {!guide && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage onPick={(id) => openGuide(id)}/>}
+          {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} groupProgress={groupProgress} markWatch={collectionFilter !== 'watchlist'} header={narrowed ? contextSummary('line') : null} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} sortDir={sortDir} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className={S.M_SPATIAL_WRAP}>
               {canvasEl}
-              {/* An open guide's dock carries its next stop, so the chip steps
-                  aside while it is open. */}
-              {filtered.length > 0 && !selectedId && upNext && !guide && <window.UpNextChip info={upNext}/>}
             </div>
           )}
+          {phoneCard}
           {guide ? (
             <window.GuidePill guide={guide} stepIndex={stepIndex} stepCount={stepStops}
               current={stepIndex >= 0 ? stepList[stepIndex] : null}
@@ -3006,15 +3183,13 @@ function App() {
               onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
           ) : charPill}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort} away={!!guide}/>}
+        <window.MobileNavBar section={section} onSection={(v) => goSection(v)}/>
         {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
             releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
-            sort={sort}
-            sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}
             onClose={() => { setSheet(null); requestAnimationFrame(() => window.playPendingFlip()); }}
@@ -3023,7 +3198,6 @@ function App() {
         {sheet === 'account' && (
           <window.AccountSheet
             onClose={() => setSheet(null)}
-            onPickCollection={setCollectionFilter}
             onAbout={() => setSheet('about')}
           />
         )}
@@ -3039,6 +3213,8 @@ function App() {
           </window.Sheet>
         )}
         <window.StatusToast touch/>
+        {/* Dev and preview builds only (theme-lab.tsx). */}
+        <window.ThemeLab/>
         <window.ShareImageHost touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
@@ -3061,7 +3237,8 @@ function App() {
             activeChar={activeChar}
             activeChars={activeChars}
             onGoSpatial={() => {
-              setViewMode('spatial');
+              // Into the Connections section, with its own sort and filters.
+              goSection('explore', { force: true });
               if (highlightedChar) {
                 if (pinnedCharIds && pinnedCharIds.has(drawerId)) { setStepId(drawerId); pendingStepRef.current = drawerId; }
               } else setSelectedId(drawerId);
@@ -3083,15 +3260,16 @@ function App() {
         onAbout={() => setAboutOpen(true)}
         onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
         onPickTitle={pickTitle} onPickPerson={pickPerson}
-        desktopView={desktopView} setDesktopView={changeDesktopView}
+        section={section} onSection={(s) => goSection(s)}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
         releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
-        collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
-        guideId={guideId} onOpenGuide={(id) => openGuide(id)}
+        guideId={guideId}
+        // Titles' second layer: the status tabs and "Mark what you've seen".
+        subNav={desktopView === 'list' && !guide && !guidesPage ? <window.TitlesSubNav collection={collectionFilter} setCollection={setCollectionFilter}/> : null}
       />
 
       {/* An open guide shows its own module instead: at the top of the List,
@@ -3114,8 +3292,13 @@ function App() {
               setStepId(id);
               setDrawerId(id);
             }}/>
+        : desktopView === 'list' && guidesPage
+        ? <window.GuidesPage onPick={(id) => openGuide(id)}/>
         : desktopView === 'list'
-        ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
+        ? <window.DesktopList upNext={upNext} titles={visible} floatingCard={compactCard && compactCard(true)}
+            myList={{ collection: collectionFilter, setCollection: setCollectionFilter,
+              filters: { phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter } }}
+            groupProgress={groupProgress} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={toggleDetails}
             onFollow={(id, n, total) => {
@@ -3125,7 +3308,10 @@ function App() {
               const t = n && window.TITLES.find(x => x.id === id);
               if (t) setListAnnounce(tr('list.stepPos', { title: I18N.titleName(t), n, total }));
             }}
-            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
+            // "64 titles" says something only when a search or a filter
+            // narrows the list (the tabs carry their own counts).
+            header={narrowed ? contextSummary('float', true) : null}
+            empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 
       {hoveredConnection && (
@@ -3141,6 +3327,7 @@ function App() {
         onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
         title={settingsOpen || settingsShown ? null : drawerTitle}
+        onShowInExplore={section !== 'explore' ? showInExplore : null}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
         onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}
@@ -3150,6 +3337,8 @@ function App() {
         search={search}
       />
       <window.StatusToast touch={false}/>
+      {/* Dev and preview builds only (theme-lab.tsx). */}
+      <window.ThemeLab/>
       <window.ShareImageHost touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>

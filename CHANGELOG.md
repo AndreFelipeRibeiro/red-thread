@@ -13,6 +13,334 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Phone Titles: the desktop list's rules, and one card above the bottom bar (Titles 4/5)
+
+Recorded: 2026-11-15 20:39 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- **Header:** the toolbar row is Sort, Filters and, in Titles, "Mark what
+  you've seen" in place of the "12 of 60 seen" count (an icon button, its
+  label kept for screen readers, where the label doesn't fit; at a large
+  text size at 320px Filters does too). The status tabs are the header's
+  last row, pinned with it, as on desktop, and measure again as their counts
+  change; at the last step the selected tab shows its icon and count only.
+- **List:** the desktop List's groups and headings (phase for Release date
+  and Phase, in-story era for Story order, flat for Title, IMDb and RT), each
+  with a mark per released title and "4/6". No folded seen runs, no dimming,
+  no "Mark all seen" on headings. Rows: a 40×60 poster with the seen mark in
+  its corner, the title, one meta line, the IMDb and RT badges, and Seen and
+  Watchlist side by side as 40px buttons. "64 titles" only when a search or
+  filter narrows the list.
+- **Up next:** marked in its own row (red edge, pill, filled check); the list
+  opens with that row in view.
+- **The compact card** (All titles and Up next with ✓ and ✕) is docked above
+  the bottom bar on Connections and Titles, in the same place on both (Andre,
+  2026-11-15). The list's last row scrolls clear of it; ✕ hides it for the
+  visit; a pinned character's pill or an open guide takes its place. Phone
+  Connections frames Up next above it.
+- **Removed:** the phone list's Up next card, the Connections chip, the
+  "caught up" / "Watchlist empty" states (the card shows progress alone, as
+  on desktop), the top meter on phone Connections, seen-run folding, the
+  sticky phase dividers and 15 unused locale keys. Swipes: not now (Andre).
+- Verified: typecheck and build; the full `qa/regress.sh` before the push;
+  the accessibility scan in English and Portuguese; by eye at 390 and 320px,
+  English and Portuguese, light and dark. QA updated for the new design
+  (test-nextup, test-progress, test-bulk, test-refocus, test-micro,
+  test-guides, test-home, test-guidemode).
+- Limits: not yet tried on a real iPhone. The bulk confirmation above 20
+  titles has no surface left to reach it (no guide is that long).
+
+## V5 design — Titles: one header, a quieter list and Up next (Titles 1/5–3/5)
+
+Recorded: 2026-11-15 19:54 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- **Header (1/5):** Titles uses the same header as Connections (search, the
+  Sort menu, Filters, settings, profile) plus a second row with the status
+  tabs (no divider after All) and "Mark what you've seen". The list's column
+  headers (#, Title, Released, IMDb, RT) sort with one click and reverse with
+  a second; they and the Sort menu are one state, kept in the address.
+- **List (1/5):** groups by phase (Release date, Phase) or in-story era (Story
+  order) as plain headings with a mark per released title and "4/6"; the
+  column sorts are one flat ranked list. Rows show the poster, the title with
+  its phase and setting, the year, the IMDb and RT chips, Seen and Watchlist;
+  seen titles keep full strength with a check on the poster's corner. The
+  Type, Phase, Set in, Budget and Characters columns, row checkboxes and the
+  bulk bar are gone (marking many at once is "Mark what you've seen"). Two
+  sizes by the list's own width (Regular, and Large from 84rem), up to
+  1480px wide. "64 titles" shows only when a search or filter narrows it.
+- **Up next (2/5):** one rule for every surface, `MCU_selectUpNext`: the first
+  released, unseen title in the list's own order and direction, tab and
+  filters (none on Seen; the Watchlist tab's first title). The Titles row gets
+  a red edge, an "Up next" pill and a filled red "Mark seen"
+  (`--brand-foreground` added for AA on the red), and the list opens with it
+  in view.
+- **The compact card (3/5):** "All titles 43/60 +4", its bar, and Up next with
+  ✓ and ✕, top right on both Connections and Titles; ✕ hides it for the visit
+  without removing the list's Up next mark. The larger progress widget, its
+  strip and scrolling bar were built and removed in review.
+- Escape no longer has a bulk-selection layer (AGENTS.md updated).
+- Verified: `npm run typecheck`; checks updated and added for the new list,
+  order, groups, Up next and the card (`test-dlist`, `test-progress`,
+  `test-nextup`, `test-bulk`, `test-nav`, `test-listkeys`, `test-home`,
+  `test-unreleased`, `test-textsize`, `test-themelab`, `test-anim`,
+  `test-refocus`); `a11y-scan` in English, Portuguese and dark; full
+  `qa/regress.sh` on the final tree, 62 check runs clean. Looked at in the
+  browser at 1280 (with and without the drawer), 1440 and 1920, dark and
+  light, English and Portuguese, and with the Theme lab presets.
+- Limits: not checked in Safari or on a phone; the phone's version is Titles
+  4/5. The card can cover the top rows' buttons on the right in Titles (it
+  floats; ✕ hides it).
+
+## V5 design — A shorter card: connections in the corner
+
+Recorded: 2026-11-15 16:48 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- The connections count is a small pill in the poster's top-left corner
+  (thread icon + number); the seen check or a guide stop's mark stays
+  top-right.
+- The white area holds the title and one meta line (phase dot · year ·
+  "Series") with tighter padding: the card is 170 × 330 (was 352). A
+  not-yet-released series drops the separator before "Series" so its badge
+  fits.
+- Verified: `test-cards` updated; 32 canvas and guide checks; the
+  accessibility scan in light and dark; full `qa/regress.sh` on the final
+  tree, 62 check runs clean.
+
+## V5 maintenance — AGENTS.md: ticket placement, ✅ on completion, calendar events
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- New tickets are placed under an epic, start a new epic, or stay standalone,
+  and the report says which and why (Andre's edit).
+- A Completed ticket gets the ✅ icon (Andre's edit).
+- Red Thread calendar events: purple, an HTML bullet list with bold labels,
+  real times, one event per session, set through the Google Calendar
+  connector.
+
+## V5 design — Card review: one card everywhere, cleaner canvas
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- The selected card (the ring's centre, the phone's pop-out) is the same card
+  as the rest, at the same size, with no action row; Seen, Watchlist and the
+  scores are in the details.
+- Seen titles keep their poster untouched and get a check in a circle in its
+  top-right corner (a guide stop's mark takes that place). "Set in" and the
+  budget are gone; the second line counts the titles that share a character
+  with it, the same titles its connections ring shows.
+  Titles are 15px medium and wrap a little sooner; a dropped line height that
+  clipped descenders is fixed. Cards, Up next and the phase labels have
+  softer (10px) corners.
+- The ring spaces its cards for the taller card and pushes apart any that
+  touch; grid-order rows are 110px apart with arcs kept in the gap; name
+  labels avoid every visible card.
+- QA: `test-cards` checks that a card's count matches its ring;
+  `test-recastname`, `test-picker` and `test-unreleased` follow the new
+  cards and tabs.
+- Verified: 31 card, canvas and guide checks; full `qa/regress.sh`
+  on the final tree, 62 check runs clean.
+
+## V5 fix — Titles: the heading and tabs line up with the table
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- On wide screens the Titles heading, its progress, the summary pill, the
+  tabs and the sort note share the table's width cap instead of floating at
+  the window's edges.
+- Verified: `test-nav`, `test-dlist`, `test-fit`, `test-textsize`,
+  `test-progress`; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
+## V5 design — One card design at rest, selected and on the phone
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- No hover band over the poster; hover only lifts the card. One status mark
+  per card, never two in a guide. The phone's selected card is built from the
+  same pieces as the canvas card.
+- QA: `test-cards` rewritten, `test-skip` updated.
+- Verified: 30 card, canvas and guide checks; full `qa/regress.sh`
+  on the final tree, 62 check runs clean.
+
+## V5 design — Posters shown whole at 2:3
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- Spatial cards show the whole poster at 2:3 (168 × 252); every other poster
+  box was checked, and the desktop List and search thumbnails, which cropped
+  slightly, are now 2:3. The generated fallback art is drawn at 2:3 too.
+- `CARD_SIZE` is the one number the canvas reads, so rows, threads, hit areas
+  and zoom-to-fit follow it.
+- Verified: 28 canvas and poster checks; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
+## V5 feature — Connections / Titles / Guides
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- The sections are Connections / Titles / Guides (pt: Conexões / Títulos /
+  Guias). Titles' tabs read All | Unseen, Watchlist, Seen, each with a soft
+  count pill (Watchlist and Seen tinted); Unseen counts released titles only,
+  so it matches "43 of 60 seen".
+- Titles' heading carries the progress (count, bar, share). "See connections"
+  replaces "Show in Explore" in the details and is new on Up next.
+- Verified: 24 checks the rename touches, the accessibility scan (English,
+  Portuguese, dark); full `qa/regress.sh` on the final tree, 62 check runs clean.
+
+## V5 improvement — Theme lab: no button; T opens it
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- The floating Theme lab button is gone. T opens and closes it (never while
+  typing), Esc closes it first; on a phone, a long press on the wordmark or
+  `?lab` opens it. It starts closed on every load; production ignores all of
+  it.
+- Verified: `test-themelab` rewritten; full `qa/regress.sh` on the final tree, 62 check runs clean.
+- Limits: a real iPhone long press not checked.
+
+## V5 design — One quiet seen mark: the picker and guide stops
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- A seen guide stop's number uses the quiet seen mark (soft green tint, tinted
+  ring, green check) instead of a solid green disc; the promo strip's stops
+  get the dark-glass version; "What have you seen?" ticks are dark glass with
+  a green check and a softer ring.
+- Includes check fixes the per-ticket QA found (`test-anim`, `test-segpill`,
+  `test-progress`, `test-nav`).
+- Verified: `test-picker`, `test-guides`, `test-promo`, `test-skip`,
+  `test-contrast`; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
+## V5 improvement — Phone: the Grid view is removed
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- My list (now Titles) is one list on the phone: the List / Grid switch and
+  the guide's phone grid are gone, and a saved Grid setting or an old
+  `?view=grid` link opens the List. The code only the Grid used is deleted
+  (`MobileGrid`, `PhoneCard`, the grid recipes, the unused View menu).
+- The status tabs carry `data-coll`, so the QA checks pick a tab by name.
+- README's navigation section catches up with the sections.
+- Verified: the checks the change touches; full `qa/regress.sh` on the final tree, 62 check runs clean.
+
+## V5 maintenance — Theme lab: try visual directions on the real app
+
+Recorded: 2026-11-15 15:36 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- A dev-only panel (`src/app/theme-lab.tsx`), in development and on Vercel
+  previews only, never on redthread.tv: presets (the app's own look,
+  Editorial, Studio), body and display typefaces, corner radius, density, and
+  a pasted tweakcn / shadcn export as a Custom preset. The choice is kept on
+  the device.
+- `--font-sans` and `--spacing` moved to a plain `@theme` block so the lab can
+  set them (AGENTS.md notes why).
+- QA: new `test-themelab`.
+- Verified: typecheck and build; full `qa/regress.sh` on the final tree, 62 check runs clean.
+- Limits: real iPhone not checked.
+
+## V5 improvement — The Account menu holds account things only
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- Show unseen / seen / watchlist and "Mark what you've seen" left the Account
+  menu; the collection lives in My list, and "Mark what you've seen" sits in
+  My list's status row.
+- Sync and sign-in errors read in plain language; the technical details go
+  to the console.
+- QA: `test-nav` checks the menu; `test-picker` opens the picker from My
+  list.
+- Verified: typecheck and build; full `qa/regress.sh` with the cards ticket,
+  61 check runs clean.
+- Limits: the signed-in menu and a real sync error were not seen by eye.
+
+## V5 design — Simpler Spatial cards
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- Nothing sits on the posters any more. Under each card: the title, a dot in
+  its phase colour, the year, and a small check once seen.
+- Hovering a card, or tabbing to its buttons, shows a band with the scores,
+  the budget and Seen / Watchlist; touch screens and small zooms leave it
+  out.
+- Seen, when on, is a soft green tint everywhere instead of a solid fill.
+- QA: new `test-cards`.
+- Verified: typecheck and build; full `qa/regress.sh` with the Account
+  ticket, 61 check runs clean; light and dark themes.
+- Limits: the "What have you seen?" picker and guide stops keep their own
+  seen marks (a follow-up ticket).
+
+## V5 feature — Phone: bottom bar for Explore, My list and Guides
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- The phone's bottom bar is Explore / My list / Guides; tapping the active
+  tab scrolls back to the top. The header is the wordmark with search,
+  Settings and Account buttons; search opens from its button and takes the
+  keyboard at once.
+- One row under the header holds Sort, Filters and a "2 of 60 seen" count.
+  My list adds the collection tabs and a List / Grid switch; Guides shows
+  the gallery.
+- QA: `test-retap` rewritten for the bottom bar; the phone checks open search
+  from its button and switch sections from the bar.
+- Verified: typecheck and build; full `qa/regress.sh` with the desktop
+  ticket, 60 check runs clean; 390×844 in English and Portuguese.
+- Limits: real iPhone Safari not checked.
+
+## V5 feature — Desktop: Explore, My list and Guides
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- The desktop header is one row: the wordmark, Explore / My list / Guides
+  tabs, search with a "/" shortcut, Sort and Filters (Type moved inside
+  Filters), then sync, Settings and Account.
+- Explore is the Spatial canvas; My list is the List with its title and the
+  All / Unseen / Seen / Watchlist tabs, the only place the collection filter
+  lives. Each section keeps its own sort and filters, remembered on the
+  device.
+- Guides shows a gallery of the guides when none is open (also at
+  `?view=guides`); picking one opens it there, closing it brings the gallery
+  back, and choosing My list closes it.
+- "Show in Explore" in the details jumps to that title on the canvas.
+- QA: new `test-nav`; the checks that used the view switch, the Guides
+  button or the old header follow the tabs.
+- Verified: typecheck and build; full `qa/regress.sh` with the phone ticket,
+  60 check runs clean; the header fits on one row from 900px in English and
+  Portuguese.
+- Limits: the designs' bottom selection bar, progress chip and simplified
+  My list rows were not built (Andre: keep the details panel; the list gets
+  its own ticket).
+
+## V5 improvement — One Sort menu for sort and order
+
+Recorded: 2026-11-15 12:04 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-15 after Andre's approval.
+
+- One Sort menu replaces the six sort tabs, the Oldest / Newest button and
+  the Order rows in Filters, on desktop and phone. Each choice reads as a
+  plain phrase ("Release date, oldest first"); the trigger shows the full
+  phrase from 1280px and the sort's short name below that
+  (`SortMenu` and `sortPhrase` in `src/app/header-controls.tsx`).
+- QA: the checks that picked a sort from the tabs or the Order rows go
+  through the menu; `test-camera`, `test-fit` and the `test-jit2` pair lose
+  their sort-tab cases.
+- Verified: typecheck and build; full `qa/regress.sh` on this ticket's tree,
+  58 check runs clean; desktop and phone in English and Portuguese.
+- Limits: real iPhone Safari not checked.
+
 ## V5 maintenance — shadcn pass 6: guides, banners, Share and the app shell; the V3 stylesheets deleted
 
 Recorded: 2026-11-15 01:23 EST (-0500). Pushed to `version/5.0` (V5 staging);

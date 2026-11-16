@@ -205,10 +205,13 @@ function AccountProvider({ children }) {
         provider: 'google',
         options: { redirectTo, queryParams: { prompt: 'select_account' } },
       });
-      if (err && attemptRef.current === attempt) { setError(err.message); setStatus('error'); }
+      // Plain words on screen; the technical detail goes to the console
+      // (Notion "Take the collection filters out of the Account menu").
+      if (err && attemptRef.current === attempt) { console.warn('Sign-in failed:', err.message); setError(window.MCU_I18N.tr('error.signIn')); setStatus('error'); }
     } catch (e) {
       if (attemptRef.current === attempt) {
-        setError((e && e.message) || 'Sign-in failed');
+        console.warn('Sign-in failed:', e && e.message);
+        setError(window.MCU_I18N.tr('error.signIn'));
         setStatus('error');
       }
     } finally {
@@ -304,13 +307,16 @@ const COLL_IC = 'coll-ic inline-flex size-[13px] flex-[0_0_13px] [&_svg]:size-fu
 const ACTION = 'acct-action h-9 w-full text-xs font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(46px,2.875rem)] in-[.m-sheet]:text-sm';
 const ERROR = cn('acct-error rounded-lg border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_8%,transparent)] px-[9px] py-2 leading-[1.4] text-destructive', XS);
 
-function AccountPanel({ onPickCollection, onClose, onAbout }) {
+// The Account menu holds only account things: who is signed in, the
+// collection's totals and Share, sync status, and the account actions (Notion
+// "Take the collection filters out of the Account menu"). Showing Unseen,
+// Seen or Watchlist is My list's collection tabs' job, and "Mark what you've
+// seen" sits beside them.
+function AccountPanel({ onClose, onAbout }) {
   const { tr } = window.useI18n();
-  const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
+  const { status, profile, error, syncAvailable, signIn, signOut } = useAccount();
   const { progress, loading: collectionLoading, syncError, retrySync } = window.useCollection();
   const signedIn = status === 'signed_in';
-
-  const pick = (v) => () => { if (onPickCollection) onPickCollection(v); if (onClose) onClose(); };
 
   return (
     <div className="acct-panel flex flex-col gap-[13px] text-sm in-[.m-sheet]:gap-[15px]">
@@ -352,22 +358,9 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
           onShare={() => { if (onClose) onClose(); window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal); }}/>
       )}
 
-      <div className="acct-links flex flex-wrap gap-1.5">
-        {window.MCU_openPicker && (
-          <Button variant="outline" className={cn(LINK, 'acct-pick h-auto min-h-[max(48px,3rem)] w-full basis-full justify-start py-2 text-left leading-[1.25] whitespace-normal in-[.m-sheet]:min-h-[max(52px,3.25rem)]')}
-            disabled={collectionLoading} onClick={() => { if (onClose) onClose(); window.MCU_openPicker(); }}>
-            <span className={cn(COLL_IC, 'pick-ic text-(--status-seen)')}><PickIcon/></span>
-            <span className="acct-pick-text"><span>{tr('picker.open')}</span><small className={cn('mt-0.5 block font-normal text-muted-foreground', XS)}>{tr('picker.accountSub')}</small></span>
-          </Button>
-        )}
-        <Button variant="outline" className={LINK} disabled={collectionLoading} onClick={pick('unseen')}><span className={COLL_IC}><window.CollectionIcon kind="unseen"/></span>{tr('account.showUnseen')}</Button>
-        <Button variant="outline" className={LINK} disabled={collectionLoading} onClick={pick('seen')}><span className={COLL_IC}><window.CollectionIcon kind="seen"/></span>{tr('account.showSeen')}</Button>
-        <Button variant="outline" className={LINK} disabled={collectionLoading} onClick={pick('watchlist')}><span className={COLL_IC}><window.CollectionIcon kind="watchlist"/></span>{tr('account.showWatchlist')}</Button>
-      </div>
-
       {syncError && (
         <div className={ERROR} role="status">
-          {tr('account.syncError', { error: syncError })}
+          {tr('account.syncErrorPlain')}
           <Button variant="outline" className={cn(ACTION, 'mt-2')} onClick={retrySync}>{tr('account.retrySync')}</Button>
         </div>
       )}
@@ -376,7 +369,7 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
 
       {!syncAvailable && (
         <div className="acct-note text-xs leading-[1.45] text-muted-foreground">
-          {tr('account.unavailable', { reason: unavailableReason ? ` — ${unavailableReason}` : '' })}
+          {tr('account.unavailable', { reason: '' })}
           {window.mcuSupabase && <Button variant="outline" className={cn(ACTION, 'mt-2')} onClick={() => window.location.reload()}>{tr('account.retryConnection')}</Button>}
         </div>
       )}
@@ -445,7 +438,7 @@ function SyncStatus() {
 // Desktop — a compact control at the right edge of tb-row
 // ---------------------------------------------------------------------------
 
-function AccountButton({ onPickCollection, onAbout }) {
+function AccountButton({ onAbout }) {
   const { status, profile, syncAvailable } = useAccount();
   const [open, setOpen] = React.useState(false);
   const signedIn = status === 'signed_in';
@@ -475,7 +468,7 @@ function AccountButton({ onPickCollection, onAbout }) {
           {!syncAvailable && status !== 'initializing' && <span className="acct-off absolute right-[3px] bottom-[3px] size-2 rounded-full border-2 border-background bg-muted-foreground" aria-hidden="true"/>}
         </PopoverTrigger>
         <PopoverContent align="end" sideOffset={9} className="acct-pop w-[268px] gap-0 p-3.5" aria-label={tr('account.title')}>
-          <AccountPanel onPickCollection={onPickCollection} onClose={() => setOpen(false)} onAbout={onAbout}/>
+          <AccountPanel onClose={() => setOpen(false)} onAbout={onAbout}/>
         </PopoverContent>
       </Popover>
     </div>
@@ -505,14 +498,14 @@ function AccountAvatarButton({ onOpen }) {
   );
 }
 
-function AccountSheet({ onClose, onPickCollection, onAbout }) {
+function AccountSheet({ onClose, onAbout }) {
   const Sheet = window.Sheet;
   return (
     <Sheet onClose={onClose} label={window.MCU_I18N.tr('account.title')}>
       <div className="m-sh-head mb-4 flex items-center justify-between">
         <div className="m-sh-title text-lg font-semibold tracking-tight">{window.MCU_I18N.tr('account.title')}</div>
       </div>
-      <AccountPanel onPickCollection={onPickCollection} onClose={onClose} onAbout={onAbout}/>
+      <AccountPanel onClose={onClose} onAbout={onAbout}/>
     </Sheet>
   );
 }

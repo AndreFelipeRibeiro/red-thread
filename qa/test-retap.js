@@ -1,10 +1,13 @@
-// Tapping the active sort tab on a phone goes back to the top (Notion V4
-// Tasks, "Mobile: Press twice resets the list").
-//   - List and Grid: scrolled down, a tap on the selected tab brings the
-//     scroll area back to the top, smoothly, or at once with reduced motion.
-//   - Nothing else changes: the same tab stays selected, the order keeps its
-//     direction, and the URL's sort is untouched.
-//   - A tap on a different tab still re-sorts as before.
+// Tapping the selected tab in the phone's bottom bar goes back to the top
+// (Notion V4 Tasks, "Mobile: Press twice resets the list"; the bar holds
+// Explore / My list / Guides since Notion "Phone: bottom bar becomes Explore,
+// My list and Guides").
+//   - My list, as List and as Grid: scrolled down, a tap on the selected tab
+//     brings the scroll area back to the top, smoothly, or at once with
+//     reduced motion.
+//   - Nothing else changes: the same tab stays selected, the sort keeps its
+//     direction, and the address is untouched.
+//   - A tap on a different tab still changes the section.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8298;
 const { chromium } = require('playwright');
@@ -35,7 +38,7 @@ const state = () => {
   return {
     top: area ? Math.round(area.scrollTop) : null,
     tab: on ? on.textContent.trim() : null,
-    order: (document.querySelector('.m-searchrow .sort-order-trigger') || {}).getAttribute?.('aria-label') || '',
+    order: (document.querySelector('.m-toolrow .sort-menu-trigger') || {}).getAttribute?.('aria-label') || '',
     search: location.search,
   };
 };
@@ -48,7 +51,6 @@ const state = () => {
 
   for (const [label, url, motion] of [
     ['list', '', 'no-preference'],
-    ['grid', '?view=grid', 'no-preference'],
     ['list, reduced motion', '', 'reduce'],
   ]) {
     const ctx = await browser.newContext({ ...PHONE, reducedMotion: motion });
@@ -74,7 +76,7 @@ const state = () => {
     await ctx.close();
   }
 
-  // A different tab still re-sorts.
+  // A different tab still changes the section.
   {
     const ctx = await browser.newContext(PHONE);
     await ctx.addInitScript(NOWELCOME);
@@ -87,7 +89,7 @@ const state = () => {
     await page.waitForTimeout(800);
     const b = await page.evaluate(state);
     seen['other tab'] = { a, b };
-    if (b.tab === a.tab) errors.push('other tab: tapping a different tab did not change the sort (still ' + a.tab + ')');
+    if (b.tab === a.tab) errors.push('other tab: tapping a different tab did not change the section (still ' + a.tab + ')');
     await ctx.close();
   }
 

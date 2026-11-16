@@ -368,6 +368,67 @@ function GuideMenu({ onPick, currentId }) {
   );
 }
 
+// Desktop: the Guides section's gallery (Notion "Desktop: navigation for
+// Explore, My list and Guides"; the low-fi "Guides" artboard): the same groups
+// and guides as the menu, as cards in a grid, each with its art, name, size and
+// a progress bar. Picking one opens it in the same section. Each card keeps
+// the menu row's hook (`g-row`) inside `g-page`.
+function GuidePageProgress({ guide }) {
+  const { statusOf } = window.useCollection();
+  useGuideSkips();
+  const p = MCU_GUIDE.progress(guide, statusOf);
+  const pct = p.complete ? 100 : p.ess.released ? Math.round(p.ess.seen / p.ess.released * 100) : 0;
+  return (
+    <span className="g-card-prog mt-2 flex items-center gap-2.5">
+      <span className="g-bar h-1 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
+        <span className={cn('block h-1 rounded-full transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none', p.complete ? 'bg-(--status-seen)' : 'bg-primary')} style={{ width: pct + '%' }}/>
+      </span>
+      <span className={cn('g-n text-xs whitespace-nowrap tabular-nums', p.complete ? 'text-foreground' : 'text-muted-foreground')}
+        aria-label={p.complete ? gtr('guide.complete') : gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>
+        {p.complete ? gtr('guide.complete') : `${p.ess.seen}/${p.ess.released}`}
+      </span>
+    </span>
+  );
+}
+function GuidesPage({ onPick }) {
+  window.useI18n();
+  const all = MCU_GUIDE.all();
+  return (
+    <div className="g-page min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-12 max-[1100px]:px-6 in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role="main" aria-labelledby="g-page-title">
+      <div className="mx-auto max-w-[1120px]">
+        <h1 id="g-page-title" className="m-0 text-2xl font-semibold tracking-tight text-foreground">{gtr('guide.menuTitle')}</h1>
+        <p className="mt-1 mb-0 text-sm text-muted-foreground">{gtr('guide.menuSub')}</p>
+        {GUIDE_GROUPS.map(grp => {
+          const list = all.filter(g => g.group === grp);
+          if (!list.length) return null;
+          return (
+            <section key={grp} className="g-group mt-7" aria-labelledby={'g-page-' + grp}>
+              <h2 id={'g-page-' + grp} className="g-group-h mt-0 mb-2.5 text-xs font-medium text-muted-foreground">{gtr('guide.group.' + grp)}</h2>
+              <div className="grid grid-cols-3 gap-4 max-[1200px]:grid-cols-2 in-[.app.touch]:grid-cols-1 in-[.app.touch]:gap-2">
+                {list.map(g => {
+                  const date = MCU_GUIDE.targetDate(g);
+                  const who = g.character && window.CHARACTERS[g.character] ? window.CHARACTERS[g.character].actor : null;
+                  return (
+                    <button key={g.id} type="button" onClick={() => onPick(g.id)}
+                      className={cn('g-row g-card flex w-full cursor-pointer items-center gap-4 rounded-xl border bg-card p-4 text-left text-card-foreground shadow-xs transition-colors hover:bg-muted/50 in-[.app.touch]:gap-3 in-[.app.touch]:p-3', FOCUS)}>
+                      <GuideArt guide={g} size={64}/>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="g-row-name text-[15px] leading-[1.3] font-semibold text-foreground">{MCU_GUIDE.name(g)}{date && <span className="g-ev ml-1.5 rounded-full border px-1.5 py-px align-[1px] text-xs font-medium text-foreground tabular-nums">{date}</span>}</span>
+                        <span className="g-row-sub mt-1 text-xs text-muted-foreground">{who ? `${who} · ` : ''}{MCU_GUIDE.size(g)}</span>
+                        <GuidePageProgress guide={g}/>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // The guide's meter: the shared ProgressHeader over its essential stops, with
 // the optional count beside it while optional stops are shown.
 // In the List and Grid it also offers "Mark N more seen" for the stops shown
@@ -727,6 +788,9 @@ function GuideDetailsSkip({ title }) {
   );
 }
 
+// A seen stop's number turns into the quiet seen mark the Seen button uses
+// (Notion "One quiet seen mark: the picker and guide stops"): a soft tint, a
+// tinted ring and the check in the seen colour.
 function GuideNum({ stop, seen, next, skipped, className = '' }) {
   const label = stop.optional
     ? gtr(seen ? 'guide.optSeenAria' : skipped ? 'guide.optSkippedAria' : 'guide.optAria')
@@ -735,7 +799,7 @@ function GuideNum({ stop, seen, next, skipped, className = '' }) {
     <span role="img" aria-label={label}
       className={cn('g-num inline-flex size-[26px] flex-[0_0_26px] items-center justify-center rounded-full border-[1.5px] border-muted-foreground text-xs font-extrabold tabular-nums text-foreground',
         stop.optional && cn('o border-dashed', DIM), skipped && 'skip border-dashed bg-transparent text-muted-foreground',
-        seen && 'done border-solid border-(--status-seen) bg-(--status-seen) text-(--on-color) [&_svg]:size-[13px]',
+        seen && 'done border-solid border-[color-mix(in_oklab,var(--status-seen)_55%,var(--border))] bg-[color-mix(in_oklab,var(--status-seen)_14%,transparent)] text-(--status-seen) [&_svg]:size-[13px]',
         next && 'cur border-primary bg-primary text-primary-foreground', className)}>
       {seen ? <window.CheckIcon/> : stop.optional ? '+' : stop.n}
     </span>
@@ -743,9 +807,8 @@ function GuideNum({ stop, seen, next, skipped, className = '' }) {
 }
 
 // Skip and Unskip for one stop. Skip is an icon button beside Seen and
-// Watchlist on desktop, under the stop's number in the phone List and on the
-// poster's corner in the Grid; Unskip is a text button in the
-// minimized row. Focus follows to the other button, since the one pressed goes.
+// Watchlist on desktop, under the stop's number in the phone List; Unskip is
+// a text button in the minimized row. Focus follows to the other button, since the one pressed goes.
 function SkipIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -809,7 +872,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
   const done = gloc(guide.done);
   const meta = (t) => [gtr(t.type === 'film' ? 'type.film.one' : 'type.series.one'), t.year, gtr('phase.label', { n: t.phase })].join(' · ');
 
-  const phone = surface === 'phone', desk = surface === 'desktop', grid = phone && layout === 'grid';
+  const phone = surface === 'phone', desk = surface === 'desktop';
   // A stop's Seen / Watchlist: a column beside it, side by side in the
   // table and in compact rows.
   const tsaCls = (compact) => cn('g-tsa static flex-col gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(34px,2.125rem)] [&_.tsa-btn]:backdrop-blur-none',
@@ -824,7 +887,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
     optional && cn('optional', !desk && 'border-dashed'), skipped && cn('skipped border-dashed', desk ? 'border-input' : 'py-1.5'),
     isNext && cn('next bg-muted', desk ? 'shadow-[inset_3px_0_0_var(--primary)]' : NEXT_RING),
     current && cn('current', desk ? 'shadow-[inset_3px_0_0_var(--primary)]' : 'shadow-[0_0_0_2px_var(--ring)]'),
-    dest && cn('dest', desk ? '' : 'border-dashed border-input bg-transparent shadow-none', grid && 'mt-3'));
+    dest && cn('dest', desk ? '' : 'border-dashed border-input bg-transparent shadow-none'));
   const openCls = (skipped) => cn('g-open flex min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-md text-left', FOCUS, skipped && 'opacity-55');
   const thumbCls = (compact, skipped) => cn('g-thumb h-[66px] w-11 flex-[0_0_44px] rounded-md', THUMB,
     compact && (desk ? 'h-9 w-6 basis-6 rounded-[4px] opacity-60' : 'h-[42px] w-7 basis-7 rounded-[4px] opacity-60'), skipped && 'h-[42px] w-7 basis-7');
@@ -875,48 +938,6 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
       <span className={cn('g-acts inline-flex flex-none', desk && 'items-center justify-end gap-1.5')}><window.TitleStatusActions title={target} className={tsaCls(false)}/></span>
     </div>
   );
-
-  if (surface === 'phone' && layout === 'grid') {
-    return (
-      <div className={cn(S.SCROLL, 'g-scroll')}>
-        {header}
-        <GuideMeter guide={guide} includeOptional={includeOptional} bulk className="mb-3"/>
-        <div className="g-grid grid grid-cols-2 gap-3">
-          {stops.map(s => {
-            const seen = statusOf(s.id) === 'seen';
-            const skipped = isSkipped(s);
-            const isNext = next && next.id === s.id;
-            return (
-              <div key={s.id} data-row-id={s.id} className={cn('g-card relative flex flex-col overflow-hidden', CARD, isNext && cn('next col-span-full bg-muted', NEXT_RING),
-                seen && 'seen', s.optional && 'optional border-dashed', skipped && 'skipped border-dashed', currentId === s.id && 'current')}>
-                <button type="button" className={cn(openCls(false), 'items-stretch gap-0', isNext ? 'flex-row gap-3 px-3 pt-3' : 'flex-col', skipped && 'opacity-50')} onClick={() => onOpen(s.id)}>
-                  <span className={cn('g-poster relative block aspect-[2/3] bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover [&>:first-child_svg]:size-full', isNext && 'w-[72px] flex-[0_0_72px] overflow-hidden rounded-lg', seen && SEEN_WASH)}>
-                    <PosterArt title={s.title}/>
-                    <GuideNum stop={s} seen={seen} next={isNext} skipped={skipped}
-                      className={cn('absolute top-[7px] left-[7px] z-2 bg-[rgba(10,12,20,.88)] text-(--on-image)', seen && 'bg-[#5fa856]', isNext && 'bg-primary text-primary-foreground')}/>
-                    {skipped && <span className={cn('g-skiptag absolute top-1/2 left-1/2 -translate-1/2 rounded-md bg-[rgba(10,12,20,.85)] px-2 py-[3px] font-bold tracking-[.8px] text-(--on-image) uppercase', XS)} aria-hidden="true">{gtr('guide.skippedTag')}</span>}</span>
-                  <span className={cn(textCls, isNext ? 'p-0' : 'px-2.5 pt-2 pb-2.5')}>
-                    {isNext && <span className="un-tag mb-[3px] text-xs font-medium text-foreground">{gtr('guide.nextStop')}</span>}
-                    <span className={titleCls(seen)}>{GI18N.titleName(s.title)}{s.optional && <span className={otag}>{gtr('guide.optionalTag')}</span>}</span>
-                    {!seen && !skipped && <span className={whyCls}>{why(s)}</span>}
-                  </span>
-                </button>
-                {skipped
-                  ? <UnskipButton guide={guide} stop={s} className="g-card-unskip mx-2.5 mb-2.5 min-h-[max(36px,2.25rem)] self-start" onDone={afterSkip}/>
-                  : <>
-                      <window.TitleStatusActions title={s.title}
-                        className={cn('g-card-tsa z-2 gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(34px,2.125rem)] [&_.tsa-btn]:backdrop-blur-none', isNext ? 'static flex-row pt-2 pr-3 pb-3 pl-24' : 'absolute top-[7px] right-[7px] flex-col')}/>
-                      {canSkip(s) && <SkipButton guide={guide} stop={s} className="g-card-skip absolute top-[7px] left-[39px] z-2 size-[max(32px,2rem)] bg-[color-mix(in_oklab,var(--background)_82%,transparent)]" onDone={afterSkip}/>}
-                    </>}
-              </div>
-            );
-          })}
-        </div>
-        {destRow}
-        {announcer}
-      </div>
-    );
-  }
 
   const rows = stops.map(s => {
     const seen = statusOf(s.id) === 'seen';
@@ -1229,7 +1250,7 @@ function GuideCaughtUp({ promo, touch, onClose }) {
             <li key={s.id} className={P.st('seen')}>
               <span className={P.p()} aria-hidden="true">
                 <span className={P.art('opacity-45')}><PosterArt title={s.title}/></span>
-                <span className={P.n('done border-(--status-seen) bg-(--status-seen) text-(--on-color)')}><window.CheckIcon/></span>
+                <span className={P.n('done border-[#5fa856] bg-[rgba(10,12,20,0.85)] text-[#7cc472]')}><window.CheckIcon/></span>
               </span>
               <span className={P.t(false)} aria-hidden="true">{promoCoverName(s.title, touch)}</span>
               <span className="story-sr">{gtr('guide.promoStopSeenAria', { title: GI18N.titleName(s.title), i: s.n })}</span>
@@ -1301,7 +1322,7 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
             <li key={s.id} className={P.st(cn(seen && 'seen', isNext && 'next', skippedNow && 'skipped'))}>
               <span className={P.p(isNext ? 'next' : skippedNow ? 'skipped' : '')} aria-hidden="true">
                 <span className={P.art(seen ? 'opacity-45' : skippedNow ? 'opacity-30' : '')}><PosterArt title={s.title}/></span>
-                <span className={P.n(seen ? 'done border-(--status-seen) bg-(--status-seen) text-(--on-color)' : isNext ? 'cur border-primary bg-primary text-primary-foreground' : '')}>{seen ? <window.CheckIcon/> : s.n}</span>
+                <span className={P.n(seen ? 'done border-[#5fa856] bg-[rgba(10,12,20,0.85)] text-[#7cc472]' : isNext ? 'cur border-primary bg-primary text-primary-foreground' : '')}>{seen ? <window.CheckIcon/> : s.n}</span>
               </span>
               <span className={cn(P.t(false), isNext && 'font-semibold text-foreground')} aria-hidden="true">{promoCoverName(s.title, touch)}</span>
               <span className="story-sr">{gtr(seen ? 'guide.promoStopSeenAria' : 'guide.promoStopAria', { title: GI18N.titleName(s.title), i: s.n })}</span>
@@ -1342,12 +1363,12 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
   return <window.ModalDialog onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className={PROMO_DIALOG}>{body}</window.ModalDialog>;
 }
 
-Object.assign(window, { GuideMenu, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt, GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint, GuideSkipControl, GuideDetailsSkip });
+Object.assign(window, { GuideMenu, GuidesPage, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt, GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint, GuideSkipControl, GuideDetailsSkip });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
 export { GuideMenu, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt,
-  GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint,
+  GuidePartOf, GuideIcon, GuidesButton, GuidesPage, GuidePromo, GuideOff, GuideOffHint,
   GuideSkipControl, GuideDetailsSkip, MCU_GUIDE, useGuideSkips };

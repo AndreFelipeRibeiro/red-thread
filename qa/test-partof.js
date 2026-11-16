@@ -106,7 +106,9 @@ const PART = () => {
     out.deskGuideNext = p;
     expect(p.present && p.title !== 'Loki: Season 2' && p.expanded === 'true', `the in-guide choice did not hold on the next stop: ${JSON.stringify(p)}`);
     // Close the guide: the other context's default (open) is back.
+    // (Closing it leaves the Guides tab on its gallery; Endgame is in My list.)
     await page.locator('.guide-banner .cb-close').click(); await page.waitForTimeout(500);
+    await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
     await page.locator('.dl-row[data-row-id="endgame"] .dl-open').click(); await page.waitForTimeout(700);
     p = await page.evaluate(PART);
     expect(p.present && p.expanded === 'true', `outside the guide it should be open: ${JSON.stringify(p)}`);
@@ -115,8 +117,8 @@ const PART = () => {
     await page.keyboard.press('Space'); await page.waitForTimeout(300);
     p = await page.evaluate(PART);
     expect(p.expanded === 'false', 'Space did not close it');
-    await page.locator('.g-btn').click(); await page.waitForTimeout(300);
-    await page.locator('.g-pop .g-row').first().click(); await page.waitForTimeout(700);
+    await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(400);
+    await page.locator('.g-page .g-row').first().click(); await page.waitForTimeout(700);
     // The second stop: the first (Endgame) has its details open already, and a
     // click on an open title closes it.
     await page.locator('.g-desk .g-stop[data-row-id]:not(.dest) .g-open').nth(1).click(); await page.waitForTimeout(700);

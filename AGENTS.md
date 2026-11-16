@@ -260,6 +260,12 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
     handoff, and the user approves it like any other ticket.
   - New work found while on a ticket becomes a new ticket under the same
     parent (Level and Parent item set), not extra scope on the current one.
+  - **Placing any new ticket:** before creating it, check the Epics view and
+    decide, in this order: (1) it belongs under an existing epic or task (set
+    Parent item and Level); (2) it starts a new epic, when it opens an area of
+    work with several tickets to come; or (3) it stays **standalone** (no
+    Parent item, no Level), which suits one-off bugs and small improvements.
+    Say which one you chose, and why, when you report the new ticket.
   - **When the user names an epic or a parent task** ("work the shadcn pass
     epic"), work its leaf tickets in their Backlog column order, one at a
     time: claim, build, verify, hand off to Awaiting review, then take the
@@ -327,6 +333,9 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   creation or edit time). Query the database for the highest **Completion
   order** and add one; tickets closed together take consecutive numbers in
   their shipping order. Leave older date-only records as they are.
+  Set the page icon to ✅ in the same update (the Epics view uses it to show
+  what is done at a glance); a parent Task or Epic gets ✅ when it closes too.
+  If a Completed ticket is reopened, remove the icon.
 - Notion-only tasks still need the user's review but no commit. Completing a
   ticket on staging is not approval to merge to `main`.
 
@@ -357,9 +366,32 @@ Times quoted anywhere else are America/New_York and come from real events
 (when work started on the batch, when it was pushed or merged).
 
 The assistant can also create the event directly on the user's Google
-**Personal** calendar (the one Notion Calendar fronts) with the Notion
-calendar tools. Creating an event is an outward-facing action: offer, and
-only create it when the user says yes.
+**Personal** calendar (the one Notion Calendar fronts). Creating an event is
+an outward-facing action: offer, and only create it when the user says yes
+(or asked for it). Every Red Thread event follows the same rules, whichever
+agent makes it (Andre, 2026-11-15):
+
+- **Colour: purple**, Google Calendar `colorId` `"3"` (Grape). Every Red
+  Thread work event is purple.
+- **Title:** the title line above, without the bold: `Red Thread V5 – Batch
+  <n> (<a few keywords>)`, or a named session such as `Red Thread V5 – First
+  release (…)`.
+- **Description in HTML**, one list item per ticket with its bold label, the
+  same bullets as the chat recap:
+  `<ul><li><b>Fixed:</b> …</li><li><b>Improved:</b> …</li></ul>`. Plain text
+  ("* Fixed: …") shows unformatted. Nothing else in the body.
+- **Time:** the real start and end of the work, in America/New_York, taken
+  from real events (the first message or commit of the session, the push,
+  merge or last handoff), never estimated. Don't overlap the user's own
+  review blocks: start after them.
+- **Which tool:** the Notion calendar tool sends the description as plain
+  text and cannot set a colour, so set both with the Google Calendar
+  connector (create the event there, or create it anywhere and then update its
+  `description` and `colorId`, with notifications off). Check against an
+  existing purple Red Thread event (for example "Red Thread V5 – Setup (UI
+  audit, master backlog, V5 design epics)", 14 November 2026) if unsure.
+- One event per session of work: a batch built overnight and the next
+  morning's review fixes are two events, not one.
 
 ## Design, accessibility and interaction standards
 
@@ -428,8 +460,7 @@ rules carry over unchanged.
     `app.tsx`), so mouse and touch users never see a ring they didn't cause.
   - Escape closes the nearest layer first: search suggestions, then menus and
     popovers, then dialogs and phone sheets, then the pair view, then the
-    desktop List's bulk selection, then the details, then the pinned character
-    or performer. Never close two layers
+    details, then the pinned character or performer. Never close two layers
     with one press. The details and the pin share one listener for that reason:
     two listeners both see the same press, and React re-renders between them,
     so the second acts on state the first just cleared.
@@ -491,6 +522,10 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   shadcn/ui on Base UI, starting from shadcn's Vega style with the Neutral base
   colour and theme, default radius, Inter and lucide icons (shadcn preset
   `base-vega`). Light and dark themes from day one.
+- `--font-sans` and `--spacing` are declared in a plain `@theme` block, not
+  `@theme inline`, so the utilities read them as variables: the dev-only Theme
+  lab (`src/app/theme-lab.tsx`, development and `*.vercel.app` previews only)
+  tries other typefaces and densities by setting them. Keep them that way.
 - Start from the library defaults; V4's art direction arrives later through
   Figma variables. Do not carry V3's colours (`--v3-bg`, `--v3-accent`, …) in
   as a starting point.

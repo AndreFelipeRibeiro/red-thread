@@ -30,7 +30,11 @@ const PILL = (sel) => {
     x: Math.round(r.left), op: getComputedStyle(pl).opacity, onClear: bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent' };
 };
 const aligned = (p) => p && p.dx !== undefined && Math.abs(p.dx) <= 1 && Math.abs(p.dy) <= 1 && Math.abs(p.dw) <= 1 && Math.abs(p.dh) <= 1 && p.op === '1' && p.onClear;
-const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', '.tb-sort-row .coll-switch', '.tb-view-switch'];
+// The groups on screen in My list (Notion "Desktop: navigation for Explore, My
+// list and Guides"): the section tabs and the collection switch, which carries
+// the slide checks. (The sort tabs went into the Sort menu, and Type and the
+// view switch into Filters and the tabs.)
+const GROUPS = ['.ml-status .coll-switch', '.nav-tabs .segmented'];
 
 (async () => {
   await new Promise(r => server.listen(PORT, r));
@@ -38,7 +42,7 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
   const out = {};
   const errors = [];
   const expect = (ok, msg) => { if (!ok) errors.push(msg); };
-  const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: 'asc' };
+  const prefs = { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release', sortDir: 'asc' };
 
   // Desktop: every group at rest, in English, Portuguese and at Large text.
   for (const [label, extra] of [['en', ''], ['pt-BR', "localStorage.setItem('mcu.lang.v1','pt-BR');"], ['large', "localStorage.setItem('mcu.textSize.v1','large');"]]) {
@@ -67,21 +71,22 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
       const tick = () => { const p = document.querySelector(g + ' > .seg-pill'); window.__x.push(Math.round(p.getBoundingClientRect().left)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, g);
-    await page.locator(g + ' button').nth(4).click();
+    await page.locator(g + ' button[data-coll="unseen"]').click();
     await page.waitForTimeout(1000);
     const xs = await page.evaluate(() => window.__x);
     const end = await page.evaluate(PILL, g);
-    const between = xs.filter(x => x > start + 10 && x < end.x - 10);
+    // Either direction, so the check does not depend on the tabs' order.
+    const lo = Math.min(start, end.x), hi = Math.max(start, end.x);
+    const between = xs.filter(x => x > lo + 10 && x < hi - 10);
     out.slide = { start, between: between.length, mid: between[0], end: end.x };
     // At least one place in between (about 12 normally; a choked machine may
     // draw only one frame of the slide).
     expect(between.length >= 1, `the pill did not slide: ${JSON.stringify(out.slide)}`);
     expect(aligned(end), 'after the slide the pill is not on the new button: ' + JSON.stringify(end));
-    // The collection and view groups follow too.
-    await page.locator('.tb-sort-row .coll-switch button').nth(2).click();
-    await page.locator('.tb-view-switch button').nth(1).click();
+    // The section tabs follow too.
+    await page.locator('.nav-tabs button').nth(2).click();
     await page.waitForTimeout(600);
-    for (const s of [GROUPS[2], GROUPS[3]]) expect(aligned(await page.evaluate(PILL, s)), `after a change the pill in ${s} is not on the new button`);
+    expect(aligned(await page.evaluate(PILL, GROUPS[1])), `after a change the pill in ${GROUPS[1]} is not on the new button`);
     errors.push(...e);
     await ctx.close();
   }
@@ -91,7 +96,7 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
     const { ctx, page, errors: e } = await ctxPage(browser, opts, prefs, {}, extra);
     await page.goto(URL); await settle(page);
     const g = GROUPS[0];
-    await page.locator(g + ' button').nth(4).click();
+    await page.locator(g + ' button[data-coll="unseen"]').click();
     await page.waitForTimeout(40);
     const p = await page.evaluate(PILL, g);
     out['reduced ' + label] = p;
@@ -104,10 +109,10 @@ const GROUPS = ['.tb-sort-controls .segmented', '.tb-type-controls .segmented', 
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, prefs, {});
     await page.goto(URL); await settle(page);
-    const g = '.m-appbar .coll-switch';
+    const g = '.m-listbar .coll-switch';
     out.phone = await page.evaluate(PILL, g);
     expect(aligned(out.phone), 'phone: the pill is not on the selected collection: ' + JSON.stringify(out.phone));
-    await page.locator(g + ' button').nth(2).tap(); await page.waitForTimeout(600);
+    await page.locator(g + ' button[data-coll="seen"]').tap(); await page.waitForTimeout(600);
     out.phoneAfter = await page.evaluate(PILL, g);
     expect(aligned(out.phoneAfter), 'phone: after a tap the pill is not on the new collection: ' + JSON.stringify(out.phoneAfter));
     errors.push(...e);

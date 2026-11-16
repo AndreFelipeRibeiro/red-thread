@@ -66,9 +66,9 @@ const BUTTONS = (sel) => {
   const w = watch && watch.getBoundingClientRect();
   return { seen: !!seen, seenOn: !!(seen && seen.classList.contains('on')), watch: !!watch, gap: !!gap, watchX: w ? Math.round(w.left) : null };
 };
-// "All titles 0/60": the meter's released count.
+// "All titles 0/60": the compact card's released count.
 const RELEASED = () => {
-  const c = document.querySelector('.dl-phase-divider.lead .pgh-count, .dl-overall-cell .pgh-count');
+  const c = document.querySelector('.spatial-overall .pgh-count');
   return c ? Number(c.textContent.split('/')[1]) : null;
 };
 
@@ -111,8 +111,9 @@ const RELEASED = () => {
   // ---- Spatial card and the details drawer ----------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2026-12-10');
-    // The card on the plain canvas (zoomed in so its buttons are drawn), then
-    // the details.
+    // The card on the plain canvas carries no Seen or Watchlist buttons (Notion
+    // "Cards: one card design at rest, selected and on the phone"); the
+    // details do.
     await page.goto(URL); await settle(page);
     const card = await page.evaluate(() => {
       const c = document.querySelector('.card[data-id="doomsday"]');
@@ -122,7 +123,7 @@ const RELEASED = () => {
     await page.goto(URL + '?title=doomsday'); await settle(page);
     const drawer = await page.evaluate(BUTTONS, '.drawer');
     out.spatial = { card, drawer };
-    expect(card && !card.seen && card.watch, `Spatial card: ${JSON.stringify(card)}`);
+    expect(card && !card.seen && !card.watch && card.refButtons === 0, `Spatial card: ${JSON.stringify(card)}`);
     expect(!drawer.missing && !drawer.seen && drawer.watch && !drawer.gap, `details drawer: ${JSON.stringify(drawer)}`);
     errors.push(...e);
     await ctx.close();

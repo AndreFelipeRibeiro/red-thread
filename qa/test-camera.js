@@ -50,23 +50,6 @@ const settle = page => page.waitForTimeout(2200);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
-const state = page => page.evaluate(() => {
-  const pressed = sel => [...document.querySelectorAll(sel)].map(b => (b.getAttribute('aria-label') || b.textContent).trim());
-  let stored = null;
-  try { stored = localStorage.getItem('mcu.prefs.v1'); } catch (e) { stored = 'THROWS'; }
-  return {
-    view: pressed('.m-viewswitch button[aria-pressed="true"]')[0] || null,
-    mobileTab: pressed('.m-tabs button[aria-pressed="true"]')[0] || null,
-    deskSort: [...document.querySelectorAll('.tb-sort-controls .segmented button[aria-pressed="true"]')].map(b => b.title)[0] || null,
-    order: (document.querySelector('.sort-order-trigger') || {}).getAttribute ? document.querySelector('.sort-order-trigger').getAttribute('aria-label') : null,
-    filterCount: (document.querySelector('.m-fcount') || {}).textContent || null,
-    stored,
-  };
-});
-const pickOrder = async (page, nth) => {
-  await page.locator('.sort-order-trigger').first().click();
-  await page.locator('.sort-order-pop button').nth(nth).click();
-};
 
 
 const T = page => page.evaluate(() => document.querySelector('.canvas').style.transform);
@@ -202,7 +185,13 @@ async function openCentreCard(page, tally) {
   tally.push('failed');
   return null;
 }
-const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.sort-order-pop button').nth(n).click(); };
+// Phones (Notion "Phone: bottom bar becomes Explore, My list and Guides"):
+// Spatial is the Explore tab, the List is My list (the Grid is gone).
+const phoneView = async (page, v) => {
+  if (v === 'spatial') { await page.locator('.m-tab[data-section="explore"]').click(); return; }
+  if (!(await page.locator('.m-listbar').count())) { await page.locator('.m-tab[data-section="mylist"]').click(); await page.waitForTimeout(400); }
+};
+const pickView = (page, n) => phoneView(page, ['list', 'list', 'spatial'][n]);
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
@@ -214,7 +203,7 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   out.desktopStart = parse(await T(page));
   for (let i = 0; i < 20; i++) {
     const d = await page.evaluate(() => {
-      const card = [...document.querySelectorAll('.card')].filter(c => c.textContent.includes('PHASE 6'))[2];
+      const card = [...document.querySelectorAll('.card')].filter(c => (window.TITLES.find(t => t.id === c.dataset.id) || {}).phase === 6)[2];
       const r = card.getBoundingClientRect();
       return { dx: innerWidth / 2 - (r.left + r.width / 2), dy: (innerHeight + 100) / 2 - (r.top + r.height / 2) };
     });
@@ -286,7 +275,8 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   // Sort change while selected clears the memory (no jump back into an old layout)
   await openCentreCard(page, cardOpens); await page.waitForTimeout(400);
   out.cardOpenAttempts = cardOpens;
-  await page.locator('.tb-sort-controls .segmented button', { hasText: 'IMDb' }).first().click();
+  await page.locator('.sort-menu-trigger').first().click(); await page.waitForTimeout(250);
+  await page.locator('.sort-menu-pop [data-sort="imdb"][data-dir="desc"]').click();
   await page.waitForTimeout(400);
   const afterSort = parse(await T(page));
   await page.locator('.drawer-close').click(); await page.waitForTimeout(900);
@@ -353,7 +343,7 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   out.mobileReenterAfterList = null;
   await page.locator('.m-lrow-open').nth(10).click();
   await page.waitForTimeout(400);
-  await page.locator('.m-apply.ghost', { hasText: 'Spatial' }).click();
+  await page.locator('.m-apply.ghost', { hasText: 'See connections' }).click();
   await page.waitForTimeout(900);
   const bg2 = await emptyPoint(page, [30, 200, 360], [700, 650, 600, 250]);
   await page.touchscreen.tap(bg2.x, bg2.y);

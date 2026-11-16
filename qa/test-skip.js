@@ -217,14 +217,16 @@ const STATE = () => {
       card: !!document.querySelector('.card.g-skipped[data-id="cap-brave"]') }));
     out.detailsSkip = r;
     expect(r.note === 'Skipped in this guide' && /g-unskip/.test(r.focus || '') && (r.stored || '').includes('cap-brave') && r.card, `details Skip: ${JSON.stringify(r)}`);
-    // Zoomed in, the card itself offers Unskip (it was skipped) and Skip on another stop.
+    // Cards on the canvas carry no Skip or Unskip (Notion "Cards: one card
+    // design at rest, selected and on the phone"): the details and the
+    // guide's list hold them.
     for (let i = 0; i < 4; i++) { await page.locator('.zoom-ctl button, .zoom button').last().click().catch(() => {}); await page.waitForTimeout(300); }
     await page.waitForTimeout(700);
     r = await page.evaluate(() => ({ unskip: !!document.querySelector('.card[data-id="cap-brave"] .g-skipctl .g-unskip'),
       skip: !!document.querySelector('.card[data-id="thunderbolts"] .g-skipctl .g-skip, .card[data-id="fantastic-four"] .g-skipctl .g-skip') }));
     out.cardSkip = r;
-    expect(r.unskip && r.skip, `zoomed-in cards: ${JSON.stringify(r)}`);
-    await page.locator('.card[data-id="cap-brave"] .g-skipctl .g-unskip').click(); await page.waitForTimeout(500);
+    expect(!r.unskip && !r.skip, `zoomed-in cards: ${JSON.stringify(r)}`);
+    await page.locator('.drawer.open .g-unskip').click(); await page.waitForTimeout(500);
     r = await page.evaluate(() => ({ stored: localStorage.getItem('mcu.guideSkips.v1'), card: !!document.querySelector('.card.g-skipped[data-id="cap-brave"]'),
       drawer: !!document.querySelector('.drawer.open .g-dskip-btn') }));
     expect(!(r.stored || '').includes('cap-brave') && !r.card && r.drawer, `card Unskip: ${JSON.stringify(r)}`);
@@ -237,7 +239,7 @@ const STATE = () => {
     // A phone guide opens framed on its next stop (Loki: Season 2): tap it.
     await page.locator('.card[data-id="loki-s2"]').click({ force: true }); await page.waitForTimeout(900);
     await page.locator('.m-focuspop .g-skip').tap(); await page.waitForTimeout(500);
-    const r = await page.evaluate(() => ({ unskip: !!document.querySelector('.m-focuspop .g-unskip'), tsa: !!document.querySelector('.m-focuspop .m-fp-tsa'),
+    const r = await page.evaluate(() => ({ unskip: !!document.querySelector('.m-focuspop .g-unskip'), tsa: !!document.querySelector('.m-focuspop .card-acts-tsa'),
       stored: localStorage.getItem('mcu.guideSkips.v1') }));
     out.popupSkip = r;
     expect(r.unskip && !r.tsa && (r.stored || '').includes('loki-s2'), `phone popup Skip: ${JSON.stringify(r)}`);
@@ -245,21 +247,21 @@ const STATE = () => {
     await ctx.close();
   }
 
-  // ---- Phone Grid, in Portuguese --------------------------------------------
+  // ---- Phone List, in Portuguese (an old Grid link opens the List) --------------------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { lang: 'pt-BR' });
     await page.goto(URL + '?view=grid&guide=before-doomsday'); await appReady(page);
-    const b = page.locator('.g-card[data-row-id="loki-s2"] .g-card-skip');
+    const b = page.locator('.g-stop[data-row-id="loki-s2"] .g-skip');
     expect((await b.getAttribute('aria-label')) === 'Pular Loki – Temporada 2 neste guia', `pt-BR Skip name: ${await b.getAttribute('aria-label')}`);
     await b.tap(); await page.waitForTimeout(500);
     let s = await page.evaluate(STATE);
-    const tag = await page.evaluate(() => (document.querySelector('.g-card[data-row-id="loki-s2"] .g-skiptag') || {}).textContent);
-    expect(s.skipped.join() === 'loki-s2' && tag === 'Pulado' && /1 pulado/.test(s.skipNote || ''), `pt-BR grid: ${JSON.stringify(s)} tag ${tag}`);
-    await page.locator('.g-card[data-row-id="loki-s2"] .g-unskip').tap(); await page.waitForTimeout(500);
+    const tag = await page.evaluate(() => (document.querySelector('.g-stop[data-row-id="loki-s2"] .g-skiptag-inline') || {}).textContent);
+    expect(s.skipped.join() === 'loki-s2' && tag === 'Pulado' && /1 pulado/.test(s.skipNote || ''), `pt-BR list: ${JSON.stringify(s)} tag ${tag}`);
+    await page.locator('.g-stop[data-row-id="loki-s2"] .g-unskip').tap(); await page.waitForTimeout(500);
     s = await page.evaluate(STATE);
-    expect(!s.skipped.length, `grid unskip: ${s.skipped}`);
+    expect(!s.skipped.length, `list unskip: ${s.skipped}`);
     const wide = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
-    expect(!wide, 'the phone grid scrolls sideways');
+    expect(!wide, 'the phone guide List scrolls sideways');
     errors.push(...e);
     await ctx.close();
   }

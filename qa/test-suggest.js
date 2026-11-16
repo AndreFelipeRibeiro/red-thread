@@ -43,6 +43,7 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   // mobile
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   const mb = page.locator('.m-searchbar input');
   await mb.tap(); await mb.type('tom'); await page.waitForTimeout(300);
   out.mPop = await page.evaluate(() => { const p = document.querySelector('.ss-pop'); if (!p) return null; const r = p.getBoundingClientRect(); return { left: Math.round(r.left), right: Math.round(r.right), vw: innerWidth, n: p.querySelectorAll('.ss-item').length }; });

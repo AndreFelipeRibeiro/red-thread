@@ -3,8 +3,8 @@
 // - From a guide, a pinned character with details open, and a search with
 //   filters and the Watchlist tab, on desktop and phone: the logo clears them
 //   all, puts the sort back to Release (earliest first) and keeps the view.
-// - Spatial frames the map again; the List scrolls to the top and its bulk
-//   selection clears; Up next comes back; "Back to the start" is announced.
+// - Spatial frames the map again; the List scrolls to the top; Up next comes
+//   back; "Back to the start" is announced.
 // - The address becomes "/" as one history step and Back restores what was
 //   there; the collection and the remembered-guide memory are as decided.
 // - It is a real link (href "/", an accessible name, reachable with Tab and
@@ -78,8 +78,7 @@ const STATE = () => {
     sheet: !!document.querySelector('.m-sheet'),
     sort: q.get('sort'), order: q.get('order'),
     view: q.get('view'),
-    upnext: !!document.querySelector('.un-strip, .un-mrow, .un-gcard, .un-chip, .un-card'),
-    checked: document.querySelectorAll('.dl-row[data-row-id] .dl-check:checked').length,
+    upnext: !!document.querySelector('.un-mrow'),
     listTop: (document.querySelector('.dlist, .m-scrollarea') || { scrollTop: -1 }).scrollTop,
     camera: canvas ? canvas.style.transform : null,
     live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean),
@@ -102,13 +101,12 @@ const STATE = () => {
     expect(s.live.includes('Back to the start'), `${where}: no announcement (${JSON.stringify(s.live)})`);
   };
 
-  // ---- Desktop List: a search, filters, the Watchlist tab, a selection ------
+  // ---- Desktop List: a search, filters, the Watchlist tab ------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'imdb', sortDir: 'asc' });
     await page.goto(URL + '?view=list&sort=imdb&order=asc&type=film&phase=3'); await settle(page);
     await page.fill('.search-wrap input', 'man'); await page.waitForTimeout(400);
     await page.keyboard.press('Escape');
-    await page.locator('.dl-row[data-row-id] .dl-check').first().check();
     await page.locator('.dl-row[data-row-id] .dl-open').first().click(); await page.waitForTimeout(700);
     // The link itself.
     const link = await page.evaluate(() => { const a = document.querySelector('.toolbar a.brand'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label'), h1: !!a.querySelector('h1') }; });
@@ -120,7 +118,6 @@ const STATE = () => {
     const after = await page.evaluate(STATE);
     out.deskAfter = after;
     firstState(after, 'desktop List', 'list');
-    expect(after.checked === 0, `desktop List: ${after.checked} rows still selected`);
     expect(after.listTop === 0, `desktop List: not scrolled to the top (${after.listTop})`);
     expect(after.collection === before.collection, 'desktop List: the collection changed');
     expect(await page.evaluate(() => document.activeElement && document.activeElement.matches('a.brand')), 'desktop: focus left the logo');
@@ -173,8 +170,8 @@ const STATE = () => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release', sortDir: 'asc' });
     await page.goto(URL + '?view=list'); await settle(page);
-    await page.locator('.g-btn').click(); await page.waitForTimeout(400);
-    await page.locator('.g-pop .g-row').first().click(); await page.waitForTimeout(800);
+    await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(400);
+    await page.locator('.g-page .g-row').first().click(); await page.waitForTimeout(800);
     let s = await page.evaluate(STATE);
     expect(s.guide && s.kept, `guide setup: ${JSON.stringify(s)}`);
     await page.locator('.toolbar a.brand').click(); await page.waitForTimeout(800);
@@ -188,20 +185,23 @@ const STATE = () => {
     await ctx.close();
   }
 
-  // ---- Phone: a search, a filter and the Watchlist tab; Grid keeps its view -
+  // ---- Phone: a search, a filter and the Watchlist tab; an old Grid link or
+  // setting opens the List (Notion "Phone: remove the Grid view") ----------
   for (const [view, prefsView] of [['list', 'list'], ['grid', 'grid']]) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: prefsView, desktopView: 'spatial', sort: 'title', sortDir: 'asc' });
     await page.goto(URL + (view === 'grid' ? '?view=grid&sort=title&phase=2' : '?sort=title&phase=2')); await settle(page);
+    await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
     await page.locator('.m-search-input input').fill('iron'); await page.waitForTimeout(300);
     await page.locator('.m-search-input input').blur();
-    await page.locator('.coll-switch button').nth(3).tap(); await page.waitForTimeout(500);
+    await page.locator('.coll-switch button[data-coll="watchlist"]').tap(); await page.waitForTimeout(500);
     await page.evaluate(() => { const a = document.querySelector('.m-scrollarea'); if (a) a.scrollTop = 200; });
     const link = await page.evaluate(() => { const a = document.querySelector('a.m-brandrow'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label') }; });
     expect(link && link.href === '/' && link.name === 'Red Thread, home', `phone logo is not a home link: ${JSON.stringify(link)}`);
     await page.locator('a.m-brandrow').tap(); await page.waitForTimeout(900);
     const s = await page.evaluate(STATE);
     out['phone_' + view] = s;
-    firstState(s, 'phone ' + view, view === 'grid' ? 'grid' : null);
+    firstState(s, 'phone ' + view, null);
+    expect(await page.locator('.m-lrow').count() > 0 && !(await page.locator('.m-card').count()), `phone ${view}: not the List`);
     expect(s.coll && /All/.test(s.coll) || s.coll === null, `phone ${view}: collection tab ${s.coll}`);
     expect(s.listTop === 0, `phone ${view}: not scrolled to the top (${s.listTop})`);
     errors.push(...e);

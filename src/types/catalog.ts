@@ -157,8 +157,8 @@ export interface UpNextInfo {
   /** On the Watchlist tab. */
   watchScope: boolean;
   onOpen(id: string): void;
+  /** The compact card's ✕: hides the card for this visit. */
   onHide(): void;
-  onShowAll(): void;
 }
 
 /** The same bundle, narrowed to the case where there is a title to show. The

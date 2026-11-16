@@ -61,11 +61,12 @@ const reload = async page => { await page.reload(); await settle(page); };
     ['deskSpatial', DESKTOP, {version:1, desktopView:'spatial'}, '.search-wrap input', p => p.locator('.canvas .card').count()],
     ['deskList', DESKTOP, {version:1, desktopView:'list'}, '.search-wrap input', p => p.locator('.dl-row, tbody tr').count()],
     ['phoneList', MOBILE, {version:1, viewMode:'list'}, '.m-searchbar input', p => p.locator('.m-lrow-open').count()],
-    ['phoneGrid', MOBILE, {version:1, viewMode:'grid'}, '.m-searchbar input', p => p.locator('.m-card').count()],
   ]) {
     for (const lang of ['en', 'pt-BR']) {
       const { ctx, page, errors } = await ctxPage(browser, { ...opts, locale: lang === 'en' ? 'en-US' : 'pt-BR' }, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.prefs.v1', JSON.stringify(" + JSON.stringify(prefs) + "));");
       await go(page);
+      // Phones: search opens from its button (Notion "Phone: bottom bar…").
+      if (box.startsWith('.m-')) { await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150); }
       const row = {};
       for (const q of Q) {
         const b = page.locator(box).first();

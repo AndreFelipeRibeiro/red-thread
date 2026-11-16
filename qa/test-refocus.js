@@ -128,7 +128,7 @@ const CAMERA = (id) => {
   // ---- Phone Spatial: the first view -----------------------------------------
   // Once something is Seen, each order opens on its Up next title (V3 Tasks,
   // "Phone Spatial: open on Up next once you've started"): centred across, wholly
-  // on screen above the Up next chip, at 60% or more and at one card size in all
+  // on screen above the compact card docked at the bottom, at 60% or more and at one card size in all
   // six orders (the phone's reading zoom). Switching order lands on
   // that order's Up next too. A first visit (nothing seen) keeps the bird's-eye
   // view: the order's first title at the left edge.
@@ -137,10 +137,10 @@ const CAMERA = (id) => {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: 'spatial', desktopView: 'spatial', sort, sortDir: sort === 'imdb' || sort === 'rt' ? 'desc' : 'asc' }, states);
     await page.goto(URL); await settle(page); await page.waitForTimeout(400);
     const land = await page.evaluate((cam) => {
-      const t = document.querySelector('.un-chip .un-title').textContent;
+      const t = document.querySelector('.spatial-overall .un-mrow .un-title').textContent;
       const id = window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id;
       const r = document.querySelector(`.card[data-id="${id}"]`).getBoundingClientRect();
-      const chip = document.querySelector('.un-chip').getBoundingClientRect();
+      const chip = document.querySelector('.spatial-overall.docked').getBoundingClientRect();
       const vp = document.querySelector('.viewport').getBoundingClientRect();
       return { id, ...eval('(' + cam + ')')(id), w: Math.round(r.width), top: Math.round(r.top - vp.top), clear: Math.round(chip.top - r.bottom) };
     }, CAMERA.toString());
@@ -166,21 +166,21 @@ const CAMERA = (id) => {
     await ctx.close();
   }
 
-  // ---- Phone Spatial: from the Up next chip, in three orders ------------------
+  // ---- Phone Spatial: from the compact card's Up next, in three orders -------
   // Closing the details of a title opened from Up next clears its selection
   // (no connections ring left behind), centres the title at 60% or more, and
-  // brings the Up next chip back, in Release, By Phase and IMDb order alike
+  // brings the card back, in Release, By Phase and IMDb order alike
   // (a title already on screen used to keep the old view in the grid orders).
   for (const sort of ['release', 'phase', 'imdb']) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: 'spatial', desktopView: 'spatial', sort, sortDir: sort === 'imdb' ? 'desc' : 'asc' }, states);
     await page.goto(URL); await settle(page);
-    const id = await page.evaluate(() => { const t = document.querySelector('.un-chip .un-title').textContent; return window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id; });
-    await page.locator('.un-chip .un-open').tap(); await page.waitForTimeout(1200);
+    const id = await page.evaluate(() => { const t = document.querySelector('.spatial-overall .un-mrow .un-title').textContent; return window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id; });
+    await page.locator('.spatial-overall .un-open').tap(); await page.waitForTimeout(1200);
     await page.locator('.m-sheet .m-sheet-x').tap(); await page.waitForTimeout(1400);
     const after = await page.evaluate(CAMERA, id);
     after.id = id;
     after.selected = await page.evaluate(() => document.querySelectorAll('.card.selected').length);
-    after.chip = await page.evaluate(() => !!document.querySelector('.un-chip'));
+    after.chip = await page.evaluate(() => !!document.querySelector('.spatial-overall.docked'));
     out['phoneSpatial_' + sort] = after;
     expect(after.selected === 0 && after.chip, `phone ${sort}: closing the details left ${JSON.stringify(after)}`);
     expect(Math.abs(after.dx) <= 4 && Math.abs(after.dy) <= 4, `phone ${sort}: ${id} not centred: ${JSON.stringify(after)}`);
@@ -193,7 +193,7 @@ const CAMERA = (id) => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release', sortDir: 'asc' }, states);
     await page.goto(URL + '?view=list'); await settle(page);
-    await page.locator('.un-strip .un-open').focus();
+    await page.locator('.dlist .spatial-overall .un-open').focus();
     await page.keyboard.press('Enter'); await page.waitForTimeout(900);
     await page.keyboard.press('Escape'); await page.waitForTimeout(150);
     const flash = await page.evaluate(() => !!document.querySelector('.dl-row[data-row-id="she-hulk"].refocus-flash'));
@@ -213,37 +213,28 @@ const CAMERA = (id) => {
     await ctx.close();
   }
 
-  // ---- Phone List: Up next has no row; a folded seen title -------------------
-  {
+  // ---- Phone List: back to the row, clear of the docked card ------------------
+  // Up next is marked in its own row (Notion "Titles 4/5"). A title opened from
+  // the compact card, and one opened from the address, come back into view on
+  // closing, below the header and above the card docked over the bottom.
+  for (const [label, open] of [['upnext', null], ['address', 'iron-man-3']]) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: 'asc' }, states);
-    await page.goto(URL); await settle(page);
-    await page.evaluate(() => { document.querySelector('.m-scrollarea').scrollTop = 0; });
-    await page.locator('.un-gcard .un-open, .un-card .un-open').first().tap(); await page.waitForTimeout(1000);
-    await page.locator('.m-sheet .m-sheet-x').tap(); await page.waitForTimeout(1000);
-    const top = await page.evaluate(() => document.querySelector('.m-scrollarea').scrollTop);
-    expect(top === 0, `closing the Up next title scrolled the List to ${top}`);
-    errors.push(...e);
-    await ctx.close();
-  }
-  {
-    // Iron Man 3 sits in a folded run of seen titles (folds are remembered on
-    // the device): opened from the address, closing brings the fold's header
-    // into view without opening it.
-    const folded = JSON.stringify(Object.keys(states));
-    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: 'asc' }, states,
-      "localStorage.setItem('mcu.seenFolds.v1', " + JSON.stringify(folded) + ");");
-    await page.goto(URL + '?title=iron-man-3'); await settle(page);
+    await page.goto(URL + (open ? '?title=' + open : '')); await settle(page);
+    let id = open;
+    if (!open) {
+      id = await page.evaluate(() => { const t = document.querySelector('.spatial-overall .un-mrow .un-title').textContent; return window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id; });
+      await page.locator('.spatial-overall .un-open').tap(); await page.waitForTimeout(1000);
+    }
     await page.locator('.m-sheet .m-sheet-x').tap(); await page.waitForTimeout(1200);
-    const f = await page.evaluate(() => {
-      const row = document.querySelector('[data-row-id="iron-man-3"]');
-      const fold = row && row.closest('.m-fx');
-      const heads = [...document.querySelectorAll('.m-run.shut')].filter(h => h.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING);
-      const head = heads[heads.length - 1];
-      const r = head && head.getBoundingClientRect();
-      return { shut: !!(fold && fold.classList.contains('shut')), head: head ? head.className : null, inView: !!(r && r.top >= 0 && r.bottom <= innerHeight), scrollTop: document.querySelector('.m-scrollarea').scrollTop };
-    });
-    out.fold = f;
-    expect(f.shut && /m-run/.test(f.head || '') && f.inView, `the seen fold was not brought into view (still folded): ${JSON.stringify(f)}`);
+    const r = await page.evaluate((id) => {
+      const row = document.querySelector(`.m-lrow[data-row-id="${id}"]`).getBoundingClientRect();
+      const area = document.querySelector('.m-scrollarea').getBoundingClientRect();
+      const card = document.querySelector('.spatial-overall.docked');
+      const bottom = card ? card.getBoundingClientRect().top : area.bottom;
+      return { id, top: Math.round(row.top - area.top), clear: Math.round(bottom - row.bottom) };
+    }, id);
+    out['phoneList_' + label] = r;
+    expect(r.top >= -1 && r.clear >= 0, `phone List (${label}): ${id} not back in view clear of the card: ${JSON.stringify(r)}`);
     errors.push(...e);
     await ctx.close();
   }

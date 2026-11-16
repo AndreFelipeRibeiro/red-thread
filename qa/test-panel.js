@@ -39,6 +39,7 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   // mobile sheet highlight
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150);
   await page.fill('.m-searchbar input', 'Sam'); await page.waitForTimeout(400);
   await page.locator('.m-lrow-open').first().tap(); await page.waitForTimeout(700);
   out.mobileMarks = await page.evaluate(() => [...document.querySelectorAll('.m-crow mark.hl')].map(m => m.textContent));

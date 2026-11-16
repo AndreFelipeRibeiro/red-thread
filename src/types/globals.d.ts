@@ -153,6 +153,8 @@ declare global {
     SegPill: SegPillModule['SegPill'];
     Toolbar: ToolbarModule['Toolbar'];
     SpatialCard: SpatialCardModule['SpatialCard'];
+    CardText: SpatialCardModule['CardText'];
+    CardMark: SpatialCardModule['CardMark'];
     ZoomControl: SpatialChrome['ZoomControl'];
     BandLabel: SpatialChrome['BandLabel'];
     SpatialOverall: SpatialChrome['SpatialOverall'];
@@ -161,7 +163,8 @@ declare global {
     ContextSummary: SpatialChrome['ContextSummary'];
     CARD_SIZE: SpatialCardModule['CARD_SIZE'];
     Segmented: ToolbarModule['Segmented'];
-    SORT_OPTIONS: ToolbarModule['SORT_OPTIONS'];
+    SECTIONS: ToolbarModule['SECTIONS'];
+    FiltersMenu: ToolbarModule['FiltersMenu'];
     SyncStatus: Tracking['SyncStatus'];
     SeenMarker: StatusActions['SeenMarker'];
     TSA_SPIN: StatusActions['TSA_SPIN'];
@@ -172,6 +175,7 @@ declare global {
     TSA_MIN_SCALE: Tracking['TSA_MIN_SCALE'];
     MCU_isReleased: Tracking['MCU_isReleased'];
     MCU_nextUp: Tracking['MCU_nextUp'];
+    MCU_selectUpNext: Tracking['MCU_selectUpNext'];
     MCU_canMarkSeen: Tracking['MCU_canMarkSeen'];
     MCU_bulkTargets: Tracking['MCU_bulkTargets'];
     matchesCollection: Tracking['matchesCollection'];
@@ -204,8 +208,8 @@ declare global {
     SearchInput: Suggest['SearchInput'];
 
     MobileTopBar: PhoneHeader['MobileTopBar'];
-    SortTabs: PhoneHeader['SortTabs'];
-    MobileGrid: Mobile['MobileGrid'];
+    MobileNavBar: PhoneHeader['MobileNavBar'];
+    MyListBar: PhoneHeader['MyListBar'];
     MobileList: Mobile['MobileList'];
     FilterSheet: PhoneHeader['FilterSheet'];
     CastSheet: TitleDetails['CastSheet'];
@@ -230,8 +234,8 @@ declare global {
     ReleaseLine: TitleDetails['ReleaseLine'];
     ReleaseBadge: TitleDetails['ReleaseBadge'];
     Synopsis: TitleDetails['Synopsis'];
-    SortOrderMenu: HeaderControls['SortOrderMenu'];
-    ViewMenu: HeaderControls['ViewMenu'];
+    SortMenu: HeaderControls['SortMenu'];
+    sortPhrase: HeaderControls['sortPhrase'];
     SettingsPanel: SettingsModule['SettingsPanel'];
     SettingsSheet: SettingsModule['SettingsSheet'];
     SettingsButton: SettingsModule['SettingsButton'];
@@ -252,17 +256,16 @@ declare global {
 
     DesktopList: DesktopList['DesktopList'];
     useRowKeys: DesktopList['useRowKeys'];
+    TitlesSubNav: DesktopList['TitlesSubNav'];
+    /** The List's groups for an order (phases, eras, or one flat run). */
+    MCU_listGroups: DesktopList['dlGroups'];
+    ListGroupHeader: DesktopList['GroupHeader'];
     /** Keeps focus on a row as the List reorders; assigned inline. */
     MCU_followRowFocus(toRow: unknown): void;
 
     UpNextTag: UpNext['UpNextTag'];
     UpNextHide: UpNext['UpNextHide'];
-    UpNextState: UpNext['UpNextState'];
-    UpNextCard: UpNext['UpNextCard'];
-    UpNextStrip: UpNext['UpNextStrip'];
     UpNextMeterRow: UpNext['UpNextMeterRow'];
-    UpNextChip: UpNext['UpNextChip'];
-    UpNextNote: UpNext['UpNextNote'];
 
     WhereToWatch: Watch['WhereToWatch'];
     MCU_region: Watch['MCU_region'];
@@ -279,6 +282,8 @@ declare global {
     GuidePartOf: GuidesUI['GuidePartOf'];
     GuideIcon: GuidesUI['GuideIcon'];
     GuidesButton: GuidesUI['GuidesButton'];
+    GuidesPage: GuidesUI['GuidesPage'];
+    ThemeLab: typeof import('../app/theme-lab')['ThemeLab'];
     GuidePromo: GuidesUI['GuidePromo'];
     GuideOff: GuidesUI['GuideOff'];
     GuideOffHint: GuidesUI['GuideOffHint'];

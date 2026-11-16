@@ -6,7 +6,7 @@
 //
 // Moved out of mobile.tsx so they can be built on the design system: this file
 // is listed with `@source` in src/index.css, so the class recipes exported
-// below (used by MobileGrid and MobileList, which stay in mobile.tsx with their
+// below (used by MobileList, which stay in mobile.tsx with their
 // grouping and reorder logic) are generated from here.
 //
 // Same content, order and actions as before; only the building blocks
@@ -255,29 +255,12 @@ export function EmptyState({ title, sub, mark, action, desktop = false }: EmptyP
 }
 
 // ---------------------------------------------------------------------------
-// Phone List and Grid: layout recipes (MobileGrid / MobileList in mobile.tsx)
+// Phone List: layout recipes (MobileList in mobile.tsx)
 // ---------------------------------------------------------------------------
 
-/** The section heading over a run of titles: a year, a story era. */
-export const GLABEL = 'm-glabel mb-[9px] text-xs font-medium text-muted-foreground in-[.m-flat]:mt-[7px] in-[.m-flat]:mb-0 [&_.pgh]:flex-col-reverse [&_.pgh]:gap-1.5 [&_.pgh-label]:text-xs';
-export const GLABEL_STORY = 'story flex items-center gap-[5px] [&>svg]:flex-none [&>svg]:opacity-75';
-
-/** The phase (or All titles) meter at the top of each phase block: the bar
- *  is the rule between phases and the meter for the one below it (drawn above
- *  the label), and it pins to the top of the scroll area while its phase is
- *  on screen. Each block bounds one, so the next phase pushes it out rather
- *  than stacking on it. The negative margins cover the scroll area's gutters;
- *  top:-14px pins it against that area's top padding. */
-export const PHASE_DIVIDER = 'm-phase-divider sticky top-[-14px] z-4 -mx-3.5 mt-[22px] bg-background px-3.5 pt-[9px] pb-2 text-sm font-semibold tracking-tight text-(--pm,var(--muted-foreground)) min-[600px]:-mx-5 min-[600px]:px-5 [.m-gblock:first-child>&]:mt-0 [&+*]:mt-2.5 [&+.m-glabel]:pt-1.5 [&_.pgh]:flex-col-reverse [&_.pgh]:gap-[5px] [&_.pgh-top]:flex-wrap [&_.pgh-top]:gap-y-1.5 [&_.pgh-label]:flex-[0_1_auto] [&_.pgh-label]:min-w-[min(100%,max-content)] [&_.pgh-label]:text-(--pm)';
-export const PHASE_DIVIDER_ALL = cn('overall [&_.pgh-label]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]', DIM);
-export const GBLOCK = 'm-gblock relative';
-export const GROUP = 'm-group [.m-group+&]:mt-4';
-export const GRID = 'm-grid grid grid-cols-2 gap-3.5 min-[600px]:grid-cols-3';
+/** A group of rows under its heading (DesktopList's GroupHeader, `phone`). */
+export const GROUP = 'm-group';
 export const LIST = 'm-list flex flex-col gap-[9px]';
-/** The All tab's flat column of collapsible wrappers. Motion starts once the
- *  collection has loaded (`settled`); the Grid's sections keep its 14px gap. */
-export const flatClass = (grid: boolean, settled: boolean) => cn(grid ? 'm-gflat [&_.m-fx:not(.shut)>.m-fx-in]:pb-3.5' : 'm-flat',
-  'flex min-w-0 flex-col [--fx:0ms] [--fx-fade:0ms] [--fx-ease:cubic-bezier(.2,.8,.2,1)]', settled && 'settled [--fx:340ms] [--fx-fade:220ms]');
 
 // The row and card a title gets. Their surfaces are shadcn's Card; the
 // current title (a pinned character's or guide's step) gets a ring in its
@@ -287,206 +270,60 @@ export const flatClass = (grid: boolean, settled: boolean) => cn(grid ? 'm-gflat
 const SURFACE = 'rounded-xl border bg-card text-left text-card-foreground shadow-sm active:border-ring';
 const WATCH = 'watch border-[color-mix(in_oklab,var(--status-watch)_75%,transparent)]';
 const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--primary))]';
-// The seen wash over a poster: badges stay above it.
-const SEEN_WASH = "after:pointer-events-none after:absolute after:inset-0 after:z-1 after:bg-[rgba(10,12,20,0.34)] after:backdrop-saturate-[.35] after:content-['']";
 
-type CardProps = {
-  t: Title; seen: boolean; watch: boolean; current: boolean;
+type RowProps = {
+  t: Title; rank: number | null; ranked: boolean; lead: 'rt' | 'imdb';
+  seen: boolean; watch: boolean; current: boolean; upNext?: boolean;
   matchedChars?: string[] | null; search?: string; onSelect: (id: string) => void;
 };
 
-/** A title in the phone Grid: poster with its PH badge and scores, then
- *  title, year and budget, "Set in" and the search match. */
-export function PhoneCard({ t, seen, watch, current, matchedChars, search, onSelect }: CardProps) {
-  const I = I18N();
-  const { PosterArt, StoryYear, ReleaseBadge } = window;
-  return (
-    <div data-flip-id={t.id} data-row-id={t.id}
-      className={cn('m-card relative block overflow-hidden', SURFACE, seen && 'seen', watch && WATCH, current && CURRENT)}>
-      <button className="m-card-open block w-full cursor-pointer rounded-[inherit] text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset" onClick={() => onSelect(t.id)}>
-        <div className={cn('m-pw relative aspect-[2/3]', THUMB, seen && SEEN_WASH)}>
-          <PosterArt title={t}/>
-          <PhaseBadge phase={t.phase}/>
-          <ScoreBadges title={t} compact/>
-        </div>
-        <div className={cn('m-cmeta px-[9px] pt-2 pb-2.5', seen && 'opacity-82')}>
-          <div className="m-ctitle line-clamp-2 min-h-[31px] text-xs leading-[1.25] font-medium tracking-tight text-pretty"><Highlight text={I.titleName(t)} query={search}/></div>
-          <div className={cn('m-cyear mt-[5px] flex items-center justify-between tabular-nums text-muted-foreground', XS)}>
-            <span>{t.year}<ReleaseBadge title={t} className="m-crelease"/></span>
-            {t.budget != null && <b className={cn('font-semibold', DIM)}>{I.budget(t.budget)}</b>}
-          </div>
-          <StoryYear title={t} className="m-cstory mt-1 flex"/>
-          <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
-        </div>
-      </button>
-      {/* Top-right: the PH badge owns top-left. */}
-      <window.TitleStatusActions title={t} className="m-card-tsa top-[7px] right-[7px] bottom-auto flex-row [transform:none] [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn_svg]:size-4"/>
-    </div>
-  );
-}
-
-type RowProps = CardProps & {
-  rank: number | null; ranked: boolean; chrono: boolean; lead: 'rt' | 'imdb'; compact: boolean;
-};
-
-/** A title in the phone List: rank (score orders), poster, title, a meta line
- *  (type or year, phase, budget, "Set in", release), scores and the search
- *  match; Seen and Watchlist at the end. On the All tab a seen title shrinks
- *  to a compact row (`compact`): small poster, title only, buttons side by
- *  side, animated in the flat list's --fx timing. */
-export function PhoneRow({ t, rank, ranked, chrono, lead, compact, seen, watch, current, matchedChars, search, onSelect }: RowProps) {
+/** A title in the phone List (Notion "Titles 4/5"): rank (score orders), a
+ *  40×60 poster with the seen mark in its corner, the title, one meta line
+ *  (year, phase, "Set in", release), scores and the search match; Seen and
+ *  Watchlist side by side at the end, as 40px buttons. Seen titles keep full
+ *  strength, as on desktop (Andre, 2026-11-15: no dimming; the mark and the
+ *  green check say it). Up next gets the desktop row's red edge, its pill and
+ *  the filled red check (icon only here: the pill names it). */
+export function PhoneRow({ t, rank, ranked, lead, seen, watch, current, upNext = false, matchedChars, search, onSelect }: RowProps) {
   const I = I18N();
   const { PosterArt, StoryYear, ReleaseBadge } = window;
   const dot = <span className="m-dot size-[3px] flex-[0_0_3px] rounded-[2px] bg-muted-foreground"/>;
-  const fx = (props: string) => `[transition-property:${props}] duration-(--fx,0ms) ease-(--fx-ease) motion-reduce:transition-none`;
-  // The meta line and scores fold away in a compact row.
-  const folds = cn('in-[.m-flat]:max-h-12 in-[.m-flat]:overflow-hidden', fx('max-height,opacity,margin'), compact && 'mt-0! max-h-0! opacity-0');
   return (
     <div data-flip-id={t.id} data-row-id={t.id}
-      className={cn('m-lrow flex min-h-[93px] w-full items-center gap-2 py-[9px] pr-[11px] pl-[9px]', SURFACE, fx('min-height,padding'),
-        seen && 'seen', compact && 'compact min-h-[max(50px,3.125rem)] py-1.5', watch && WATCH, current && CURRENT)}>
+      className={cn('m-lrow relative flex min-h-[78px] w-full scroll-mt-3 scroll-mb-[calc(var(--dock-h,0px)+12px)] items-center gap-2 py-2 pr-2.5 pl-2', SURFACE,
+        seen && 'seen', watch && WATCH, current && CURRENT,
+        upNext && 'up-next border-[color-mix(in_oklab,var(--brand)_45%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_6%,var(--card))]')}>
+      {upNext && <span className="m-next-bar absolute top-3 bottom-3 left-[-1px] w-[3px] animate-[un-in_260ms_ease_both] rounded-full bg-(--brand) motion-reduce:animate-none" aria-hidden="true"/>}
       <button className="m-lrow-open flex min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => onSelect(t.id)}>
         {ranked && <div className="m-rank w-[22px] flex-[0_0_22px] text-center text-sm font-semibold tabular-nums text-muted-foreground">{rank}</div>}
-        <div className={cn('m-lthumb relative h-[75px] w-[50px] flex-[0_0_50px] rounded-md', THUMB, fx('width,height,flex-basis'),
-          seen && "after:pointer-events-none after:absolute after:inset-0 after:bg-[rgba(10,12,20,0.5)] after:content-['']", compact && 'h-[38px] w-[26px] basis-[26px]')}>
+        <div className={cn('m-lthumb relative h-[60px] w-10 flex-[0_0_40px] rounded-[5px]', THUMB)}>
           <PosterArt title={t}/>
+          {seen && (
+            <span className="m-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-[#5fa856] bg-[rgba(10,12,20,.82)] text-[#7cc472] shadow-[0_1px_4px_rgba(0,0,0,.45)] [&_svg]:size-2.5"
+              role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
+          )}
         </div>
-        <div className={cn('m-ltext min-w-0 flex-1', seen && 'opacity-85')}>
-          <div className="m-ltitle text-sm leading-[1.3] font-medium tracking-tight"><Highlight text={I.titleName(t)} query={search}/></div>
-          <div className={cn('m-lmeta mt-1 flex flex-wrap items-center gap-[7px] tabular-nums text-muted-foreground', XS, folds)}>
-            {!ranked && <span>{tr(t.type === 'film' ? 'type.film.one' : 'type.series.one')}</span>}
-            {chrono && <>{dot}<span title={tr('story.releaseYear')}>{t.year}</span></>}
-            {ranked && <span>{t.year}</span>}
+        <div className="m-ltext flex min-w-0 flex-1 flex-col items-start">
+          {upNext && (
+            <span className="m-next-pill mb-1 animate-[un-in_260ms_ease_both] rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-xs font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">
+              {tr('upnext.label')}
+            </span>
+          )}
+          <div className="m-ltitle text-sm leading-[1.3] font-semibold tracking-tight"><Highlight text={I.titleName(t)} query={search}/></div>
+          <div className={cn('m-lmeta mt-0.5 flex flex-wrap items-center gap-x-[7px] gap-y-1 tabular-nums text-muted-foreground', XS)}>
+            <span>{t.year}</span>
             {dot}
             <span style={{ color: phaseColor(t.phase) }}>{tr('phase.label', { n: t.phase })}</span>
-            {t.budget != null && <>{dot}<span>{I.budget(t.budget)}</span></>}
-            {t.story && !chrono && <>{dot}<StoryYear title={t}/></>}
+            {t.story && <>{dot}<StoryYear title={t}/></>}
             <ReleaseBadge title={t} className="m-lrelease ml-1.5"/>
           </div>
-          <ScoreBadges title={t} lead={lead} className={cn('mt-[7px] flex-row flex-wrap items-center gap-x-3 gap-y-1.5', folds)}/>
+          <ScoreBadges title={t} lead={lead} className="mt-1.5 flex-row flex-wrap items-center gap-x-3 gap-y-1.5"/>
           <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
         </div>
       </button>
-      <window.TitleStatusActions title={t} className={cn('m-lrow-tsa static flex-none flex-col gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(32px,2rem)] [&_.tsa-btn_svg]:size-[15px]', compact && 'flex-row')}/>
+      <window.TitleStatusActions title={t} upNext={upNext}
+        className="m-lrow-tsa static z-auto flex-none flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(40px,2.5rem)] [&_.tsa-btn_svg]:size-4 [&_.tsa-next]:px-0 [&_.tsa-lab]:hidden [&_.tsa-gap]:order-0"/>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Seen runs on the All tab (phone List and Grid)
-// ---------------------------------------------------------------------------
-
-/** Runs of seen titles: two or more consecutive seen titles in the current
- *  order. Order never changes; a run only groups neighbours. */
-export function seenRuns(titles: Title[], statusOf: (id: string) => string): Title[][] {
-  const runs: Title[][] = [];
-  let run: Title[] = [];
-  const close = () => { if (run.length >= 2) runs.push(run); run = []; };
-  titles.forEach(t => { if (statusOf(t.id) === 'seen') run.push(t); else close(); });
-  close();
-  return runs;
-}
-
-// Folded runs, remembered on this device across visits and shared by List and
-// Grid. Runs shift as titles are marked, so this keeps the titles that were
-// folded rather than the runs: a run is folded when most of its titles were.
-const SEEN_FOLDS_KEY = 'mcu.seenFolds.v1';
-const seenFolds: Set<string> = (() => {
-  try { return new Set<string>(JSON.parse(window.localStorage.getItem(SEEN_FOLDS_KEY) || '[]') || []); } catch (e) { return new Set<string>(); }
-})();
-const seenFoldListeners = new Set<() => void>();
-export function useSeenFolds() {
-  const [, bump] = React.useReducer((x: number) => x + 1, 0);
-  React.useEffect(() => { seenFoldListeners.add(bump); return () => { seenFoldListeners.delete(bump); }; }, []);
-  const isShut = (items: Title[]) => items.filter(t => seenFolds.has(t.id)).length * 2 > items.length;
-  const toggle = (items: Title[]) => {
-    const shut = !isShut(items);
-    items.forEach(t => { if (shut) seenFolds.add(t.id); else seenFolds.delete(t.id); });
-    try { window.localStorage.setItem(SEEN_FOLDS_KEY, JSON.stringify([...seenFolds])); } catch (e) { /* not remembered */ }
-    seenFoldListeners.forEach(fn => fn());
-  };
-  return { isShut, toggle };
-}
-
-/** Settles once the saved collection has loaded: lists only animate changes
- *  after that, so they open already compact and folded. */
-export function useSettled() {
-  const { ready } = useCollection();
-  const [settled, setSettled] = React.useState(false);
-  React.useEffect(() => {
-    if (!ready || settled) return undefined;
-    let b = 0;
-    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setSettled(true)); });
-    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b); };
-  }, [ready, settled]);
-  return settled;
-}
-
-/** A collapsible wrapper: animates its content's height to and from zero
- *  (grid-template-rows 1fr <-> 0fr). With `appear`, it mounts closed and opens
- *  on the next frame (a row that just joined the list). The inner box reaches
- *  6px past its content on each side so rings and focus outlines aren't
- *  clipped; its bottom padding is the gap between rows, and folds away. */
-export function Fx({ open = true, appear = false, children }: { open?: boolean; appear?: boolean; children: React.ReactNode }) {
-  const [ready, setReady] = React.useState(!appear);
-  React.useEffect(() => {
-    if (ready) return undefined;
-    let b = 0;
-    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setReady(true)); });
-    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const shut = !(open && ready);
-  // Content is clipped only while closed or opening/closing, so open content
-  // can glide across sections (Grid reorder) and keep its rings unclipped.
-  const was = React.useRef(shut);
-  const [moving, setMoving] = React.useState(false);
-  React.useEffect(() => {
-    if (was.current === shut) return undefined;
-    was.current = shut;
-    setMoving(true);
-    const id = setTimeout(() => setMoving(false), 420);
-    return () => clearTimeout(id);
-  }, [shut]);
-  return (
-    <div aria-hidden={shut || undefined}
-      className={cn('m-fx grid min-w-0 grid-cols-[minmax(0,1fr)] motion-reduce:transition-none',
-        shut ? 'shut invisible grid-rows-[0fr] opacity-0 [transition:grid-template-rows_var(--fx)_var(--fx-ease),opacity_var(--fx-fade)_ease,visibility_0s_var(--fx)]'
-          : 'grid-rows-[1fr] opacity-100 [transition:grid-template-rows_var(--fx)_var(--fx-ease),opacity_var(--fx-fade)_ease,visibility_0s]',
-        moving && 'moving')}>
-      <div className={cn('m-fx-in -mx-1.5 -mt-1.5 min-h-0 min-w-0 px-1.5 pt-1.5 pb-[9px] [transition:padding_var(--fx)_var(--fx-ease),margin_var(--fx)_var(--fx-ease)] motion-reduce:transition-none',
-        shut && 'mt-0 pt-0 pb-0', (shut || moving) && 'overflow-hidden')}>{children}</div>
-    </div>
-  );
-}
-
-/** The header of a run of seen titles on the All tab: a slim bar while the
- *  run is open, a summary row (stacked posters, count, first and last title)
- *  while it is folded. One element morphs between the two. */
-export function SeenRunHead({ items, shut, onToggle }: { items: Title[]; shut: boolean; onToggle: () => void }) {
-  const I = I18N();
-  const PosterArt = window.PosterArt;
-  const n = items.length;
-  const first = I.titleName(items[0]), last = I.titleName(items[n - 1]);
-  const fx = (props: string) => `[transition-property:${props}] duration-(--fx) ease-(--fx-ease) motion-reduce:transition-none`;
-  return (
-    <button aria-expanded={!shut} aria-label={tr(shut ? 'list.seenRunShow' : 'list.seenRunHide', { n })} onClick={onToggle}
-      className={cn('m-run flex w-full max-w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-xl border border-dashed border-transparent py-0.5 pr-1 pl-0.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-        DIM, fx('padding,background-color,border-color'),
-        shut && 'shut border-input bg-[color-mix(in_oklab,var(--status-seen)_6%,transparent)] py-[9px] pr-3 pl-2.5 text-foreground')}>
-      <span className={cn('m-run-stack flex flex-none', fx('max-width,opacity'), shut ? 'max-w-20 opacity-100' : 'max-w-0 opacity-0')} aria-hidden="true">
-        {items.slice(0, 3).map(t => (
-          <span key={t.id} className={cn("m-run-thumb relative h-[45px] w-[30px] flex-[0_0_30px] rounded-[5px] ring-2 ring-background [&+&]:-ml-3.5 after:absolute after:inset-0 after:bg-[rgba(10,12,20,.45)] after:content-['']", THUMB)}>
-            <PosterArt title={t}/>
-          </span>
-        ))}
-      </span>
-      <span className="m-run-text flex min-w-0 flex-1 flex-col">
-        <b className="inline-flex items-center gap-1.5 text-xs font-semibold text-(--status-seen-text) [&_svg]:size-3"><window.CheckIcon/>{tr('list.seenRun', { n })}</b>
-        <span className={cn('m-run-range truncate text-xs text-muted-foreground', fx('max-height,opacity,margin'), shut ? 'mt-[3px] max-h-[18px] opacity-100' : 'max-h-0 opacity-0')}>{first} – {last}</span>
-      </span>
-      <span className={cn('m-run-chev text-xl leading-none text-muted-foreground', fx('transform'), shut ? 'rotate-90' : '-rotate-90')} aria-hidden="true">›</span>
-    </button>
   );
 }
 

@@ -62,7 +62,7 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
   x: number; y: number; phase?: number | null; color?: string; plain: boolean; touch: boolean; children: React.ReactNode;
 }) {
   return (
-    <div className={cn('band-label pointer-events-none absolute top-0 left-0 z-1 rounded-xl text-sm font-semibold tracking-tight whitespace-nowrap', FLOAT,
+    <div className={cn('band-label pointer-events-none absolute top-0 left-0 z-1 rounded-lg text-sm font-semibold tracking-tight whitespace-nowrap', FLOAT,
       touch ? 'w-[240px] px-[11px] pt-[7px] pb-[8px]' : 'w-[420px] px-[13px] pt-[8px] pb-[9px]', plain && 'plain w-auto',
       phase ? 'phase text-(--band)' : 'text-muted-foreground',
       '[transition:opacity_320ms_ease_60ms,top_420ms_cubic-bezier(.2,.8,.2,1)_60ms] motion-reduce:[transition:opacity_200ms_ease]',
@@ -74,12 +74,34 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
   );
 }
 
-/** The meter over the whole catalogue (every order but By Phase), with Up
- *  next under it on desktop; top-right on desktop, across the top on phones. */
-export function SpatialOverall({ touch, children }: { touch: boolean; children: React.ReactNode }) {
+/** The compact card: All titles with its bar (every order but By Phase), then
+ *  Up next with ✓ and ✕. The same card in the same place on Connections and
+ *  in Titles (Andre, 2026-11-15): top right on desktop, docked above the
+ *  bottom bar on phones (Notion "Titles 4/5"), where it is within thumb reach.
+ *  `floating`: desktop, placed top right of the canvas; off, the host places
+ *  it (the desktop Titles list pins it to its own top-right corner).
+ *  On phones it publishes the room it takes as --dock-h on the main area, as
+ *  a guide's dock does, so the list's last row scrolls clear of it. */
+export function SpatialOverall({ touch, floating = true, children }: { touch: boolean; floating?: boolean; children: React.ReactNode }) {
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    const main = touch && el ? el.closest<HTMLElement>('.m-main') : null;
+    if (!el || !main) return undefined;
+    const set = () => main.style.setProperty('--dock-h', Math.ceil(el.offsetHeight + (parseFloat(getComputedStyle(el).bottom) || 0)) + 'px');
+    set();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(set);
+    if (ro) ro.observe(el);
+    return () => { if (ro) ro.disconnect(); main.style.removeProperty('--dock-h'); };
+  }, [touch]);
   return (
-    <div className={cn('spatial-overall pointer-events-none absolute z-40 rounded-xl px-[13px] pt-[8px] pb-[9px] text-sm font-semibold tracking-tight text-foreground', FLOAT,
-      touch ? 'top-[62px] right-3 left-3.5 w-auto' : 'top-3.5 right-4 w-[300px]')}>
+    <div ref={ref} className={cn('spatial-overall pointer-events-none z-40 rounded-xl px-[13px] pt-[8px] pb-[9px] text-sm font-semibold tracking-tight text-foreground', FLOAT,
+      // Desktop: the same card and the floating chrome's small shadow, on
+      // Connections and in Titles.
+      !touch && (floating ? 'absolute top-3.5 right-4 w-[300px]' : 'w-[300px]'),
+      // Phones: docked over the bottom of the main area, the full width less
+      // the gutters, with 44px targets for ✓ and ✕.
+      touch && 'docked absolute inset-x-3 bottom-3 w-auto bg-background pr-2 min-[600px]:inset-x-5 [&_.tsa-btn]:size-[max(44px,2.75rem)]! [&_.tsa-btn]:min-h-[max(44px,2.75rem)]! [&_.un-hide]:size-[max(44px,2.75rem)] [&_.un-hide]:flex-[0_0_44px]')}>
       {children}
     </div>
   );
