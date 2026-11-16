@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 feature — Phone lists: swipe a row to mark it seen or add it to the Watchlist
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - On Titles and a guide's stops, a row slid right is marked seen and slid
   left joins the Watchlist; on a title already in that state the swipe
@@ -32,7 +33,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Phone rows: Seen as the one button (direction B)
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Titles rows drop the rank, carry "Up next" at the start of the meta line
   instead of a pill, show the score in place of the phase in a score order,
@@ -45,7 +47,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — One type system: six roles and the art sizes
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Every font size is a role in `src/index.css` (`text-display`, `-title`,
   `-heading`, `-body`, `-label`, `-caption`, in rem, so Text size and the
@@ -63,7 +66,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Red as the interface accent; Seen is one green
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Red is the one accent through tokens: `--primary` fills (buttons, Mark
   seen, the radio and switch), `--brand` draws text, lines and rings (links,
@@ -78,7 +82,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Sort menu: six sorts and an Order switch, shared with Titles
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - One row per sort with a line on what it's for, then an Order switch whose
   labels follow the sort; choosing a sort applies its usual direction and
@@ -92,7 +97,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Filters: one panel, with Status
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - One panel (popover on desktop, sheet on phones): Status, Phase as
   multi-select chips (`phase=2,3`), Type, Budget, Released only, a live
@@ -104,7 +110,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Status pills in every header; Titles loses its tabs row
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - The Seen and Watchlist pills, with their counts, sit in the header of
   every section on desktop and phone and filter in place; All and Unseen are
@@ -120,7 +127,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — The seen mark: a filled green circle with a white check
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - On cards, rows, guide covers and stop badges, the picker and the Seen
   button over a poster.
@@ -128,7 +136,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — The All titles card and a guide's card share one design
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Desktop and phone, both cards: a mini header (the name, its count, the
   stepper for a guide, then ×), a 4px bar, a rule, then the next title with
@@ -138,7 +147,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 fix — A selected title with a guide open no longer turns the canvas into its ring
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - A link with a title and a guide (or a title carried over from Titles)
   keeps the guide's linear route: the ring layout and its fading need no
@@ -149,7 +159,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Guides: no optional stops
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - The 43 optional stops are gone from the 20 guides, and "Include optional"
   with them; counts, segments and "Part of" count only the stops that
@@ -158,7 +169,8 @@ Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 maintenance — Batch 9 verification
 
-Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Full regress on the committed tree: all 68 check runs clean (63 check scripts in 65 runs plus the accessibility scan in English, Portuguese and English in the dark theme); the first run caught the header overflowing in Portuguese at Large text (900px desktop, 320px phone), fixed by the extra fit steps before this commit.
 - Limits: headless Chromium; the swipe was checked with protocol touch
