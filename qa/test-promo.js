@@ -322,17 +322,25 @@ const labelsOverlap = (page) => page.evaluate(() => {
     await ctx.close();
   }
   // Nothing coming up and the evergreen guide finished: the unfinished guide
-  // closest to finished. With the Infinity Saga's essentials seen, the
-  // Avengers guide has one left (Age of Ultron).
+  // closest to finished. With the Infinity Saga's essentials seen, several
+  // guides have one stop left (The Avengers, Hulk since Guides 4/4): the
+  // promoted one has the fewest left of any unfinished guide.
   {
     const INFINITY_ESS = ['iron-man', 'cap-first-avenger', 'avengers', 'cap-winter-soldier', 'gotg', 'civil-war', 'thor-ragnarok', 'black-panther', 'infinity-war', 'endgame'];
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2027-02-01');
     await seed(page, storage({ seen: INFINITY_ESS }));
     await page.goto(URL); await settle(page);
     const p = await promoState(page);
-    const want = await guideName(page, 'avengers');
-    out.closest = p && p.guide;
-    expect(p && p.guide === want, `closest to finished: promoted ${p && p.guide}, expected ${want}`);
+    const left = await page.evaluate((name) => {
+      const G = window.MCU_GUIDE;
+      const st = JSON.parse(localStorage.getItem('mcu.collection.v1') || '{"states":{}}').states;
+      const statusOf = (id) => st[id] || 'none';
+      const open = G.all().filter(g => !g.evergreen && !G.finished(g, statusOf));
+      const got = open.find(g => G.name(g) === name);
+      return { min: Math.min(...open.map(g => G.remaining(g, statusOf))), got: got ? G.remaining(got, statusOf) : null };
+    }, p && p.guide);
+    out.closest = { guide: p && p.guide, ...left };
+    expect(p && left.got != null && left.got === left.min, `closest to finished: promoted ${p && p.guide} (${left.got} left), the fewest is ${left.min}`);
     expect(p && p.countdown === 'Guide · picked for you', `closest to finished: band reads "${p && p.countdown}"`);
     errors.push(...e);
     await ctx.close();
@@ -382,8 +390,11 @@ const labelsOverlap = (page) => page.evaluate(() => {
 
   // Every guide finished with no guide's release in the next 60 days: the
   // caught-up moment still comes, naming the next release, or none.
+  // Since Guides 4/4, "Before Secret Wars" dates the next release in 2027; the
+  // no-release case is after its date (the last dated release).
   for (const [date, want] of [['2026-10-01', "You've finished every guide. Get ready for Avengers: Doomsday."],
-                              ['2027-02-01', "You've finished every guide. We'll have a new one for the next release."]]) {
+                              ['2027-02-01', "You've finished every guide. Get ready for Avengers: Secret Wars."],
+                              ['2028-01-15', "You've finished every guide. We'll have a new one for the next release."]]) {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, date);
     await seed(page, storage());
     await page.goto(URL); await require('./ready').appReady(page, 0);

@@ -225,7 +225,7 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
         return (
           <React.Fragment key={item.key}>
             {head && <li className="ss-head px-2 py-1.5 text-xs font-medium text-muted-foreground" role="presentation">{head}</li>}
-            <li id={`${listId}-${i}`} role="option" aria-selected={i === active}
+            <li id={`${listId}-${i}`} role="option" aria-selected={i === active} data-kind={item.kind}
               className={`ss-item flex min-h-[max(44px,2.75rem)] cursor-pointer items-center gap-2.5 rounded-sm px-2 py-[5px]${i === active ? ' on bg-accent text-accent-foreground' : ''}`}
               onMouseDown={e => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(item)}>
               <SsThumb item={item}/>

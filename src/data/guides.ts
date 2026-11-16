@@ -6,9 +6,10 @@
 // this ships (V3 Tasks, "Create curated watch guides"). The Doomsday guide
 // follows the ticket's draft (2026-10-29); the other five are Claude's drafts.
 //
-// DRAFT (Guides 4/4, 2026-11-16): every guide after the animated series is a
-// new draft for Andre to keep, change or drop, and The Avengers and the
-// animated series moved shelf (teams, corners). Not to ship before approval.
+// Guides 4/4 (2026-11-16): every guide after the animated series was a draft
+// until Andre approved them all the same day, when The Avengers and the
+// animated series moved shelf (teams, corners). A new guide can wait for
+// approval the same way: `draft: true` (and `draftGroup` for a shelf move).
 //
 // Fields: `group` places the guide on a Guides page shelf (coming, stories,
 // characters, teams, corners: "Corners of the universe", which replaced
@@ -130,8 +131,7 @@ const ALL_GUIDES = [
   },
   {
     id: 'avengers',
-    group: 'stories',
-    draftGroup: 'teams',
+    group: 'teams',
     color: '#4a6da3',
     short: { en: 'The Avengers', 'pt-BR': 'Os Vingadores' },
     kind: 'arc',
@@ -173,8 +173,7 @@ const ALL_GUIDES = [
   },
   {
     id: 'animated',
-    group: 'animation',
-    draftGroup: 'corners',
+    group: 'corners',
     color: '#a06030',
     preparesFor: 'friendly-spidey-s2',
     short: { en: 'Animated series', 'pt-BR': 'Séries animadas' },
@@ -199,7 +198,6 @@ const ALL_GUIDES = [
   // Characters
   {
     id: 'iron-man',
-    draft: true,
     group: 'characters',
     color: '#9a3c2c',
     short: { en: 'Iron Man', 'pt-BR': 'Homem de Ferro' },
@@ -225,7 +223,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'captain-america',
-    draft: true,
     group: 'characters',
     color: '#34507e',
     short: { en: 'Captain America', 'pt-BR': 'Capitão América' },
@@ -251,7 +248,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'thor',
-    draft: true,
     group: 'characters',
     color: '#566f8f',
     short: { en: 'Thor', 'pt-BR': 'Thor' },
@@ -276,7 +272,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'hulk',
-    draft: true,
     group: 'characters',
     color: '#3f6b45',
     short: { en: 'Hulk', 'pt-BR': 'Hulk' },
@@ -300,7 +295,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'black-widow',
-    draft: true,
     group: 'characters',
     color: '#5a3a46',
     short: { en: 'Black Widow', 'pt-BR': 'Viúva Negra' },
@@ -325,7 +319,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'doctor-strange',
-    draft: true,
     group: 'characters',
     color: '#5c3f7a',
     short: { en: 'Doctor Strange', 'pt-BR': 'Doutor Estranho' },
@@ -349,7 +342,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'wanda',
-    draft: true,
     group: 'characters',
     color: '#8a2f3e',
     short: { en: 'Wanda', 'pt-BR': 'Wanda' },
@@ -373,7 +365,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'loki',
-    draft: true,
     group: 'characters',
     color: '#3f6a46',
     short: { en: 'Loki', 'pt-BR': 'Loki' },
@@ -397,7 +388,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'ant-man',
-    draft: true,
     group: 'characters',
     color: '#7a3434',
     short: { en: 'Ant-Man', 'pt-BR': 'Homem-Formiga' },
@@ -419,7 +409,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'black-panther',
-    draft: true,
     group: 'characters',
     color: '#4a3a6a',
     short: { en: 'Black Panther', 'pt-BR': 'Pantera Negra' },
@@ -442,7 +431,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'captain-marvel',
-    draft: true,
     group: 'characters',
     color: '#8a5a2c',
     short: { en: 'Captain Marvel', 'pt-BR': 'Capitã Marvel' },
@@ -465,7 +453,6 @@ const ALL_GUIDES = [
   // Teams (The Avengers above is the fourth)
   {
     id: 'guardians',
-    draft: true,
     group: 'teams',
     color: '#4e3a7a',
     short: { en: 'Guardians', 'pt-BR': 'Guardiões' },
@@ -487,7 +474,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'thunderbolts',
-    draft: true,
     group: 'teams',
     color: '#4c4c56',
     short: { en: 'Thunderbolts*', 'pt-BR': 'Thunderbolts*' },
@@ -509,7 +495,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'next-generation',
-    draft: true,
     group: 'teams',
     color: '#7a4f2c',
     short: { en: 'Next generation', 'pt-BR': 'Nova geração' },
@@ -534,7 +519,6 @@ const ALL_GUIDES = [
   // Corners of the universe (the animated series above is the fourth)
   {
     id: 'cosmic',
-    draft: true,
     group: 'corners',
     color: '#2f4a7a',
     short: { en: 'Cosmic', 'pt-BR': 'Cósmico' },
@@ -557,7 +541,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'street-level',
-    draft: true,
     group: 'corners',
     color: '#6a2a2a',
     short: { en: 'Street level', 'pt-BR': 'Nas ruas' },
@@ -579,7 +562,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'mystic',
-    draft: true,
     group: 'corners',
     color: '#4a2a5a',
     short: { en: 'The mystic arts', 'pt-BR': 'Artes místicas' },
@@ -601,7 +583,6 @@ const ALL_GUIDES = [
   // Story threads
   {
     id: 'infinity-stones',
-    draft: true,
     group: 'stories',
     color: '#6a5a2a',
     short: { en: 'Infinity Stones', 'pt-BR': 'Joias do Infinito' },
@@ -623,7 +604,6 @@ const ALL_GUIDES = [
   },
   {
     id: 'thanos',
-    draft: true,
     group: 'stories',
     color: '#5a3a6a',
     short: { en: 'Thanos', 'pt-BR': 'Thanos' },
@@ -646,7 +626,6 @@ const ALL_GUIDES = [
   // Event guide after Doomsday, made like it
   {
     id: 'before-secret-wars',
-    draft: true,
     kind: 'event',
     group: 'coming',
     target: 'secret-wars',
@@ -671,8 +650,8 @@ const ALL_GUIDES = [
   },
 ];
 
-// Drafts (Guides 4/4) show only where Andre reviews them: on localhost, on
-// Vercel previews (*.vercel.app), or when a QA check asks
+// Drafts (none right now) show only where Andre reviews them: on localhost,
+// on Vercel previews (*.vercel.app), or when a QA check asks
 // (window.__GUIDE_DRAFTS). Never on redthread.tv until approved, when the
 // `draft` flags (and `draftGroup`, which moves a guide to its new shelf) are
 // removed. Ids stay permanent either way.
@@ -686,6 +665,8 @@ const draftsShown = (() => {
     return host === 'localhost' || /\.vercel\.app$/.test(host);
   } catch (e) { return false; }
 })();
-window.GUIDES = ALL_GUIDES
+// Typed here, not imported: the link-preview step loads this file on its own.
+type MaybeDraft = (typeof ALL_GUIDES)[number] & { draft?: boolean; draftGroup?: string };
+window.GUIDES = (ALL_GUIDES as MaybeDraft[])
   .filter((g) => draftsShown || !g.draft)
   .map((g) => (draftsShown && g.draftGroup ? { ...g, group: g.draftGroup } : g));

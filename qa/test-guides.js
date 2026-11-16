@@ -115,15 +115,17 @@ const DATA = () => {
   data.errs.forEach(e => err('data: ' + e));
   out.guides = data.guides;
   if (!data.guides.length) err('no guides loaded');
-  // The drafts awaiting approval (Guides 4/4) follow the same rules; they
-  // only show where QA or a preview asks for them.
+  // Drafts awaiting approval (none since Guides 4/4 was approved) follow the
+  // same rules; they only show where QA or a preview asks for them. Every
+  // approved guide shows on production (the 26 from Guides 4/4 at least).
   {
     const d = await ctxPage(browser, DESKTOP, seedJs({}) + 'window.__GUIDE_DRAFTS = true;');
     await d.page.goto(URL + '?view=list'); await settle(d.page);
     const dd = await d.page.evaluate(DATA);
     dd.errs.forEach(e => err('draft data: ' + e));
     out.draftGuides = dd.guides.length;
-    if (dd.guides.length <= data.guides.length) err('the drafts did not load with window.__GUIDE_DRAFTS');
+    if (dd.guides.length < data.guides.length) err('fewer guides with window.__GUIDE_DRAFTS than without');
+    if (data.guides.length < 26) err(`production shows ${data.guides.length} guides, expected the 26 approved ones`);
     await d.ctx.close();
   }
 

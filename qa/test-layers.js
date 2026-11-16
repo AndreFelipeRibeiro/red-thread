@@ -32,7 +32,7 @@ const MENUS = {
     await page.goto('http://127.0.0.1:' + PORT + '/'); await require('./ready').appReady(page);
     // details open + character pinned
     await page.fill('.search-wrap input', 'Iron Man'); await page.waitForTimeout(400);
-    await page.locator('.ss-item', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
+    await page.locator('.ss-item[data-kind="title"]', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
     await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(600);
     await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(1300);
     for (const view of ['Spatial', 'List']) {
