@@ -54,15 +54,21 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   in Spatial (count, how many filters, Clear).
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
 - Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
-  cards, list rows and details, alongside the release year. Chronological order
+  list rows and details, alongside the release year. Chronological order
   follows those timeframes, and the mobile Chrono list groups by them.
+- A Spatial card's meta line (and the phone's selected card) shows what the
+  sort or filter is about, beside the phase dot: the year (Release, A–Z, By
+  Phase, and IMDb or Tomatometer, whose score sits on the poster's
+  bottom-left corner), where it is set on Chronological, the budget with the
+  Budget filter on; "Series" and a coming title's release badge stay.
 - Phones show Titles as a List (the Grid was removed on 2026-11-15; old
   `?view=grid` links open the List), with the desktop List's rules at the
-  phone's size: the same phase or era headings with their marks and "4/6",
+  phone's size: the same phase or era headings with their bar and "4/6",
   no folding and no dimming, the seen mark on the poster, and the Up next
   row's red edge, pill and filled check. Rows show a 40×60 poster, the
-  title, one meta line (year, phase, setting), the IMDb and RT badges, and
-  Seen and Watchlist as 40px buttons; rank numbers when sorting by rating.
+  title, one meta line (year and phase; where it is set in Story order), the
+  score being sorted by and rank numbers when sorting by rating, and Seen
+  and Watchlist as 40px buttons.
 - On Connections and on phones, one Sort menu holds every sort in both
   directions as plain phrases ("Release date, oldest first"); desktop Titles
   sorts from its own order bar and column headers (below). In Spatial, connection lines and
@@ -101,7 +107,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   preview's tags. Previews are English; unknown ids get the app-wide card.
 - Text size: Settings → Text size (Small / Default / Large) scales every
   piece of text, and the controls around it, except the Spatial cards (zoom
-  the canvas for those); controls never get smaller than the default,
+  the canvas for those): 87.5 / 100 / 106.25% on desktop, and a step larger
+  on phones, 100 / 112.5 / 125%; controls never get smaller than the default,
   saved on the device. A larger default font size in the browser enlarges the
   app's text too. On an iPhone or iPad it starts from the system Text Size
   (the two smallest steps → Small, xLarge and up → Large) until a size is
@@ -133,8 +140,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   slim header row (#, Title, Released, IMDb, RT) sorts with one click and
   reverses with a second; it and the Sort menu are one state with the
   address's `sort` and `order`. Release date and Phase group the rows by
-  phase, Story order by in-story era, and each heading shows one small mark
-  per released title, filled when seen ("4/6"). The column sorts are one flat
+  phase, Story order by in-story era, and each heading shows a short
+  segmented bar, one segment per released title, red when seen ("4/6"). The column sorts are one flat
   ranked list. Rows show the poster, the title with its phase and setting,
   the year, the IMDb and RT chips, Seen and Watchlist; a seen title keeps
   full strength and carries the cards' seen mark in its poster's corner. "64
@@ -144,11 +151,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   The column is up to 1480px wide.
 - Up next (the first released, unseen title in the order, tab and filters)
   is marked in its Titles row with a red edge, an "Up next" pill and a filled
-  "Mark seen", and the list opens with that row in view. The compact card
+  "Mark seen", and on Connections its card has a red outline (an open
+  guide's next stop too); the list opens with that row in view. The compact card
   ("All titles 43/60 +4" and Up next with ✓ and ✕) is the same card in the
   same place on Connections and Titles: the top-right corner on desktop,
   docked above the bottom bar on phones (the list's last row scrolls clear
-  of it). ✕ hides it until the next visit.
+  of it). ✕ hides it, and the outline, until the next visit. Phone
+  Connections cards use a 17px title and a 12px meta line in the same card
+  size, so the layout is the same on both.
 - Cast drawer on desktop; List and Spatial views with detail sheets on mobile.
 - Details read the same on desktop and phones: poster beside the phase, type,
   year, title, release date and story timeframe; then IMDb and RT scores
@@ -172,8 +182,22 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   past 4); a shelf needs at least 4 guides, so smaller groups share one. Each
   card shows three posters, its name and size, and a status row: a progress
   bar only for a guide you follow, "2 of 6 seen" with "+ Follow" otherwise,
-  "✓ All 10 seen" once finished. Followed guides are kept on the device
-  (`mcu.guidesFollowed.v1`); the old remembered guide becomes the first one.
+  "✓ All 10 seen" once finished. Under the hero, the Continue shelf holds the
+  other guides you follow (the most recent activity first): each with its
+  next stop ("Stop 6 of 7: …"), progress, "Open guide →" and the next poster
+  with Mark seen ("Seen" on phones); "Manage" opens the list of guides.
+  Marking a stop seen inside an open guide follows it, with a toast whose
+  Undo stops following (the mark stays); seen marks anywhere else never
+  follow a guide. A followed guide is unfollowed once every essential stop
+  is seen. With a followed guide in focus and nothing narrowing the view, Up
+  next in Titles and on Connections is that guide's next stop. Followed
+  guides are kept on the device (`mcu.guidesFollowed.v1`) and, signed in,
+  travel with the account's preferences; the old remembered guide becomes
+  the first one.
+- Shelves follow each guide's group: Stories, Characters, Teams and Corners
+  of the universe, each needing 4 guides (a smaller group joins "More
+  guides"); event guides other than the hero sit with the stories until
+  there are 4.
 - Phone Spatial opens on your Up next title once you've marked anything
   seen: each order (and Recenter) centres it at a readable zoom above the
   docked card, at one card size in every order. A first visit, or one with everything
@@ -191,11 +215,15 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Guides: short, curated paths through the catalogue (a Guides button in the
   desktop toolbar and the phone app bar). Catch up before Avengers: Doomsday,
   the Infinity Saga essentials, Spider-Man, the Avengers films, the Multiverse
-  Saga and the animated series. Each stop says why it is there; essential
+  Saga and the animated series. Twenty more are drafts awaiting approval
+  (Notion "Guides 4/4", `draft: true` in `src/data/guides.ts`): they show
+  only in development and on Vercel previews, never on redthread.tv. Each
+  stop says why it is there; essential
   stops are numbered and optional ones sit behind "Include optional". An open
   guide works like a pinned character: the List and Grid show its stops in
   order with the next one marked, Spatial dims the rest and draws the route
-  between its numbered cards (an arrow on an event guide's destination), the
+  between its numbered cards (an arrow on an event guide's destination) and
+  opens on the next stop at a readable zoom (− or Fit shows the route), the
   stepper walks the stops and then an event guide's destination, Up next
   suggests the next stop, Escape, "‹ Guides" or the Guides tab closes
   it (closing is how to see every title again: a guide shows only its own),
@@ -218,8 +246,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   title, one meta line with the reason, Seen and Watchlist, and the next
   stop with the red edge, "Up next" pill and filled check. On Connections
   one row floats over the canvas on desktop, and on phones one dock at the
-  bottom carries the guide, its next stop (with Seen), its progress and the
-  stepper, and the canvas opens on the next stop,
+  bottom carries the guide, its next stop (its poster, with Seen), its red
+  progress and the stepper, and the canvas opens on the next stop; Seen with
+  the camera on another stop glides back to the one being marked,
   and `?guide=` shares it. The guide you are following reopens when you come
   back to the home page (until you close or finish it). Returning visitors
   are offered one guide they haven't finished, once per guide on each device:
@@ -380,8 +409,15 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - **102 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB (credited in About with TMDB's
   notice; TMDB also asks for its logo there, not added yet)
-- A poster or portrait that fails to load falls back to generated art or the
-  character's initials
+- A poster that is missing or fails to load falls back to a monogram: a
+  field in one of nine hues, fixed per title and never the same as its
+  release-order neighbour's (a muted deep field in dark; in light, a
+  near-white tile with coloured initials and a hairline edge), the title's
+  initials in the display face and the year. While a real poster loads, its
+  box takes the official poster's main colour (`poster_color` in the media
+  data, from `tools/poster-colors.cjs`; the title's accent until a title has
+  one); a portrait
+  falls back to the character's initials
 - IMDb and Rotten Tomatoes scores where available
 
 Titles and cast lists are maintained by hand in [`data.js`](data.js) against Wikipedia's per-character MCU filmographies — this isn't pulled from a live API, so it reflects whatever was true as of the last update. Unreleased titles (anything past a "Not yet rated" badge) carry pre-release cast announcements, which can and do change before release.
@@ -635,13 +671,14 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/assets/logo-mark.svg` | The logo mark (the work-in-progress push pin), the one file every place that shows the mark draws from, icons and link previews included |
 | `src/assets/logo-wordmark.svg` | The wordmark's lettering, drawn beside the mark in the toolbar and the phone app bar |
 | `tools/make-icons.js` | Maintainer script: redraws `favicon.png` and `apple-touch-icon.png` from the logo mark (uses the Playwright that `qa/` installs; not deployed) |
+| `tools/poster-colors.cjs` | Maintainer script: each poster's dominant colour into `src/data/media-data.ts` (`poster_color`, `poster_color_raw`) and a review table in `tools/poster-colors-report.html` (uses the Playwright that `qa/` installs; not deployed). Re-run when posters change |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
 | `src/app/guides-ui.tsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
 | `src/app/picker.tsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
 | `src/app/desktop-list.tsx` | Desktop Titles list: the order bar, sortable column headers, foldable phase and era groups, status actions |
 | `src/app/search-suggest.tsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
-| `src/app/poster.tsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
+| `src/app/poster.tsx` | TMDB posters or the Monogram fallback (also when an image fails; the initials rule is `monogram()`); cast portraits with initials fallback |
 | `src/index.css` | The design tokens: shadcn's CSS variables with a light `:root` block and a `.dark` block, the phase colours as `--phase-1`…`--phase-6` in both, and the Tailwind entry, with classes generated only from the files listed with `@source`; plus the keyframes and the few page-level rules (page background, search highlights, logo masks, Reduce motion). The app and `design.html` both load it. Every surface is styled on its components; V3's `styles.css` and `styles-mobile.css` are gone (shadcn pass, 2026-11-14) |
 | `src/app/shell.tsx`, `src/app/banners.tsx`, `src/app/list-parts.tsx` | Class recipes for markup in `app.tsx` and `mobile.tsx` (the app frame, Spatial's viewport and threads, the phone frame and focus card; the pinned character's banner and pill and the guide's stepper; the List and Grid rows, meters and score chips) |
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |

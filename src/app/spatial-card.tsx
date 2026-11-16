@@ -69,9 +69,13 @@ export interface CardProps {
   isRingFocus?: boolean;
   isDragging?: boolean;
   isCurrent?: boolean;
+  /** The title the Up next card (or an open guide's dock) names. */
+  isUpNext?: boolean;
   curColor?: string;
   matchedChars?: string[] | null;
   searchQuery?: string;
+  /** What the meta line adds, from the sort and filters (cardFacet). */
+  facet?: CardFacet;
   scale?: number;
   guideBadge?: { cls: string; label: string; text: string } | null;
   guide?: unknown;
@@ -84,7 +88,7 @@ export interface CardProps {
   touch?: boolean;
 }
 
-export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false }: CardProps) {
+export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, facet = 'year' }: CardProps) {
   const I18N = window.MCU_I18N;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
@@ -136,7 +140,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         enter && 'animate-[card-enter_300ms_ease-out_backwards] motion-reduce:animate-none',
         isSelected && 'selected', isHighlighted && 'highlighted', isDimmed && 'dimmed', isCollDimmed && 'coll-dim',
         isRingHidden && 'ring-hidden', isRingFocus && 'ring-focus', seen && 'seen', listed && 'listed',
-        isDragging && 'dragging', isCurrent && 'current', skipped && 'g-skipped', enter && 'enter')}
+        isDragging && 'dragging', isCurrent && 'current', skipped && 'g-skipped', enter && 'enter',
+        // Up next: a red outline clear of the card's own border and shadow, so
+        // it reads with any other state (Andre, 2026-11-16: it looked like
+        // every other card). An outline is not clipped by overflow-hidden.
+        isUpNext && 'up-next outline-3 outline-offset-[3px] outline-(--brand)')}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
@@ -167,14 +175,14 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
           onFocus={() => onFocusCard && onFocusCard(title.id)}
           onClick={(e) => { e.stopPropagation(); onClick(); }}/>
       )}
-      <div className={cn('card-poster relative aspect-[2/3] w-full flex-none overflow-hidden bg-muted',
+      <div className={cn('card-poster relative aspect-[2/3] w-full flex-none overflow-hidden bg-muted [&_.poster-mono-year]:hidden',
         // Seen: the art dimmed and desaturated, the quiet half of the seen
         // mark (a backdrop filter here cost a GPU layer per card).
         skipped && '[&>:first-child]:opacity-30')}>
         <window.PosterArt title={title}/>
-        <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections}/>
+        <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections} title={title} facet={facet}/>
       </div>
-      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars}/>
+      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars} touch={touch} facet={facet}/>
     </div>
   );
 }
@@ -202,8 +210,17 @@ type GuideBadge = { cls: string; label: string; text: string } | null | undefine
  *  many titles it connects to (the titles that share a character with it,
  *  the same ones its ring shows). Top right: the seen check, or a guide
  *  stop's mark in its place. */
-export function CardMark({ seen, guideBadge, skipped = false, connections = 0, pop = false }: { seen: boolean; guideBadge?: GuideBadge; skipped?: boolean; connections?: number; pop?: boolean }) {
+export function CardMark({ seen, guideBadge, skipped = false, connections = 0, pop = false, title, facet }: { seen: boolean; guideBadge?: GuideBadge; skipped?: boolean; connections?: number; pop?: boolean; title?: Title; facet?: CardFacet }) {
   const corner = pop ? 'top-2.5' : 'top-2';
+  // Bottom left, in a score order: the score being sorted by (none for a
+  // title without one). Canvas pixels on the card, the phone's sizes on its
+  // tapped card.
+  const scoreKind = title && (facet === 'imdb' || facet === 'rt') && title[facet] != null ? facet : null;
+  const score = scoreKind && title && (
+    <span className={cn('card-score absolute z-3 shadow-[0_2px_8px_rgba(0,0,0,.45)]', pop ? 'bottom-2.5 left-2.5' : 'bottom-2 left-2')}>
+      <window.ScoreChip kind={scoreKind} title={title} compact className={cn('card-rating', pop ? 'text-[max(13px,0.8125rem)]' : 'text-[12px] [&_.tg]:text-[inherit]')}/>
+    </span>
+  );
   const right = cn('card-mark absolute right-2 z-3', corner, pop && 'right-2.5');
   const status = guideBadge
     ? <span className={right}><span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-80')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span></span>
@@ -227,32 +244,61 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
         </span>
       )}
       {status}
+      {score}
     </>
   );
+}
+
+/** What a card's meta line adds beside the phase dot, from the sort and the
+ *  filters in use (Notion "Cards show what the current sort and filters are
+ *  about"). The rule table, first match wins:
+ *  | Budget filter on           | the budget ("$356M")                |
+ *  | Story order (Chronological)| where it is set ("2010", "c. 1943") |
+ *  | IMDb rating                | the year; the IMDb score on the art |
+ *  | Tomatometer                | the year; the RT score on the art   |
+ *  | anything else              | the year                            |
+ *  Andre, 2026-11-16: A–Z and By Phase keep the year (the bare dot read as
+ *  missing data), and a score sits on the poster's bottom-left corner, clear
+ *  of the card's edge (CardMark). The phase dot, "Series" and a coming
+ *  title's release badge always stay. The card keeps its height (CARD_SIZE). */
+export type CardFacet = 'year' | 'story' | 'imdb' | 'rt' | 'budget';
+export function cardFacet(sort: string, filters: { budget?: string } = {}): CardFacet {
+  if (filters.budget && filters.budget !== 'all') return 'budget';
+  if (sort === 'chrono') return 'story';
+  if (sort === 'imdb') return 'imdb';
+  if (sort === 'rt') return 'rt';
+  return 'year';
 }
 
 /** The card's text, on the canvas and in the phone's selected card (`pop`):
  *  the title, then one meta line: phase dot · year · "Series" (a title not out
  *  yet adds its release badge). What else it shows by sort and filter is
  *  Notion "Cards show what the current sort and filters are about". */
-export function CardText({ title, skipped = false, query, matchedChars, pop = false }: {
-  title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; pop?: boolean;
+export function CardText({ title, skipped = false, query, matchedChars, pop = false, touch = false, facet = 'year' }: {
+  title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; pop?: boolean; touch?: boolean; facet?: CardFacet;
 }) {
+  // The phone's canvas cards (Andre, 2026-11-16: the titles looked small next
+  // to the larger phone text): a 17px title and a 12px line, the selected
+  // card's sizes, in the same 75px under the poster (CARD_SIZE stays, so the
+  // layout doesn't move) by trimming the padding and leading.
+  const fit = touch && !pop;
   const I18N = window.MCU_I18N;
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   const dot = <span className="card-sep flex-none text-muted-foreground/60" aria-hidden="true">·</span>;
   const upcoming = !window.MCU_isReleased(title);
   return (
-    <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[5px] px-3.5 pt-2.5 pb-3' : 'gap-[4px] px-[12px] pt-[8px] pb-[8px]')}>
+    <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[5px] px-3.5 pt-2.5 pb-3' : fit ? 'gap-[3px] px-[11px] pt-[7px] pb-[5px]' : 'gap-[4px] px-[12px] pt-[8px] pb-[8px]')}>
       {/* Size and line height in one class: a font size after a separate
           leading class makes cn() drop the leading, and descenders clip. */}
-      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-[max(17px,1.0625rem)]/[1.3]' : 'text-[15px]/[1.3]', skipped && 'opacity-40')}>
+      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-[max(17px,1.0625rem)]/[1.3]' : fit ? 'text-[17px]/[1.2]' : 'text-[15px]/[1.3]', skipped && 'opacity-40')}>
         <Highlight text={I18N.titleName(title)} query={query}/>
       </div>
-      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-[max(13px,0.8125rem)] leading-[1.35]' : 'text-[11px] leading-[1.35]', skipped && 'opacity-40')}>
+      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-[max(13px,0.8125rem)] leading-[1.35]' : fit ? 'text-[12px] leading-[1.3]' : 'text-[11px] leading-[1.35]', skipped && 'opacity-40')}>
         <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
-        <span className="flex-none whitespace-nowrap">{title.year}</span>
+        {(facet === 'year' || facet === 'imdb' || facet === 'rt') && <span className="flex-none whitespace-nowrap">{title.year}</span>}
+        {facet === 'story' && title.story && <window.StoryYear title={title} className={cn('card-story min-w-0 text-[inherit] in-[.card]:text-[inherit] [&>svg]:size-[1em]')}/>}
+        {facet === 'budget' && <span className="card-budget flex-none whitespace-nowrap">{title.budget != null ? tr('budget.format', { n: title.budget }) : '—'}</span>}
         {/* A title not out yet carries its badge too, so it drops the
             separator to keep the line on one row. */}
         {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
@@ -264,4 +310,4 @@ export function CardText({ title, skipped = false, query, matchedChars, pop = fa
   );
 }
 
-Object.assign(window, { SpatialCard, CARD_SIZE, CardText, CardMark });
+Object.assign(window, { SpatialCard, CARD_SIZE, CardText, CardMark, cardFacet });

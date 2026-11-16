@@ -58,10 +58,12 @@ export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-
 // Share in it, the name gets back what
 // Share costs: more width, a smaller photo, tighter gaps.
 export const PILL = 'char-pill absolute bottom-3 left-1/2 z-45 flex w-[min(420px,calc(100%-24px))] -translate-x-1/2 animate-[mrise_220ms_cubic-bezier(.2,.8,.2,1)] flex-col gap-2 motion-reduce:animate-none has-[.cb-share]:w-[min(420px,calc(100%-16px))]';
-export const PILL_BAR = 'cp-bar flex items-center gap-1 rounded-full border bg-popover p-1 text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,.5),inset_0_0_0_1px_color-mix(in_oklab,var(--char-color)_30%,transparent)] backdrop-blur-md';
-export const PILL_WHO = 'cp-who flex min-w-0 flex-auto items-center gap-[9px] pr-1 in-[.char-pill:has(.cb-share)]:gap-[7px] in-[.char-pill:has(.cb-share)]:pr-0';
-export const PILL_PHOTO = cn(PHOTO, 'size-[38px] in-[.char-pill:has(.cb-share)]:size-[34px]');
-export const PILL_NAME = 'cp-name truncate text-sm font-medium text-foreground';
+export const PILL_BAR = 'cp-bar group/pill flex items-center gap-1 data-[fit=1]:gap-0.5 data-[fit=2]:gap-0.5 rounded-full border bg-popover p-1 text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,.5),inset_0_0_0_1px_color-mix(in_oklab,var(--char-color)_30%,transparent)] backdrop-blur-md';
+export const PILL_WHO = 'cp-who flex min-w-0 flex-auto items-center gap-[9px] pr-1 in-[.char-pill:has(.cb-share)]:gap-[7px] in-[.char-pill:has(.cb-share)]:pr-0 group-data-[fit=1]/pill:gap-[5px] group-data-[fit=2]/pill:gap-[5px]';
+export const PILL_PHOTO = cn(PHOTO, 'size-[38px] in-[.char-pill:has(.cb-share)]:size-[34px] group-data-[fit=1]/pill:size-[30px] group-data-[fit=2]/pill:size-[30px]');
+// The name fits by measuring (fitCharPill in app.tsx): tighter gaps and a
+// smaller photo first (data-fit 1), then two lines (2), never cut short.
+export const PILL_NAME = 'cp-name truncate text-sm font-medium text-foreground group-data-[fit=2]/pill:line-clamp-2 group-data-[fit=2]/pill:whitespace-normal';
 export const PILL_ACTOR = 'cp-actor truncate text-(length:--fs-xs) text-muted-foreground';
 export const PILL_GUIDE = cn('cp-guide', ROUND, 'size-[max(38px,2.375rem)] bg-[color-mix(in_oklab,var(--primary)_16%,transparent)] active:bg-[color-mix(in_oklab,var(--primary)_28%,transparent)]');
 /** Share in the pill: the stepper's borderless circle. */

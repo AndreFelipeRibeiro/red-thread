@@ -3,13 +3,15 @@
 //     canvas's cards (desktop Spatial, List, details, guide; phone List,
 //     Grid, details, guide, Settings, account).
 //   - Settings → Text size: Small / Default / Large scale the root
-//     (87.5 / 100 / 106.25% on desktop, 112.5% Large on phones), apply at once and survive a reload; a
+//     (87.5 / 100 / 106.25% on desktop; 100 / 112.5 / 125% on phones since
+//     Notion "Phone text sizes … a new Large"), apply at once and survive a reload; a
 //     Spatial card's text keeps its size; the choice stays on the device
 //     (not in the synced preferences). Controls grow with Large and never
 //     get smaller than their default at Small.
-//   - Phones set body text at 14px (15.75 at Large), the bottom nav at 12px
-//     (12.75 at Large, never under 12) and draw the search field at 13px
-//     (13.8 at Large) while its own font stays 16px or more, so iPhones
+//   - Phones set body text at 15.75px (14 at Small, 17.5 at Large), the
+//     bottom nav at 12.75px (12 at Small, 13.5 at Large, never under 12) and
+//     draw the search field at 13.8px (13 at Small, 14.6 at Large) while its
+//     own font stays 16px or more, so iPhones
 //     don't zoom in when it takes focus.
 //   - The desktop List keeps every cell inside its column (English and
 //     Portuguese, Default and Large, 1024–1440px), with all 12 columns at
@@ -196,7 +198,7 @@ const SCAN = () => {
       await page.reload(); await ready(page);
       st = await state(page);
       out.iosChoice = st;
-      expect(st.attr === null && st.root === 16, 'the choice did not win over iOS after a reload ' + JSON.stringify(st));
+      expect(st.attr === null && st.root === 18, 'the choice did not win over iOS after a reload ' + JSON.stringify(st));
       await ctx.close();
     }
     // A change in iOS while the app was in the background.
@@ -222,7 +224,7 @@ const SCAN = () => {
 
   // ---- Phone sizes: body, bottom nav, search ---------------------------------
   {
-    const want = { '': { root: 16, body: 14, nav: 12, shown: 13 }, large: { root: 18, body: 15.75, nav: 12.75, shown: 13.81 }, small: { root: 14, body: 12.25, nav: 12, shown: 13 } };
+    const want = { '': { root: 18, body: 15.75, nav: 12.75, shown: 13.81 }, large: { root: 20, body: 17.5, nav: 13.5, shown: 14.63 }, small: { root: 16, body: 14, nav: 12, shown: 13 } };
     for (const size of ['', 'large', 'small']) {
       const { ctx, page } = await open(PHONE, size ? `localStorage.setItem('mcu.textSize.v1', '${size}');` : '');
       await go(page, '?view=list');

@@ -243,10 +243,10 @@ function TitlesSubNav({ collection, setCollection }) {
   );
 }
 
-// A group's heading: its dot, its name, and its progress as one small mark
-// per released title, filled when seen, with "4/6" (Andre, 2026-11-15: the
-// full-width bar was too heavy; the band labels on Connections use the same
-// marks). A plain heading, not a fold: the list opens at Up next, and the
+// A group's heading: its dot, its name, and its progress as a short
+// segmented bar, one segment per released title, red when seen, with "4/6"
+// (Andre, 2026-11-15: the full-width bar was too heavy; 2026-11-16: round
+// marks read unlike every other meter, and like the dot before the name). A plain heading, not a fold: the list opens at Up next, and the
 // Unseen tab hides what you've seen. Progress counts released titles in the
 // catalogue's filters, not the tab (app.tsx `groupProgress`), so Seen does not
 // always read 100%. Hooks: `dl-group`, `dl-group-head`, `dl-group-count`,
@@ -267,13 +267,15 @@ function GroupHeader({ g, prog, phone = false }) {
         {has && (
           <span className="ml-1 inline-flex items-center gap-2" aria-hidden="true">
             {marks ? (
-              <span className="dl-group-marks inline-flex items-center gap-[3px]">
+              // 12px a segment up to 8, then sharing 96px (as wide as the
+              // plain bar past 24), so a long phase doesn't push the count off.
+              <span className="dl-group-marks seg flex h-1 items-center gap-[3px]" style={{ width: prog.released <= 8 ? prog.released * 15 - 3 : 120 }}>
                 {Array.from({ length: prog.released }, (_, i) => (
-                  <span key={i} className={cn('size-1.5 rounded-full @min-[84rem]:size-2', i < prog.seen ? 'bg-(--brand)' : 'bg-[color-mix(in_oklab,var(--muted-foreground)_32%,transparent)]')}/>
+                  <span key={i} className={cn('h-full min-w-0 flex-1 rounded-[1px]', i < prog.seen ? 'on bg-(--brand)' : 'bg-[color-mix(in_oklab,var(--muted-foreground)_32%,transparent)]')}/>
                 ))}
               </span>
             ) : (
-              <span className="dl-group-marks block h-1 w-24 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-(--brand)" style={{ width: Math.round((prog.seen / prog.released) * 100) + '%' }}/></span>
+              <span className="dl-group-marks block h-1 w-[120px] overflow-hidden rounded-[1px] bg-muted"><span className="block h-full rounded-full bg-(--brand)" style={{ width: Math.round((prog.seen / prog.released) * 100) + '%' }}/></span>
             )}
             <span className="text-xs font-medium text-muted-foreground tabular-nums">{prog.seen}/{prog.released}</span>
           </span>
@@ -406,8 +408,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                         </span>
                       </span>
                       <span className={cn('c-release text-foreground/85', FIG)} role="cell">{t.year}</span>
-                      <span className="c-imdb flex justify-end" role="cell">{t.imdb != null ? <ScoreChip kind="imdb" title={t} className="w-max @min-[84rem]:text-sm"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
-                      <span className="c-rt flex justify-end" role="cell">{t.rt != null ? <ScoreChip kind="rt" title={t} className="w-max @min-[84rem]:text-sm"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
+                      <span className="c-imdb flex justify-end" role="cell">{t.imdb != null ? <ScoreChip kind="imdb" title={t} className="w-max"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
+                      <span className="c-rt flex justify-end" role="cell">{t.rt != null ? <ScoreChip kind="rt" title={t} className="w-max"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
                       <span className="c-actions flex justify-end" role="cell" onClick={e => e.stopPropagation()}>
                         <window.TitleStatusActions title={t} upNext={isNext} className="dl-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-(--dl-btn) [&_.tsa-btn:not(.tsa-next)_svg]:size-(--dl-icon) [&_.tsa-next]:h-(--dl-btn) @min-[84rem]:[&_.tsa-next]:text-sm [&_.tsa-gap]:order-0"/>
                       </span>

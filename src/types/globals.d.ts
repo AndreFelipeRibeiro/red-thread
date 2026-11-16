@@ -139,6 +139,8 @@ declare global {
 
     // ---- Components and helpers, typed from their modules ------------------
     PosterArt: Poster['PosterArt'];
+    /** The poster fallback's initials for a title name (poster.tsx). */
+    MCU_monogram: Poster['monogram'];
     Portrait: Poster['Portrait'];
     castPortrait: Poster['castPortrait'];
     performerPortrait: Poster['performerPortrait'];
@@ -154,6 +156,7 @@ declare global {
     Toolbar: ToolbarModule['Toolbar'];
     SpatialCard: SpatialCardModule['SpatialCard'];
     CardText: SpatialCardModule['CardText'];
+    cardFacet: SpatialCardModule['cardFacet'];
     CardMark: SpatialCardModule['CardMark'];
     ZoomControl: SpatialChrome['ZoomControl'];
     BandLabel: SpatialChrome['BandLabel'];
@@ -262,6 +265,8 @@ declare global {
     ListGroupHeader: DesktopList['GroupHeader'];
     /** Keeps focus on a row as the List reorders; assigned inline. */
     MCU_followRowFocus(toRow: unknown): void;
+    /** Scrolls an element into view inside its own scroll area, never the page (mobile.tsx). */
+    MCU_scrollInArea(el: Element, block?: 'center' | 'start' | 'nearest', smooth?: boolean): void;
 
     UpNextTag: UpNext['UpNextTag'];
     UpNextHide: UpNext['UpNextHide'];

@@ -296,6 +296,35 @@ const ReleaseBadge = (props) => <window.ReleaseBadge {...props}/>;
 // (red edge, pill, filled check) and the list opens with that row in view;
 // progress and Up next themselves are the compact card docked above the
 // bottom bar (app.tsx).
+// Brings a row into view by scrolling its own scroll area only. iOS Safari's
+// scrollIntoView also scrolls the page when it can, which pushed the whole
+// app (header and logo) up past the top of the window at large text sizes
+// (Notion "Phone, Large text: Titles is taller than the window"). `block`:
+// 'center', 'start' or 'nearest', as scrollIntoView.
+function scrollInArea(el, block = 'nearest', smooth = false) {
+  let area = el.parentElement;
+  while (area && !(area.scrollHeight > area.clientHeight && /(auto|scroll)/.test(getComputedStyle(area).overflowY))) area = area.parentElement;
+  if (!area) return;
+  const a = area.getBoundingClientRect(), r = el.getBoundingClientRect();
+  let delta = 0;
+  if (block === 'center') delta = (r.top + r.height / 2) - (a.top + a.height / 2);
+  else if (block === 'start') delta = r.top - a.top;
+  else if (r.top < a.top) delta = r.top - a.top;
+  else if (r.bottom > a.bottom) delta = Math.min(r.bottom - a.bottom, r.top - a.top);
+  if (delta) area.scrollBy({ top: delta, behavior: smooth ? 'smooth' : 'auto' });
+}
+window.MCU_scrollInArea = scrollInArea;
+// The phone app is one screen tall and scrolls inside its areas, never as a
+// page. Anything that still scrolls the page (a focus or scroll call from
+// elsewhere) is put back, except while a text field has focus, when iOS
+// moves the page to keep it above the keyboard.
+window.addEventListener('scroll', () => {
+  if (!document.querySelector('.app.touch') || (window.scrollY === 0 && window.scrollX === 0)) return;
+  const f = document.activeElement;
+  if (f && (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA' || f.isContentEditable)) return;
+  window.scrollTo(0, 0);
+}, { passive: true });
+
 function MobileList({ header, currentId, titles, sort, sortDir, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, groupProgress, upNext }) {
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
@@ -317,7 +346,7 @@ function MobileList({ header, currentId, titles, sort, sortDir, onSelect, search
     // height yet, so it is measured here.
     const card = area.parentElement && area.parentElement.querySelector('.spatial-overall.docked');
     const dock = card ? card.offsetHeight + (parseFloat(getComputedStyle(card).bottom) || 0) : 0;
-    if (row.getBoundingClientRect().bottom > area.getBoundingClientRect().bottom - dock) row.scrollIntoView({ block: 'center' });
+    if (row.getBoundingClientRect().bottom > area.getBoundingClientRect().bottom - dock) scrollInArea(row, 'center');
     return undefined;
   });
   if (!titles.length) return <div className={S.SCROLL} ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
@@ -337,7 +366,7 @@ function MobileList({ header, currentId, titles, sort, sortDir, onSelect, search
               {g.items.map(t => {
                 n += 1;
                 return (
-                  <PhoneRow key={t.id} t={t} rank={n} ranked={ranked} lead={lead} upNext={t.id === upNextId}
+                  <PhoneRow key={t.id} t={t} rank={n} ranked={ranked} lead={lead} story={sort === 'chrono'} upNext={t.id === upNextId}
                     matchedChars={searchCharMatches ? searchCharMatches[t.id] : null} search={search} onSelect={onSelect}
                     seen={statusOf(t.id) === 'seen'} watch={!!markWatch && statusOf(t.id) === 'watchlist'} current={currentId === t.id}/>
                 );
@@ -538,7 +567,7 @@ function Sheet({ children, onClose, tall, label, labelledBy, describedBy, classN
 // whole poster with its corner mark, the title and the two meta lines. A tap
 // opens the details sheet, which holds Seen, Watchlist, the scores and the
 // cast; in a guide, Skip / Unskip stay under the card.
-function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, guideBadge, onGuideSkip, connections = 0 }) {
+function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, guideBadge, onGuideSkip, connections = 0, facet = 'year' }) {
   const { statusOf } = window.useCollection();
   if (!title) return null;
   const PosterArt = window.PosterArt;
@@ -549,9 +578,9 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, guideBadge, onGui
       <button className={S.FP.open} onClick={onOpenCast} aria-label={MI18N.titleName(title)}>
         <div className={S.FP.poster}>
           <PosterArt title={title}/>
-          <window.CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections} pop/>
+          <window.CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections} pop title={title} facet={facet}/>
         </div>
-        <window.CardText title={title} skipped={skipped} pop/>
+        <window.CardText title={title} skipped={skipped} pop facet={facet}/>
       </button>
       {guideSkip && (guideSkip.state === 'can' || skipped) && (
         <window.GuideSkipControl guide={guide} info={guideSkip} className="m-fp-skip px-3.5 pb-3" onDone={onGuideSkip}/>

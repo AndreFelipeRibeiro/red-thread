@@ -81,7 +81,7 @@ const seed = (states) => `localStorage.setItem('mcu.collection.v1', JSON.stringi
       kicker: hero ? hero.querySelector('.g-hero-kicker').textContent : null,
       cta: (document.querySelector('.g-cta') || {}).textContent || null,
       heroBar: !!(hero && hero.querySelector('.g-hero-bar')),
-      shelves: [...document.querySelectorAll('.g-shelf')].map(sh => sh.querySelectorAll('.g-gcard').length),
+      shelves: [...document.querySelectorAll('.g-shelf:not(.g-continue)')].map(sh => sh.querySelectorAll('.g-gcard').length),
       cards: cards.map(c => ({ name: nameOf(c), status: c.querySelector('.g-card-status').innerText.replace(/\n/g, ' '),
         follow: !!c.querySelector('.g-follow'), bar: !!c.querySelector('.g-card-bar'), h: Math.round(c.getBoundingClientRect().height),
         top: Math.round(c.getBoundingClientRect().top) })),
@@ -178,6 +178,18 @@ const seed = (states) => `localStorage.setItem('mcu.collection.v1', JSON.stringi
     });
     out['phone ' + label] = r;
     if (r.hScroll || r.stripOut || r.introOut || r.cardOut) err(`phone ${label}: ${JSON.stringify(r)}`);
+    // Show all (Andre, 2026-11-16: three across squeezed the cards and pushed
+    // Follow out): two a row, one under 360px, nothing past a card's edge.
+    await page.locator('.g-shelf-all').first().click();
+    await page.waitForTimeout(250);
+    r = await page.evaluate(() => {
+      const grid = document.querySelector('.g-shelf-row.grid');
+      if (!grid) return { grid: false };
+      return { cols: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+        cardOut: [...grid.querySelectorAll('.g-gcard')].filter(c => { const b = c.getBoundingClientRect(); return [...c.querySelectorAll('*')].some(e => e.getClientRects().length && e.getBoundingClientRect().right > b.right + 0.5); }).length };
+    });
+    out['phone ' + label + ' show all'] = r;
+    if (r.cols !== (w < 360 ? 1 : 2) || r.cardOut) err(`phone ${label} show all: ${JSON.stringify(r)}`);
     errors.forEach(e => err(`phone ${label} console: ` + e));
     await ctx.close();
   }

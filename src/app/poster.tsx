@@ -1,31 +1,94 @@
 import React from 'react';
 import type { Title } from '../types/catalog';
 
-// Abstract original poster art — no Marvel imagery, just stylized geometric compositions
-// Generates a deterministic SVG per title from its accent color and title hash
+// The fallback when a poster is missing or fails to load (Notion "Replace
+// the poster fallback art with something less generic", decision A ·
+// Monogram): a solid field in the official poster's main colour, the title's
+// initials in the display font, and the year. The same in dark and light,
+// because the poster is art.
 
-function hashCode(str: string) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  return Math.abs(h);
+// The initials (up to three characters) from a title's main name, the part
+// before ":":
+//   - the first letter of each word; hyphens and joined capitals split
+//     (Spider-Man → SM, WandaVision → WV); the, of, a, an, and, by and "Vol."
+//     are skipped;
+//   - a single-word main name adds the subtitle's first letter (Thor: The
+//     Dark World → TD, Avengers: Doomsday → AD);
+//   - a trailing number or season number is kept (Iron Man 2 → IM2, Loki:
+//     Season 2 → L2), letters giving way to it within the three;
+//   - punctuation is dropped (Thunderbolts* → T).
+// Read from the English title, so a poster looks the same in every language.
+const SKIP = new Set(['the', 'of', 'a', 'an', 'and', 'by', 'vol']);
+function words(s: string): string[] {
+  return s.replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/[\s-]+/)
+    .flatMap((w) => w.split(/(?<=\p{Ll})(?=\p{Lu})/u)).filter(Boolean);
+}
+function monogram(name: string): string {
+  let rest = name;
+  let num = '';
+  const season = rest.match(/\s*:?\s*Season\s+(\d+)\s*$/i);
+  if (season) { num = season[1]; rest = rest.slice(0, season.index); }
+  const colon = rest.indexOf(':');
+  const main = colon === -1 ? rest : rest.slice(0, colon);
+  const sub = colon === -1 ? '' : rest.slice(colon + 1);
+  let ws = words(main).filter((w) => !SKIP.has(w.toLowerCase()));
+  if (!num && ws.length && /^\d+$/.test(ws[ws.length - 1])) num = ws.pop() as string;
+  let letters = ws.map((w) => w[0].toUpperCase());
+  if (letters.length === 1) {
+    const first = words(sub).find((w) => !SKIP.has(w.toLowerCase()) && !/^\d+$/.test(w));
+    if (first) letters.push(first[0].toUpperCase());
+  }
+  letters = letters.slice(0, Math.max(1, 3 - num.length));
+  return letters.join('') + num;
 }
 
-function darken(hex: string, amt: number) {
-  const n = parseInt(hex.slice(1), 16);
-  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  r = Math.max(0, Math.floor(r * (1 - amt)));
-  g = Math.max(0, Math.floor(g * (1 - amt)));
-  b = Math.max(0, Math.floor(b * (1 - amt)));
-  return `rgb(${r},${g},${b})`;
+// The colour: the official poster's (tools/poster-colors.cjs), else the
+// title's accent (a new title before the next media sync).
+function posterColor(title: Title): string {
+  const media = window.MEDIA;
+  return (media && media.poster_color && media.poster_color[title.id]) || title.accent;
 }
 
-function lighten(hex: string, amt: number) {
-  const n = parseInt(hex.slice(1), 16);
-  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  r = Math.min(255, Math.floor(r + (255 - r) * amt));
-  g = Math.min(255, Math.floor(g + (255 - g) * amt));
-  b = Math.min(255, Math.floor(b + (255 - b) * amt));
-  return `rgb(${r},${g},${b})`;
+// The Monogram's colour (Andre, 2026-11-16: the posters' own colours were
+// mostly navy, teal and maroon, so a row of fallbacks looked the same). Nine
+// hues around the wheel (no yellow-green: it turns olive on the dark field),
+// a fixed one per title from its place in release order, stepping four hues
+// at a time so neighbours are always far apart.
+// Fixed, not random: the same title looks the same on every visit and device.
+// Muted, as the first version was (Andre, 2026-11-16: the saturated set was
+// too loud). Dark: a deep field with light initials. Light: a near-white
+// tile with coloured initials and a hairline edge in its hue (Andre's pick of
+// three; pastel fields and the dark field both sat badly on the light page).
+// The initials are toned down to about 3.4:1 (light) and 3.9:1 (dark) on
+// their field in every hue: above the 3:1 for large text and graphics (they
+// are artwork; the image is named after the title for screen readers).
+// The poster's own colour stays the background while a real poster loads.
+const MONO_HUES = [25, 60, 145, 185, 220, 255, 290, 325, 355];
+function monoHue(title: Title): number {
+  const i = window.TITLES ? window.TITLES.findIndex((t) => t.id === title.id) : -1;
+  const n = i >= 0 ? i : [...title.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  return MONO_HUES[(n * 4) % MONO_HUES.length];
+}
+
+function MonogramPoster({ title }: { title: Title }) {
+  const text = monogram(title.title);
+  return (
+    // An image like the poster it stands in for, named the same way as that
+    // poster's alt text; its letters and year are artwork, not text to read.
+    // Sized from its own width (container units), so it reads the same from
+    // a 32px thumbnail to the details. 2:3 when the box around it has no
+    // height of its own. The centring sits on an inner layer, since the
+    // thumbnail recipes set their first child's display.
+    <div className="poster-mono @container relative size-full overflow-hidden bg-[oklch(0.955_0.018_var(--mh))] shadow-[inset_0_0_0_1px_oklch(0.85_0.04_var(--mh))] dark:bg-[oklch(0.33_0.06_var(--mh))] dark:shadow-none"
+      role="img" aria-label={window.MCU_I18N.titleName(title)}
+      style={{ '--mh': monoHue(title), aspectRatio: '2 / 3' } as React.CSSProperties}>
+      <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+        <span className="poster-mono-initials font-display leading-none tracking-[-0.02em] whitespace-nowrap text-[oklch(0.6_0.07_var(--mh))] dark:text-[oklch(0.66_0.06_var(--mh))]"
+          style={{ fontSize: text.length > 2 ? '40cqw' : '46cqw' }}>{text}</span>
+      </span>
+      <span aria-hidden="true" className="poster-mono-year absolute top-[max(6px,8.5cqw)] left-[max(6px,8.5cqw)] text-[12px] leading-none font-semibold text-black/45 tabular-nums dark:text-white/55 @max-[64px]:hidden">{title.year}</span>
+    </div>
+  );
 }
 
 // Image addresses that failed to load this session. Shared, so a card that
@@ -41,7 +104,8 @@ function useImageFallback(url: string | null | undefined) {
 }
 
 // A real poster when media metadata has one and it loads; otherwise (no
-// address, or the image fails) the generated art below.
+// address, or the image fails) the Monogram above. The box takes the poster's
+// colour while the image loads.
 function PosterArt({ title }: { title: Title }) {
   const media = window.MEDIA;
   const local = media && media.local_posters && media.local_posters[title.id];
@@ -52,122 +116,12 @@ function PosterArt({ title }: { title: Title }) {
   const [failed, onError] = useImageFallback(url);
   if (url && !failed) {
     return (
-      <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:'var(--muted)'}}>
+      <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:`color-mix(in oklab, ${posterColor(title)} 35%, #121214)`}}>
         <img src={url} alt={window.MCU_I18N.titleName(title)} loading="lazy" onError={onError} style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
       </div>
     );
   }
-  return <GeneratedPoster title={title}/>;
-}
-
-// 6 abstract poster styles, picked deterministically per title
-function GeneratedPoster({ title }: { title: Title }) {
-  const h = hashCode(title.id);
-  const variant = h % 6;
-  const accent = title.accent;
-  const dark = darken(accent, 0.55);
-  const mid = darken(accent, 0.25);
-  const light = lighten(accent, 0.3);
-  const W = 200, H = 300; // 2:3, the poster box everywhere
-  const gid = 'g_' + title.id.replace(/[^a-z0-9]/gi, '');
-
-  const initial = title.title.split(/[: ]/)[0].slice(0, 1).toUpperCase();
-  const phaseRoman = ['I','II','III','IV','V','VI'][title.phase - 1];
-
-  let art;
-  if (variant === 0) {
-    // concentric rings
-    art = (
-      <g>
-        {[0,1,2,3,4].map(i => (
-          <circle key={i} cx={W/2} cy={H*0.42} r={20 + i*22} fill="none" stroke={accent} strokeWidth={1.2} opacity={0.18 + i*0.12}/>
-        ))}
-        <circle cx={W/2} cy={H*0.42} r={14} fill={light}/>
-      </g>
-    );
-  } else if (variant === 1) {
-    // diagonal beams
-    art = (
-      <g>
-        {[0,1,2,3,4,5].map(i => (
-          <polygon key={i} points={`0,${i*40} ${W},${i*40 - 60} ${W},${i*40 - 40} 0,${i*40 + 20}`} fill={accent} opacity={0.08 + (i%2)*0.1}/>
-        ))}
-        <circle cx={W*0.7} cy={H*0.35} r={42} fill={dark} stroke={light} strokeWidth={1.5}/>
-      </g>
-    );
-  } else if (variant === 2) {
-    // shattered grid
-    art = (
-      <g>
-        {Array.from({length: 14}).map((_, i) => {
-          const r = ((h + i*97) % 100) / 100;
-          const x = (i % 5) * 40 + 4;
-          const y = Math.floor(i / 5) * 50 + 20;
-          return <rect key={i} x={x} y={y} width={36 + r*4} height={42} fill={accent} opacity={0.05 + r*0.25} transform={`rotate(${(r-0.5)*8} ${x+18} ${y+20})`}/>;
-        })}
-      </g>
-    );
-  } else if (variant === 3) {
-    // city skyline silhouette
-    art = (
-      <g>
-        <rect x="0" y="0" width={W} height={H*0.55} fill={`url(#${gid}_sky)`}/>
-        <circle cx={W*0.75} cy={H*0.3} r={28} fill={light} opacity={0.85}/>
-        {Array.from({length: 18}).map((_, i) => {
-          const bh = 30 + ((h + i*47) % 80);
-          return <rect key={i} x={i*12} y={H*0.55 - bh} width={11} height={bh + H*0.5} fill={dark}/>;
-        })}
-      </g>
-    );
-  } else if (variant === 4) {
-    // radial burst
-    art = (
-      <g>
-        {Array.from({length: 24}).map((_, i) => {
-          const a = (i / 24) * Math.PI * 2;
-          const x2 = W/2 + Math.cos(a) * 200;
-          const y2 = H*0.42 + Math.sin(a) * 200;
-          return <line key={i} x1={W/2} y1={H*0.42} x2={x2} y2={y2} stroke={accent} strokeWidth={1} opacity={0.15 + (i%3)*0.08}/>;
-        })}
-        <circle cx={W/2} cy={H*0.42} r={36} fill={dark} stroke={light} strokeWidth={2}/>
-      </g>
-    );
-  } else {
-    // stacked horizontal bands
-    art = (
-      <g>
-        {[0,1,2,3,4,5,6,7].map(i => (
-          <rect key={i} x="0" y={i*22 + 30} width={W} height={14} fill={accent} opacity={0.08 + ((h+i)%5)*0.06}/>
-        ))}
-        <polygon points={`${W/2},40 ${W*0.78},${H*0.38} ${W/2},${H*0.55} ${W*0.22},${H*0.38}`} fill={light} opacity="0.85"/>
-      </g>
-    );
-  }
-
-  return (
-    // An image like the poster it stands in for, named the same way as that
-    // poster's alt text; its letters are artwork, not text to read out.
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" width="100%" height="100%"
-      role="img" aria-label={window.MCU_I18N.titleName(title)}>
-      <defs>
-        <linearGradient id={`${gid}_bg`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={dark}/>
-          <stop offset="100%" stopColor="#0a0c14"/>
-        </linearGradient>
-        <linearGradient id={`${gid}_sky`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={mid}/>
-          <stop offset="100%" stopColor={dark}/>
-        </linearGradient>
-      </defs>
-      <rect x="0" y="0" width={W} height={H} fill={`url(#${gid}_bg)`}/>
-      {art}
-      {/* big initial */}
-      <text x={W/2} y={H*0.78} textAnchor="middle" fontFamily="'Bebas Neue', Impact, sans-serif" fontSize="120" fill={light} opacity="0.18" letterSpacing="-4" aria-hidden="true">{initial}</text>
-      {/* phase roman numeral */}
-      <text x={W - 10} y={H - 12} textAnchor="end" fontFamily="ui-monospace, monospace" fontSize="10" fill={light} opacity="0.55" letterSpacing="2" aria-hidden="true">PHASE {phaseRoman}</text>
-      <rect x="0" y="0" width={W} height={H} fill="none" stroke={light} strokeOpacity="0.08" strokeWidth="1"/>
-    </svg>
-  );
+  return <MonogramPoster title={title}/>;
 }
 
 // A cast portrait: the photo, or the character's initials if there is none
@@ -217,6 +171,7 @@ function performerPortrait(name: string, repCharId: string) {
 }
 
 window.PosterArt = PosterArt;
+window.MCU_monogram = monogram;
 window.Portrait = Portrait;
 window.castPortrait = castPortrait;
 window.performerPortrait = performerPortrait;
@@ -225,4 +180,4 @@ window.performerPortrait = performerPortrait;
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { PosterArt, Portrait, castPortrait, performerPortrait };
+export { PosterArt, Portrait, castPortrait, performerPortrait, monogram };

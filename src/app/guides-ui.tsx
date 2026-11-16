@@ -366,6 +366,49 @@ function useFollowedGuides() {
   }, []);
   return MCU_GUIDE.followed();
 }
+// Signed-in sync (Guides 2/4): the list travels with the account's
+// preferences (settings.tsx, `guidesFollowed`), the account's copy winning on
+// sign-in like every other preference.
+Object.assign(MCU_GUIDE, {
+  followedList() { if (!followedCache) followedCache = readFollowed(); return followedCache.slice(); },
+  setFollowedList(list) {
+    if (!Array.isArray(list)) return;
+    const clean = list.filter(x => x && typeof x.id === 'string' && typeof x.at === 'number' && MCU_GUIDE.get(x.id));
+    if (JSON.stringify(clean) === JSON.stringify(MCU_GUIDE.followedList())) return;
+    writeFollowed(clean);
+  },
+  onFollowed(fn) { window.addEventListener(FOLLOWED_EVENT, fn); return () => window.removeEventListener(FOLLOWED_EVENT, fn); },
+});
+
+// Auto-follow and auto-unfollow (Guides 2/4). Marking a stop seen from inside
+// a guide (the open guide's list, its Spatial stops, its bulk action) follows
+// that guide; the status toast then says so, and its Undo stops following
+// (the seen mark stays). Seen marks made anywhere else, and the "What have
+// you seen?" picker, never follow a guide. A followed guide whose essential
+// stops are now all seen stops being followed on its own, so the next one
+// takes focus. Runs before the toast's own listener (registered at load), and
+// leaves `autoFollow` on the event for it.
+window.onStatusChange((e) => {
+  if (!e) return;
+  const before = (id) => (e.states && e.states[id]) || 'none';
+  const afterMap = e.bulk ? (e.after || {}) : Object.assign({}, e.states, { [e.title.id]: e.to });
+  const after = (id) => afterMap[id] || 'none';
+  MCU_GUIDE.followed().forEach(id => {
+    const g = MCU_GUIDE.get(id);
+    if (g && !MCU_GUIDE.progress(g, before).complete && MCU_GUIDE.progress(g, after).complete) {
+      MCU_GUIDE.unfollow(id);
+      e.finishedGuide = id;
+    }
+  });
+  const open = window.MCU_activeGuideId ? MCU_GUIDE.get(window.MCU_activeGuideId) : null;
+  if (!open || e.picker || MCU_GUIDE.isFollowed(open.id) || e.finishedGuide === open.id) return;
+  const seenIds = e.bulk ? (e.to === 'seen' ? e.ids : (e.seenIds || [])) : (e.to === 'seen' ? [e.title.id] : []);
+  if (!seenIds.length || MCU_GUIDE.progress(open, after).complete) return;
+  const stopIds = MCU_GUIDE.stops(open, true).map(s => s.id);
+  if (!seenIds.some(id => stopIds.indexOf(id) !== -1)) return;
+  MCU_GUIDE.follow(open.id);
+  e.autoFollow = open.id;
+});
 
 function GuideArt({ guide, size = 44, round = false, className = '' }) {
   return (
@@ -398,7 +441,7 @@ function GuideMenuProgress({ guide }) {
 // The Guides menu: grouped like the mockups (Coming up, Stories, Characters,
 // Animation), each guide with its size and progress. Shared by the desktop
 // popover and the phone sheet.
-const GUIDE_GROUPS = ['coming', 'stories', 'characters', 'animation'];
+const GUIDE_GROUPS = ['coming', 'stories', 'characters', 'teams', 'corners', 'animation'];
 // A guide in the menu (and in "Part of"): the menu item's look.
 const ROW = cn('g-row flex min-h-[max(56px,3.5rem)] w-full cursor-pointer items-center gap-3 rounded-md px-2 py-[7px] text-left hover:bg-accent hover:text-accent-foreground', FOCUS);
 const ROW_TEXT = 'g-row-text flex min-w-0 flex-1 flex-col';
@@ -458,6 +501,9 @@ const shelfGroup = (g) => (g.group === 'animation' ? 'corners' : (g.group || 'st
 function guideShelves(excludeId) {
   const list = MCU_GUIDE.all().filter(g => g.id !== excludeId);
   const by = SHELF_ORDER.map(key => ({ key, items: list.filter(g => shelfGroup(g) === key) }));
+  // Event guides not in the hero sit with the stories until there are 4.
+  const coming = by.find(sh => sh.key === 'coming'), stories = by.find(sh => sh.key === 'stories');
+  if (coming.items.length && coming.items.length < 4) { stories.items = stories.items.concat(coming.items); coming.items = []; }
   const full = by.filter(sh => sh.items.length >= 4);
   const rest = by.filter(sh => sh.items.length && sh.items.length < 4).flatMap(sh => sh.items);
   if (!rest.length) return full;
@@ -470,7 +516,8 @@ const shelfLabel = (key) => gtr(key === 'all' ? 'guide.shelf.all' : key === 'mor
 // What a guide is, in one word ("Story", "Character"), for kickers.
 const guideType = (g) => gtr('guide.type.' + shelfGroup(g));
 
-const POSTER = cn('g-poster relative block overflow-hidden bg-muted', THUMB);
+// Guide posters show their own year chip, so the fallback's year steps aside.
+const POSTER = cn('g-poster relative block overflow-hidden bg-muted [&_.poster-mono-year]:hidden', THUMB);
 // The release year over a poster's top-left corner (decorative: the title's
 // name is read out instead).
 function PosterYear({ title, className = '' }) {
@@ -609,8 +656,9 @@ function GuideCard({ guide, onPick, className = '' }) {
   const pct = p.ess.released ? Math.round(p.ess.seen / p.ess.released * 100) : 0;
   const [said, setSaid] = React.useState('');
   return (
-    <article className={cn('g-gcard relative flex flex-col gap-2.5 rounded-[14px] border bg-card p-3 text-card-foreground shadow-xs transition-colors hover:bg-muted/40', followed && 'followed', p.complete && 'done', className)}>
-      <div className="g-card-posters grid grid-cols-3 gap-2" aria-hidden="true">
+    <article className={cn('g-gcard @container/gcard relative flex flex-col gap-2.5 rounded-[14px] border bg-card p-3 text-card-foreground shadow-xs transition-colors hover:bg-muted/40', followed && 'followed', p.complete && 'done', className)}>
+      {/* A narrow card's posters are too small for their years. */}
+      <div className="g-card-posters grid grid-cols-3 gap-2 @max-[180px]/gcard:gap-1.5 @max-[180px]/gcard:[&_.g-year]:hidden" aria-hidden="true">
         {posters.map(s => (
           <span key={s.id} className={cn(POSTER, 'aspect-[2/3] rounded-md')}>
             <window.PosterArt title={s.title}/>
@@ -622,14 +670,20 @@ function GuideCard({ guide, onPick, className = '' }) {
         <button type="button" className="g-row g-card-open cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-[14px] focus-visible:after:ring-3 focus-visible:after:ring-ring/50" onClick={() => onPick(guide.id)}>{name}</button>
       </h3>
       <p className="g-card-size m-0 -mt-1 text-xs text-muted-foreground">{MCU_GUIDE.size(guide)}</p>
-      <div className="g-card-status mt-auto flex h-7 items-center gap-2.5 text-xs text-muted-foreground tabular-nums">
+      {/* A narrow card (two a row on a phone) stacks the row: the bar or the
+          count on its own line, then the label or Follow. */}
+      <div className="g-card-status mt-auto flex h-7 items-center gap-2.5 text-xs text-muted-foreground tabular-nums @max-[180px]/gcard:h-auto @max-[180px]/gcard:min-h-7 @max-[180px]/gcard:flex-wrap @max-[180px]/gcard:gap-y-2">
         {p.complete ? (
           <span className="inline-flex items-center gap-1.5 [&_svg]:size-3"><window.CheckIcon/>{gtr('guide.card.allSeen', { n: p.ess.released })}</span>
         ) : followed ? <>
-          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true"><span className="block h-full rounded-full bg-(--brand)" style={{ width: pct + '%' }}/></span>
-          <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released }) + ' · ' + gtr('guide.following')}>{gtr('guide.card.following', { seen: p.ess.seen, n: p.ess.released })}</span>
+          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-border @max-[180px]/gcard:basis-full" aria-hidden="true"><span className="block h-full rounded-full bg-(--brand)" style={{ width: pct + '%' }}/></span>
+          <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released }) + ' · ' + gtr('guide.following')}>
+            {/* Narrow: the count alone (the bar already says it is followed). */}
+            <span className="@max-[180px]/gcard:hidden" aria-hidden="true">{gtr('guide.card.following', { seen: p.ess.seen, n: p.ess.released })}</span>
+            <span className="hidden @max-[180px]/gcard:inline" aria-hidden="true">{gtr('guide.seenOf', { seen: p.ess.seen, n: p.ess.released })}</span>
+          </span>
         </> : <>
-          <span className="truncate">{p.ess.seen ? gtr('guide.seenOf', { seen: p.ess.seen, n: p.ess.released }) : gtr('guide.card.noneSeen')}</span>
+          <span className="truncate @max-[180px]/gcard:basis-full">{p.ess.seen ? gtr('guide.seenOf', { seen: p.ess.seen, n: p.ess.released }) : gtr('guide.card.noneSeen')}</span>
           <span className="flex-1"/>
           <Button variant="outline" size="sm" className="g-follow relative z-2 h-7 gap-1 rounded-full px-2.5 text-[13px] font-semibold in-[.app.touch]:h-9 in-[.app.touch]:px-3 [&_svg]:size-3"
             aria-label={gtr('guide.followAria', { name })}
@@ -644,6 +698,125 @@ function GuideCard({ guide, onPick, className = '' }) {
   );
 }
 
+// A shelf's ‹ › (desktop): scrolls the row by a view.
+function shelfArrow(row, dir, label) {
+  const scroll = () => {
+    const el = row.current;
+    if (!el) return;
+    const still = window.MCU_MOTION && window.MCU_MOTION.reduced();
+    el.scrollBy({ left: dir * el.clientWidth, behavior: still ? 'auto' : 'smooth' });
+  };
+  return (
+    <Button key={dir} variant="outline" size="icon" className="g-shelf-arrow size-7 rounded-full p-0 in-[.app.touch]:hidden [&_svg]:size-3.5" aria-label={label} onClick={scroll}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={dir < 0 ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6'}/></svg>
+    </Button>
+  );
+}
+
+// The Continue shelf (Guides 2/4; Figma 31:424, phone 31:777): right under
+// the hero, the followed guides other than the one in the hero, the most
+// recent activity first, finished ones left out. Each card: the kicker
+// ("Following · Character"), the name, the next stop ("Stop 6 of 7: …"),
+// progress, "Open guide →", and the next poster with Mark seen attached (the
+// hero's object; "Seen" on phones). "Manage" opens the guide switcher's list.
+// Hidden when nothing else is followed. Hooks: `g-continue`, `g-ccard`,
+// `g-ccard-open`, `g-cta`, `g-manage`.
+function ContinueCard({ guide, onPick }) {
+  const { statusOf, states, toggleSeen } = window.useCollection();
+  const p = MCU_GUIDE.progress(guide, statusOf);
+  const next = MCU_GUIDE.next(guide, false, statusOf);
+  const total = MCU_GUIDE.stops(guide, false).length;
+  const name = MCU_GUIDE.name(guide);
+  const pct = p.ess.released ? Math.round(p.ess.seen / p.ess.released * 100) : 0;
+  const mark = (t) => {
+    const was = statusOf(t.id);
+    toggleSeen(t.id);
+    window.MCU_emitStatusChange({ title: t, from: was, to: was === 'seen' ? 'none' : 'seen', states });
+  };
+  return (
+    <article className="g-ccard relative flex min-h-[176px] items-stretch gap-4 rounded-[14px] border bg-card p-4 pr-3 text-card-foreground shadow-xs transition-colors hover:bg-muted/40 in-[.app.touch]:min-h-0 in-[.app.touch]:gap-3 in-[.app.touch]:p-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 py-1">
+        <p className="m-0 text-xs font-semibold tracking-[.04em] text-muted-foreground uppercase">{gtr('guide.hero.following', { kind: guideType(guide) })}</p>
+        <h3 className="m-0 text-xl leading-[1.2] font-semibold tracking-tight text-foreground in-[.app.touch]:text-lg">
+          <button type="button" className="g-row g-ccard-open cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-[14px] focus-visible:after:ring-3 focus-visible:after:ring-ring/50" onClick={() => onPick(guide.id)}>{name}</button>
+        </h3>
+        {next && <p className="m-0 line-clamp-2 text-sm leading-[1.4] text-muted-foreground">{gtr('guide.continue.stop', { i: next.n, n: total, title: GI18N.titleName(next.title) })}</p>}
+        <span className="flex-1"/>
+        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true"><span className="block h-full rounded-full bg-(--brand)" style={{ width: pct + '%' }}/></span>
+          <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}</span>
+        </div>
+        <span className="mt-1.5 text-[13px] font-medium text-foreground in-[.app.touch]:hidden" aria-hidden="true">{gtr('guide.continue.open')}</span>
+      </div>
+      {next && (
+        <div className="g-hstop next relative z-2 flex w-[104px] flex-none flex-col self-start overflow-hidden rounded-lg border-2 border-(--brand) bg-card shadow-sm in-[.app.touch]:w-[84px]">
+          <span className={cn(POSTER, 'aspect-[2/3] w-full')}>
+            <window.PosterArt title={next.title}/>
+            <PosterYear title={next.title} className="in-[.app.touch]:hidden"/>
+            <span className="absolute top-1 right-1 z-2 rounded-full bg-(--brand) px-1.5 py-px text-[10px] leading-[1.4] font-semibold whitespace-nowrap text-(--brand-foreground)">{gtr('upnext.label')}</span>
+          </span>
+          <button type="button" className={cn('g-cta flex h-9 w-full cursor-pointer items-center justify-center gap-1 bg-(--brand) text-xs font-semibold text-(--brand-foreground) hover:bg-(--brand)/90 focus-visible:ring-inset [&_svg]:size-3.5', FOCUS)}
+            onClick={() => mark(next.title)} aria-label={gtr('status.markSeenAria', { title: GI18N.titleName(next.title) })}>
+            <window.CheckIcon/>
+            <span className="in-[.app.touch]:hidden">{gtr('status.markSeen')}</span>
+            <span className="hidden in-[.app.touch]:inline">{gtr('guide.continue.seen')}</span>
+          </button>
+        </div>
+      )}
+    </article>
+  );
+}
+function ManageFollowed({ phone, onPick }) {
+  const [open, setOpen] = React.useState(false);
+  const pick = (id) => { setOpen(false); onPick(id); };
+  const btn = 'g-manage h-7 px-2 text-[13px] font-medium text-muted-foreground hover:text-foreground';
+  if (phone) {
+    const Sheet = window.Sheet;
+    return <>
+      <Button variant="ghost" size="sm" className={btn} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>{gtr('guide.continue.manage')}</Button>
+      {open && <Sheet onClose={() => setOpen(false)} label={gtr('guide.switchTitle')}>
+        <div className="g-switch-sheet -mx-2"><GuideSwitchList currentId={null} onPick={pick} onAll={() => setOpen(false)}/></div>
+      </Sheet>}
+    </>;
+  }
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), btn)}>{gtr('guide.continue.manage')}</PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} aria-label={gtr('guide.switchTitle')}
+        className="g-pop g-switch-pop max-h-[min(560px,calc(100vh-160px))] w-[380px] gap-0 overflow-y-auto p-1.5">
+        <GuideSwitchList currentId={null} onPick={pick} onAll={() => setOpen(false)}/>
+      </PopoverContent>
+    </Popover>
+  );
+}
+function ContinueShelf({ heroId, onPick, phone }) {
+  const { statusOf } = window.useCollection();
+  useGuideSkips();
+  useFollowedGuides();
+  const list = MCU_GUIDE.followed().map(MCU_GUIDE.get)
+    .filter(g => g && g.id !== heroId && !MCU_GUIDE.finished(g, statusOf) && MCU_GUIDE.next(g, false, statusOf));
+  const row = React.useRef(null);
+  if (!list.length) return null;
+  return (
+    <section className="g-shelf g-continue flex flex-col gap-3.5" aria-labelledby="g-shelf-continue">
+      <div className="g-shelf-head flex items-center gap-2.5">
+        <h2 id="g-shelf-continue" className="m-0 text-xs font-semibold tracking-[.04em] text-muted-foreground uppercase">{gtr('guide.continue.title')}</h2>
+        <span className="text-xs text-muted-foreground">{gtr('guide.continue.count', { n: list.length })}</span>
+        <span className="flex-1"/>
+        <ManageFollowed phone={phone} onPick={onPick}/>
+        {list.length > 2 && <>{shelfArrow(row, -1, gtr('guide.shelf.prev'))}{shelfArrow(row, 1, gtr('guide.shelf.next'))}</>}
+      </div>
+      <div ref={row} className="g-shelf-row flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden in-[.app.touch]:-mx-3.5 in-[.app.touch]:gap-3 in-[.app.touch]:scroll-px-3.5 in-[.app.touch]:px-3.5">
+        {list.map(g => (
+          <div key={g.id} className="w-[calc((100%-1rem)/2)] flex-none snap-start max-[700px]:w-full in-[.app.touch]:w-[min(84vw,320px)]">
+            <ContinueCard guide={g} onPick={onPick}/>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // A shelf: its name, and with more than 4 guides "See all" and ‹ › (desktop).
 // The row scrolls sideways, 4 cards to a view on desktop and with the next
 // card peeking on phones; "See all" lays the whole shelf out as a grid.
@@ -652,17 +825,7 @@ function GuideShelf({ shelf, onPick }) {
   const [all, setAll] = React.useState(false);
   const many = shelf.items.length > 4;
   const id = 'g-shelf-' + shelf.key;
-  const scroll = (dir) => {
-    const el = row.current;
-    if (!el) return;
-    const still = window.MCU_MOTION && window.MCU_MOTION.reduced();
-    el.scrollBy({ left: dir * el.clientWidth, behavior: still ? 'auto' : 'smooth' });
-  };
-  const arrow = (dir, label) => (
-    <Button variant="outline" size="icon" className="g-shelf-arrow size-7 rounded-full p-0 in-[.app.touch]:hidden [&_svg]:size-3.5" aria-label={label} onClick={() => scroll(dir)}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={dir < 0 ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6'}/></svg>
-    </Button>
-  );
+  const arrow = (dir, label) => shelfArrow(row, dir, label);
   return (
     <section className="g-shelf flex flex-col gap-3.5" aria-labelledby={id}>
       <div className="g-shelf-head flex items-center gap-2.5">
@@ -672,7 +835,10 @@ function GuideShelf({ shelf, onPick }) {
         {many && !all && <>{arrow(-1, gtr('guide.shelf.prev'))}{arrow(1, gtr('guide.shelf.next'))}</>}
       </div>
       <div ref={row} className={cn('g-shelf-row',
-        all ? 'grid grid-cols-4 gap-4 max-[900px]:grid-cols-3 in-[.app.touch]:grid-cols-2 in-[.app.touch]:gap-3 max-[359px]:in-[.app.touch]:grid-cols-1'
+        // Phones: two a row, one under 360px (Andre, 2026-11-16: three across
+        // squeezed the names and pushed Follow out of the card). The width
+        // steps come after max-[900px], so they win on a narrow screen.
+        all ? 'grid grid-cols-4 gap-4 max-[900px]:grid-cols-3 max-[600px]:grid-cols-2 max-[359px]:grid-cols-1 in-[.app.touch]:gap-3'
           : 'flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden in-[.app.touch]:-mx-3.5 in-[.app.touch]:gap-3 in-[.app.touch]:scroll-px-3.5 in-[.app.touch]:px-3.5')}>
         {shelf.items.map(g => (
           <GuideCard key={g.id} guide={g} onPick={onPick}
@@ -705,6 +871,7 @@ function GuidesPage({ onPick, inMain = false }) {
       <div className="mx-auto flex max-w-[1120px] flex-col gap-11 in-[.app.touch]:gap-7">
         <h1 id="g-page-title" className="story-sr">{gtr('guide.menuTitle')}</h1>
         {hero && <GuidesHero guide={hero} followed={MCU_GUIDE.isFollowed(hero.id)} onPick={onPick}/>}
+        <ContinueShelf heroId={hero ? hero.id : null} onPick={onPick} phone={inMain}/>
         {shelves.map(sh => <GuideShelf key={sh.key} shelf={sh} onPick={onPick}/>)}
       </div>
     </div>
@@ -750,21 +917,22 @@ function GuideMeter({ guide, includeOptional, className = '', bulk = false }) {
 //   an icon button, the stepper and ×.
 // It keeps the banner's hooks (guide-banner, cb-step, cb-pos, cb-close,
 // g-optcheck) so the stepper and close read the same everywhere.
-function GuideSegments({ guide, statusOf, next, done = false }) {
+function GuideSegments({ guide, statusOf, done = false }) {
   // One segment per essential stop that counts (released, not skipped), in
-  // order: seen ones lit (green once the guide is complete), the next one
-  // outlined.
+  // order: seen ones red, as in every other meter (green once the guide is
+  // complete), the rest the plain track. Andre, 2026-11-16: the dark dashes
+  // with an outlined next one read as a different kind of meter.
   const segs = MCU_GUIDE.stops(guide, false)
     .filter(s => window.MCU_isReleased(s.title) && !MCU_GUIDE.skippedNow(guide, s.id, statusOf))
     .map(s => {
-      const on = statusOf(s.id) === 'seen', cur = !on && next && next.id === s.id;
-      return <i key={s.id} className={cn('flex-1 rounded-[2px] transition-[background-color,box-shadow] duration-[260ms] motion-reduce:transition-none',
-        done ? 'bg-(--status-seen)' : on ? 'on bg-primary' : cur ? 'cur bg-transparent shadow-[inset_0_0_0_1px_var(--foreground)]' : 'bg-border')}/>;
+      const on = statusOf(s.id) === 'seen';
+      return <i key={s.id} className={cn('flex-1 rounded-[2px] transition-[background-color] duration-[260ms] motion-reduce:transition-none',
+        done ? 'bg-(--status-seen)' : on ? 'on bg-(--brand)' : 'bg-input')}/>;
     });
   return <span className="gm-segs flex h-1 gap-[3px]" aria-hidden="true">{segs}</span>;
 }
 
-function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOptional, stepIndex, stepCount, onOpenNext, onPrev, onNext, onClose }) {
+function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOptional, stepIndex, stepCount, onOpenNext, onSeenNext, onPrev, onNext, onClose }) {
   window.useI18n();
   const { statusOf, states } = window.useCollection();
   useGuideSkips();
@@ -834,13 +1002,14 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
                 <span className="gm-ntitle mt-0.5 truncate text-sm font-semibold">{GI18N.titleName(next.title)}</span>
               </span>
             </button>
-            <window.TitleStatusActions title={next.title} variant="inline" className={tsaCls(false)}/>
+            {/* Seen with the camera on another stop glides back to this one. */}
+            <span className="contents" onClickCapture={() => onSeenNext && onSeenNext(next.id)}><window.TitleStatusActions title={next.title} variant="inline" className={tsaCls(false)}/></span>
           </> : complete ? <span className="gm-doneline truncate text-sm font-semibold text-(--status-seen-text)">{doneLine}</span> : null}
         </span>
         {vr}
         <span className={meterCls} role="img" aria-label={meterLabel}>
           <span className="gm-mtop flex items-center gap-2.5"><span className="gm-mlabel min-w-0 flex-1 truncate">{gtr('guide.progressLabel')}</span><span className={cn('gm-count tabular-nums text-foreground', XS)}>{p.ess.seen}/{p.ess.released}</span></span>
-          <GuideSegments guide={guide} statusOf={statusOf} next={next} done={complete}/>
+          <GuideSegments guide={guide} statusOf={statusOf} done={complete}/>
         </span>
         {vr}
         {nOpt > 0 && (
@@ -888,7 +1057,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
                 ? <span className="gm-check inline-flex size-4 flex-[0_0_16px] items-center justify-center rounded-full bg-(--status-seen) text-(--on-color) [&_svg]:size-2.5" aria-hidden="true"><window.CheckIcon/></span>
                 : <span className={cn('gm-count tabular-nums text-foreground', XS)}>{p.ess.seen}/{p.ess.released}</span>}
             </span>
-            <GuideSegments guide={guide} statusOf={statusOf} next={next} done={complete}/>
+            <GuideSegments guide={guide} statusOf={statusOf} done={complete}/>
             {notes.length > 0 && <span className={cn('gm-notes font-medium text-muted-foreground', XS)}>{notes.join(' · ')}</span>}
           </div>
           {next ? (
@@ -946,7 +1115,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
 // Seen, on top; the progress segments, the count, the stepper and close below.
 // Once complete it turns green and says what the guide was for.
 const DOCK_TEXT = 'g-dock-text flex min-w-0 flex-1 flex-col gap-px text-left';
-function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onPrev, onNext, onClose }) {
+function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onSeenNext, onPrev, onNext, onClose }) {
   const { statusOf } = window.useCollection();
   window.useI18n();
   useGuideSkips();
@@ -960,7 +1129,7 @@ function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onP
   for (let i = 0; i < p.ess.released; i++) {
     const on = i < p.ess.seen;
     segs.push(<i key={i} className={cn('h-1 flex-1 rounded-[2px] transition-[background-color] duration-[260ms] motion-reduce:transition-none',
-      on ? cn('on', p.complete ? 'bg-(--status-seen)' : 'bg-primary') : 'bg-input')}/>);
+      on ? cn('on', p.complete ? 'bg-(--status-seen)' : 'bg-(--brand)') : 'bg-input')}/>);
   }
   // The List and Grid behind the dock keep their last card clear of it: the
   // dock publishes the room it takes (its height plus its gap to the bottom)
@@ -987,13 +1156,24 @@ function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onP
       {/* One card at the bottom: the guide and its next stop (and Seen) on
           top, the progress segments, count, stepper and close below. Outside
           the canvas, so the blur is allowed. */}
-      <div className="g-dock-card rounded-xl border bg-popover pt-2.5 pr-1.5 pb-1.5 pl-2.5 text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,.5),inset_0_0_0_1px_color-mix(in_oklab,var(--char-color,var(--primary))_30%,transparent)] backdrop-blur-md">
+      {/* The Up next card's border and small shadow (Andre, 2026-11-16: the
+          dock's own shadow was too heavy). */}
+      <div className="g-dock-card rounded-xl border border-border in-[.g-dock.done]:border-[color-mix(in_oklab,var(--status-seen)_55%,var(--border))] bg-background/95 pt-2.5 pr-1.5 pb-1.5 pl-2.5 text-foreground shadow-sm backdrop-blur-md">
         <div className="g-dock-top flex items-center gap-2.5 pr-1">
-          <GuideArt guide={guide} size={36} round/>
+          {/* The next stop's poster, as on the Up next card, so ✓ visibly
+              belongs to that title and not to the card the stepper is on.
+              A finished guide keeps its own art. */}
+          {showNext
+            ? <span className={cn('g-dock-poster h-[54px] w-9 flex-[0_0_36px] rounded-[5px]', THUMB)} aria-hidden="true"><window.PosterArt title={next}/></span>
+            : <GuideArt guide={guide} size={36} round/>}
           {showNext
             ? <button type="button" className={cn(DOCK_TEXT, 'g-dock-next cursor-pointer rounded-md', FOCUS)} onClick={() => onOpenNext && onOpenNext(next.id)}>{text}</button>
             : <span className={DOCK_TEXT}>{text}</span>}
-          {showNext && <window.TitleStatusActions title={next} className="g-dock-tsa static flex-none flex-row [transform:none] [&_.tsa-btn]:size-[max(40px,2.5rem)] [&_.tsa-btn.watch]:hidden [&_.tsa-gap]:hidden"/>}
+          {/* ✓ with the camera on another stop brings it back to this one,
+              so the mark is seen landing (Andre, 2026-11-16). */}
+          {showNext && <span className="contents" onClickCapture={() => onSeenNext && onSeenNext(next.id)}>
+            <window.TitleStatusActions title={next} className="g-dock-tsa static flex-none flex-row [transform:none] [&_.tsa-btn]:size-[max(40px,2.5rem)] [&_.tsa-btn.watch]:hidden [&_.tsa-gap]:hidden"/>
+          </span>}
         </div>
         <div className="g-dock-bottom mt-2 flex items-center gap-2">
           <span className="g-dock-meter flex min-w-0 flex-1 gap-[3px]" role="img" aria-label={gtr('guide.partSeen', { seen: p.ess.seen, n: p.ess.released })}>{segs}</span>
@@ -1558,12 +1738,16 @@ const promoCls = (touch) => ({
   p: (kind = '') => cn('gp-p relative block aspect-[2/3] overflow-hidden bg-muted', touch ? 'rounded-md shadow-[0_8px_18px_rgba(0,0,0,.45)]' : 'rounded-[7px] shadow-[0_10px_22px_rgba(0,0,0,.45)]',
     kind === 'next' && (touch ? 'shadow-[0_0_0_2px_var(--primary),0_8px_18px_rgba(0,0,0,.45)]' : 'shadow-[0_0_0_2px_var(--primary),0_10px_22px_rgba(0,0,0,.45)]'),
     kind === 'skipped' && 'outline-1 outline-offset-[-1px] outline-input outline-dashed',
-    kind === 'dest' && cn('flex flex-col items-center justify-center border-[1.5px] border-dashed border-[color-mix(in_srgb,var(--gc)_45%,#fff)] bg-[color-mix(in_srgb,var(--gc)_18%,var(--card))] text-center shadow-none [&_b]:leading-[1.05] [&_b]:font-extrabold [&_b]:text-foreground [&_b]:tabular-nums [&_small]:mt-1 [&_small]:px-[3px] [&_small]:font-bold [&_small]:text-(length:--fs-xs)', touch ? '[&_b]:text-base [&_small]:tracking-[.3px]' : '[&_b]:text-xl [&_small]:tracking-[.6px]', '[&_small]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]'),
+    // Phones: the month and day alone; "in 32 days" didn't fit a cover's
+    // width at Large, and the band above already counts the days.
+    kind === 'dest' && cn('flex flex-col items-center justify-center border-[1.5px] border-dashed border-[color-mix(in_srgb,var(--gc)_45%,#fff)] bg-[color-mix(in_srgb,var(--gc)_18%,var(--card))] text-center shadow-none [&_b]:leading-[1.05] [&_b]:font-extrabold [&_b]:text-foreground [&_b]:tabular-nums [&_small]:mt-1 [&_small]:px-[3px] [&_small]:font-bold [&_small]:text-(length:--fs-xs)', touch ? '[&_b]:text-base [&_small]:hidden' : '[&_b]:text-xl [&_small]:tracking-[.6px]', '[&_small]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]'),
     kind === 'more' && cn('flex items-center justify-center border border-input bg-card text-base font-bold shadow-none', DIM)),
   art: (mods = '') => cn('gp-art block size-full *:block *:size-full [&_img]:object-cover [&_svg]:size-full', mods),
   n: (mods = '') => cn('gp-n absolute inline-flex items-center justify-center rounded-full border border-[color-mix(in_oklab,var(--foreground)_23%,transparent)] bg-[color-mix(in_oklab,var(--background)_82%,transparent)] font-bold tabular-nums text-foreground [&_svg]:size-[11px]', XS,
     touch ? 'top-1 left-1 size-[18px]' : 'top-[5px] left-[5px] size-5', mods),
-  t: (strong) => cn('gp-t leading-[1.3] [overflow-wrap:anywhere]', XS, touch ? 'block truncate leading-[1.25]' : 'line-clamp-2', strong ? 'text-foreground' : DIM),
+  // Phones show the covers alone (Andre, 2026-11-16: a few letters each was
+  // all that fit); each stop's name stays for screen readers (story-sr).
+  t: (strong) => cn('gp-t leading-[1.3] [overflow-wrap:anywhere]', XS, touch ? 'hidden' : 'line-clamp-2', strong ? 'text-foreground' : DIM),
   arr: cn('gp-arr flex-none text-muted-foreground', touch ? 'mt-[30px] text-base' : 'mt-[46px] text-lg'),
   body: cn('gp-body', touch ? 'px-[18px] pt-4 pb-6' : 'px-7 pt-[18px] pb-[22px]'),
   h: cn('gp-h leading-[1.25] font-bold text-foreground', touch ? 'text-(length:--fs-2xl)' : 'text-(length:--fs-3xl)'),
@@ -1586,7 +1770,7 @@ function GuidePromo({ promo, touch, onStart, onClose }) {
 // The countdown band shared by the offer and the caught-up moment.
 function PromoCountdown({ target, days, touch, label }) {
   const cd = cn('gp-cd flex items-end', touch ? 'gap-3 pr-12' : 'gap-3.5 pr-[52px]');
-  if (!target) return <div className={cd} id="gp-cd"><span className="gp-lab inline-flex items-center gap-2 pt-2 pb-6 text-xs font-bold tracking-[1.2px] text-white uppercase [&_i]:block [&_i]:size-2 [&_i]:rounded-[2px] [&_i]:bg-primary"><i aria-hidden="true"/>{label}</span></div>;
+  if (!target) return <div className={cd} id="gp-cd"><span className="gp-lab inline-flex items-center gap-2 pt-2 pb-6 text-xs font-bold tracking-[1.2px] text-white uppercase [&_i]:block [&_i]:size-2 [&_i]:rounded-[2px] [&_i]:bg-white"><i aria-hidden="true"/>{label}</span></div>;
   const date = promoDateParts(target.release, !touch);
   const word = days === 1;
   return (
@@ -1673,7 +1857,7 @@ function GuideCaughtUp({ promo, touch, onClose }) {
       </div>
     </div>
   );
-  if (touch) return <window.Sheet onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className={PROMO_SHEET}>{body}</window.Sheet>;
+  if (touch) return <window.Sheet onClose={onClose} tall labelledBy="gp-title" describedBy="gp-cd" className={PROMO_SHEET}>{body}</window.Sheet>;
   return <window.ModalDialog onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className={PROMO_DIALOG}>{body}</window.ModalDialog>;
 }
 
@@ -1747,7 +1931,7 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
       </div>
     </div>
   );
-  if (touch) return <window.Sheet onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className={PROMO_SHEET}>{body}</window.Sheet>;
+  if (touch) return <window.Sheet onClose={onClose} tall labelledBy="gp-title" describedBy="gp-cd" className={PROMO_SHEET}>{body}</window.Sheet>;
   return <window.ModalDialog onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className={PROMO_DIALOG}>{body}</window.ModalDialog>;
 }
 

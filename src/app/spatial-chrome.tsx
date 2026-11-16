@@ -23,7 +23,9 @@ const FLOAT = 'border border-border bg-background/95 shadow-sm';
 
 /** − / value / +, bottom-right on desktop (clear of the open drawer) and
  *  top-right on phones, where it rests hidden and shows while zooming. The
- *  value is a button: a double-click (desktop) or a tap (phone) types a zoom. */
+ *  value is a button: a double-click (desktop) or a tap (phone) types a zoom.
+ *  Opaque in dark too (the input tint mixed into the background), so a card
+ *  passing under it never shows through the value. */
 export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onCommit, onCancel, onStep }: {
   scale: number; min: number; max: number; touch: boolean; rest: boolean;
   edit: string | null; onEdit: (v: string | null) => void; onCommit: () => void; onCancel: () => void;
@@ -35,7 +37,7 @@ export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onComm
     touch && 'h-[max(40px,2.5rem)] min-w-[54px]');
   const start = String(Math.round(scale * 100));
   return (
-    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-border bg-background shadow-xs dark:border-input dark:bg-input/30',
+    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-border bg-background shadow-xs dark:border-input dark:bg-[color-mix(in_oklab,var(--input)_30%,var(--background))]',
       touch
         ? 'touch top-3 right-3 z-22 rounded-lg transition-opacity duration-250 motion-reduce:transition-none'
         : 'right-4 bottom-4 transition-[right] duration-360 ease-[cubic-bezier(.2,.8,.2,1)] [.app:not(.touch).drawer-open_&]:right-[396px]',
