@@ -516,9 +516,30 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 `codex mcp add figma --url https://mcp.figma.com/mcp`.
 
 - Figma is the source of truth for the design: variables (colour, type,
-  spacing, radius, motion) and components. Code mirrors the variables as
+  spacing, radius, motion) and components. [docs/design-tokens.md](docs/design-tokens.md)
+  maps every token in `src/index.css` to its Figma collection, variable or
+  style (same name without the `--`, code syntax `var(--name)`); a new token
+  gets its row there in the same change. Code mirrors the variables as
   design tokens in one place, with the same names; components use tokens,
   never raw values copied from a frame.
+- **Figma leads** (Notion "Connect Figma to code and make Figma the source of
+  truth", 2026-11-17). The [Red Thread – Design System](https://www.figma.com/design/P92ZRC9X0R6WoCmoB8MG8P)
+  file holds the variables, icons and a component for everything the app
+  draws; [docs/figma-library.md](docs/figma-library.md) maps each component
+  to its code (Code Connect needs an Organization plan; AFR is on Pro, so the
+  map lives there and in each component's description).
+  - A change to the look starts in Figma: a variable, a style, a component,
+    or a frame built from the library's instances. The code follows.
+  - Before changing a component's code, read its Figma component with the
+    MCP (link from the map). After, the two agree: when a code change alters
+    how something looks (a fix, a new state, a new component), update or add
+    the Figma component in the same ticket with `tools/figma/` (README
+    there), and say so on the ticket.
+  - A new or changed token gets the same name in `src/index.css`, the Figma
+    variable (code syntax `var(--name)`) and its row in
+    [docs/design-tokens.md](docs/design-tokens.md), in the same change.
+  - All Red Thread Figma files live in the AFR team folder
+    https://www.figma.com/files/folder/683084303; create new ones there.
 - Work from links, not descriptions: a design ticket's **Figma** field links
   the frame(s). Read the frame with the MCP (design context, variables, a
   screenshot) before coding, and compare the result against the frame in a

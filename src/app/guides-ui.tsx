@@ -526,7 +526,7 @@ function PosterYear({ title, className = '' }) {
 // The cards' quiet seen mark in a poster's corner.
 function PosterSeen({ className = '' }) {
   return (
-    <span aria-hidden="true" className={cn('g-seen absolute right-1 bottom-1 z-2 inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_1px_4px_rgba(0,0,0,.45)] [&_svg]:size-2.5', className)}>
+    <span aria-hidden="true" className={cn('g-seen absolute right-1 bottom-1 z-2 inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-mark [&_svg]:size-2.5', className)}>
       <window.CheckIcon/>
     </span>
   );
@@ -1052,7 +1052,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
   const cls = cn('guide-banner g-module rounded-xl border bg-card text-card-foreground shadow-sm [--gm-line:var(--border)]',
     complete && 'done border-[color-mix(in_oklab,var(--seen)_55%,var(--background))] bg-[color-mix(in_oklab,var(--seen)_8%,var(--card))] [--char-color:var(--seen)] [--gm-line:color-mix(in_oklab,var(--seen)_30%,var(--background))]',
     spatial
-      ? 'spatial absolute top-3 right-[22px] left-[22px] z-40 flex cursor-default items-center gap-3 bg-[color-mix(in_oklab,var(--background)_96%,transparent)] py-2 pr-2 pl-2.5 shadow-[0_12px_30px_rgba(0,0,0,.45)] not-dark:shadow-[0_1px_2px_rgb(0_0_0/.06),0_10px_28px_-12px_rgb(0_0_0/.2)] in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+22px)]'
+      ? 'spatial absolute top-3 right-[22px] left-[22px] z-40 flex cursor-default items-center gap-3 bg-[color-mix(in_oklab,var(--background)_96%,transparent)] py-2 pr-2 pl-2.5 shadow-float in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+22px)]'
       : 'list mx-auto mb-2.5 max-w-[1480px]');
   // Seen only, labelled (Watchlist stays on the row); on a complete guide's
   // destination, Watchlist only.
@@ -1755,8 +1755,8 @@ const promoCls = (touch) => ({
   band: cn('gp-band relative bg-linear-[170deg] from-(--gc-top) via-(--gc-mid) via-55% to-card', touch ? 'px-[18px] pt-[22px] pb-16' : 'px-7 pt-[26px] pb-[92px]'),
   strip: cn('gp-strip relative m-0 flex list-none items-start', touch ? '-mt-[50px] gap-1.5 px-[18px]' : '-mt-[74px] gap-3 px-7'),
   st: (mods = '') => cn('gp-st flex min-w-0 flex-[1_1_0] flex-col', touch ? 'gap-1.5' : 'gap-[7px]', mods),
-  p: (kind = '') => cn('gp-p relative block aspect-[2/3] overflow-hidden bg-muted', touch ? 'rounded-md shadow-[0_8px_18px_rgba(0,0,0,.45)]' : 'rounded-[7px] shadow-[0_10px_22px_rgba(0,0,0,.45)]',
-    kind === 'next' && (touch ? 'shadow-[0_0_0_2px_var(--brand),0_8px_18px_rgba(0,0,0,.45)]' : 'shadow-[0_0_0_2px_var(--brand),0_10px_22px_rgba(0,0,0,.45)]'),
+  p: (kind = '') => cn('gp-p relative block aspect-[2/3] overflow-hidden bg-muted', touch ? 'rounded-md shadow-pop' : 'rounded-[7px] shadow-pop',
+    kind === 'next' && 'shadow-[0_0_0_2px_var(--brand),var(--elevation-pop)]',
     kind === 'skipped' && 'outline-1 outline-offset-[-1px] outline-input outline-dashed',
     // Phones: the month and day alone; "in 32 days" didn't fit a cover's
     // width at Large, and the band above already counts the days.

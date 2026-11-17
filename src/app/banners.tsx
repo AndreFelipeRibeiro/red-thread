@@ -60,7 +60,7 @@ export const W_STEP_BTN = cn(ROUND, "relative size-7 text-title after:absolute a
 export const W_BAR = 'h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-(--progress-track)';
 
 /** The character's face, ringed in the character's colour. */
-export const PHOTO = 'cb-photo inline-flex flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold text-[#0a0c14] shadow-[0_0_0_2px_var(--char-color,var(--brand))] [&_img]:block [&_img]:size-full [&_img]:object-cover';
+export const PHOTO = 'cb-photo inline-flex flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold text-(--on-image-base) shadow-[0_0_0_2px_var(--char-color,var(--brand))] [&_img]:block [&_img]:size-full [&_img]:object-cover';
 
 /** A segmented group of plain buttons (`on` marks the chosen one) in the tab
  *  list's look; with a SegPill as its first child the pill carries the

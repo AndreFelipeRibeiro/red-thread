@@ -53,12 +53,12 @@ export const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-
 // and the number to the text colour. Tabular figures, no monospace.
 // The chip is opaque so the yellow and red read the same on a poster, a List
 // row or a light card (a translucent chip over a light row put the red score
-// at 2.85:1; on rgb(10,12,20) every rating colour is 5.9:1 or better).
+// at 2.85:1; on --on-image-base every rating colour is 5.9:1 or better).
 // Andre, 2026-11-16: the pills were a bit large. One small size everywhere
 // (List rows and columns, the cards' covers, the details), at the 12px floor
 // and growing only with the Large text size; tighter padding.
 const SC_TEXT = 'text-caption leading-[1.25]';
-const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-white/14 bg-[rgb(10,12,20)] px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
+const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-white/14 bg-(--on-image-base) px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
 const TAG = 'tg rounded-[2px] px-[3px] py-0 font-extrabold tracking-[.2px]';
 
 export function ScoreChip({ kind, title, compact = false, className }: { kind: 'imdb' | 'rt'; title: Title; compact?: boolean; className?: string }) {
@@ -66,12 +66,12 @@ export function ScoreChip({ kind, title, compact = false, className }: { kind: '
   if (value == null) return null;
   const pad = compact && 'px-[4px] py-[1.5px]';
   return kind === 'imdb' ? (
-    <div className={cn(CHIP, SC_TEXT, 'imdb text-[#f5c518]', pad, className)} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
-      <span className={cn(TAG, 'imdb-tag bg-[#f5c518] text-black')}>IMDb</span>{value.toFixed(1)}
+    <div className={cn(CHIP, SC_TEXT, 'imdb text-(--imdb)', pad, className)} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
+      <span className={cn(TAG, 'imdb-tag bg-(--imdb) text-black')}>IMDb</span>{value.toFixed(1)}
     </div>
   ) : (
-    <div className={cn(CHIP, SC_TEXT, 'rt text-[#fa5c3c]', pad, className)} title={tr('score.rt')}>
-      <span className={cn(TAG, 'rt-tag bg-[#cc2a0a] text-white')}>RT</span>{value}%
+    <div className={cn(CHIP, SC_TEXT, 'rt text-(--rt-text)', pad, className)} title={tr('score.rt')}>
+      <span className={cn(TAG, 'rt-tag bg-(--rt) text-white')}>RT</span>{value}%
     </div>
   );
 }
@@ -228,7 +228,7 @@ export function MatchBadge({ matchedChars, query, title }: { matchedChars?: stri
   return (
     <div className="card-match mt-1.5 flex max-w-full items-center gap-[7px] rounded-md border border-[color-mix(in_oklab,var(--match-color)_40%,transparent)] bg-[color-mix(in_oklab,var(--match-color)_14%,transparent)] py-1 pr-[7px] pl-1 in-[.card]:mt-[7px]"
       style={{ '--match-color': c.color } as React.CSSProperties} title={matchedChars.map(mid => I.charName(mid)).join(', ')}>
-      <div className="card-match-portrait flex size-[22px] flex-[0_0_22px] items-center justify-center overflow-hidden rounded-full text-card-micro font-bold text-[#0a0c14] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
+      <div className="card-match-portrait flex size-[22px] flex-[0_0_22px] items-center justify-center overflow-hidden rounded-full text-card-micro font-bold text-(--on-image-base) shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
         style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
         <window.Portrait url={portrait} alt={I.charName(id)} initials={c.initials}/>
       </div>
@@ -308,7 +308,7 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
         <div className={cn('m-lthumb relative h-[60px] w-10 flex-[0_0_40px] rounded-[5px]', THUMB)}>
           <PosterArt title={t}/>
           {seen && (
-            <span className="m-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_1px_4px_rgba(0,0,0,.45)] [&_svg]:size-2.5"
+            <span className="m-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-mark [&_svg]:size-2.5"
               role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
           )}
         </div>

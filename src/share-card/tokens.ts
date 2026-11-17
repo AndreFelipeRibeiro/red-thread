@@ -10,19 +10,29 @@
 
 export type Tokens = Record<string, string>;
 
-/** The custom properties of the `.dark` block, with var() references inside
- *  them resolved (one level is all the file uses). */
-export function readDarkTokens(css: string): Tokens {
-  const start = css.indexOf('.dark {');
-  if (start === -1) throw new Error('share-card: no .dark block in src/index.css');
-  const body = css.slice(start, css.indexOf('}', start));
+/** The custom properties of one `{ … }` block, starting at `from`. */
+function readBlock(css: string, from: number): Tokens {
+  const open = css.indexOf('{', from);
+  const body = css.slice(open + 1, css.indexOf('}', open));
   const out: Tokens = {};
   const re = /--([a-z0-9-]+)\s*:\s*([^;]+);/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(body))) out[m[1]] = m[2].trim();
-  Object.keys(out).forEach((k) => {
-    out[k] = out[k].replace(/var\(--([a-z0-9-]+)\)/g, (_, name: string) => out[name] || '');
-  });
+  return out;
+}
+
+/** The custom properties of the `.dark` block, with var() references inside
+ *  them resolved: to the palette (the `@primitives` block, Notion "Build the
+ *  Figma foundations") or to another token of the block. */
+export function readDarkTokens(css: string): Tokens {
+  const start = css.indexOf('.dark {');
+  if (start === -1) throw new Error('share-card: no .dark block in src/index.css');
+  const prim = css.indexOf('@primitives');
+  const palette = prim === -1 ? {} : readBlock(css, css.indexOf(':root', prim));
+  const out = readBlock(css, start);
+  const resolve = (v: string, depth = 0): string => v.replace(/var\(--([a-z0-9-]+)\)/g, (_, name: string) =>
+    depth > 3 ? '' : resolve(palette[name] ?? out[name] ?? '', depth + 1));
+  Object.keys(out).forEach((k) => { out[k] = resolve(out[k]); });
   return out;
 }
 

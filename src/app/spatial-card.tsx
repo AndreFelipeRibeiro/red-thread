@@ -46,13 +46,13 @@ const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_22
 const SHADOW = {
   // Light theme: a short contact shadow and a soft, cool one below, so a
   // card rests on the paper canvas rather than hovering over it.
-  base: 'shadow-sm not-dark:shadow-[0_1px_2px_rgb(20_24_40/.06),0_8px_20px_-12px_rgb(20_24_40/.25)]',
-  drag: 'shadow-[0_24px_50px_-8px_rgba(0,0,0,0.6),0_0_0_1px_var(--phase-color)]',
+  base: 'shadow-card',
+  drag: 'shadow-[var(--elevation-lift),0_0_0_1px_var(--phase-color)]',
   // Hover is a slight lift, nothing more.
-  hover: 'hover:shadow-[0_18px_36px_-12px_rgb(0_0_0/.55)] not-dark:hover:shadow-[0_16px_32px_-14px_rgb(0_0_0/.3)]',
+  hover: 'hover:shadow-card-hover',
   selected: 'shadow-[0_0_0_2px_var(--phase-color),0_20px_50px_-8px_color-mix(in_oklab,var(--phase-color)_70%,transparent)]',
   highlighted: 'shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_40%,transparent),0_16px_40px_-8px_color-mix(in_oklab,var(--foreground)_27%,transparent)] not-dark:shadow-[0_14px_34px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)]',
-  current: 'shadow-[0_0_0_3px_var(--cur-color,var(--brand)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--brand))_50%,transparent),0_24px_50px_-8px_rgba(0,0,0,.65)]',
+  current: 'shadow-[0_0_0_3px_var(--cur-color,var(--brand)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--brand))_50%,transparent),var(--elevation-lift)]',
 };
 
 export interface CardProps {
@@ -124,7 +124,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (isRingFocus && !touch) z = 'z-27';
   // The card whose poster is hovered in the details' Cast and connections
   // (Andre, 2026-11-16): outlined and lifted above its neighbors.
-  if (isPeek) { border = 'border-(--brand)'; shadow = 'shadow-[0_0_0_2px_var(--brand),0_10px_28px_rgb(0_0_0/.22)]'; z = 'z-29'; fade = 'filter-none'; lift = '[--lift:1.06] motion-reduce:[--lift:1]'; }
+  if (isPeek) { border = 'border-(--brand)'; shadow = 'shadow-[0_0_0_2px_var(--brand),var(--elevation-card-hover)]'; z = 'z-29'; fade = 'filter-none'; lift = '[--lift:1.06] motion-reduce:[--lift:1]'; }
   const stateOwnsBorder = isSelected || isHighlighted || listed || skipped || isCurrent || isPeek;
   const stateOwnsShadow = isSelected || isHighlighted || isCurrent || isPeek;
   const hover = cn(!stateOwnsShadow && SHADOW.hover,
@@ -204,7 +204,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
 function gnumClass(cls: string) {
   const k = new Set(cls.split(/\s+/));
   const dashed = 'border-[1.5px] border-dashed bg-(--on-image-ground)';
-  return cn('card-gnum inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-[6px] text-card-meta font-bold tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+  return cn('card-gnum inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-[6px] text-card-meta font-bold tabular-nums shadow-mark-lg',
     cls,
     k.has('skip') ? cn(dashed, 'border-(--on-image-dim) text-(--on-image-muted)')
       : k.has('done') ? 'border-[1.5px] border-(--seen) bg-(--seen) text-(--seen-foreground)'
@@ -226,7 +226,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
   // tapped card.
   const scoreKind = title && (facet === 'imdb' || facet === 'rt') && title[facet] != null ? facet : null;
   const score = scoreKind && title && (
-    <span className={cn('card-score absolute z-3 shadow-[0_2px_8px_rgba(0,0,0,.45)]', pop ? 'bottom-2.5 left-2.5' : 'bottom-2 left-2')}>
+    <span className={cn('card-score absolute z-3 shadow-mark-lg', pop ? 'bottom-2.5 left-2.5' : 'bottom-2 left-2')}>
       <window.ScoreChip kind={scoreKind} title={title} compact className={cn('card-rating', pop ? 'text-card-meta-pop' : 'text-card-meta-lg [&_.tg]:text-[inherit]')}/>
     </span>
   );
@@ -235,7 +235,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
     ? <span className={right}><span className={cn(gnumClass(guideBadge.cls), skipped && 'opacity-80')} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span></span>
     : seen ? (
       <span className={right}>
-        <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+        <span className={cn('card-seen inline-flex items-center justify-center rounded-full border-[1.5px] border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-mark-lg',
           pop ? 'size-[30px] [&_svg]:size-4' : 'size-[24px] [&_svg]:size-[13px]')} role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
       </span>
     ) : null;
@@ -244,7 +244,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
     <>
       {connections > 0 && (
         <span className={cn('card-conn-pill absolute left-2 z-3', corner, pop && 'left-2.5')}>
-          <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-[rgba(10,12,20,.78)] font-semibold text-(--on-image) tabular-nums shadow-[0_2px_8px_rgba(0,0,0,.45)]',
+          <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-(--on-image-base)/78 font-semibold text-(--on-image) tabular-nums shadow-mark-lg',
             pop ? 'h-[30px] px-2.5 text-card-meta-pop [&_svg]:size-[13px]' : 'h-[24px] px-2 text-card-meta [&_svg]:size-[11px]')}
             role="img" aria-label={label} title={`${label} · ${tr('card.connectionsTip')}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>

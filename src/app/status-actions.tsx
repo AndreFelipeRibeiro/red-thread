@@ -19,7 +19,7 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 // On a poster the overlay sits on an image, so it stays a dark glass chip in
 // both themes (the `dark:` copies outrank the outline button's own).
 const ON_POSTER = /\b(card-tsa|m-card-tsa|m-fp-tsa|g-card-tsa)\b/;
-const GLASS = 'border-[#ffffff26] bg-[rgba(10,12,20,0.78)] text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-[rgba(10,12,20,0.92)] hover:text-(--on-image) dark:border-[#ffffff26] dark:bg-[rgba(10,12,20,0.78)] dark:hover:bg-[rgba(10,12,20,0.92)]';
+const GLASS = 'border-white/15 bg-(--on-image-base)/78 text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-(--on-image-base)/92 hover:text-(--on-image) dark:border-white/15 dark:bg-(--on-image-base)/78 dark:hover:bg-(--on-image-base)/92';
 const ON = {
   // Seen is quiet (Notion "Simplify the Spatial cards": with real progress a
   // solid green button on most titles was the loudest colour on screen): a

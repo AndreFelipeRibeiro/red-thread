@@ -95,8 +95,8 @@ export function MenuSwitch({ options, value, onChange, label, tall = false, clas
 
 // The score tags on the IMDb and Tomatometer rows, as on the scores.
 const SORT_TAG: Record<string, [string, string]> = {
-  imdb: ['IMDb', 'bg-[#f5c518] text-black'],
-  rt: ['RT', 'bg-[#cc2a0a] text-white'],
+  imdb: ['IMDb', 'bg-(--imdb) text-black'],
+  rt: ['RT', 'bg-(--rt) text-white'],
 };
 
 function SortList({ sort, sortDir, onPick, onFlip, phone }: {

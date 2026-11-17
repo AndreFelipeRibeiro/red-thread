@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Red Thread — primitive specimens (dev only)</title>
+<meta name="robots" content="noindex"/>
+<!-- Dev only (tools/figma/README.md): every shadcn primitive the app uses,
+     for tools/figma/capture-dom.js to read. Not a build input. -->
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import '/src/index.css';
+import { startTheme } from '/src/theme';
+import Specimens from '/src/design/Specimens.tsx';
+startTheme();
+createRoot(document.getElementById('root')).render(React.createElement(Specimens));
+</script>
+</body>
+</html>

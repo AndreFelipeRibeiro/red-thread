@@ -13,6 +13,75 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 workflow — Connect Figma to code: Figma leads
+
+Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
+pushed yet.
+
+- AGENTS.md now says Figma leads: a change to the look starts in the Red
+  Thread – Design System file; agents read a component with the Figma MCP
+  before changing its code, and update the Figma component in the same ticket
+  when code changes how something looks. All Red Thread Figma files live in
+  the AFR team folder.
+- Code Connect needs a Figma Organization plan (AFR is on Pro), so
+  `docs/figma-library.md` maps every Figma component to its code, and each
+  component's description names its file.
+- Limits: no Code Connect mappings until the plan changes.
+
+## V5 design — The Red Thread component library in Figma
+
+Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
+pushed yet.
+
+- The Design System file gains a Cover (Light and Dark side by side), Icons
+  (31), the shadcn primitives the app uses (Button with 24 variants, Icon
+  button, Badge, Input, Label, Switch, Radio, Select, Popover, Separator) and
+  Red Thread's own pieces: Spatial card, Score chip, Phase badge, List row and
+  header, Phase header, Phone list row, App bar, Zoom control, Title count,
+  Band label, Phone nav bar, Details panel, Status actions, Cast row, Follow
+  the thread, Up next, the Guides promo and cards, and the picker. 35
+  components and sets; 447 of 523 paints bound to variables.
+- Built from the running app with the new `tools/figma/` (capture in both
+  themes, match every value to its token, build bound components; a
+  dev-only specimens page of every primitive, `src/design/Specimens.tsx`).
+- Nine control tokens (`--field`, `--button-outline`,
+  `--button-outline-border`, `--destructive-tint`, `--switch-track`,
+  `--switch-thumb`, `--switch-thumb-off`, `--invalid-border`,
+  `--invalid-ring`) replace shadcn's dark-only resting colors in the button,
+  badge, input, select, radio and switch, so Figma holds one variable per
+  color. Same colors: 336 readings across every control, in both themes,
+  identical before and after.
+- Verified: typecheck; `qa/quick.sh` with test-contrast, test-v4scope and
+  test-typescale, 49 check runs clean.
+- Limits: about 55 mixed colors have no token yet and keep their light value
+  in Figma (Notion "Name the mixed colors"); the remaining surfaces and the
+  hover and focus states are listed in `docs/figma-library.md` (Notion
+  "Finish the Figma library").
+
+## V5 design — Figma foundations and the primitive palette
+
+Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
+pushed yet.
+
+- `src/index.css` gains a primitive palette (42 colors named by hue and
+  lightness, `red-55`, `neutral-98`); every theme color points at one, with
+  the same value as before. The share cards resolve the palette too.
+- The Design System Figma file mirrors it: Primitives, Color (Light, Dark),
+  Type (Desktop, Phone), Radius & Spacing and Size steps collections, 14
+  effect styles and 17 text styles, named like the tokens with code syntax
+  `var(--name)`. `docs/design-tokens.md` is the map.
+
+## V5 maintenance — Token cleanup before the Figma foundations
+
+Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
+pushed yet.
+
+- Unused shadcn chart and sidebar tokens removed; every shadow is one of
+  seven elevation tokens (`shadow-mark` … `shadow-lift`); the stray raw
+  colors are named (`--on-image-base`, `--imdb`, `--rt`, `--rt-text`).
+- A few near-identical shadows were merged on purpose (listed on the Notion
+  ticket); everything else is unchanged.
+
 ## V5 improvement — Seen and Watchlist pills on Guides open Titles, filtered
 
 Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging);
