@@ -234,6 +234,16 @@
       --seen-foreground: oklch(1 0 0);
       --seen-text: oklch(0.45 0.13 147);
       --logo: #c41e3a;
+      /* The Connections canvas (Notion "Design light mode on purpose", 2026-11-16):
+         in the light theme a neutral, slightly cool paper a step below the
+         white of the cards and bars, so the cards and their dark poster art
+         sit on a ground instead of floating on white, with no colored wash
+         (the warm one read as a pink cast). The dot grid and the resting
+         threads are quieter than in the dark theme, where they glow on black. */
+      --canvas-top: oklch(0.968 0.003 255);
+      --canvas-bottom: oklch(0.948 0.004 255);
+      --canvas-dot: color-mix(in oklab, var(--foreground) 10%, transparent);
+      --thread-rest: 0.42;
       --background: oklch(1 0 0);
       --foreground: oklch(0.145 0 0);
       --card: oklch(1 0 0);
@@ -298,6 +308,10 @@
       --brand: oklch(0.68 0.17 23);
       --brand-foreground: oklch(0.145 0 0);
       --logo: #c41e3a;
+      --canvas-top: var(--background);
+      --canvas-bottom: var(--background);
+      --canvas-dot: color-mix(in oklab, var(--foreground) 4%, transparent);
+      --thread-rest: 0.55;
       --background: oklch(0.145 0 0);
       --foreground: oklch(0.985 0 0);
       --card: oklch(0.205 0 0);

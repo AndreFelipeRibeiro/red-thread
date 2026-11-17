@@ -326,7 +326,10 @@ export function FiltersPanel({ f, phone = false, showing, onDone }: {
 // list, Connections dims the rest); tapping the chosen one again returns to
 // All. Unseen lives in the Filters panel's Status section. Hooks:
 // `status-counts`, `data-coll`, `aria-pressed`.
-export function StatusCounts({ value, onChange, phone = false }: { value: string; onChange: (v: string) => void; phone?: boolean }) {
+// `keepOn`: where there is nothing to filter (Guides), a press always asks
+// for that status, never All, and the app takes it to Titles (Notion "Seen
+// and Watchlist pills on Guides open Titles, filtered", Andre 2026-11-16).
+export function StatusCounts({ value, onChange, phone = false, keepOn = false }: { value: string; onChange: (v: string) => void; phone?: boolean; keepOn?: boolean }) {
   window.useI18n();
   const { progress, loading } = window.useCollection() as unknown as { progress: { seenTotal: number; watchlist: number }; loading: boolean };
   // Counts from the previous render, so a count that just appeared pops in.
@@ -349,7 +352,7 @@ export function StatusCounts({ value, onChange, phone = false }: { value: string
               // pills alone; the icon stays in the name. The desktop header does
               // the same below 1100px, where the row runs out of room.
               phone ? 'h-11 group-data-[fit=3]/toolrow:px-1.5 group-data-[fit=4]/toolrow:px-1.5 group-data-[fit=5]/toolrow:px-1 [&_.sc-icon]:group-data-[fit=3]/toolrow:hidden [&_.sc-icon]:group-data-[fit=4]/toolrow:hidden [&_.sc-icon]:group-data-[fit=5]/toolrow:hidden' : 'h-10 max-[1100px]:px-2 max-[1100px]:[&_.sc-icon]:hidden group-data-[fit=2]/toprow:px-2 group-data-[fit=3]/toprow:px-2 group-data-[fit=4]/toprow:px-2 [&_.sc-icon]:group-data-[fit=2]/toprow:hidden [&_.sc-icon]:group-data-[fit=3]/toprow:hidden [&_.sc-icon]:group-data-[fit=4]/toprow:hidden')}
-            onClick={() => onChange(on ? 'all' : kind)}>
+            onClick={() => onChange(on && !keepOn ? 'all' : kind)}>
             <span className="sc-icon inline-flex size-[13px] flex-[0_0_13px]" aria-hidden="true"><Icon kind={kind}/></span>
             {n != null && <CountBadge n={n} kind={kind} on={on} appeared={!!before && !before[kind] && n > 0}/>}
           </button>

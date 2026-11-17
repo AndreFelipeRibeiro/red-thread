@@ -653,7 +653,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
             d={curve(p1,p2,offset,i,isPair)}
             data-a={conn.a} data-b={conn.b} data-ch={ch} data-em={emphasized ? '1' : '0'}
             onClick={(e) => { e.stopPropagation(); if (onPickConnection) onPickConnection({ a: conn.a, b: conn.b }); }}
-            style={{transition:'opacity 220ms, stroke-width 220ms', cursor: 'pointer', ...(draw ? draw.style : {})}}
+            // A resting line takes the theme's --thread-rest (quieter on the
+            // light paper than on black); lit and dimmed lines keep theirs.
+            style={{transition:'opacity 220ms, stroke-width 220ms', cursor: 'pointer', ...(dimmed || emphasized ? {} : { opacity: 'var(--thread-rest)' }), ...(draw ? draw.style : {})}}
             className={draw ? draw.className : undefined}
             pathLength={draw ? draw.pathLength : undefined}
             fill="none"
@@ -2599,6 +2601,12 @@ function App() {
     } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
   };
   const showInExplore = (id) => goSection('explore', { select: id, force: true });
+  // The header's Seen and Watchlist pills: on Guides, where there is nothing
+  // to filter, they open Titles with that status (Andre, 2026-11-16).
+  const pickCollection = (v) => {
+    setCollectionFilter(v);
+    if (section === 'guides') goSection('mylist');
+  };
   // The trail's pin (See on canvas, or Highlight in Titles) pins the
   // character's thread where you are, what tapping a person did before
   // E 4/5; already pinned, it stays pinned.
@@ -3515,7 +3523,7 @@ function App() {
           onOpenAccount={() => setSheet('account')}
           onOpenSettings={() => setSheet('settings')}
           guideActive={!!guide}
-          collection={collectionFilter} setCollection={setCollectionFilter}
+          collection={collectionFilter} setCollection={pickCollection}
         />
         <div role="main" className={`${S.M_MAIN}${charPill || (guide && viewMode === 'spatial') || phoneCard ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
@@ -3631,7 +3639,7 @@ function App() {
         search={search} setSearch={setSearch}
         guideId={guideId}
         // Titles' second layer: the status tabs and "Mark what you've seen".
-        collection={collectionFilter} setCollection={setCollectionFilter}
+        collection={collectionFilter} setCollection={pickCollection}
       />
 
       {/* An open guide shows its own module instead: at the top of the List,

@@ -69,7 +69,9 @@ const BUTTONS = (sel) => {
 // "All titles 0/60": the compact card's released count.
 const RELEASED = () => {
   const c = document.querySelector('.spatial-overall .pgh-count');
-  return c ? Number(c.textContent.split('/')[1]) : null;
+  // "0/60 seen": the number after the slash.
+  const m = c && c.textContent.match(/\/\s*(\d+)/);
+  return m ? Number(m[1]) : null;
 };
 
 (async () => {

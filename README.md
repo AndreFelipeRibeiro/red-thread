@@ -123,10 +123,15 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   suggestions) open over the details drawer; the zoom control moves left of it.
 - Phase (several at once), film/series, budget, release (Released only) and
   status filters. The header's Seen and Watchlist pills show their counts on
-  landing and filter the current section (a second tap clears it); All and
+  landing and filter the current section (a second tap clears it; on Guides,
+  which has nothing to filter, they open Titles with that status); All and
   Unseen are in Filters → Status. Unseen counts released titles only, so it
   matches "44 of 60 seen". Each state has its icon: a dashed ring, a check
   and a bookmark.
+- One name per idea, in both languages: [docs/glossary.md](docs/glossary.md)
+  (Connections, Titles, Guides, Seen, Unseen, Watchlist / "Quero ver", Story
+  order, Phase 1…). Errors visitors see are plain sentences, never a
+  service's own message.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
   language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without
@@ -196,7 +201,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   is marked in its Titles row with a red edge, an "Up next" pill and a filled
   "Mark seen", and on Connections its card has a red outline (an open
   guide's next stop too); the list opens with that row in view. The compact card
-  (Up next's poster and name under "All titles · 43/60 +4 · Up next", ✕ in
+  (Up next's poster and name under "All titles · 43/60 seen · Up next", ✕ in
   the corner and the progress under them; no ✓, the details mark it; laid
   out like an open guide's card) is the same card in the
   same place on Connections and Titles: the top-right corner on desktop,
@@ -317,14 +322,18 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   green confetti each time it becomes complete, skipped stops included (none
   with reduced motion). Every title also
   carries a continuity marker (main, alternate reality or anthology).
-- "What have you seen?": a poster grid of every released title, by phase in
-  release order, to mark many as seen in one go. The first-visit welcome
-  offers it ("Mark what I've seen"), and it stays reachable from the account
-  menu or sheet and from the Seen tab's empty state. Each phase has Select
-  all / Clear; titles already seen start ticked and can be unticked. Saving is
-  one change with one toast and Undo (no extra confirmation: the button names
-  the number); closing with unsaved picks asks first. A full-height sheet on
-  phones, a dialog on desktop.
+- "What have you seen?": a poster wall of every released title, by phase in
+  release order, to mark many as seen in one go ("Start with what you've
+  seen" on a first visit, "Update what you've seen" after). The first-visit
+  welcome offers it ("Mark what I've seen"), and it stays reachable from the
+  header's "Mark what you've seen" button and the Seen empty state. No titles
+  sit over the art: an unmarked poster has an empty ring, a marked one is
+  dimmed with the green check. A bar and "37 of 60 seen" fill as you tap;
+  each phase has its count, a small bar and Mark all (then Undo, then ✓ All
+  seen); desktop adds a search. Marking a Watchlist title says it moves to
+  Seen. Saving is one change with one toast and Undo (no extra confirmation:
+  the button names the number); closing with unsaved picks asks first. A
+  full-height sheet on phones, a 760px dialog on desktop.
 - The synopsis is short and spoiler-light (three lines, then See more),
   written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,

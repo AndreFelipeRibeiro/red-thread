@@ -88,12 +88,13 @@ export function ScoreBadges({ title, lead, compact, className }: { title: Title;
   return <div className={wrap}>{lead === 'rt' ? [rt, imdb] : [imdb, rt]}</div>;
 }
 
-/** "PH 1" on a poster, in the phase colour. */
+/** "Phase 1" on a poster, in the phase color: the same name as everywhere
+ *  else (docs/glossary.md), not a short form. */
 export function PhaseBadge({ phase, className }: { phase: number; className?: string }) {
   return (
     <Badge className={cn('m-pbadge absolute top-[7px] left-[7px] z-2 border-transparent font-semibold text-(--on-color) tabular-nums', className)}
       style={{ background: phaseColor(phase) }}>
-      {tr('phase.short', { n: phase })}
+      {tr('phase.label', { n: phase })}
     </Badge>
   );
 }
@@ -160,7 +161,7 @@ export function ProgressHeader({ label, color, seen, released, upcoming, band, w
             group shows the disc alone. */}
         {done
           ? <span className={cn('pgh-done inline-flex size-3.5 shrink-0 in-[.band]:size-[13px] items-center justify-center rounded-full leading-none font-bold text-background', XS, FILL)} aria-hidden="true">✓</span>
-          : <span className={cn('pgh-count shrink-0 tabular-nums', XS, DIM)} aria-hidden="true">{seen}/{released}</span>}
+          : <span className={cn('pgh-count shrink-0 tabular-nums', XS, DIM)} aria-hidden="true">{tr('progress.count', { seen, n: released })}</span>}
         {up}
         {action}
       </span>

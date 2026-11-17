@@ -13,6 +13,88 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 improvement — Seen and Watchlist pills on Guides open Titles, filtered
+
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- On Guides, which has nothing to filter, the header's Seen and Watchlist
+  pills now open Titles with that status on (an open guide closes, as the
+  Titles tab does). There a press always turns the filter on, even when the
+  pill already shows as on; on Connections and Titles they work as before.
+- Verified: `qa/test-nav.js` gains the case (Guides → Seen opens Titles with
+  exactly the seen titles, twice, and a second press in Titles returns to
+  All); seen in a browser at 1440×900.
+- Limits: phones show no pills on Guides (that section has no toolbar row),
+  so nothing changes there.
+
+## V5 improvement — A glossary, and one name per idea
+
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- `docs/glossary.md` names each idea once in English and Portuguese, with the
+  names that must not come back; AGENTS.md and the README link it.
+- Portuguese calls the Watchlist "Quero ver" everywhere (Andre's choice),
+  replacing "Para assistir" and "lista para assistir"; English always writes
+  "Watchlist" capitalized.
+- The poster badge says "Phase 1" / "Fase 1" (was "PH 1" / "F 1"); meters say
+  "40/60 seen · 4 coming" (was "40/60 +4"); the Up next card says "All titles
+  · 40/60 seen · Up next", and in Portuguese only its label truncates, so the
+  count and "A seguir" always show; "Upcoming" is "Coming soon". Dead
+  `sort.*` strings ("Chronological", "Chrono", "By Phase") are removed.
+- A title's "Not saved" line no longer shows the service's own error message:
+  it says "Couldn't save. Try again in a moment" or "Can't reach your account
+  right now", with the detail in the console. Error strings drop "cloud", and
+  Portuguese "login" became "entrar".
+- Verified: `qa/test-progress.js`, `qa/test-unreleased.js` and
+  `qa/test-nextup.js` read the new count; quick runs of test-i18n, test-fit,
+  test-guides and test-skip clean; the Up next card measured in English and
+  Portuguese.
+- Limits: strings were searched for the listed conflicts, not each reread.
+
+## V5 design — Light mode, designed on purpose
+
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The light theme's Connections canvas is a neutral, slightly cool paper a
+  step below the white cards, replacing the warm wash that read as a pink
+  cast and the cool one opposite. New tokens `--canvas-top`,
+  `--canvas-bottom` and `--canvas-dot` (the dark theme keeps its page black).
+- Cards rest on it with a short contact shadow and a soft, cool one below;
+  resting threads are quieter in light (`--thread-rest`, 0.42; dark keeps
+  0.55). Lit and dimmed threads, and the dark theme, are unchanged.
+- Verified: test-contrast in both themes, test-threads, test-v4scope and
+  test-cards clean; desktop landing, the details drawer and the phone home
+  looked at in light.
+- Limits: awaiting Andre's side-by-side review; thread colors themselves
+  belong to "Make the red thread the signature".
+
+## V5 design — "What have you seen?" as a poster wall
+
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Direction A of the explorations, Andre's pick: posters with no titles over
+  the art (the name is the accessible name and tooltip), an empty ring when
+  unmarked and the one green check when marked, dimmed; no "Seen" or
+  "Unmark" labels or outlines.
+- A guide-style meter on top (the bar, then "37 of 60 seen"), the title in
+  the display size on desktop ("Start with what you've seen" on a first
+  visit, "Update what you've seen" after), and a search on desktop that
+  matches every language's names. Sticky phase headers carry the phase
+  color, years, count, a small bar and Mark all, which turns into Undo for
+  that phase, then ✓ All seen.
+- The always-on Watchlist note is gone: marking a Watchlist title says, in
+  the footer, that saving moves it to Seen. One button: Save (red) once there
+  is something to save, otherwise Done / Skip for now. Saving, Undo, sync and
+  the leave prompt behave as before.
+- Desktop is a 760px dialog with 6 columns; phones a full-height sheet with
+  3 columns, the footer above the sticky headers.
+- Verified: `qa/test-picker.js` rewritten for the new design (title, count,
+  nothing over the posters, search, Mark all / Undo / All seen, the Watchlist
+  line, Done); test-contrast clean; desktop at 1440×900 and phones at 375
+  and 320px. Andre's first review (footer overlap on phones, title size,
+  meter, search width, shadows at the sticky headers) addressed.
+- Limits: not tried on a real iPhone.
+
 ## V5 design — Connections: a selected title's ring, legible at first sight
 
 Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);

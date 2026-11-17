@@ -327,7 +327,10 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
     out.widget = { start: r };
     if (!r) err('no compact card on desktop Connections');
     else {
-      if (!r.text.includes(`${seenIds.length}/${byRelease.length}`) || !r.text.includes(`+${notOut}`)) err(`the compact card should read ${seenIds.length}/${byRelease.length} and +${notOut}: ${r.text}`);
+      // "All titles · 5/60 seen · Up next" (docs/glossary.md): the count in
+      // words; the titles still to come are left to the Titles meters.
+      const wantCount = await page.evaluate(([s, n]) => window.MCU_I18N.tr('progress.count', { seen: s, n }), [seenIds.length, byRelease.length]);
+      if (!r.text.includes(wantCount) || /\+\d/.test(r.text)) err(`the compact card should read "${wantCount}" and no bare "+${notOut}": ${r.text}`);
       if (r.next !== name(byRelease[5].id)) err(`the card's Up next is ${r.next}, expected ${name(byRelease[5].id)}`);
     }
     await page.evaluate(() => {

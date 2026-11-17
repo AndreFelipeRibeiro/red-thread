@@ -67,8 +67,10 @@ const grid = page => page.evaluate(() => ({
   on: [...document.querySelectorAll('.pk-p[aria-pressed="true"]')].map(b => b.dataset.pick),
   count: (document.querySelector('.pk-count') || {}).textContent || '',
   go: (document.querySelector('.pk-go') || {}).textContent || '',
-  goDisabled: document.querySelector('.pk-go') ? document.querySelector('.pk-go').disabled : null,
-  heads: [...document.querySelectorAll('.pk-ph')].map(h => h.querySelector('.pk-pl').textContent + '|' + h.querySelector('.pk-pa').textContent),
+  // Nothing to save: the one button is a quiet close (Done / Skip for now).
+  closeOnly: !!document.querySelector('.pk-go.pk-close') && !document.querySelector('.pk-go.picker-go'),
+  heads: [...document.querySelectorAll('.pk-ph')].map(h => h.querySelector('.pk-pl').textContent + '|' + (h.querySelector('.pk-pn') || {}).textContent + '|' + (h.querySelector('.pk-pa, .pk-done') || {}).textContent),
+  total: ((document.querySelector('.pk-total b') || {}).textContent) || '',
   ask: !!document.querySelector('.pk-ask'),
   open: !!document.querySelector('.pk'),
 }));
@@ -94,16 +96,42 @@ const grid = page => page.evaluate(() => ({
   if (g.ids.join() !== plan.order.join()) err(`desktop: grid order ${g.ids.length} titles ≠ released by phase in release order (${plan.order.length})`);
   if (g.ids.some(id => plan.unreleased.includes(id))) err('desktop: an unreleased title is in the picker');
   if (g.on.length) err(`desktop: a new guest starts with ${g.on.length} picked`);
-  if (!g.goDisabled) err('desktop: the save button is enabled with nothing picked');
+  if (!g.closeOnly) err('desktop: with nothing picked the button should only close');
+  if (g.total !== '0') err(`desktop: a new guest's count reads "${g.total}"`);
+  if (await page.locator('.pk-name, .pk-tag').count()) err('desktop: titles or labels are drawn over the posters');
+  const wantTitle = await page.evaluate(() => window.MCU_I18N.tr('picker.titleFirst'));
+  if ((await page.locator('.pk-title').textContent()) !== wantTitle) err('desktop: a first visit is not titled "Start with what you\'ve seen"');
+  // Search (desktop): accents and case don't matter, and every language's
+  // names match ("capitao" finds Capitão América).
+  await page.locator('.pk-search input').fill('capitao'); await page.waitForTimeout(150);
+  const hits = await page.evaluate(() => [...document.querySelectorAll('.pk-p')].map(b => b.dataset.pick));
+  const wantHits = await page.evaluate(() => window.TITLES.filter(t => window.MCU_isReleased(t) && window.MCU_I18N.titleNames(t).some(n => window.MCU_I18N.fold(n).includes('capitao'))).map(t => t.id));
+  if (!hits.length || hits.slice().sort().join() !== wantHits.slice().sort().join()) err(`desktop search: ${hits.join()} ≠ ${wantHits.join()}`);
+  await page.locator('.pk-search input').fill(''); await page.waitForTimeout(150);
   // Select all of the first phase, then three titles of the second.
   const p1 = plan.phases[0].ids, p2 = plan.phases[1].ids;
+  await page.locator('.pk-pa').first().click();
+  // Mark all turns into Undo for that phase, which puts it back as it was.
+  g = await grid(page);
+  const undoWord = await page.evaluate(() => window.MCU_I18N.tr('picker.undoPhase'));
+  if (g.heads[0].split('|')[2] !== undoWord) err(`desktop: after Mark all the phase reads "${g.heads[0]}"`);
+  await page.locator('.pk-undo').click(); await page.waitForTimeout(100);
+  if ((await grid(page)).on.length) err('desktop: Undo after Mark all left picks');
   await page.locator('.pk-pa').first().click();
   for (const id of p2.slice(0, 3)) await page.locator(`[data-pick="${id}"]`).click();
   g = await grid(page);
   const want = p1.concat(p2.slice(0, 3));
   if (g.on.sort().join() !== want.slice().sort().join()) err(`desktop: picked ${g.on.length}, expected ${want.length}`);
-  if (!/^Clear$/.test(g.heads[0].split('|')[1])) err(`desktop: a full phase's button reads "${g.heads[0]}"`);
-  if (g.heads[0].indexOf(`${p1.length}/${p1.length}`) === -1) err(`desktop: phase count reads "${g.heads[0]}"`);
+  // Picks in another phase leave the first one's Undo alone; touching one of
+  // its own posters ends it, and the full phase then says All seen.
+  if (g.heads[0].split('|')[2] !== undoWord) err(`desktop: picks elsewhere ended Phase 1's Undo ("${g.heads[0]}")`);
+  await page.locator(`[data-pick="${p1[0]}"]`).click(); await page.locator(`[data-pick="${p1[0]}"]`).click(); await page.waitForTimeout(100);
+  g = await grid(page);
+  const allSeen = await page.evaluate(() => window.MCU_I18N.tr('picker.allSeen'));
+  if (g.heads[0].split('|')[2] !== allSeen) err(`desktop: a full phase reads "${g.heads[0]}"`);
+  const wantPn = await page.evaluate(n => window.MCU_I18N.tr('picker.phaseCount', { seen: n, n }), p1.length);
+  if (g.heads[0].split('|')[1] !== wantPn) err(`desktop: phase count reads "${g.heads[0]}"`);
+  if (g.total !== String(want.length)) err(`desktop: the big count reads ${g.total}, expected ${want.length}`);
   if (g.count.indexOf(String(want.length)) === -1 || g.go.indexOf(String(want.length)) === -1) err(`desktop: footer "${g.count}" / "${g.go}" should name ${want.length}`);
   if ((await page.locator('.pk-count[aria-live="polite"]').count()) !== 1) err('desktop: the count is not a polite live region');
   // Keyboard: Tab onto a poster and Space toggles it.
@@ -131,7 +159,7 @@ const grid = page => page.evaluate(() => ({
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, null, true));
   await page.goto(URL + '?welcome'); await settle(page);
   await page.locator('.welcome-pick .picker-go').click(); await page.waitForTimeout(500);
-  for (let i = 0; i < 3; i++) await page.locator('.pk-pa').nth(i).click();
+  for (let i = 0; i < 3; i++) await page.locator('.pk-pa:not(.pk-undo)').first().click();
   const many = plan.phases.slice(0, 3).reduce((n, x) => n + x.ids.length, 0);
   await page.locator('.pk-go').click(); await page.waitForTimeout(500);
   if (await page.locator('.bulk-dialog').count()) err('over 20: the picker asked for confirmation');
@@ -159,14 +187,17 @@ const grid = page => page.evaluate(() => ({
   const lab = await page.locator(`[data-pick="${a}"]`).getAttribute('aria-label');
   const wantLab = await page.evaluate(id => window.MCU_I18N.tr('picker.ariaSeen', { title: window.MCU_I18N.titleName(window.TITLES.find(t => t.id === id)) }), a);
   if (lab !== wantLab) err(`later: a seen poster is named "${lab}"`);
-  if (!(await page.locator(`[data-pick="${a}"] .pk-tag`).count())) err('later: no "Seen" label');
-  if (!(await page.locator('.pk-note').count())) err('later: no Watchlist note');
+  if (!(await page.locator(`[data-pick="${a}"] .pk-tick.on`).count())) err('later: a seen poster has no green check');
+  if (!(await page.locator(`[data-pick="${c}"] .pk-wl`).count())) err('later: a Watchlist poster has no bookmark');
+  if (await page.locator('.pk-wnote').count()) err('later: the Watchlist note shows before a Watchlist title is marked');
   await page.locator(`[data-pick="${a}"]`).click(); await page.locator(`[data-pick="${c}"]`).click();
+  if (!(await page.locator('.pk-count .pk-wnote').count())) err('later: marking a Watchlist title does not say it moves to Seen');
   g = await grid(page);
   const wantGo = await page.evaluate(() => window.MCU_I18N.tr('picker.save'));
   if (g.go !== wantGo) err(`later: button reads "${g.go}"`);
   if (!/1.*1/.test(g.count)) err(`later: footer "${g.count}" should count 1 seen and 1 unseen`);
-  if (!(await page.locator(`[data-pick="${a}"].un .pk-tag.ul`).count())) err('later: an unticked seen title shows no "Unmark" label');
+  const unLab = await page.evaluate(id => window.MCU_I18N.tr('picker.ariaUnmark', { title: window.MCU_I18N.titleName(window.TITLES.find(t => t.id === id)) }), a);
+  if (!(await page.locator(`[data-pick="${a}"].un`).count()) || (await page.locator(`[data-pick="${a}"]`).getAttribute('aria-label')) !== unLab) err('later: an unmarked seen title does not say it will be marked unseen');
   await page.locator('.pk-go').click(); await page.waitForTimeout(900);
   st = await saved(page);
   if (st[a] || st[b] !== 'seen' || st[c] !== 'seen') err(`later save: ${JSON.stringify(st)}`);
@@ -180,6 +211,9 @@ const grid = page => page.evaluate(() => ({
   await page.locator('.ml-pick').click(); await page.waitForTimeout(500);
   await page.locator('.pk-dialog .about-x').click(); await page.waitForTimeout(300);
   if (await page.locator('.pk').count()) err('close: × with no changes did not close');
+  await page.locator('.ml-pick').click(); await page.waitForTimeout(500);
+  await page.locator('.pk-close').click(); await page.waitForTimeout(300);
+  if (await page.locator('.pk').count()) err('close: Done with no changes did not close');
   await page.locator('.ml-pick').click(); await page.waitForTimeout(500);
   await page.locator(`[data-pick="${p2[1]}"]`).click();
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
@@ -240,7 +274,7 @@ const grid = page => page.evaluate(() => ({
   else {
     await empty.click(); await page.waitForTimeout(600);
     const t = await page.locator('.pk-title').textContent();
-    if (t !== 'O que você já viu?') err(`pt-BR: picker title "${t}"`);
+    if (t !== 'Comece pelo que você já viu') err(`pt-BR: picker title "${t}"`);
   }
   await finish('phone-empty', ctx, errors);
 
