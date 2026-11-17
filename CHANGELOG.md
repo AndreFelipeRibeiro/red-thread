@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 improvement — Seen and Watchlist pills on Guides open Titles, filtered
 
-Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - On Guides, which has nothing to filter, the header's Seen and Watchlist
   pills now open Titles with that status on (an open guide closes, as the
@@ -29,7 +30,8 @@ Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — A glossary, and one name per idea
 
-Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - `docs/glossary.md` names each idea once in English and Portuguese, with the
   names that must not come back; AGENTS.md and the README link it.
@@ -53,7 +55,8 @@ Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Light mode, designed on purpose
 
-Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - The light theme's Connections canvas is a neutral, slightly cool paper a
   step below the white cards, replacing the warm wash that read as a pink
@@ -70,7 +73,8 @@ Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — "What have you seen?" as a poster wall
 
-Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 21:57 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Direction A of the explorations, Andre's pick: posters with no titles over
   the art (the name is the accessible name and tooltip), an empty ring when
