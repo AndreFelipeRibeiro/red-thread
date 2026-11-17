@@ -330,13 +330,17 @@ const pickView = (page, n) => phoneView(page, ['list', 'list', 'spatial'][n]);
   out.mobileEnterZoom = await page.locator('.zoom-val').first().textContent();
   const mStart = parse(await T(page));
   const mc = await page.evaluate(() => { const r = document.querySelector('.card').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 60 }; });
+  // A tap opens the details sheet with no ring (Notion "Explore E 5/5"); a
+  // card the sheet would cover glides up, and closing puts the canvas back.
   await page.touchscreen.tap(mc.x, mc.y);
   await page.waitForTimeout(800);
   out.mobileSelectedMoved = !near(parse(await T(page)), mStart);
-  const bg = await emptyPoint(page, [30, 200, 360], [700, 650, 600, 250]);
-  await page.touchscreen.tap(bg.x, bg.y);
+  out.mobileSheet = await page.locator('.m-sheet').count();
+  await page.locator('.m-sheet .m-sheet-x').tap();
   await page.waitForTimeout(900);
   out.mobileRestored = near(parse(await T(page)), mStart);
+  if (out.mobileSheet !== 1) out.assertErrors.push('mobileSheet=' + out.mobileSheet + ' (a tap should open the details)');
+  if (!out.mobileRestored) out.assertErrors.push('mobileRestored=false (closing the details should put the canvas back)');
   // List -> sheet -> "See connections in Spatial" -> deselect: normal framing
   await pickView(page, 0);
   await page.waitForTimeout(300);

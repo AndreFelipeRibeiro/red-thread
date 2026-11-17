@@ -23,7 +23,9 @@ const off = page => page.evaluate(() => {
   await page.fill('.search-wrap input', 'Iron Man'); await page.waitForTimeout(400);
   await page.locator('.ss-item[data-kind="title"]', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
   await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(900);
-  await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(2500);
+  // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
+  await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(500);
+  await page.locator('.drawer.open .trail-pin').click(); await page.waitForTimeout(2500);
   for (let k = 0; k < 11; k++) { out.d.push(await off(page)); await page.locator('.cb-step button').last().click(); await page.waitForTimeout(900); }
   out.d.push(await off(page));
   await page.screenshot({ path: path.join(S, 'shots', 'align-d-last.png') });
@@ -31,7 +33,8 @@ const off = page => page.evaluate(() => {
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   await page.locator('.m-lrow-open', { hasText: 'Iron Man' }).first().tap(); await page.waitForTimeout(700);
-  await page.locator('.m-crow', { hasText: 'James Rhodes' }).tap(); await page.waitForTimeout(800);
+  await page.locator('.m-crow', { hasText: 'James Rhodes' }).tap(); await page.waitForTimeout(500);
+  await page.locator('.m-sheet .trail-pin').tap(); await page.waitForTimeout(800);
   out.mPill = await page.evaluate(() => { const p = document.querySelector('.char-pill'); return { text: p.innerText.replace(/\\n/g, ' | '), h: Math.round(p.getBoundingClientRect().height), switch: !!document.querySelector('.cb-mode'), rows: document.querySelectorAll('.m-lrow').length, overflow: p.scrollWidth > p.clientWidth + 1 }; });
   await page.screenshot({ path: path.join(S, 'shots', 'align-m-list.png') });
   await page.locator('.m-lrow-open', { hasText: 'Iron Man 2' }).first().tap(); await page.waitForTimeout(700);

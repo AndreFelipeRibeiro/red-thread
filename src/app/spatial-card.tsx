@@ -71,6 +71,8 @@ export interface CardProps {
   isCurrent?: boolean;
   /** The title the Up next card (or an open guide's dock) names. */
   isUpNext?: boolean;
+  /** The card whose poster is hovered in Cast and connections (desktop). */
+  isPeek?: boolean;
   curColor?: string;
   matchedChars?: string[] | null;
   searchQuery?: string;
@@ -86,9 +88,11 @@ export interface CardProps {
   connections?: number;
   /** The phone's canvas (`.app.touch`): tap, not drag. */
   touch?: boolean;
+  /** The phone canvas zoomed out (E 5/5): the title alone, larger. */
+  overview?: boolean;
 }
 
-export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, facet = 'year' }: CardProps) {
+export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
   const I18N = window.MCU_I18N;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
@@ -116,8 +120,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   // The desktop ring's centre is the same card at the same size (Andre,
   // 2026-11-15); its outline and shadow mark it.
   if (isRingFocus && !touch) z = 'z-27';
-  const stateOwnsBorder = isSelected || isHighlighted || listed || skipped || isCurrent;
-  const stateOwnsShadow = isSelected || isHighlighted || isCurrent;
+  // The card whose poster is hovered in the details' Cast and connections
+  // (Andre, 2026-11-16): outlined and lifted above its neighbors.
+  if (isPeek) { border = 'border-(--brand)'; shadow = 'shadow-[0_0_0_2px_var(--brand),0_10px_28px_rgb(0_0_0/.22)]'; z = 'z-29'; fade = 'filter-none'; lift = '[--lift:1.06] motion-reduce:[--lift:1]'; }
+  const stateOwnsBorder = isSelected || isHighlighted || listed || skipped || isCurrent || isPeek;
+  const stateOwnsShadow = isSelected || isHighlighted || isCurrent || isPeek;
   const hover = cn(!stateOwnsShadow && SHADOW.hover,
     !(isSelected || isHighlighted || isCurrent || (isRingFocus && !touch)) && 'hover:z-20',
     !(isCurrent || (isRingFocus && !touch) || isDragging || touch) && 'hover:[--lift:1.025] motion-reduce:hover:[--lift:1]');
@@ -182,7 +189,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         <window.PosterArt title={title}/>
         <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections} title={title} facet={facet}/>
       </div>
-      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars} touch={touch} facet={facet}/>
+      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars} touch={touch} overview={overview} facet={facet}/>
     </div>
   );
 }
@@ -274,8 +281,12 @@ export function cardFacet(sort: string, filters: { budget?: string } = {}): Card
  *  the title, then one meta line: phase dot · year · "Series" (a title not out
  *  yet adds its release badge). What else it shows by sort and filter is
  *  Notion "Cards show what the current sort and filters are about". */
-export function CardText({ title, skipped = false, query, matchedChars, pop = false, touch = false, facet = 'year' }: {
+export function CardText({ title, skipped = false, query, matchedChars, pop = false, touch = false, overview = false, facet = 'year' }: {
   title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; pop?: boolean; touch?: boolean; facet?: CardFacet;
+  /** The phone canvas zoomed out (Notion "Explore E 5/5"): at about 80px a
+   *  card's two lines were too small to read, so the title alone, larger, in
+   *  place of the year line (the ticket's fallback). */
+  overview?: boolean;
 }) {
   // The phone's canvas cards (Andre, 2026-11-16: the titles looked small next
   // to the larger phone text): a 17px title and a 12px line, the selected
@@ -291,10 +302,10 @@ export function CardText({ title, skipped = false, query, matchedChars, pop = fa
     <div className={cn('card-meta flex min-h-0 flex-1 flex-col', pop ? 'gap-[5px] px-3.5 pt-2.5 pb-3' : fit ? 'gap-[3px] px-[11px] pt-[7px] pb-[5px]' : 'gap-[4px] px-[12px] pt-[8px] pb-[8px]')}>
       {/* Size and line height in one class: a font size after a separate
           leading class makes cn() drop the leading, and descenders clip. */}
-      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', pop ? 'text-card-title-pop/[1.3]' : fit ? 'text-card-title-lg/[1.2]' : 'text-card-title/[1.3]', skipped && 'opacity-40')}>
+      <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', overview ? 'pr-0 text-card-title-ov/[1.15] font-semibold' : pop ? 'text-card-title-pop/[1.3]' : fit ? 'text-card-title-lg/[1.2]' : 'text-card-title/[1.3]', skipped && 'opacity-40')}>
         <Highlight text={I18N.titleName(title)} query={query}/>
       </div>
-      <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-card-meta-pop leading-[1.35]' : fit ? 'text-card-meta-lg leading-[1.3]' : 'text-card-meta leading-[1.35]', skipped && 'opacity-40')}>
+      {!overview && <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-card-meta-pop leading-[1.35]' : fit ? 'text-card-meta-lg leading-[1.3]' : 'text-card-meta leading-[1.35]', skipped && 'opacity-40')}>
         <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
         {(facet === 'year' || facet === 'imdb' || facet === 'rt') && <span className="flex-none whitespace-nowrap">{title.year}</span>}
         {facet === 'story' && title.story && <window.StoryYear title={title} className={cn('card-story min-w-0 text-[inherit] in-[.card]:text-[inherit] [&>svg]:size-[1em]')}/>}
@@ -304,7 +315,7 @@ export function CardText({ title, skipped = false, query, matchedChars, pop = fa
         {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
         {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
         {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-card-micro font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
-      </div>
+      </div>}
       <window.MatchBadge matchedChars={matchedChars} query={query} title={title}/>
     </div>
   );

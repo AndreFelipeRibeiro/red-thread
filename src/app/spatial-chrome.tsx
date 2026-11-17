@@ -22,7 +22,10 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 // A card floating over the canvas: the band labels, the meter, the empty note.
 const FLOAT = 'border border-border bg-background/95 shadow-sm';
 
-/** − / value / +, bottom-right on desktop (clear of the open drawer) and
+/** − / value / +, bottom-left on desktop (Notion "Spatial: the zoom
+ *  control overlaps title cards", 2026-11-16: bottom-right it sat on the next
+ *  row of cards, which the timelines bring in at the right; bottom-left they
+ *  leave empty, and it is clear of the open drawer) and
  *  top-right on phones, where it rests hidden and shows while zooming. The
  *  value is a button: a double-click (desktop) or a tap (phone) types a zoom.
  *  Opaque in dark too (the input tint mixed into the background), so a card
@@ -41,7 +44,7 @@ export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onComm
     <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-border bg-background shadow-xs dark:border-input dark:bg-[color-mix(in_oklab,var(--input)_30%,var(--background))]',
       touch
         ? 'touch top-3 right-3 z-22 rounded-lg transition-opacity duration-250 motion-reduce:transition-none'
-        : 'right-4 bottom-4 transition-[right] duration-360 ease-[cubic-bezier(.2,.8,.2,1)] [.app:not(.touch).drawer-open_&]:right-[396px]',
+        : 'bottom-4 left-4',
       touch && rest && 'rest pointer-events-none opacity-0 focus-within:pointer-events-auto focus-within:opacity-100')}>
       <Button variant="ghost" className={btn} onClick={() => onStep(1 / 1.15)} disabled={scale <= min + 1e-4} aria-label={tr('canvas.zoomOut')}>&minus;</Button>
       {edit != null
@@ -58,11 +61,14 @@ export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onComm
 }
 
 /** A row's name over the Release (phase) and Chronological (era) timelines,
- *  with its progress meter where there is one. In canvas pixels. The labels
- *  wait for the cards after a new layout, then fade in with a small rise
- *  (`lines-settling` / `bands-settling` on the canvas). */
-export function BandLabel({ x, y, phase, color, plain, touch, children }: {
-  x: number; y: number; phase?: number | null; color?: string; plain: boolean; touch: boolean; children: React.ReactNode;
+ *  and in By Phase its count ("Phase 1 4/6"): a pill that hugs its words, as
+ *  on the landing view (Andre, 2026-11-16: the dashed meters were busy). In
+ *  canvas pixels. The labels wait for the cards after a new layout, then
+ *  fade in with a small rise (`lines-settling` / `bands-settling` on the
+ *  canvas). */
+export function BandLabel({ x, y, phase, color, plain, touch, count = null, children }: {
+  x: number; y: number; phase?: number | null; color?: string; plain: boolean; touch: boolean;
+  count?: { seen: number; released: number } | null; children: React.ReactNode;
 }) {
   return (
     <div className={cn('band-label pointer-events-none absolute top-0 left-0 z-1 rounded-lg text-body font-semibold tracking-tight whitespace-nowrap', FLOAT,
@@ -73,6 +79,7 @@ export function BandLabel({ x, y, phase, color, plain, touch, children }: {
       'motion-reduce:[.canvas.lines-settling_&]:top-0 motion-reduce:[.canvas.bands-settling_&]:top-0')}
       style={{ transform: `translate(${x}px, ${y}px)`, ...(phase && color ? { '--band': color } : {}) } as React.CSSProperties}>
       {children}
+      {count && <span className="band-count ml-2 font-semibold tabular-nums text-foreground" title={tr('progress.seen', { seen: count.seen, n: count.released })}>{count.seen}/{count.released}</span>}
     </div>
   );
 }
@@ -99,9 +106,6 @@ export function SpatialOverall({ touch, floating = true, children }: { touch: bo
   }, [touch]);
   return (
     <div ref={ref} className={cn('spatial-overall pointer-events-none z-40', B.WIDGET,
-      // All titles' header and bar read like a guide's (B.W_*): the name and
-      // count, × at the end of the row, a 4px bar under them.
-      '[&_.pgh]:gap-1 [&_.pgh-top]:min-h-[max(30px,1.875rem)] [&_.pgh-top]:gap-2 [&_.pgh-label]:text-body [&_.pgh-label]:font-semibold [&_.pgh-label]:tracking-tight [&_.pgh-count]:font-semibold [&_.pgh-count]:text-muted-foreground [&_.pgh-up]:font-semibold [&_.pgh-bar]:mr-[7px] [&_.pgh-bar]:h-1 [&_.pgh-bar.seg]:gap-[3px] [&_.w-head]:pointer-events-auto [&_.pgh-top]:pointer-events-auto',
       // Desktop: top right, on Connections and in Titles, as wide as a
       // guide's card.
       !touch && (floating ? 'absolute top-3.5 right-4 w-[340px] max-w-[calc(100%-32px)]' : 'w-[340px]'),

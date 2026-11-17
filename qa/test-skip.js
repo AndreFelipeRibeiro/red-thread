@@ -244,13 +244,14 @@ const STATE = () => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { seen: ['endgame'] });
     await page.goto(URL + '?view=spatial&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(600);
-    // A phone guide opens framed on its next stop (Loki: Season 2): tap it.
+    // A tap on a phone guide stop opens its details sheet (no pop card since
+    // Notion "Explore E 5/5"), where Skip sits as on desktop.
     await page.locator('.card[data-id="loki-s2"]').click({ force: true }); await page.waitForTimeout(900);
-    await page.locator('.m-focuspop .g-skip').tap(); await page.waitForTimeout(500);
-    const r = await page.evaluate(() => ({ unskip: !!document.querySelector('.m-focuspop .g-unskip'), tsa: !!document.querySelector('.m-focuspop .card-acts-tsa'),
+    await page.locator('.m-sheet .g-dskip-btn').tap(); await page.waitForTimeout(500);
+    const r = await page.evaluate(() => ({ unskip: !!document.querySelector('.m-sheet .g-unskip'), pop: !!document.querySelector('.m-focuspop'),
       stored: localStorage.getItem('mcu.guideSkips.v1') }));
-    out.popupSkip = r;
-    expect(r.unskip && !r.tsa && (r.stored || '').includes('loki-s2'), `phone popup Skip: ${JSON.stringify(r)}`);
+    out.sheetSkip = r;
+    expect(r.unskip && !r.pop && (r.stored || '').includes('loki-s2'), `phone sheet Skip: ${JSON.stringify(r)}`);
     errors.push(...e);
     await ctx.close();
   }

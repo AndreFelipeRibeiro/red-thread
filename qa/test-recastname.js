@@ -141,7 +141,11 @@ const go = async page => { await page.goto(URL); await settle(page); };
     if (!bruceRow()) { await click(row); attempts = 2; }
     const cast = bruceRow();
     if (!cast) return { error: 'no Bruce Banner cast row on The Incredible Hulk', attempts };
+    // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
     await click(cast);
+    const pin = document.querySelector('.drawer.open .trail-pin');
+    if (!pin) return { error: 'no pin in Bruce Banner\'s trail' };
+    await click(pin);
     const sub = () => {
       const el = document.querySelector('.char-banner .cb-sub');
       return el ? el.textContent.trim() : null;

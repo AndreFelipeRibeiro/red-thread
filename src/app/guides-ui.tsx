@@ -431,7 +431,7 @@ function GuideMenuProgress({ guide }) {
   return (
     <span className="g-prog flex flex-none flex-col items-end gap-[5px]">
       <span className={cn('g-n tabular-nums', XS, DIM)} aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{p.ess.seen}/{p.ess.released}</span>
-      <span className="g-bar h-[3px] w-[46px] overflow-hidden rounded-[2px] bg-border" aria-hidden="true">
+      <span className="g-bar h-[3px] w-[46px] overflow-hidden rounded-[2px] bg-(--progress-track)" aria-hidden="true">
         <span className="block h-[3px] bg-(--progress) transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none" style={{ width: pct + '%' }}/>
       </span>
     </span>
@@ -538,8 +538,10 @@ const BRAND_TEXT = 'text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))
 // right, its stops on a thread: seen ones dimmed with the seen mark, the next
 // one larger with its call to action attached (Mark seen when followed,
 // Start guide when not), and an event guide's destination last, dashed, with
-// its date. A long guide shows the next stop with up to three on each side
-// (one after it on phones).
+// its date. A long guide shows the next stop with up to three on each side.
+// Phones show four small posters beside it, the destination included (the
+// one before the next stop, when there is one, then the ones after); three
+// below 390px and two below 360px (Andre, 2026-11-16: only Loki and Doomsday read as sparse).
 function GuidesHero({ guide, followed, onPick }) {
   const { statusOf, states, toggleSeen } = window.useCollection();
   useGuideSkips();
@@ -566,11 +568,26 @@ function GuidesHero({ guide, followed, onPick }) {
   const start = () => { MCU_GUIDE.follow(guide.id); setSaid(gtr('guide.followedSaid', { name })); };
   const pct = p.ess.released ? Math.round(p.ess.seen / p.ess.released * 100) : 0;
   const stopName = (s) => GI18N.titleName(s.title);
+  // Phones: which small posters show (see above).
+  const phoneShown = (() => {
+    const ids = new Set(), midOut = new Set(), narrowOut = new Set();
+    if (at < 0) { shown.slice(0, 4 - (target ? 1 : 0)).forEach(s => ids.add(s.id)); return { ids, midOut, narrowOut }; }
+    let budget = 4 - (target ? 1 : 0);
+    if (at > 0 && budget > 1) { ids.add(stops[at - 1].id); budget--; }
+    const after = stops.slice(at + 1, at + 1 + budget);
+    after.forEach(s => ids.add(s.id));
+    // Narrower phones keep three, the narrowest two (the destination counts).
+    const order = [...(at > 0 && ids.has(stops[at - 1].id) ? [stops[at - 1]] : []), ...after];
+    const dest = target ? 1 : 0;
+    order.slice(Math.max(0, 3 - dest)).forEach(s => midOut.add(s.id));
+    order.slice(Math.max(0, 2 - dest)).forEach(s => narrowOut.add(s.id));
+    return { ids, midOut, narrowOut };
+  })();
   // Progress: under the blurb on desktop, under the strip on phones.
   const prog = (cls) => (
     <div className={cn('g-hero-prog flex items-center gap-3 text-label font-semibold text-muted-foreground tabular-nums', cls)}>
       {followed ? <>
-        <span className="g-hero-bar h-1 w-[100px] overflow-hidden rounded-full bg-border in-[.app.touch]:flex-1" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
+        <span className="g-hero-bar h-1 w-[100px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:flex-1" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
         <span aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}</span>
       </> : <span>{p.ess.seen ? gtr('guide.seenOf', { seen: p.ess.seen, n: p.ess.released }) : gtr('guide.hero.notStarted', { size: MCU_GUIDE.size(guide) })}</span>}
     </div>
@@ -588,7 +605,7 @@ function GuidesHero({ guide, followed, onPick }) {
         {prog('in-[.app.touch]:hidden')}
         <Button variant="outline" className="g-hero-about h-[38px] px-3.5 text-label in-[.app.touch]:hidden" onClick={() => onPick(guide.id)}>{gtr('guide.about')}</Button>
       </div>
-      <ol className="g-strip relative m-0 flex list-none items-center gap-3 p-0 in-[.app.touch]:gap-2" aria-label={gtr('guide.promoStops')}>
+      <ol className="g-strip relative m-0 flex list-none items-center gap-3 p-0 in-[.app.touch]:gap-1.5" aria-label={gtr('guide.promoStops')}>
         <span aria-hidden="true" className="g-thread absolute inset-x-8 top-1/2 h-0.5 bg-border"/>
         {shown.map(s => {
           const seen = statusOf(s.id) === 'seen';
@@ -602,7 +619,9 @@ function GuidesHero({ guide, followed, onPick }) {
                     {followed ? gtr('upnext.label') : gtr('guide.stopPill', { i: s.n })}
                   </span>
                 </span>
-                <button type="button" className={cn('g-cta flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 bg-primary text-label font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:ring-inset [&_svg]:size-[15px]', FOCUS)}
+                {/* One line, on phones too (Andre, 2026-11-16): there the
+                    words alone, without the + or the check. */}
+                <button type="button" className={cn('g-cta flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 bg-primary px-1 text-label font-semibold whitespace-nowrap text-primary-foreground hover:bg-primary/90 focus-visible:ring-inset [&_svg]:size-[15px] [&_svg]:flex-none in-[.app.touch]:[&_svg]:hidden', FOCUS)}
                   onClick={followed ? () => mark(s.title) : start}
                   aria-label={followed ? gtr('status.markSeenAria', { title: stopName(s) }) : gtr('guide.startAria', { name })}>
                   {followed ? <window.CheckIcon/> : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>}
@@ -611,12 +630,11 @@ function GuidesHero({ guide, followed, onPick }) {
               </li>
             );
           }
-          // Phones keep one stop after the next one (and the destination).
-          const far = at >= 0 && stops.findIndex(x => x.id === s.id) > at + 1;
+          const far = !phoneShown.ids.has(s.id);
           return (
-            <li key={s.id} className={cn('g-hstop relative z-1 flex-none', seen && 'seen', far && 'in-[.app.touch]:hidden')}
+            <li key={s.id} className={cn('g-hstop relative z-1 flex-none', seen && 'seen', far && 'in-[.app.touch]:hidden', phoneShown.midOut.has(s.id) && 'max-[389px]:in-[.app.touch]:hidden', phoneShown.narrowOut.has(s.id) && 'max-[359px]:in-[.app.touch]:hidden')}
               aria-label={gtr(seen ? 'guide.promoStopSeenAria' : 'guide.promoStopAria', { title: stopName(s), i: s.n })}>
-              <span className={cn(POSTER, 'h-24 w-16 rounded-md in-[.app.touch]:h-[54px] in-[.app.touch]:w-9', seen && '[&>:first-child]:opacity-45')}>
+              <span className={cn(POSTER, 'h-24 w-16 rounded-md in-[.app.touch]:h-12 in-[.app.touch]:w-8', seen && '[&>:first-child]:opacity-45')}>
                 <window.PosterArt title={s.title}/>
                 <PosterYear title={s.title} className="in-[.app.touch]:hidden"/>
               </span>
@@ -626,7 +644,7 @@ function GuidesHero({ guide, followed, onPick }) {
         })}
         {target && (
           <li className="g-hstop dest relative z-1 flex-none" aria-label={gtr('guide.destLabel', { title: GI18N.titleName(target) }) + (date ? ' · ' + date : '')}>
-            <span className={cn(POSTER, 'h-24 w-16 rounded-md border-[1.5px] border-dashed border-muted-foreground in-[.app.touch]:h-[54px] in-[.app.touch]:w-9 [&>:first-child]:opacity-60')}>
+            <span className={cn(POSTER, 'h-24 w-16 rounded-md border-[1.5px] border-dashed border-muted-foreground in-[.app.touch]:h-12 in-[.app.touch]:w-8 [&>:first-child]:opacity-60')}>
               <window.PosterArt title={target}/>
               {date && <span aria-hidden="true" className="absolute inset-x-1 bottom-1.5 z-2 rounded-full bg-black/60 px-1 py-0.5 text-center text-tag leading-[1.3] font-semibold whitespace-nowrap text-white/90 in-[.app.touch]:inset-x-0 in-[.app.touch]:bottom-0.5 in-[.app.touch]:text-card-micro">{date}</span>}
             </span>
@@ -666,17 +684,18 @@ function GuideCard({ guide, onPick, className = '' }) {
           </span>
         ))}
       </div>
-      <h3 className="m-0 text-heading leading-[1.35] font-semibold text-foreground">
+      {/* The name and size line follow the size steps (Notion "Size steps 2/3"). */}
+      <h3 className="m-0 text-(length:--step-title) leading-[1.35] font-semibold text-foreground">
         <button type="button" className="g-row g-card-open cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-[14px] focus-visible:after:ring-3 focus-visible:after:ring-ring/50" onClick={() => onPick(guide.id)}>{name}</button>
       </h3>
-      <p className="g-card-size m-0 -mt-1 text-label text-muted-foreground">{MCU_GUIDE.size(guide)}</p>
+      <p className="g-card-size m-0 -mt-1 text-(length:--step-meta) text-muted-foreground">{MCU_GUIDE.size(guide)}</p>
       {/* A narrow card (two a row on a phone) stacks the row: the bar or the
           count on its own line, then the label or Follow. */}
       <div className="g-card-status mt-auto flex h-7 items-center gap-2.5 text-label text-muted-foreground tabular-nums @max-[180px]/gcard:h-auto @max-[180px]/gcard:min-h-7 @max-[180px]/gcard:flex-wrap @max-[180px]/gcard:gap-y-2">
         {p.complete ? (
           <span className="inline-flex items-center gap-1.5 [&_svg]:size-3"><window.CheckIcon/>{gtr('guide.card.allSeen', { n: p.ess.released })}</span>
         ) : followed ? <>
-          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-border @max-[180px]/gcard:basis-full" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
+          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-(--progress-track) @max-[180px]/gcard:basis-full" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
           <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released }) + ' · ' + gtr('guide.following')}>
             {/* Narrow: the count alone (the bar already says it is followed). */}
             <span className="@max-[180px]/gcard:hidden" aria-hidden="true">{gtr('guide.card.following', { seen: p.ess.seen, n: p.ess.released })}</span>
@@ -743,7 +762,7 @@ function ContinueCard({ guide, onPick }) {
         {next && <p className="m-0 line-clamp-2 text-body leading-[1.4] text-muted-foreground">{gtr('guide.continue.stop', { i: next.n, n: total, title: GI18N.titleName(next.title) })}</p>}
         <span className="flex-1"/>
         <div className="mt-2 flex items-center gap-3 text-label text-muted-foreground tabular-nums">
-          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
+          <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-(--progress-track)" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
           <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}</span>
         </div>
         <span className="mt-1.5 text-label font-medium text-foreground in-[.app.touch]:hidden" aria-hidden="true">{gtr('guide.continue.open')}</span>
@@ -867,8 +886,8 @@ function GuidesPage({ onPick, inMain = false }) {
   const hero = MCU_GUIDE.focus(statusOf, today) || MCU_GUIDE.heroPick(statusOf, today);
   const shelves = guideShelves(hero ? hero.id : null);
   return (
-    <div ref={pageRef} onScroll={(e) => { guidesPageScroll = e.currentTarget.scrollTop; }} className="g-page min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-[72px] max-[1100px]:px-6 in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role={inMain ? 'region' : 'main'} aria-labelledby="g-page-title">
-      <div className="mx-auto flex max-w-[1120px] flex-col gap-11 in-[.app.touch]:gap-7">
+    <div ref={pageRef} onScroll={(e) => { guidesPageScroll = e.currentTarget.scrollTop; }} className="g-page @container min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-[72px] max-[1100px]:px-6 in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role={inMain ? 'region' : 'main'} aria-labelledby="g-page-title">
+      <div className="step-sizes mx-auto flex max-w-[1120px] flex-col gap-11 in-[.app.touch]:gap-7">
         <h1 id="g-page-title" className="story-sr">{gtr('guide.menuTitle')}</h1>
         {hero && <GuidesHero guide={hero} followed={MCU_GUIDE.isFollowed(hero.id)} onPick={onPick}/>}
         <ContinueShelf heroId={hero ? hero.id : null} onPick={onPick} phone={inMain}/>
@@ -929,62 +948,68 @@ function GuideSegments({ guide, statusOf, done = false, currentId = null }) {
       // The stop the stepper is on gets a quiet gray outline (Andre,
       // 2026-11-16), so stepping shows where you are on the bar.
       return <i key={s.id} className={cn('flex-1 rounded-[2px] transition-[background-color] duration-[260ms] motion-reduce:transition-none',
-        done ? 'bg-(--progress-done)' : on ? 'on bg-(--progress)' : 'bg-input',
+        done ? 'bg-(--progress-done)' : on ? 'on bg-(--progress)' : 'bg-(--progress-track)',
         currentId === s.id && 'cur outline-1 outline-offset-2 outline-muted-foreground/70')}/>;
     });
   return <span className="gm-segs flex h-1 gap-[3px]" aria-hidden="true">{segs}</span>;
 }
 
 // The open guide's card on Connections, the same on desktop (top right) and
-// phones (the dock at the bottom), laid out like the All titles card (B.W_*):
-// the guide and its count with ‹ › and ×, the red progress with the stop the
-// stepper is on outlined, a rule, then the next stop with its poster and ✓.
-// A finished guide says what it was for. On desktop the guide's name opens
-// its page (Andre, 2026-11-16).
-function GuideWidget({ guide, p, next, currentId = null, pos, stepCount, onOpenPage = null, onOpenNext, onSeenNext, onPrev, onNext, onClose }) {
+// phones (the dock at the bottom), laid out like the All titles card (B.W_*,
+// Andre 2026-11-16): the next stop's poster, "Before Doomsday · 3/5" over its
+// name, × in the corner; under them the progress with ‹ › at its end, the
+// stop the stepper is on outlined. The poster and name open the stop's
+// details, where it is marked seen (no ✓ in the card). On desktop the
+// guide's name opens its page. A finished guide says what it was for.
+// The card follows the stepper (Andre, 2026-11-16): while you step it shows
+// the stop you are on ("Before Doomsday · Stop 2 of 5"), so the outlined
+// dash, the card and the details name the same title; at rest it shows the
+// next stop not yet seen ("Before Doomsday · Next"). The seen count is the
+// bar's (its label says it for screen readers).
+function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId = null, pos, stepCount, onOpenPage = null, onOpenNext, onPrev, onNext, onClose }) {
   const { statusOf } = window.useCollection();
   const complete = p.complete;
   const date = MCU_GUIDE.targetDate(guide);
   const doneLine = date ? gtr('guide.pillDoneDate', { date }) : gtr('guide.complete');
   const name = MCU_GUIDE.short(guide);
+  const stepping = !!current && stepIndex >= 0;
+  const shown = stepping ? current : next;
+  const where = stepping
+    ? (stepIndex >= stepCount ? gtr('guide.destPos') : gtr('guide.stepOf', { i: stepIndex + 1, n: stepCount }))
+    : next ? gtr('guide.dockNextTag') : null;
+  const count = <>{where && <span className={cn('gm-where', stepping ? 'text-foreground' : '')}>{where}</span>}<span className="gm-count g-dock-count story-sr">{p.ess.seen}/{p.ess.released}</span></>;
+  const open = () => shown && onOpenNext && onOpenNext(shown.id);
   return (
     <>
-      <div className={cn(B.W_HEAD, 'gm-head')}>
-        {onOpenPage
-          ? <button type="button" className={cn(B.W_NAME, 'gm-page g-dock-name cursor-pointer rounded-sm hover:underline hover:underline-offset-2', FOCUS)}
-              onClick={onOpenPage} aria-label={gtr('guide.openPageAria', { name: MCU_GUIDE.name(guide) })}>{name}</button>
-          : <span className={cn(B.W_NAME, 'g-dock-name')}>{name}</span>}
-        <span className={cn(B.W_COUNT, 'gm-count g-dock-count', complete && 'text-(--seen-text)')} aria-hidden="true">{p.ess.seen}/{p.ess.released}</span>
-        <span className={B.W_FILL}/>
-        <div className={B.PILL_STEP}>
-          <button type="button" className={B.W_BTN} onClick={onPrev} aria-label={gtr('guide.prev')} disabled={!stepCount}>‹</button>
-          <span className="cb-pos story-sr" aria-live="polite">{pos}</span>
-          <button type="button" className={B.W_BTN} onClick={onNext} aria-label={gtr('guide.next')} disabled={!stepCount}>›</button>
+      <div className={cn(B.W_ROW, 'gm-next')}>
+        {shown
+          ? <button type="button" tabIndex={-1} aria-hidden="true" className={cn('gm-nthumb g-dock-poster cursor-pointer', B.W_POSTER, THUMB)} onClick={open}><window.PosterArt title={shown}/></button>
+          : <GuideArt guide={guide} size={36} round/>}
+        <div className={B.W_TEXT}>
+          <span className={cn(B.W_KICKER, 'flex min-w-0 items-baseline gap-1')}>
+            {onOpenPage
+              ? <button type="button" className={cn('gm-page g-dock-name min-w-0 cursor-pointer truncate rounded-sm text-left hover:text-foreground', FOCUS)}
+                  onClick={onOpenPage} aria-label={gtr('guide.openPageAria', { name: MCU_GUIDE.name(guide) })}>{name}</button>
+              : <span className="g-dock-name min-w-0 truncate">{name}</span>}
+            {where && <span aria-hidden="true">·</span>}
+            <span className="flex-none whitespace-nowrap">{count}</span>
+          </span>
+          {shown
+            ? <button type="button" className={cn(B.W_TITLE, 'gm-nextopen g-dock-next cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
+                aria-label={gtr('guide.openNextAria', { title: GI18N.titleName(shown) })}><span className="gm-ntitle">{GI18N.titleName(shown)}</span></button>
+            : <span className={cn(B.W_TITLE, 'gm-doneline g-dock-sub', complete ? 'text-(--seen-text)' : 'text-muted-foreground')}>{complete ? doneLine : MCU_GUIDE.size(guide)}</span>}
         </div>
         <button type="button" className={B.W_CLOSE} aria-label={gtr('guide.close')} title={gtr('guide.close')} onClick={onClose}>×</button>
       </div>
-      <span className={cn(B.W_BAR, 'gm-meter g-dock-meter')} role="img" aria-label={gtr('guide.partSeen', { seen: p.ess.seen, n: p.ess.released })}>
-        <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId}/>
-      </span>
-      <div className={B.W_RULE} role="presentation"/>
-      <div className={cn(B.W_ROW, 'gm-next')}>
-        {next
-          ? <span className={cn('gm-nthumb g-dock-poster', B.W_POSTER, THUMB)} aria-hidden="true"><window.PosterArt title={next}/></span>
-          : <GuideArt guide={guide} size={36} round/>}
-        {next ? (
-          <button type="button" className={cn(B.W_TEXT, 'gm-nextopen g-dock-next cursor-pointer', FOCUS)} onClick={() => onOpenNext && onOpenNext(next.id)}
-            aria-label={gtr('guide.openNextAria', { title: GI18N.titleName(next) })}>
-            <span className={B.W_KICKER}>{gtr('guide.dockNextTag')}</span>
-            <span className={cn(B.W_TITLE, 'gm-ntitle')}>{GI18N.titleName(next)}</span>
-          </button>
-        ) : (
-          <span className={cn('gm-doneline g-dock-sub min-w-0 flex-1 truncate text-body font-semibold', complete ? 'text-(--seen-text)' : 'text-muted-foreground')}>{complete ? doneLine : MCU_GUIDE.size(guide)}</span>
-        )}
-        {/* ✓ with the camera on another stop brings it back to this one, so
-            the mark is seen landing (Andre, 2026-11-16). */}
-        {next && <span className="contents" onClickCapture={() => onSeenNext && onSeenNext(next.id)}>
-          <window.TitleStatusActions title={next} className={cn('gm-tsa g-dock-tsa', B.W_TSA)}/>
-        </span>}
+      <div className={B.W_FOOT}>
+        <span className="gm-meter g-dock-meter min-w-0 flex-1" role="img" aria-label={gtr('guide.partSeen', { seen: p.ess.seen, n: p.ess.released })}>
+          <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId}/>
+        </span>
+        <div className={B.W_STEP}>
+          <button type="button" className={B.W_STEP_BTN} onClick={onPrev} aria-label={gtr('guide.prev')} disabled={!stepCount}>‹</button>
+          <span className="cb-pos story-sr" aria-live="polite">{pos}</span>
+          <button type="button" className={B.W_STEP_BTN} onClick={onNext} aria-label={gtr('guide.next')} disabled={!stepCount}>›</button>
+        </div>
       </div>
     </>
   );
@@ -1027,7 +1052,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
   const cls = cn('guide-banner g-module rounded-xl border bg-card text-card-foreground shadow-sm [--gm-line:var(--border)]',
     complete && 'done border-[color-mix(in_oklab,var(--seen)_55%,var(--background))] bg-[color-mix(in_oklab,var(--seen)_8%,var(--card))] [--char-color:var(--seen)] [--gm-line:color-mix(in_oklab,var(--seen)_30%,var(--background))]',
     spatial
-      ? 'spatial absolute top-3 right-[22px] left-[22px] z-40 flex cursor-default items-center gap-3 bg-[color-mix(in_oklab,var(--background)_96%,transparent)] py-2 pr-2 pl-2.5 shadow-[0_12px_30px_rgba(0,0,0,.45)] not-dark:shadow-[0_1px_2px_rgb(0_0_0/.06),0_10px_28px_-12px_rgb(0_0_0/.2)] in-[.app:not(.touch).drawer-open]:right-[402px]'
+      ? 'spatial absolute top-3 right-[22px] left-[22px] z-40 flex cursor-default items-center gap-3 bg-[color-mix(in_oklab,var(--background)_96%,transparent)] py-2 pr-2 pl-2.5 shadow-[0_12px_30px_rgba(0,0,0,.45)] not-dark:shadow-[0_1px_2px_rgb(0_0_0/.06),0_10px_28px_-12px_rgb(0_0_0/.2)] in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+22px)]'
       : 'list mx-auto mb-2.5 max-w-[1480px]');
   // Seen only, labelled (Watchlist stays on the row); on a complete guide's
   // destination, Watchlist only.
@@ -1049,9 +1074,10 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
     return (
       <section aria-label={region} onMouseDown={stop} onClick={stop} onWheel={stop}
         className={cn('guide-banner g-module spatial absolute top-3.5 right-4 z-40 w-[340px] max-w-[calc(100%-32px)] cursor-default', B.WIDGET,
-          'in-[.app:not(.touch).drawer-open]:right-[396px]', complete && 'done border-[color-mix(in_oklab,var(--seen)_55%,var(--border))]')}>
+          'in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+16px)]', complete && 'done border-[color-mix(in_oklab,var(--seen)_55%,var(--border))]')}>
         <GuideWidget guide={guide} p={p} next={next ? next.title : null} currentId={currentId} pos={pos} stepCount={stepCount}
-          onOpenPage={onOpenPage} onOpenNext={onOpenNext} onSeenNext={onSeenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
+          stepIndex={stepIndex} current={currentId ? window.TITLES.find(t => t.id === currentId) || null : null}
+          onOpenPage={onOpenPage} onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
       </section>
     );
   }
@@ -1171,7 +1197,8 @@ function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onS
       {/* Outside the canvas, so the blur is allowed. */}
       <div className={cn('g-dock-card', B.WIDGET, 'in-[.g-dock.done]:border-[color-mix(in_oklab,var(--seen)_55%,var(--border))]')}>
         <GuideWidget guide={guide} p={p} next={showNext} currentId={current ? current.id : null} pos={pos} stepCount={stepCount}
-          onOpenNext={onOpenNext} onSeenNext={onSeenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
+          stepIndex={stepIndex} current={current}
+          onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
       </div>
     </div>
   );
@@ -1390,7 +1417,7 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
         ? <p className="g-ready m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground [&_b]:text-(--seen-text)"><b>{gloc(guide.done) || gtr('guide.complete')}</b> {gtr('guide.allEssentialSeen')}</p>
         : <p className="g-blurb m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground">{MCU_GUIDE.blurb(guide)}</p>}
       <div className="g-meter flex w-full max-w-[560px] flex-wrap items-center gap-x-3 gap-y-2 text-label font-semibold text-muted-foreground tabular-nums">
-        <span className="h-1 w-[200px] overflow-hidden rounded-full bg-border in-[.app.touch]:min-w-0 in-[.app.touch]:flex-1" aria-hidden="true">
+        <span className="h-1 w-[200px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:min-w-0 in-[.app.touch]:flex-1" aria-hidden="true">
           <span className={cn('block h-full rounded-full', p.complete ? 'bg-(--seen)' : 'bg-(--brand)')} style={{ width: pct + '%' }}/>
         </span>
         <span className="pgh-count" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>
@@ -1399,12 +1426,12 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
         <window.BulkHeaderAction ids={ids} group={name}/>
       </div>
       <div className="g-actions flex flex-wrap items-center gap-2.5">
-        <Button variant="outline" className={cn('g-following h-10 gap-1.5 px-3.5 text-body [&_svg]:size-3.5', followed && 'on')} aria-pressed={followed}
+        <Button variant="outline" className={cn('g-following h-10 gap-1.5 px-3.5 text-body [&_svg]:size-3.5 in-[.g-desk]:h-(--step-control-h)', followed && 'on')} aria-pressed={followed}
           aria-label={followed ? gtr('guide.unfollowAria', { name }) : gtr('guide.followAria', { name })} onClick={toggleFollow}>
           {followed ? <window.CheckIcon/> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>}
           {followed ? gtr('guide.following') : gtr('guide.follow')}
         </Button>
-        {!phone && <GuideShare guide={guide} className="g-share h-10 px-3.5"/>}
+        {!phone && <GuideShare guide={guide} className="g-share h-10 px-3.5 in-[.g-desk]:h-(--step-control-h)"/>}
         {nOpt > 0 && (
           <label className="g-optrow inline-flex cursor-pointer items-center gap-2.5 text-body text-muted-foreground">
             {/* shadcn's Switch look. */}
@@ -1479,7 +1506,8 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
     // Phones: Seen as the one button, as in Titles (direction B, Andre
     // 2026-11-16); Watchlist is a swipe to the left or in the details.
     ? 'g-tsa static z-auto flex-none flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(40px,2.5rem)] [&_.tsa-btn_svg]:size-4 [&_.tsa-next]:px-0 [&_.tsa-lab]:hidden [&_.tsa-gap]:hidden [&:has(.tsa-btn.seen:not(.tsa-gap))_.tsa-btn.watch]:hidden'
-    : 'g-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-[max(34px,2.125rem)] [&_.tsa-next]:h-[max(34px,2.125rem)] [&_.tsa-gap]:order-0';
+    // Desktop: the size steps, as the Titles list (Notion "Size steps 2/3").
+    : 'g-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-(--step-button) [&_.tsa-btn:not(.tsa-next)_svg]:size-(--step-icon) [&_.tsa-next]:h-(--step-button) @min-[84rem]:[&_.tsa-next]:text-body [&_.tsa-gap]:order-0';
   const otag = cn('g-otag ml-1.5 rounded-full border border-input px-[5px] py-px align-[1px] text-label font-medium', DIM);
   const rows = stops.map(s => {
     const seen = statusOf(s.id) === 'seen';
@@ -1494,28 +1522,28 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
     const row = (
       <div key={s.id} data-row-id={s.id} role={desk ? 'row' : undefined}
         className={cn('g-stop relative flex items-center gap-3', seen && 'seen', s.optional && 'optional', skipped && 'skipped',
-          desk ? 'min-h-[76px] border-b border-border/70 px-3 py-2' : 'min-h-[78px] rounded-xl border bg-card py-2 pr-2.5 pl-2 text-card-foreground shadow-sm',
+          desk ? 'min-h-(--step-row-h) border-b border-border/70 px-3 py-2' : 'min-h-[78px] rounded-xl border bg-card py-2 pr-2.5 pl-2 text-card-foreground shadow-sm',
           s.optional && !desk && 'border-dashed', skipped && (desk ? 'min-h-[56px] border-dashed' : 'min-h-0 border-dashed py-1.5'),
           isNext && cn('next up-next', desk ? 'bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]' : 'border-[color-mix(in_oklab,var(--brand)_45%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_6%,var(--card))]'),
           currentId === s.id && cn('current', desk ? 'shadow-[inset_3px_0_0_var(--ring)]' : 'shadow-[0_0_0_2px_var(--ring)]'))}>
         {isNext && <span className="g-next-bar absolute top-2.5 bottom-2.5 left-[-1px] w-[3px] rounded-full bg-(--brand)" aria-hidden="true"/>}
         <span role={desk ? 'cell' : undefined} className="g-numcell inline-flex w-6 flex-none flex-col items-center gap-1.5">
-          <span role="img" aria-label={numLabel} className={cn('g-num text-body font-semibold tabular-nums', isNext ? 'text-foreground' : 'text-muted-foreground')}>{s.optional ? '+' : s.n}</span>
+          <span role="img" aria-label={numLabel} className={cn('g-num font-semibold tabular-nums', desk ? 'text-(length:--step-figure)' : 'text-body', isNext ? 'text-foreground' : 'text-muted-foreground')}>{s.optional ? '+' : s.n}</span>
           {phone && canSkip(s) && <SkipButton guide={guide} stop={s} className="size-[max(32px,2rem)] basis-8" onDone={afterSkip}/>}
         </span>
         <button type="button" role={desk ? 'cell' : undefined} className={cn('g-open flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md text-left', FOCUS, skipped && 'opacity-55')} onClick={() => onOpen(s.id)}>
-          <span className={cn(POSTER, 'g-thumb rounded-[5px]', skipped ? 'h-[42px] w-7 flex-[0_0_28px]' : 'h-[60px] w-10 flex-[0_0_40px]')}>
+          <span className={cn(POSTER, 'g-thumb rounded-[5px]', skipped ? 'h-[42px] w-7 flex-[0_0_28px]' : desk ? 'h-(--step-poster-h) w-(--step-poster-w) flex-[0_0_var(--step-poster-w)]' : 'h-[60px] w-10 flex-[0_0_40px]')}>
             <PosterArt title={t}/>
             {seen && <PosterSeen className="top-[3px] right-[3px] bottom-auto"/>}
           </span>
           <span className="g-text flex min-w-0 flex-col items-start">
             <span className="flex max-w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="g-title text-body leading-[1.3] font-semibold text-foreground in-[.g-desk]:text-heading">{GI18N.titleName(t)}</span>
+              <span className={cn('g-title leading-[1.3] font-semibold text-foreground', desk ? 'text-(length:--step-title)' : 'text-body')}>{GI18N.titleName(t)}</span>
               {s.optional && <span className={otag}>{gtr('guide.optionalTag')}</span>}
               {skipped && <span className={cn(otag, 'g-skiptag-inline border-dashed')}>{gtr('guide.skippedTag')}</span>}
               {isNext && desk && <span className="g-next-pill rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-label font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))]">{gtr('upnext.label')}</span>}
             </span>
-            {!skipped && <span className="g-meta mt-0.5 text-label text-muted-foreground tabular-nums in-[.g-desk]:text-body">
+            {!skipped && <span className={cn('g-meta mt-0.5 text-muted-foreground tabular-nums', desk ? 'text-(length:--step-meta)' : 'text-label')}>
               {isNext && phone && <><span className="g-next-pill font-semibold text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))]">{gtr('upnext.label')}</span> · </>}
               {meta}{desk && why ? ' · ' + why : ''}
             </span>}
@@ -1558,8 +1586,9 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
     );
   }
   return (
-    <div className="dlist g-desk relative @container min-h-0 flex-1 overflow-y-auto px-[22px] pt-6 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[402px]" role="main" aria-label={name}>
-      <div className="mx-auto w-full max-w-[1120px]">
+    <div className="dlist g-desk relative @container min-h-0 flex-1 overflow-y-auto px-[22px] pt-6 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[calc(var(--drawer-w)+22px)]" role="main" aria-label={name}>
+      {/* The size steps (Notion "Size steps 2/3"), by this page's width. */}
+      <div className="step-sizes mx-auto w-full max-w-[1120px]">
         <div className={cn('grid items-start gap-8', guide.target ? 'grid-cols-[minmax(0,1fr)_290px] max-[1100px]:grid-cols-1' : 'grid-cols-1')}>
           {header}
           {guide.target && <div className="pt-12 max-[1100px]:pt-0">{dest}</div>}

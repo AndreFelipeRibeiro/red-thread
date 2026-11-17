@@ -96,7 +96,9 @@ const phoneView = (page, name) => page.evaluate(async (n) => {
 // What a view is showing right now: how many per-phase meters, and whether the
 // whole-catalogue meter is up.
 const readCanvas = (page) => page.evaluate(() => ({
-  phaseMeters: document.querySelectorAll('.band-label .pgh-bar').length,
+  // By Phase's row pills carry the phase's count ("Phase 1 4/6"; no meter
+  // since Andre, 2026-11-16).
+  phaseMeters: document.querySelectorAll('.band-label .band-count').length,
   // The floating box can also hold just the Up next row (By Phase has no All
   // titles meter), so look for a meter inside it, not the box itself.
   overall: !!document.querySelector('.spatial-overall .pgh'),
@@ -107,7 +109,7 @@ const readCanvas = (page) => page.evaluate(() => ({
 // catalogue-wide count is the heading's (the progress widget, Titles 3/5).
 const readDeskList = (page) => page.evaluate(() => ({
   groups: document.querySelectorAll('.dl-group').length,
-  meters: document.querySelectorAll('.dl-group .dl-group-marks').length,
+  meters: document.querySelectorAll('.dl-group .dl-group-num').length,
   phases: [...document.querySelectorAll('.dl-group-label')].filter(b => /^Phase \d/.test(b.textContent.trim())).length,
 }));
 const checkDeskList = (sort, got, errors) => {
@@ -120,18 +122,18 @@ const checkDeskList = (sort, got, errors) => {
 // Titles sorts from the header's Sort menu, as Connections does.
 const deskListSort = (page, key) => deskSort(page, key);
 // The phone List follows the desktop List (Notion "Titles 4/5"): the same
-// group headings with their marks, and All titles in the compact card docked
+// group headings with their counts, and All titles in the compact card docked
 // above the bottom bar (none in By Phase, where the headings carry it).
 const readPhoneList = (page) => page.evaluate(() => ({
   groups: document.querySelectorAll('.m-scrollarea .m-ghead').length,
-  meters: document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-marks').length,
+  meters: document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-num').length,
   phases: [...document.querySelectorAll('.m-scrollarea .m-ghead .dl-group-label')].filter(b => /^Phase \d/.test(b.textContent.trim())).length,
   overall: !!document.querySelector('.spatial-overall.docked .pgh'),
 }));
 const checkRule = (where, sort, got, errors) => {
   const want = expectFor(sort);
   if (got.phaseMeters !== want.phaseMeters || got.overall !== want.overall) {
-    errors.push(`${where} in ${sort} order shows ${got.phaseMeters} phase meters and ${got.overall ? 'an' : 'no'} All titles meter; expected ${want.phaseMeters} and ${want.overall ? 'one' : 'none'}`);
+    errors.push(`${where} in ${sort} order shows ${got.phaseMeters} phase counts and ${got.overall ? 'an' : 'no'} All titles meter; expected ${want.phaseMeters} and ${want.overall ? 'one' : 'none'}`);
   }
 };
 const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom));
@@ -253,8 +255,8 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   // ---- The canvas ---------------------------------------------------------
   await deskView(page, 'Spatial');
   await deskSort(page, DESK_SORT.phase);
-  // Connection lines run behind the band labels, so heading and meter sit on
-  // an opaque pill, about two and a half cards wide.
+  // Connection lines run behind the band labels, so the name and count sit on
+  // an opaque pill that hugs them (Andre, 2026-11-16: no dashed meter).
   R.bands = await page.evaluate(() => [...document.querySelectorAll('.band-label')].map((el) => {
     const cs = getComputedStyle(el);
     const r = el.getBoundingClientRect();
@@ -265,16 +267,17 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
       gapToCards: cards.length ? Math.round(Math.min(...cards.map((c) => c.top)) - r.bottom) : null,
       bg: cs.backgroundColor, radius: parseFloat(cs.borderRadius),
       segs: el.querySelectorAll('.pgh-seg').length,
+      count: (el.querySelector('.band-count') || {}).textContent || null,
     };
   }));
   if (!R.bands.length) errors.push('no Spatial band labels in By Phase');
   R.bands.forEach((b, i) => {
     if (/rgba\(0, 0, 0, 0\)|transparent/.test(b.bg)) errors.push(`band ${i} has no background; the lines run straight through it`);
     if (!(b.radius > 0)) errors.push(`band ${i} is not a pill (border-radius ${b.radius})`);
-    if (!b.segs) errors.push(`band ${i} has no meter segments`);
+    if (b.segs) errors.push(`band ${i} still draws ${b.segs} meter segments`);
+    if (!/^\d+\/\d+$/.test(b.count || '')) errors.push(`band ${i} has no "4/6" count: ${b.count}`);
     if (b.cardW) {
-      const inCards = b.w / b.cardW;
-      if (inCards < 2 || inCards > 3) errors.push(`band ${i} is ${inCards.toFixed(2)} cards wide; it should sit between 2 and 3`);
+      if (b.w > b.cardW * 1.5) errors.push(`band ${i} is ${b.w}px wide; a pill that hugs "Phase 1 4/6" is narrower than a card and a half`);
       if (b.gapToCards < 0) errors.push(`band ${i} overlaps the cards beneath it by ${-b.gapToCards}px`);
     }
   });
@@ -384,24 +387,26 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
   }
 
   // ---- Phone: the List in By Phase: one heading per phase, with its marks ---
-  // Plain headings (no sticky dividers, no folding; Notion "Titles 4/5"): one
-  // mark per released title, as many filled as are seen.
+  // Plain headings (no sticky dividers, no folding; Notion "Titles 4/5"),
+  // each with its count.
   await phoneView(m, 'List');
   await phoneSort(m, PHONE_SORT.phase);
   R.listPhase = await m.evaluate(() => {
     const heads = [...document.querySelectorAll('.m-scrollarea .m-ghead')];
     const st = JSON.parse(localStorage.getItem('mcu.collection.v1') || '{"states":{}}').states;
     return heads.map(h => {
-      const marks = [...h.querySelectorAll('.dl-group-marks > span')];
-      return { label: h.querySelector('.dl-group-label').textContent.trim(), marks: marks.length,
-        filled: marks.filter(x => /\bon\b/.test(x.className)).length,
+      // "Phase 1 4/6": the count beside the colored name, no marks (Andre,
+      // 2026-11-16).
+      const num = (h.querySelector('.dl-group-num') || {}).textContent || '';
+      return { label: h.querySelector('.dl-group-label').textContent.trim(), marks: h.querySelectorAll('.dl-group-marks').length,
+        num, labelColor: getComputedStyle(h.querySelector('.dl-group-label')).color,
         sticky: getComputedStyle(h).position === 'sticky' };
     }).concat([{ seenTotal: Object.values(st).filter(v => v === 'seen').length }]);
   });
   const heads = R.listPhase.slice(0, -1);
   if (heads.length !== 6) errors.push(`the List in By Phase shows ${heads.length} phase headings, expected 6`);
   if (heads.some(h => h.sticky)) errors.push('a phone List heading is sticky again');
-  if (heads.some(h => !h.marks)) errors.push(`a phase heading has no marks: ${JSON.stringify(heads)}`);
+  if (heads.some(h => h.marks || !/^\d+\/\d+$/.test(h.num))) errors.push(`a phase heading should read "Phase N 4/6" with no marks: ${JSON.stringify(heads)}`);
 
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));

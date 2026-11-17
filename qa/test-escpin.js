@@ -130,7 +130,8 @@ const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
   R.phoneSheet = await m.evaluate(() => !!document.querySelector('.m-sheet'));
   const row = await m.$('.m-crow');
   R.phoneCastRow = !!row;
-  if (row) { await row.click(); await m.waitForTimeout(1400); }
+  // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
+  if (row) { await row.click(); await m.waitForTimeout(600); await m.locator('.m-sheet .trail-pin').click(); await m.waitForTimeout(1400); }
   R.phonePinned = await m.evaluate(() => !!document.querySelector('.char-pill'));
   await m.keyboard.press('Escape'); await m.waitForTimeout(700);
   R.phoneAfterEscape = await m.evaluate(() => !!document.querySelector('.char-pill'));

@@ -30,11 +30,24 @@ const MENUS = {
   for (const vw of [1440, 1100]) {
     let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: vw, height: 900 } }, ART + SEED);
     await page.goto('http://127.0.0.1:' + PORT + '/'); await require('./ready').appReady(page);
+    // Landing (release order): no card under the zoom control, bottom-left
+    // (Notion "Spatial: the zoom control overlaps title cards").
+    await page.waitForTimeout(800);
+    const under = await page.evaluate(() => {
+      const z = document.querySelector('.zoom-ctl').getBoundingClientRect();
+      return [...document.querySelectorAll('.card[data-id]')].filter((c) => {
+        const r = c.getBoundingClientRect();
+        return +getComputedStyle(c).opacity > 0.05 && r.right > z.left - 4 && r.left < z.right + 4 && r.bottom > z.top - 4 && r.top < z.bottom + 4;
+      }).map((c) => c.dataset.id);
+    });
+    out['d' + vw + 'landingUnderZoom'] = under;
+    if (under.length) errors.push('landing: cards under the zoom control: ' + under.join(', '));
     // details open + character pinned
     await page.fill('.search-wrap input', 'Iron Man'); await page.waitForTimeout(400);
     await page.locator('.ss-item[data-kind="title"]', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
     await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(600);
-    await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(1300);
+    await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(500);
+    await page.locator('.drawer.open .trail-pin').click(); await page.waitForTimeout(1300);
     for (const view of ['Spatial', 'List']) {
       await page.locator('.nav-tabs button', { hasText: view === 'Spatial' ? 'Connections' : 'Titles' }).click(); await page.waitForTimeout(900);
       const r = {};
@@ -61,7 +74,8 @@ const MENUS = {
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED);
   await page.goto('http://127.0.0.1:' + PORT + '/'); await require('./ready').appReady(page);
   await page.locator('.m-lrow-open', { hasText: 'Iron Man' }).first().tap(); await page.waitForTimeout(700);
-  await page.locator('.m-crow', { hasText: 'Tony Stark' }).tap(); await page.waitForTimeout(900);
+  await page.locator('.m-crow', { hasText: 'Tony Stark' }).tap(); await page.waitForTimeout(500);
+  await page.locator('.m-sheet .trail-pin').tap(); await page.waitForTimeout(900);
   for (const view of ['list', 'spatial']) {
     if (view === 'spatial') { await page.locator('.m-lrow-open', { hasText: 'Iron Man 2' }).first().tap(); await page.waitForTimeout(700); await page.locator('.m-apply.ghost', { hasText: 'See connections' }).tap(); await page.waitForTimeout(1300); }
     const r = {};

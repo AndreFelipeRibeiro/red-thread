@@ -9,7 +9,7 @@
 //   info.watchScope  true on the Watchlist tab
 //   info.onOpen(id), info.onHide() (the card's ✕: hides the card for the visit)
 //
-// One surface shows them: the compact card's row (UpNextMeterRow), the same
+// One surface shows them: the compact card (AllTitlesWidget), the same
 // card in the same place on Connections and in Titles, on desktop and phones;
 // the list marks the same title in its row. The desktop List's strip went with
 // Notion "Titles 3/5", and the phone List's card and the phone Connections
@@ -103,41 +103,75 @@ function UpNextSlide({ id, className, children }: { id: string; className: strin
   );
 }
 
-// One row inside the compact All titles card, on Connections and in Titles:
-// top right on desktop, docked above the bottom bar on phones (Notion
-// "Titles 3/5" and "4/5"), laid out like a guide's next stop (B.W_*, Andre
-// 2026-11-16). Under the All titles header the card's × is in the header;
-// on its own (By Phase has no All titles meter) the row keeps it.
-function UpNextMeterRow({ info, hide = true }: { info: UpNextInfo; hide?: boolean }) {
+// The compact All titles card, on Connections and in Titles: top right on
+// desktop, docked above the bottom bar on phones (Notion "Titles 3/5" and
+// "4/5"). The same layout as an open guide's card (B.W_*, Andre 2026-11-16):
+// Up next's poster, "All titles · 37/60 · Up next" over its name (a tap opens
+// its details, where it is marked seen: no ✓ here) and × in the corner,
+// which hides the card for this visit; under them the catalog's progress.
+// By Phase has no All titles meter (the phase pills carry it), so the card
+// is Up next alone; with everything seen it is the meter alone.
+type AllCount = { seen: number; released: number; upcoming?: number };
+function AllTitlesWidget({ info, all, label, onClose, collapsed = false, offScreen = null }: {
+  info: UpNextInfo | null; all: AllCount | null; label: string; onClose: () => void;
+  /** Phone Connections with the Up next card on screen: the header and bar alone (E 5/5). */
+  collapsed?: boolean;
+  /** Panned away from the Up next card: an arrow pointing to it ("↖ off screen"). */
+  offScreen?: string | null;
+}) {
   const PosterArt = window.PosterArt;
-  const r = info.result;
-  if (r.kind !== 'next') return null;
-  const t = r.title;
+  const t = info && info.result.kind === 'next' ? info.result.title : null;
+  const done = !!all && all.released > 0 && all.seen >= all.released;
+  const count = all && <>
+    <span className="pgh-label">{label}</span> · <span className={cn('pgh-count tabular-nums', done && 'text-(--seen-text)')}>{all.seen}/{all.released}</span>
+    {all.upcoming ? <span className="pgh-up tabular-nums"> +{all.upcoming}</span> : null}
+  </>;
+  const close = (
+    <button type="button" className={cn('un-hide', B.W_CLOSE)} onClick={(e) => { e.stopPropagation(); onClose(); }}
+      aria-label={untr('upnext.hideCardAria')} title={untr('upnext.hide')}>×</button>
+  );
   return (
     <>
-      <div className={cn(B.W_RULE, 'first:hidden')} role="presentation"/>
-      <section className="un-mrow pointer-events-auto" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
-        <UpNextSlide id={t.id} className={cn('un-mrow-body', B.W_ROW)}>
-          <button type="button" className={cn(OPEN, 'flex-1 gap-2.5')} onClick={() => info.onOpen(t.id)}>
-            <span className={cn('un-mposter', B.W_POSTER, THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
-            <span className={cn('un-mtext', B.W_TEXT)}>
-              <UpNextTag info={info} short className={B.W_KICKER}/>
-              <span className={cn('un-title block', B.W_TITLE)}>{UpNI18N.titleName(t)}</span>
-            </span>
-          </button>
-          <UpNextStatus info={info} title={t} variant="inline"
-            className={cn('un-compact mt-0 flex-nowrap [&_.tsa-btn]:min-h-0 [&_.tsa-btn]:justify-center [&_.tsa-btn]:p-0 [&_.tsa-lab]:hidden', B.W_TSA)}/>
-          {hide && <UpNextHide info={info}/>}
-        </UpNextSlide>
-      </section>
+      {t && info && !collapsed ? (
+        <section className="un-mrow pointer-events-auto flex min-w-0 items-center gap-2.5" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
+          <UpNextSlide id={t.id} className="un-mrow-body">
+            <button type="button" className={cn(OPEN, B.W_OPEN)} onClick={() => info.onOpen(t.id)}>
+              <span className={cn('un-mposter', B.W_POSTER, THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
+              <span className={cn('un-mtext', B.W_TEXT)}>
+                <span className={B.W_KICKER}>
+                  {count}{count && ' · '}
+                  <span className="un-tag" title={`${info.lead} · ${info.detail}. ${untr('upnext.rule')}`}>{info.lead}</span>
+                </span>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className={cn('un-title block min-w-0', B.W_TITLE)}>{UpNI18N.titleName(t)}</span>
+                  {offScreen && <span className="un-off inline-flex flex-none items-center gap-0.5 rounded-full bg-(--brand)/10 px-1.5 py-px text-label font-semibold whitespace-nowrap text-(--brand)">
+                    <span aria-hidden="true">{offScreen}</span>{untr('upnext.offScreen')}</span>}
+                </span>
+              </span>
+            </button>
+          </UpNextSlide>
+          {close}
+        </section>
+      ) : (
+        <div className={cn(B.W_ROW, 'pointer-events-auto')}>
+          <span className={cn(B.W_TITLE, 'flex-1')}>{count}</span>
+          {close}
+        </div>
+      )}
+      {all && all.released > 0 && (
+        <div className={cn(B.W_FOOT, 'pgh pointer-events-auto', done && 'done')} role="img"
+          aria-label={untr('progress.seen', { seen: all.seen, n: all.released })}>
+          <span className={B.W_BAR}><span className={cn('pgh-fill block h-full rounded-full transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none', done ? 'bg-(--progress-done)' : 'bg-(--progress)')} style={{ width: Math.round(all.seen / all.released * 100) + '%' }}/></span>
+        </div>
+      )}
     </>
   );
 }
 
-Object.assign(window, { UpNextTag, UpNextHide, UpNextMeterRow });
+Object.assign(window, { UpNextTag, UpNextHide, AllTitlesWidget });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { UpNextTag, UpNextHide, UpNextMeterRow };
+export { UpNextTag, UpNextHide, AllTitlesWidget };

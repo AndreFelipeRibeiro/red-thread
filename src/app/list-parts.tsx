@@ -168,12 +168,12 @@ export function ProgressHeader({ label, color, seen, released, upcoming, band, w
         <span className={cn('pgh-bar seg flex h-[3px] gap-0.5', band && 'h-1 gap-[3px] in-[.app.touch]:gap-0.5', lit && 'lit')} aria-hidden="true">
           {Array.from({ length: released }, (_, i) => (
             <span key={i} style={{ '--i': i } as React.CSSProperties}
-              className={cn('pgh-seg h-full min-w-0 flex-1 rounded-[1px] bg-border transition-[background-color] duration-[260ms] motion-reduce:transition-none',
+              className={cn('pgh-seg h-full min-w-0 flex-1 rounded-[1px] bg-[color-mix(in_oklab,var(--pm,var(--progress))_22%,transparent)] transition-[background-color] duration-[260ms] motion-reduce:transition-none',
                 i < seen && 'on', lit && i < seen && cn(FILL, 'animate-[pgh-seg-in_300ms_cubic-bezier(.2,.8,.2,1)_backwards] [animation-delay:calc(min(var(--i,0),8)*45ms)] motion-reduce:animate-none in-[.reduce-motion]:animate-none'))}/>
           ))}
         </span>
       ) : (
-        <span className={cn('pgh-bar block h-0.5 overflow-hidden rounded-[1px] bg-border', band && 'h-[3px]')} aria-hidden="true">
+        <span className={cn('pgh-bar block h-0.5 overflow-hidden rounded-[1px] bg-[color-mix(in_oklab,var(--pm,var(--progress))_22%,transparent)]', band && 'h-[3px]')} aria-hidden="true">
           {/* The bar animates only after the visitor's own marking, never on
               first paint or a sort change, and never with reduced motion. */}
           <span className={cn('pgh-fill block h-full rounded-[1px] transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none in-[.flip-active]:transition-none in-[.lines-settling]:transition-none', FILL)}

@@ -193,18 +193,23 @@ const CANVAS = () => {
     const c = await page.evaluate(CANVAS);
     out.phoneCanvas = c;
     expect(c.stops === 10 && c.dimmed === 0 && !c.summary, `phone Spatial with Series set: ${JSON.stringify(c)}`);
-    // The dock: the next stop with Seen; no separate meter or Up next card.
+    // The dock: the next stop (no ✓: it is marked in its details); no separate meter or Up next card.
     const d = await page.evaluate(() => {
       const next = (window.MCU_GUIDE.next(window.MCU_GUIDE.get('infinity-saga'), false, () => 'none') || {}).id;
       const card = document.querySelector(`.card[data-id="${next}"]`).getBoundingClientRect();
       const vp = document.querySelector('.viewport').getBoundingClientRect(), dock = document.querySelector('.g-dock').getBoundingClientRect();
-      return { next, sub: (document.querySelector('.g-dock .g-dock-next .gm-ntitle') || {}).textContent, seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen'),
+      return { next, sub: (document.querySelector('.g-dock .g-dock-next .gm-ntitle') || {}).textContent, seen: !!document.querySelector('.g-dock .tsa-btn.seen'),
         segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-mrow'), meter: !!document.querySelector('.spatial-overall'),
-        cx: Math.round(card.left + card.width / 2 - innerWidth / 2), inView: card.top >= vp.top && card.bottom <= dock.top + 1, readable: card.width >= 140 };
+        inView: card.top >= vp.top && card.bottom <= dock.top + 1,
+        // The phone fits the guide's whole path above its dock (Notion
+        // "Explore E 5/5"): every stop on screen, not just the next one.
+        allIn: window.MCU_GUIDE.stops(window.MCU_GUIDE.get('infinity-saga'), false).every((st) => {
+          const c = document.querySelector(`.card[data-id="${st.id}"]`); if (!c) return false;
+          const r = c.getBoundingClientRect(); return r.left >= vp.left - 1 && r.right <= vp.right + 1 && r.top >= vp.top - 1 && r.bottom <= dock.top + 1; }) };
     });
     out.phoneDock = d;
-    expect(d.sub === 'Iron Man' && d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
-    expect(Math.abs(d.cx) < 4 && d.inView && d.readable, `phone guide not framed on its next stop: ${JSON.stringify(d)}`);
+    expect(d.sub === 'Iron Man' && !d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
+    expect(d.inView && d.allIn, `phone guide should fit its whole path above the dock: ${JSON.stringify(d)}`);
     // The zoom control rests hidden and shows while zooming (a double-tap here).
     const z0 = await page.evaluate(() => document.querySelector('.zoom-ctl').classList.contains('rest'));
     const vp = await page.evaluate(() => { const r = document.querySelector('.viewport').getBoundingClientRect(); return { x: r.left + 12, y: r.top + 12 }; });
@@ -216,6 +221,29 @@ const CANVAS = () => {
     expect(z0 && !z1 && z2, `phone zoom control: ${JSON.stringify(out.phoneZoom)}`);
     const wide = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
     expect(!wide, 'the phone page scrolls sideways');
+    errors.push(...e);
+    await ctx.close();
+  }
+
+  // A short phone (375×667): stepping through a guide frames each stop above
+  // the dock, as landing does (Andre, 2026-11-16: the stepper parked the
+  // card behind the guide's card).
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true }, { lang: 'en' });
+    await page.goto(URL + '?view=spatial&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(900);
+    const steps = [];
+    for (let i = 0; i < 3; i++) {
+      await page.locator('.g-dock .cb-step button').last().tap(); await page.waitForTimeout(1300);
+      steps.push(await page.evaluate(() => {
+        const name = document.querySelector('.g-dock .cb-pos').textContent.split(' · ').slice(1).join(' · ');
+        const t = window.TITLES.find(x => window.MCU_I18N.titleName(x) === name);
+        const card = t && document.querySelector(`.card[data-id="${t.id}"]`);
+        if (!card) return { name, missing: true };
+        return { id: t.id, bottom: Math.round(card.getBoundingClientRect().bottom), dock: Math.round(document.querySelector('.g-dock').getBoundingClientRect().top) };
+      }));
+    }
+    out.shortPhoneSteps = steps;
+    steps.forEach(s => expect(!s.missing && s.bottom <= s.dock, `short phone: stepping parked a card under the guide's card: ${JSON.stringify(s)}`));
     errors.push(...e);
     await ctx.close();
   }

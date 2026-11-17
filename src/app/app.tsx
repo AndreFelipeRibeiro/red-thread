@@ -47,6 +47,15 @@ const CARD_H = window.CARD_SIZE.h;
 // uses it to frame Up next and a title whose details just closed, so cards
 // read at one size whichever order is on.
 const phoneReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 2.5));
+// The phone canvas's overview (Notion "Explore E 5/5"): about four posters
+// across. The canvas still opens at the reading zoom (Andre, 2026-11-16: the
+// larger cards worked better); a double-tap on empty canvas switches to the
+// overview and back, and a pinch or double-tap sets the zoom for the rest of
+// the visit (phoneZoom).
+const phoneOverviewScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 4.3));
+let phoneZoom = null;
+// Below this zoom a phone card shows its title alone, larger (E 5/5).
+const PHONE_OVERVIEW_BELOW = 0.6;
 // Desktop's reading zoom: the timeline orders open at about 7.5 titles across
 // (one title step is CARD_W * 1.15), capped at 100%, so any window 1,466px or
 // wider reads at 100%. Stepping through a character or a guide, and centring
@@ -61,6 +70,14 @@ const deskReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 7.5));
 const BAND_LABEL_H = 58;
 // Space between the two titles of the pair view (room for the labels).
 const PAIR_GAP = 380;
+// Desktop, following a title's thread (Notion "Explore E 4/5", Andre
+// 2026-11-16): its connected titles in one row by release, this far apart.
+const LINE_GAP = 48;
+// The desktop ring's circles, innermost first.
+const RING_CAPS = [6, 10, 16, 22];
+// The details drawer's width (--drawer-w in src/index.css: 380px, 440px from a
+// 1600px window; Notion "Size steps 3/3"), for the camera's sums.
+const drawerW = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--drawer-w')) || 380;
 
 // Variant handling: a character may declare `prime`, pointing at the "through-line"
 // identity it is a variant of (He Who Remains -> kang, Captain Carter -> peggy).
@@ -298,7 +315,7 @@ const keepFocusOnStep = () => {
   drawerStepTimer = setTimeout(() => { drawerStepFocus = false; }, 1000);
 };
 
-function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search, onShowInExplore }) {
+function CastDrawer({ title: current, back = null, ex = null, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search, onShowInExplore }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
   // the last title while it slides away. Switching titles swaps the content.
   const [title, setTitle] = useState(current);
@@ -330,7 +347,12 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   // Details and cast scroll as one, so a new title starts at its poster rather
   // than wherever the last one's cast was scrolled to.
   const scrollRef = useRef(null);
-  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [title && title.id]);
+  const explore = current && ex ? ex.explore : null;
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [title && title.id, explore && explore.kind]);
+  // Leaving the thread or trail puts keyboard focus back on the heading.
+  useEffect(() => {
+    if (headingRef.current && lastInput === 'keyboard' && open) headingRef.current.focus({ preventScroll: true });
+  }, [explore && explore.kind]);
   useEffect(() => {
     if (!current) { setOpen(false); return; }
     setTitle(current);
@@ -344,11 +366,20 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   return (
     <window.DrawerFrame asideRef={asideRef} scrollRef={scrollRef} open={open} onClose={onClose}
       onSlid={() => { if (!current) setTitle(null); }}>
-      <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
+      {explore && explore.kind === 'thread' ? (
+        <window.ThreadView id={title.id} surface="drawer" headingRef={headingRef} headingId="drawer-title"
+          onLeave={ex.onLeave} onOpen={ex.onOpen}/>
+      ) : explore && explore.kind === 'trail' ? (
+        <window.TrailView char={explore.char} from={explore.from} surface="drawer" headingRef={headingRef} headingId="drawer-title" inCanvas={ex.inCanvas}
+          onLeave={ex.onLeave} onOpen={ex.onOpen} onPin={ex.onPin}/>
+      ) : (
+      <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title" back={current ? back : null}
+        onThread={current && ex ? ex.onThread : null}
         // From My list and Guides: the title on the Explore canvas.
         onExplore={onShowInExplore ? () => onShowInExplore(title.id) : null}
         cast={<window.DrawerCast title={title} activeChar={activeChar} activeChars={activeChars} search={search}
           onCharacterClick={onCharacterClick} onCharacterHover={onCharacterHover}/>}/>
+      )}
     </window.DrawerFrame>
   );
 }
@@ -394,7 +425,7 @@ function connectionCounts(titles) {
 // How far below a row the arc joining two of its cards may dip (see control()).
 const ARC_MAX = 80;
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination, in place of the character threads. A single path in the
   // existing layer, so the canvas performance rules hold.
@@ -457,7 +488,23 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       labels.forEach(v => { if (!grouped[key].characters.includes(v)) grouped[key].characters.push(v); });
     }
   });
-  const connections = Object.values(grouped);
+  let connections = Object.values(grouped);
+  // A selected title's ring: only its own lines, one from it to each title
+  // it connects to, through the characters they share (Notion "Connections:
+  // a selected title's ring, legible at first sight"); the lines among the
+  // other titles are left out. Its first circle carries the labels.
+  if (spokes) {
+    const ft = visibleTitles.find(t => t.id === spokes.focus);
+    if (ft) {
+      const mine = new Map();
+      ft.cast.forEach(c => { const p = primeOf(c); if (!mine.has(p)) mine.set(p, c); });
+      connections = visibleTitles.filter(t => t.id !== ft.id).map(t => {
+        const characters = [];
+        t.cast.forEach(c => { const own = mine.get(primeOf(c)); if (own && characters.indexOf(own) === -1) characters.push(own); });
+        return { a: ft.id, b: t.id, characters };
+      }).filter(c => c.characters.length);
+    }
+  }
 
   // Control point of a connection's curve. Titles on the same row (neighbours
   // on a timeline or grid) would be joined by a line hidden behind the cards,
@@ -554,9 +601,17 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     const isPair = pair && pair.a === conn.a && pair.b === conn.b;
     const involvesFocus = focusId && (focusId === conn.a || focusId === conn.b);
     const anyFocus = focusId || hoveredConnection || activeChar || pair;
-    const N = conn.characters.length;
+    // The ring's spokes: one line per title, in its first shared character's
+    // color, labeled "Tony Stark +3" (a bundle of one line per character
+    // tangled at The Avengers' 30). A hovered or pinned person narrows them to
+    // that person's own lines.
+    const chars = !spokes ? conn.characters
+      : activeChar ? conn.characters.filter(ch => activeChars && activeChars.some(a => primeOf(a) === primeOf(ch)))
+      : conn.characters.slice(0, 1);
+    const spokeMore = spokes && !activeChar ? conn.characters.length - 1 : 0;
+    const N = chars.length;
 
-    return conn.characters.map((ch, i) => {
+    return chars.map((ch, i) => {
       const charObj = window.CHARACTERS[ch];
       if (!charObj) return null;
       const offsetIdx = i - (N - 1) / 2;
@@ -573,8 +628,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
       const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
-      const strokeW = emphasized ? 3 : 1.8;
-      const showLabel = emphasized && (isPair || involvesFocus);
+      const strokeW = (emphasized ? 3 : 1.8) + (spokes ? Math.min(2, spokeMore * 0.5) : 0);
+      const showLabel = emphasized && (isPair || involvesFocus) && (!spokes || isHovered || spokes.inner.has(conn.b) || !!activeChar);
       const drawDelay = emphasized && drawChar && primeOf(ch) === primeOf(drawChar) ? drawRank.get(conn.a + '__' + conn.b) : undefined;
       const draw = drawDelay !== undefined ? { className: 'thread-draw', pathLength: 1, style: { '--d': drawDelay + 'ms' } } : null;
 
@@ -582,7 +637,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
         // Spread labels along the curve based on N: t in (0.15..0.85), then
         // move each to the nearest spot not covered by a card (see placeLabel).
         const t0 = N === 1 ? 0.5 : 0.15 + (i / (N - 1)) * 0.7;
-        const labelText = I18N.charName(ch);
+        const labelText = I18N.charName(ch) + (spokeMore ? ' +' + spokeMore : '');
         const labelW = labelPillWidth(labelText);
         const lp = placeLabel(t => pointOnCurve(p1, p2, offset, t, i, isPair), t0, labelW, 22);
         labels.push({ x: lp.x, y: lp.y, w: labelW, h: 22, color: charObj.color, text: labelText, key: conn.a + '__' + conn.b + '__' + ch });
@@ -858,6 +913,9 @@ function App() {
   window.MCU_openPicker = openPicker;
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredTitle, setHoveredTitle] = useState(null);
+  // Follow the thread or a character's trail (E 4/5), shown in place of the
+  // details; declared here because the canvas layout reads it.
+  const [explore, setExplore] = useState(null);
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
   const [hoveredConnection, setHoveredConnection] = useState(null);
   // A clicked connection: its two titles are brought side by side.
@@ -1133,7 +1191,7 @@ function App() {
     const el = vp && vp.querySelector(`.card[data-id="${id}"]`);
     if (!el) return;
     const r = el.getBoundingClientRect(), v = vp.getBoundingClientRect();
-    const left = v.left + 24, right = v.right - (drawerIdRef.current ? 380 : 0) - 24;
+    const left = v.left + 24, right = v.right - (drawerIdRef.current ? drawerW() : 0) - 24;
     const top = v.top + 64, bottom = v.bottom - 64;
     let dx = 0, dy = 0;
     if (r.left < left) dx = left - r.left; else if (r.right > right) dx = right - r.right;
@@ -1340,6 +1398,19 @@ function App() {
     });
     return set;
   }, [focusId, filtered]);
+  // The ring's order: the titles sharing the most characters with the
+  // selected one first. The first circle (RING_CAPS[0] titles) is what the
+  // camera frames and what the lines label (Notion "Connections: a selected
+  // title's ring, legible at first sight").
+  const ringOrder = useMemo(() => {
+    if (!focusId || !relatedIds) return null;
+    const focusTitle = window.TITLES.find(t => t.id === focusId);
+    const focusCast = new Set(focusTitle.cast.map(primeOf));
+    return [...relatedIds].filter(id => id !== focusId).map(id => {
+      const t = window.TITLES.find(x => x.id === id);
+      return { id, shared: t.cast.filter(c => focusCast.has(primeOf(c))).length };
+    }).sort((a, b) => b.shared - a.shared).map(x => x.id);
+  }, [focusId, relatedIds]);
 
   // While a title's rings are showing, only it and its connected titles stay
   // on the canvas: the rest fade out in place (in the grids they would sit
@@ -1347,14 +1418,22 @@ function App() {
   // An open guide keeps its own linear route: a selected title (details open,
   // or carried over from Titles) does not turn the canvas into its ring
   // (Andre, 2026-11-16).
-  const ringIds = !guide && !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
+  const ringIds = !isTouch && !guide && !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
   const lineTitles = useMemo(() => ringIds ? filtered.filter(t => ringIds.has(t.id)) : filtered, [filtered, ringIds]);
   // Counted over what the filters show (not the ring), so a card's number
   // holds while you move around a selection.
   const connCounts = useMemo(() => connectionCounts(filtered), [filtered]);
 
+  // Desktop Connections with the thread open: the canvas lines up (above).
+  const threadLine = !isTouch && desktopView === 'spatial' && !!explore && explore.kind === 'thread';
+
+  // Phones (E 5/5): while a title's details are open over the canvas, the
+  // canvas dims everything not connected to it and outlines it; nothing
+  // moves, so closing leaves the canvas where it was.
+  const phoneFocusId = isTouch && viewMode === 'spatial' && drawerId && !guide && !highlightedChar ? drawerId : null;
+
   // Hover-focus is separate: used only for dimming/labels, not reflow.
-  const hoverFocusId = hoveredTitle || selectedId;
+  const hoverFocusId = hoveredTitle || selectedId || phoneFocusId;
   const hoverRelatedIds = useMemo(() => {
     if (!hoverFocusId) return null;
     const ft = window.TITLES.find(t => t.id === hoverFocusId);
@@ -1380,20 +1459,25 @@ function App() {
       const gap = PAIR_GAP;
       focusLayout = { [pair.a]: { x: mx - gap / 2 - CARD_W / 2, y: my }, [pair.b]: { x: mx + gap / 2 + CARD_W / 2, y: my } };
     } else
+    // Desktop, following the thread: the title and its connected titles in
+    // one row by release, the threads arcing below it (Andre, 2026-11-16:
+    // the panel's list is the timeline, the canvas lines up with it).
+    if (threadLine && !guide && focusId && relatedIds && relatedIds.size > 1) {
+      const row = [...relatedIds].map(id => window.TITLES.find(t => t.id === id)).filter(Boolean)
+        .sort((a, b) => String(a.release || '').localeCompare(String(b.release || '')) || a.id.localeCompare(b.id));
+      const at = row.findIndex(t => t.id === focusId);
+      const cx = 800, cy = 560, step = CARD_W + LINE_GAP;
+      focusLayout = {};
+      row.forEach((t, i) => { focusLayout[t.id] = { x: cx + (i - at) * step, y: cy }; });
+    } else
     // An open guide keeps its linear route: no ring, as for ringIds (Andre,
-    // 2026-11-16: a link with a title and a guide opened on the ring).
-    if (!guide && focusId && relatedIds && relatedIds.size > 1) {
-      const others = [...relatedIds].filter(id => id !== focusId);
-      const focusTitle = window.TITLES.find(t => t.id === focusId);
-      const focusCast = new Set(focusTitle.cast.map(primeOf));
-      const scored = others.map(id => {
-        const t = window.TITLES.find(x => x.id === id);
-        const shared = t.cast.filter(c => focusCast.has(primeOf(c))).length;
-        return { id, shared };
-      }).sort((a,b) => b.shared - a.shared);
+    // 2026-11-16: a link with a title and a guide opened on the ring). Phones
+    // have no ring at all (E 5/5): the canvas dims around the title instead.
+    if (!isTouch && !guide && focusId && relatedIds && relatedIds.size > 1) {
+      const scored = ringOrder.map(id => ({ id }));
       const cx = 800, cy = 560;
       const compact = isTouch;
-      const ringCaps = compact ? [5, 9, 14, 20] : [6, 10, 16, 22];
+      const ringCaps = compact ? [5, 9, 14, 20] : RING_CAPS;
       const ringRadii = compact ? [340, 600, 860, 1120] : [480, 800, 1120, 1440];
       const placed = { [focusId]: { x: cx, y: cy } };
       // The rings are ellipses, flatter than circles; they were tuned for a
@@ -1444,13 +1528,77 @@ function App() {
       out[id] = o ? { x: o.x, y: o.y } : (f ? { x: f.x - CARD_W/2, y: f.y - CARD_H/2 } : p);
     });
     return out;
-  }, [basePositions, overrides, focusId, relatedIds, isTouch, pair, guide]);
+  }, [basePositions, overrides, focusId, relatedIds, ringOrder, isTouch, pair, guide, threadLine]);
 
   // Reset overrides when sort/filter changes the layout
   useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, search]);
 
   const selectedTitle = selectedId ? window.TITLES.find(t => t.id === selectedId) : null;
   const drawerTitle = drawerId ? window.TITLES.find(t => t.id === drawerId) : null;
+  // The details' back stack (Notion "Explore E 2/5"): hopping to another
+  // title from inside the details (a poster in Cast and connections, a row in
+  // the thread or a trail) pushes where you were, and ‹ names it and goes
+  // back, to the thread or trail too (E 4/5). Opening a title any other way,
+  // or closing the details, starts over.
+  const [detailBack, setDetailBack] = useState([]);
+  const hoppingRef = useRef(false);
+  // Follow the thread and a character's trail (Notion "Explore E 4/5") take
+  // the details' place: in the desktop panel and in the phone sheet, full
+  // height. The details' title (drawerId) stays put underneath; a new title,
+  // or closing, leaves them, unless ‹ is bringing one back.
+  const exploreRestoreRef = useRef(null);
+  useEffect(() => {
+    const restore = exploreRestoreRef.current;
+    exploreRestoreRef.current = null;
+    setExplore(restore);
+    if (hoppingRef.current) { hoppingRef.current = false; return; }
+    setDetailBack([]);
+  }, [drawerId]);
+  const hopTo = (id) => {
+    if (!drawerId || id === drawerId) return;
+    hoppingRef.current = true;
+    setDetailBack(b => b.concat({ id: drawerId, explore }));
+    setDrawerId(id);
+    // Desktop Connections: the canvas follows the details.
+    if (!isTouch && desktopView === 'spatial') setSelectedId(id);
+  };
+  const hopBack = () => {
+    const prev = detailBack[detailBack.length - 1];
+    if (!prev) return;
+    hoppingRef.current = true;
+    exploreRestoreRef.current = prev.explore || null;
+    setDetailBack(b => b.slice(0, -1));
+    setDrawerId(prev.id);
+    if (!isTouch && desktopView === 'spatial') setSelectedId(prev.id);
+  };
+  window.MCU_hopTitle = hopTo;
+  // Desktop: a poster hovered in Cast and connections marks its card; the
+  // person's block keeps their thread lit (Andre, 2026-11-16).
+  const [peekId, setPeekId] = useState(null);
+  window.MCU_peekTitle = (id) => setPeekId(id);
+  useEffect(() => { setPeekId(null); }, [drawerId]);
+  const backEntry = detailBack.length ? detailBack[detailBack.length - 1] : null;
+  const backTitle = backEntry ? window.TITLES.find(t => t.id === backEntry.id) : null;
+  // ‹ back to a trail names the character; to anything else, the title.
+  const detailBackProp = backTitle ? {
+    label: backEntry.explore && backEntry.explore.kind === 'trail' ? I18N.charName(backEntry.explore.char) : I18N.titleName(backTitle),
+    onBack: hopBack,
+  } : null;
+  const exploreDesk = !isTouch && desktopView === 'spatial';
+  const exploreLeave = () => { setExplore(null); if (exploreDesk && drawerId) setSelectedId(drawerId); };
+  const exploreProps = {
+    explore,
+    onThread: () => { setHoveredCharacter(null); setPeekId(null); setExplore({ kind: 'thread' }); },
+    onTrail: (ch) => { setHoveredCharacter(null); setPeekId(null); setExplore({ kind: 'trail', char: ch, from: drawerId }); },
+    onLeave: exploreLeave,
+    // A row in the thread or a trail opens that title's details; ‹ comes back
+    // to the list (Andre, 2026-11-16: no path built inside the panel, which
+    // would only re-create the canvas).
+    onOpen: (id) => { if (id !== drawerId) { setPeekId(null); hopTo(id); } else exploreLeave(); },
+  };
+  // Desktop: the trail's character stays lit on the canvas, around the title
+  // it started from.
+  const trailChar = !isTouch && explore && explore.kind === 'trail' ? explore.char : null;
   const ordered = useMemo(() => sortTitles(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
 
   // Real filtering, but only for the flat mobile grid/list — they have no layout
@@ -1483,13 +1631,14 @@ function App() {
   // The visible titles a character lights: its whole identity thread.
   const charTitleIds = (c) => (c && primeToTitleIds[primeOf(c)]) || null;
 
-  const activeChar = highlightedChar || hoveredCharacter;
+  const activeChar = highlightedChar || hoveredCharacter || trailChar;
   // Every character the highlight covers, so a performer's whole cast list and
   // all their connection threads light up, not just the representative one.
   const activeChars = useMemo(() => {
     if (highlightedChar) return pinnedChars;
-    return hoveredCharacter ? [hoveredCharacter] : null;
-  }, [highlightedChar, pinnedChars, hoveredCharacter]);
+    const c = hoveredCharacter || trailChar;
+    return c ? [c] : null;
+  }, [highlightedChar, pinnedChars, hoveredCharacter, trailChar]);
   // One portrayal reuses its own set; a performer needs the union, memoised so
   // the canvas is not handed a fresh Set on every render.
   const pinnedVisibleIds = useMemo(() => {
@@ -1540,6 +1689,9 @@ function App() {
   // zooms out to 17%": fitting every stop landed at an unreadable zoom).
   // Read through a ref for the same reason.
   const guideFrameRef = useRef(null);
+  // Phones fit the guide's whole path instead (E 5/5): its stops' ids.
+  const guidePathRef = useRef(null);
+  guidePathRef.current = guide ? guideStepTitles.map(t => t.id) : null;
   guideFrameRef.current = guide
     ? ((window.MCU_GUIDE.next(guide, guideOptional, statusOf) || {}).id || (guideStepTitles[0] && guideStepTitles[0].id) || null)
     : null;
@@ -1697,7 +1849,7 @@ function App() {
           : (rect.width - 32) / canvasW)
       // Timeline layouts open at about 7.5 titles across on desktop and 2.5 on
       // touch (one title step is CARD_W * 1.15), capped at 100%.
-      : isTouch ? phoneReadScale(rect.width) : Math.max(ZOOM_MIN, deskReadScale(rect.width));
+      : isTouch ? (phoneZoom || phoneReadScale(rect.width)) : Math.max(ZOOM_MIN, deskReadScale(rect.width));
 
     // Phones, a guide open: its next stop, centred at the readable zoom this
     // layout opens at, between the top chrome and the guide pill. The route
@@ -1716,6 +1868,28 @@ function App() {
         scale,
       });
       return;
+    }
+    // Phones (Notion "Explore E 5/5"): the canvas zooms out to fit the
+    // guide's whole path, above its dock; the rest is dimmed and its stops
+    // ride one red line. Tap a stop or step with ‹ › to read closer.
+    const path = isTouch && guidePathRef.current;
+    if (gp && path && path.length > 1) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      path.forEach(id => {
+        const p = basePositions[id];
+        if (!p) return;
+        x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + CARD_W); y1 = Math.max(y1, p.y + CARD_H);
+      });
+      if (isFinite(x0)) {
+        const top = 56, bottomChrome = 150, side = 16;
+        const scale = Math.max(ZOOM_MIN, Math.min(0.85, (rect.width - side * 2) / (x1 - x0), (rect.height - top - bottomChrome) / (y1 - y0)));
+        frame({
+          x: rect.width / 2 - (x0 + x1) / 2 * scale,
+          y: top + (rect.height - top - bottomChrome) / 2 - (y0 + y1) / 2 * scale,
+          scale,
+        });
+        return;
+      }
     }
     if (gp) {
       // In a guide the phone canvas has no top chrome (the count, meter and
@@ -1742,7 +1916,7 @@ function App() {
       ? upNextFrameRef.current : null;
     const up = upStop && basePositions[upStop];
     if (up) {
-      const scale = phoneReadScale(rect.width);
+      const scale = phoneZoom || phoneReadScale(rect.width);
       const dock = viewportRef.current.closest('.m-main');
       const card = dock && dock.querySelector('.spatial-overall.docked');
       const cr = card && card.getBoundingClientRect();
@@ -1795,6 +1969,11 @@ function App() {
       }
     }
 
+    // Desktop: the zoom control sits in the bottom-left corner (about 46px
+    // with its margin), which the timelines leave empty as they step down to
+    // the right; a grid that fits is centered above it (Notion "Spatial: the
+    // zoom control overlaps title cards").
+    const zoomReserve = isTouch ? 0 : 52;
     // Left/top-most card in canvas coords, so we can pad from the real content edge
     let minX = Infinity, minY = Infinity;
     Object.values(basePositions).forEach(p => { if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y; });
@@ -1837,13 +2016,14 @@ function App() {
     } else if (gridSort) {
       // Grid layouts: match the grid's width (mobile keeps a legibility floor of ~3 columns)
       const scale = defaultScale;
+      const rectH = rect.height - zoomReserve;
       const zoomed = canvasW * scale > rect.width - 32;
       // By Phase is the one grid layout with band labels: leave room above the
       // first row for its pill, below the count pill, as the timelines do.
       const top = sort === 'phase' ? chromeTop + BAND_LABEL_H * scale : 14;
       frame({
         x: zoomed ? 14 - minX * scale : (rect.width - canvasW * scale) / 2,
-        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : top - minY * scale,
+        y: canvasH * scale <= rectH - 32 ? (rectH - canvasH * scale) / 2 : top - minY * scale,
         scale,
       });
     } else {
@@ -1865,14 +2045,15 @@ function App() {
       // sits at the top-left of the viewport: keep the first label clear of it.
       const pill = chromeTop;
       const top = pill + BAND_LABEL_H * scale;
+      const rectH = rect.height - zoomReserve;
       let y = top - minY * scale;
       if (isFinite(y0)) {
         const yTop = y0 - BAND_LABEL_H;
-        if ((y1 - yTop) * scale <= rect.height - 28 - pill) {
-          y = Math.max(rect.height / 2 - ((yTop + y1) / 2) * scale, pill - yTop * scale);
+        if ((y1 - yTop) * scale <= rectH - 28 - pill) {
+          y = Math.max(rectH / 2 - ((yTop + y1) / 2) * scale, pill - yTop * scale);
         } else {
           y = top - y0 * scale;
-          if (leading && (leading.y + CARD_H) * scale + y > rect.height - 14) y = rect.height - 14 - (leading.y + CARD_H) * scale;
+          if (leading && (leading.y + CARD_H) * scale + y > rectH - 14) y = rectH - 14 - (leading.y + CARD_H) * scale;
         }
       }
       frame({ x: 14 - minX * scale, y, scale });
@@ -1979,7 +2160,7 @@ function App() {
       return left >= 8 && top >= 8 && left + CARD_W * v.scale <= rect.width - 8 && top + CARD_H * v.scale <= rect.height - 8;
     })();
     if (fits) glideTo(v);
-    else centreOn(isTouch ? phoneReadScale(rect.width) : Math.max(v ? v.scale : 0, deskReadScale(rect.width)));
+    else centreOn(isTouch ? (phoneZoom || phoneReadScale(rect.width)) : Math.max(v ? v.scale : 0, deskReadScale(rect.width)));
     refocusAfterKeyboard(`.card[data-id="${prev}"] button`);
   }, [selectedId]);
 
@@ -2027,15 +2208,42 @@ function App() {
     if (!selectedId || !viewportRef.current || !relatedIds) return;
     const p0 = positions[selectedId];
     if (isTouch) {
-      // Centre on the focused card at a scale that keeps the first ring reachable
+      // No ring on phones (E 5/5): fly to the card (Up next, See connections)
+      // at the visit's zoom, centered above whatever is docked at the bottom.
       if (!p0) return;
       const rect = viewportRef.current.getBoundingClientRect();
-      const scale = Math.max(0.26, Math.min(0.62, rect.width / 920));
-      setView({
+      const scale = phoneZoom || phoneReadScale(rect.width);
+      let bottom = rect.height;
+      document.querySelectorAll('.g-dock, .char-pill, .spatial-overall.docked').forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.height && r.top > rect.top) bottom = Math.min(bottom, r.top - rect.top - 8);
+      });
+      glideTo({
         x: rect.width / 2 - (p0.x + CARD_W/2) * scale,
-        y: rect.height / 2 - (p0.y + CARD_H/2) * scale,
+        y: bottom / 2 - (p0.y + CARD_H/2) * scale,
         scale,
       });
+      return;
+    }
+    // Following the thread: the row centered on the title beside the panel,
+    // about five and a half cards across, the next one cut by the edge so the
+    // row reads as going on (Andre, 2026-11-16); the rest is a pan away.
+    if (threadLine && !guide) {
+      if (!p0) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const w = rect.width - drawerW();
+      const scale = Math.max(0.4, Math.min(1, w / (5.5 * (CARD_W + LINE_GAP))));
+      // Centered on the title, unless that leaves room empty at an end of
+      // the row (Thor comes first in its own thread): then the row starts
+      // or ends at the edge, and a row that fits is centered whole.
+      let x0 = Infinity, x1 = -Infinity;
+      relatedIds.forEach(id => { const p = positions[id]; if (p) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x + CARD_W); } });
+      const pad = 24;
+      let x = w / 2 - (p0.x + CARD_W / 2) * scale;
+      if ((x1 - x0) * scale <= w - pad * 2) x = w / 2 - (x0 + x1) / 2 * scale;
+      else x = Math.min(pad - x0 * scale, Math.max(w - pad - x1 * scale, x));
+      // The arcs hang below the row, so the row sits a little above center.
+      glideTo({ x, y: rect.height / 2 - (p0.y + CARD_H / 2 + ARC_MAX / 2) * scale, scale });
       return;
     }
     // An open guide keeps its route (no ring): centre the selected card left
@@ -2043,7 +2251,7 @@ function App() {
     if (guide) {
       if (!p0) return;
       const rect = viewportRef.current.getBoundingClientRect();
-      const v = viewRef.current, w = rect.width - 380;
+      const v = viewRef.current, w = rect.width - drawerW();
       // A card already in view (a click on the canvas) stays where it is.
       const left = p0.x * v.scale + v.x, top = p0.y * v.scale + v.y;
       if (left >= 8 && top >= 8 && left + CARD_W * v.scale <= w - 8 && top + CARD_H * v.scale <= rect.height - 8) return;
@@ -2051,7 +2259,9 @@ function App() {
       setView({ x: w / 2 - (p0.x + CARD_W / 2) * scale, y: 36 + (rect.height - 36) / 2 - (p0.y + CARD_H / 2) * scale, scale });
       return;
     }
-    const ids = [...relatedIds];
+    // The selected title and its first circle, not every circle: the outer
+    // ones run off the edges at a readable zoom (Andre, 2026-11-16).
+    const ids = [selectedId, ...(ringOrder || []).slice(0, RING_CAPS[0])];
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     ids.forEach(id => {
       const p = positions[id];
@@ -2063,19 +2273,41 @@ function App() {
     });
     if (!isFinite(minX)) return;
     const rect = viewportRef.current.getBoundingClientRect();
-    const drawerOffset = 380;
+    const drawerOffset = drawerW();
     // An open guide's module floats over the top: fit the ring below it.
     const topIn = deskGuideRef.current ? 72 : 0;
     const availW = rect.width - drawerOffset - 80;
     const availH = rect.height - topIn - 80;
     const w = maxX - minX, h = maxY - minY;
-    const scale = Math.min(availW / w, availH / h, 1.1);
+    const scale = Math.max(0.45, Math.min(availW / w, availH / h, 0.85));
     setView({
       x: (rect.width - drawerOffset) / 2 - (minX + w/2) * scale,
       y: topIn + (rect.height - topIn) / 2 - (minY + h/2) * scale,
       scale,
     });
-  }, [selectedId, relatedIds, isTouch, guide]);
+  }, [selectedId, relatedIds, isTouch, guide, threadLine]);
+  // Following the thread: a row hovered in the panel whose card is off
+  // screen brings it into view after a beat (scanning the list stays calm).
+  // Not in the first moments: the pointer that pressed Follow the thread
+  // lands on a row as the list appears, which is not a request to move.
+  const lineSinceRef = useRef(0);
+  useEffect(() => { if (threadLine) lineSinceRef.current = performance.now(); }, [threadLine]);
+  useEffect(() => {
+    if (!threadLine || !peekId || !viewportRef.current) return undefined;
+    if (performance.now() - lineSinceRef.current < 900) return undefined;
+    const id = setTimeout(() => {
+      const p = positions[peekId];
+      if (!p || !viewportRef.current) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const v = viewRef.current, w = rect.width - drawerW();
+      const left = v.x + p.x * v.scale, right = left + CARD_W * v.scale;
+      let dx = 0;
+      if (left < 24) dx = 24 - left + w / 4;
+      else if (right > w - 24) dx = (w - 24) - right - w / 4;
+      if (dx) glideTo({ ...v, x: v.x + dx });
+    }, 250);
+    return () => clearTimeout(id);
+  }, [peekId, threadLine]);
 
   // Touch gestures for the spatial canvas: pan, pinch, double-tap zoom, tap-background clear
   const touchRef = useRef(null);
@@ -2126,6 +2358,8 @@ function App() {
     touchActiveRef.current = Date.now();
     const s = touchRef.current;
     touchRef.current = null;
+    // A pinch sets the zoom for the rest of the visit (E 5/5).
+    if (s && s.mode === 'pinch') phoneZoom = viewRef.current.scale;
     // A finger that was moving throws the canvas; a tap falls through to the
     // tap and double-tap handling below.
     if (s && s.mode === 'pan' && s.moved) { startInertia(); return; }
@@ -2136,14 +2370,17 @@ function App() {
     lastTapRef.current = { t: now, x: s.sx, y: s.sy };
     if (s.onCard) return;
     if (isDouble) {
+      // Double-tap on empty canvas switches between the overview and a
+      // closer, reading view, about the point tapped (E 5/5).
       peekZoom();
       const rect = viewportRef.current.getBoundingClientRect();
       const mx = s.sx - rect.left, my = s.sy - rect.top;
-      setView(v => {
-        const ns = Math.min(2, v.scale * 1.7);
-        const r = ns / v.scale;
-        return { x: mx - (mx - v.x) * r, y: my - (my - v.y) * r, scale: ns };
-      });
+      const over = phoneOverviewScale(rect.width), close = phoneReadScale(rect.width);
+      const v = viewRef.current;
+      const ns = v.scale < (over + close) / 2 ? close : over;
+      const r = ns / v.scale;
+      phoneZoom = ns;
+      glideTo({ x: mx - (mx - v.x) * r, y: my - (my - v.y) * r, scale: ns });
     } else {
       // Closing a title's rings brings the hidden cards straight back; the
       // click the browser synthesizes after this tap would then land on
@@ -2194,12 +2431,10 @@ function App() {
       setDrawerId(next);
       return;
     }
-    if (viewMode === 'spatial') {
-      if (selectedId === id) setDrawerId(id);
-      else setSelectedId(id);
-    } else {
-      setDrawerId(id);
-    }
+    // Phones (E 5/5): a tap opens the details, with no focus ring; the
+    // canvas dims around the title behind the sheet (phoneFocusId) and stays
+    // where it is.
+    setDrawerId(id);
   };
 
   // Collection has its own switch in the header, so the Filters badge skips it.
@@ -2269,23 +2504,33 @@ function App() {
   const upNextInMeter = !guide && !!upNext && upNext.result.kind === 'next';
   // The compact card, the same card in the same place on Connections and in
   // Titles: top right on desktop, docked above the bottom bar on phones
-  // (Notion "Titles 4/5"). All titles with its bar, and Up next with ✓ and ✕.
-  // ✕ hides the card for this visit. In By Phase there is no All titles meter
-  // (the phase headings carry it), so the card is Up next alone.
-  // × sits at the end of the All titles header, as on a guide's card
-  // (Andre, 2026-11-16).
-  const cardClose = (
-    <>
-      <span className={B.W_FILL}/>
-      <button type="button" className={'un-hide ' + B.W_CLOSE} onClick={() => setCardHidden(true)}
-        aria-label={tr('upnext.hideCardAria')} title={tr('upnext.hide')}>×</button>
-    </>
-  );
+  // (Notion "Titles 4/5"), in the compact layout an open guide's card shares
+  // (AllTitlesWidget, Andre 2026-11-16): Up next with "All titles · 37/60",
+  // × in the corner (it hides the card for this visit) and the catalog's
+  // progress under them. In By Phase there is no All titles meter (the phase
+  // pills carry it), so the card is Up next alone.
   const allHeader = !!(viewProgress && viewProgress.all);
+  // Phone Connections (E 5/5): panned away from the Up next card, its row
+  // points to it ("↖ off screen"). The row always shows (Andre, 2026-11-16:
+  // folding it while the card was on screen hid Up next).
+  const upNextAt = (() => {
+    if (!isTouch || viewMode !== 'spatial' || !upNextInMeter || !upNextCardId || !viewportRef.current) return null;
+    const p = positions[upNextCardId];
+    if (!p) return null;
+    const rect = viewportRef.current.getBoundingClientRect();
+    const cx = view.x + (p.x + CARD_W / 2) * view.scale, cy = view.y + (p.y + CARD_H / 2) * view.scale;
+    // The docked widget covers the bottom of the canvas.
+    const bottom = rect.height - 130;
+    if (cx >= 0 && cx <= rect.width && cy >= 0 && cy <= bottom) return { on: true };
+    const ang = Math.atan2(cy - bottom / 2, cx - rect.width / 2);
+    const arrows = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'];
+    return { on: false, arrow: arrows[(Math.round(ang / (Math.PI / 4)) + 8) % 8] };
+  })();
   const compactCard = !cardHidden && (allHeader || upNextInMeter) ? (inList) => (
     <window.SpatialOverall touch={isTouch} floating={!inList}>
-      {allHeader && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all} action={cardClose}/>}
-      {upNextInMeter && <window.UpNextMeterRow info={upNext} hide={!allHeader}/>}
+      <window.AllTitlesWidget info={upNextInMeter ? upNext : null} all={allHeader ? viewProgress.all : null}
+        offScreen={!inList && upNextAt && !upNextAt.on ? upNextAt.arrow : null}
+        label={tr('progress.all')} onClose={() => setCardHidden(true)}/>
     </window.SpatialOverall>
   ) : null;
 
@@ -2354,6 +2599,17 @@ function App() {
     } else changeDesktopView(next === 'explore' ? 'spatial' : 'list');
   };
   const showInExplore = (id) => goSection('explore', { select: id, force: true });
+  // The trail's pin (See on canvas, or Highlight in Titles) pins the
+  // character's thread where you are, what tapping a person did before
+  // E 4/5; already pinned, it stays pinned.
+  exploreProps.inCanvas = spatialNow;
+  exploreProps.onPin = () => {
+    const ch = explore && explore.kind === 'trail' ? explore.char : null;
+    if (!ch) return;
+    setExplore(null);
+    if (highlightedChar === ch && !pinnedActor) { if (isTouch) setDrawerId(null); return; }
+    pinSubject([ch], null);
+  };
   // The progress widget's counts open Titles on that tab (Notion "Titles 3/5").
 
   // `showing` is overridable because the Spatial canvas counts what is actually
@@ -2720,10 +2976,20 @@ function App() {
       const floor = isTouch ? 0.6 : deskReadScale(rect.width);
       const scale = cameraFramedRef.current ? Math.max(viewRef.current.scale, floor) : floor;
       cameraFramedRef.current = true;
-      const drawerSpace = isTouch ? 0 : 380;
+      const drawerSpace = isTouch ? 0 : drawerW();
+      // Phones: center in the room above whatever is docked at the bottom
+      // (a guide's card, the pinned character's pill), as the landing frame
+      // does, so a step never parks the card behind it (Andre, 2026-11-16).
+      let bottom = rect.height;
+      if (isTouch) {
+        document.querySelectorAll('.g-dock, .char-pill, .spatial-overall.docked').forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.height && r.top > rect.top) bottom = Math.min(bottom, r.top - rect.top - 8);
+        });
+      }
       glideTo({
         x: (rect.width - drawerSpace) / 2 - (p.x + CARD_W / 2) * scale,
-        y: rect.height / 2 - (p.y + CARD_H / 2) * scale,
+        y: bottom / 2 - (p.y + CARD_H / 2) * scale,
         scale,
       });
     } else {
@@ -2826,7 +3092,7 @@ function App() {
     const pa = basePositions[pair.a], pb = basePositions[pair.b];
     if (!pa || !pb) { setPair(null); return; }
     const rect = viewportRef.current.getBoundingClientRect();
-    const side = !isTouch && drawerId ? 380 : 0;
+    const side = !isTouch && drawerId ? drawerW() : 0;
     const span = PAIR_GAP + CARD_W * 2 + 80;
     const scale = Math.min(1, Math.max(viewRef.current.scale, 0.6), (rect.width - side) / span);
     const mx = (pa.x + pb.x) / 2 + CARD_W / 2, my = (pa.y + pb.y) / 2 + CARD_H / 2;
@@ -2870,6 +3136,8 @@ function App() {
       // Text fields keep Escape for themselves; a List checkbox has no use for it.
       if (t && t.closest('input:not([type="checkbox"]), textarea, select, [contenteditable="true"]')) return;
       if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .g-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
+      // The thread or trail first: back to the details they replaced.
+      if (detailsOpen && explore) { exploreLeave(); return; }
       if (detailsOpen) { setSelectedId(null); setDrawerId(null); return; }
       if (guide) { closeGuide(); return; }
       unpinCharacter();
@@ -2878,7 +3146,7 @@ function App() {
     // re-renders between listeners), so an open menu is still visible here.
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [detailsOpen, highlightedChar, pair, guide]);
+  }, [detailsOpen, highlightedChar, pair, guide, explore]);
   useEffect(() => { setPair(null); }, [basePositions]);
   // Labels steer clear of the cards that are lit; dimmed ones may sit under them.
   const labelAvoidIds = useMemo(() => {
@@ -3030,7 +3298,8 @@ function App() {
   });
 
   const focusPop = (() => {
-    if (!isTouch || viewMode !== 'spatial' || !selectedId) return null;
+    // Phones have no focus ring or pop card any more (E 5/5).
+    if (isTouch || viewMode !== 'spatial' || !selectedId) return null;
     const p = positions[selectedId];
     const t = window.TITLES.find(x => x.id === selectedId);
     if (!p || !t) return null;
@@ -3118,9 +3387,9 @@ function App() {
             : (viewProgress.byEra && viewProgress.byEra[b.era]));
           return (
             <window.BandLabel key={b.phase ? 'p' + b.phase : 'e' + b.era} x={b.x} y={b.y - BAND_LABEL_H} phase={b.phase}
-              color={b.phase ? PHASE_COLORS[b.phase] : undefined} plain={!g} touch={isTouch}>
-              {g ? <window.ProgressHeader band label={label} seen={g.seen} released={g.released} upcoming={g.upcoming}
-                     color={b.phase ? PHASE_COLORS[b.phase] : undefined}/> : label}
+              color={b.phase ? PHASE_COLORS[b.phase] : undefined} plain touch={isTouch}
+              count={g && g.released ? { seen: g.seen, released: g.released } : null}>
+              {label}
             </window.BandLabel>
           );
         })}
@@ -3139,6 +3408,7 @@ function App() {
           pair={pair}
           onPickConnection={pickConnection}
           shownIds={ringIds}
+          spokes={ringIds && !threadLine && focusId ? { focus: focusId, inner: new Set((ringOrder || []).slice(0, RING_CAPS[0])) } : null}
           route={guide ? { ids: guideStepTitles.map(t => t.id), target: guide.target } : null}
         />
         {filtered.map(t => {
@@ -3152,7 +3422,8 @@ function App() {
           // A skipped stop dims through its own class, which keeps Unskip legible.
           const skippedHere = guideSkipInfo && guideSkipInfo[t.id] && guideSkipInfo[t.id].state === 'skipped';
           const isDimmed = pair ? !inPair : ((charDim && !skippedHere) || hoverDim);
-          const isHighlighted = pair ? !!inPair : (charHL || (hoverFocusId === t.id) || !!onLine);
+          const phoneFocus = (phoneFocusId || (isTouch && selectedId)) === t.id;
+          const isHighlighted = pair ? !!inPair : (charHL || (hoverFocusId === t.id && !phoneFocus) || !!onLine);
           // Visual only — the card stays in the layout so nothing reflows.
           const isCollDimmed = collectionFilter !== 'all' && !guide
             && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t);
@@ -3169,7 +3440,7 @@ function App() {
               onDragStart={isTouch ? (() => {}) : onCardDragStart}
               focusable={!isTouch}
               onFocusCard={revealCard}
-              isSelected={selectedId === t.id}
+              isSelected={selectedId === t.id || phoneFocus}
               guideBadge={guideBadges ? guideBadges[t.id] : null}
               guide={guide} guideSkip={guideSkipInfo ? guideSkipInfo[t.id] : null} onGuideSkip={onCanvasSkip}
               isHighlighted={isHighlighted}
@@ -3179,12 +3450,13 @@ function App() {
               isRingFocus={!!ringIds && selectedId === t.id}
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
-              isUpNext={upNextCardId === t.id}
+              isUpNext={upNextCardId === t.id} isPeek={!isTouch && peekId === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
               matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
               searchQuery={search}
               scale={view.scale}
               touch={isTouch}
+              overview={isTouch && view.scale < PHONE_OVERVIEW_BELOW}
             />
           );
         })}
@@ -3312,7 +3584,7 @@ function App() {
         {promo && <window.GuidePromo promo={promo} touch onStart={startPromo} onClose={() => setPromo(null)}/>}
         {drawerTitle && (
           <window.CastSheet
-            title={drawerTitle} search={search}
+            title={drawerTitle} search={search} back={detailBackProp}
             inSpatial={viewMode === 'spatial'}
             onClose={() => {
               setDrawerId(null);
@@ -3322,7 +3594,8 @@ function App() {
               const back = selectionReturnRef.current;
               if (viewMode === 'spatial' && selectedIdRef.current && back && back.id === selectedIdRef.current && !back.fromCanvas) setSelectedId(null);
             }}
-            onCharacterClick={pinCharacter}
+            onCharacterClick={exploreProps.onTrail}
+            ex={exploreProps}
             activeChar={activeChar}
             activeChars={activeChars}
             onGoSpatial={() => {
@@ -3416,10 +3689,11 @@ function App() {
         onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
         onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
-        title={settingsOpen || settingsShown ? null : drawerTitle}
+        title={settingsOpen || settingsShown ? null : drawerTitle} back={detailBackProp}
         onShowInExplore={section !== 'explore' ? showInExplore : null}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
-        onCharacterClick={pinCharacter}
+        onCharacterClick={exploreProps.onTrail}
+        ex={exploreProps}
         hoveredCharacter={hoveredCharacter}
         onCharacterHover={setHoveredCharacter}
         activeChar={activeChar}

@@ -145,7 +145,11 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
     row.click(); await new Promise(r => setTimeout(r, 900));
     const cast = [...document.querySelectorAll('.m-crow')].find(r => /James Rhodes/.test(r.textContent));
     if (!cast) return { error: 'no James Rhodes cast row' };
-    cast.click(); await new Promise(r => setTimeout(r, 1500));
+    // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
+    cast.click(); await new Promise(r => setTimeout(r, 600));
+    const pin = document.querySelector('.m-sheet .trail-pin');
+    if (!pin) return { error: 'no pin in James Rhodes\'s trail' };
+    pin.click(); await new Promise(r => setTimeout(r, 1500));
     return { pill: !!document.querySelector('.char-pill'), char: new URLSearchParams(location.search).get('char') };
   });
   if (R.pin.error) errors.push(R.pin.error);

@@ -217,6 +217,8 @@ declare global {
     CastSheet: TitleDetails['CastSheet'];
     DrawerFrame: TitleDetails['DrawerFrame'];
     DrawerCast: TitleDetails['DrawerCast'];
+    ThreadView: TitleDetails['ThreadView'];
+    TrailView: TitleDetails['TrailView'];
     SheetFrame: TitleDetails['SheetFrame'];
     Hourglass: TitleDetails['Hourglass'];
     TitleDetailsBody: TitleDetails['TitleDetailsBody'];
@@ -268,7 +270,7 @@ declare global {
 
     UpNextTag: UpNext['UpNextTag'];
     UpNextHide: UpNext['UpNextHide'];
-    UpNextMeterRow: UpNext['UpNextMeterRow'];
+    AllTitlesWidget: UpNext['AllTitlesWidget'];
 
     WhereToWatch: Watch['WhereToWatch'];
     MCU_region: Watch['MCU_region'];
@@ -316,6 +318,10 @@ declare global {
     MCU_activeGuideId: string | null;
     MCU_openGuide(id: string): void;
     MCU_openPicker(): void;
+    /** The details hop to another title, pushing the one shown (Notion "Explore E 2/5"). */
+    MCU_hopTitle(id: string): void;
+    /** Desktop: mark one card on the canvas while its poster in Cast and connections is hovered. */
+    MCU_peekTitle(id: string | null): void;
     /** True while a sheet is closing itself, so the address sync can tell that
      *  pop apart from the visitor pressing Back. */
     MCU_isOwnSheetPop(): boolean;
