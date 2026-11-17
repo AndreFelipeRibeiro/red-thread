@@ -328,6 +328,8 @@ const DATA = () => {
   const part = await page.evaluate(id => ({ rows: document.querySelectorAll('.td-slot-guides .g-partof-row').length, want: window.MCU_GUIDE.forTitle(id).length }), plan.ess[0]);
   if (part.rows !== part.want) err(`details: Part of shows ${part.rows} guides for ${plan.ess[0]}, expected ${part.want}`);
   if (part.rows) {
+    // Part of starts collapsed (Notion "Explore E 2/5"): open it first.
+    await page.locator('.td-slot-guides .td-acc-btn').click(); await page.waitForTimeout(300);
     await page.locator('.td-slot-guides .g-partof-row', { hasText: plan.name }).click(); await page.waitForTimeout(600);
     const r = await page.evaluate(() => ({ guide: new URLSearchParams(location.search).get('guide'), cur: (document.querySelector('.g-stop.current') || { dataset: {} }).dataset.rowId }));
     if (r.guide !== plan.id) err(`details: Part of opened ${r.guide}, expected ${plan.id}`);
@@ -443,10 +445,10 @@ const DATA = () => {
   await page.goto(URL + `?view=spatial&guide=${plan.id}`); await settle(page); await page.waitForTimeout(600);
   const chip = await page.evaluate(() => ({
     pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.spatial-overall'),
-    next: !!document.querySelector('.g-dock .g-dock-next'), seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen') }));
+    next: !!document.querySelector('.g-dock .g-dock-next'), seen: !!document.querySelector('.g-dock .tsa-btn.seen') }));
   if (!chip.pill) err('phone Spatial: no guide dock');
   if (chip.chip) err('phone Spatial: the compact card shows beside the guide dock');
-  if (nextExpected && !(chip.next && chip.seen)) err('phone Spatial: the dock does not offer the next stop with Seen');
+  if (nextExpected && !(chip.next && !chip.seen)) err('phone Spatial: the dock should offer the next stop, with no ✓ (it is marked in its details)');
   await finish('phone-grid', ctx, errors);
 
   // A character with a guide: an icon button on the pill.

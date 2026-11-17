@@ -38,30 +38,26 @@ export const DOCK_CLOSE = cn('cb-close', ROUND, DIM, 'size-[max(38px,2.375rem)] 
 export const PILL_POS = 'cb-pos min-w-[42px] text-center text-label whitespace-nowrap tabular-nums text-foreground';
 
 // The floating progress card (Andre, 2026-11-16): the All titles card and an
-// open guide's card share one anatomy, on desktop (top right) and phones
-// (docked at the bottom). A mini header (the name, its count, the stepper for
-// a guide, then ×), the progress under it, a rule, then the next title: its
-// poster, a kicker ("Up next" or "Next"), the title and ✓.
-export const WIDGET = 'rounded-lg border border-border bg-background/95 pt-1.5 pr-1.5 pb-2.5 pl-[13px] text-foreground shadow-sm backdrop-blur-md';
-export const W_HEAD = 'w-head flex min-h-[max(30px,1.875rem)] items-center gap-2';
-export const W_NAME = 'min-w-0 truncate text-left text-body font-semibold tracking-tight';
-export const W_COUNT = 'flex-none text-caption font-semibold tabular-nums text-muted-foreground';
-export const W_FILL = 'flex-1';
-/** The header's icon buttons (‹ › ×): borderless circles, 30px on desktop,
- *  40px on phones, where they reach past the row rather than make it taller
- *  (Andre, 2026-11-16: no extra space above the name). */
-const W_TOUCH = 'in-[.app.touch]:-my-[5px] in-[.app.touch]:size-[max(40px,2.5rem)]';
-export const W_BTN = cn(ROUND, 'size-[max(30px,1.875rem)] text-title', W_TOUCH);
-export const W_CLOSE = cn('cb-close', ROUND, DIM, 'size-[max(30px,1.875rem)] text-heading in-[.app.touch]:text-title', W_TOUCH);
-export const W_BAR = 'mt-1 mr-[7px] block';
-export const W_RULE = 'w-rule my-2.5 mr-[7px] h-px bg-border';
-export const W_ROW = 'w-row flex items-center gap-2.5 pr-1';
-export const W_POSTER = 'h-[54px] w-9 flex-[0_0_36px] rounded-[5px]';
-export const W_TEXT = 'flex min-w-0 flex-1 flex-col gap-px rounded-md text-left';
+// open guide's card share one compact layout, on desktop (top right) and
+// phones (docked at the bottom), at two sizes. One row: the next title's
+// poster, "Before Doomsday · 3/5" over its name (a tap opens its details,
+// where it is marked seen: no ✓ in the card) and a small × in the corner.
+// Under it, the progress with, for a guide, ‹ › together at its right end;
+// the stop the stepper is on keeps its gray outline.
+export const WIDGET = 'rounded-lg border border-border bg-background/95 pt-2.5 pr-2 pb-2 pl-2.5 text-foreground shadow-sm backdrop-blur-md';
+export const W_ROW = 'w-row flex min-w-0 items-center gap-2.5';
+export const W_OPEN = 'w-open flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
+export const W_POSTER = 'h-[54px] w-9 flex-[0_0_36px] rounded-[5px] in-[.app.touch]:h-12 in-[.app.touch]:w-8 in-[.app.touch]:basis-8 in-[.app.touch]:rounded-[4px]';
+export const W_TEXT = 'flex min-w-0 flex-1 flex-col gap-px text-left';
 export const W_KICKER = 'truncate text-label font-medium text-muted-foreground';
 export const W_TITLE = 'truncate text-body font-semibold text-foreground';
-/** ✓: 38px on desktop, 44px on phones. */
-export const W_TSA = 'static flex-none flex-row [transform:none] [&_.tsa-btn]:size-[max(38px,2.375rem)] in-[.app.touch]:[&_.tsa-btn]:size-[max(44px,2.75rem)] [&_.tsa-btn.watch]:hidden [&_.tsa-gap]:hidden';
+/** The small × in the top-right corner, with a 40px touch area around it. */
+export const W_CLOSE = cn('cb-close', ROUND, DIM, "relative -mt-1 -mr-0.5 size-7 flex-none self-start text-heading after:absolute after:-inset-1.5 after:content-['']");
+export const W_FOOT = 'w-foot mt-2 flex items-center gap-2';
+/** ‹ ›, side by side at the end of the progress. */
+export const W_STEP = 'cb-step -my-1.5 -mr-0.5 inline-flex flex-none items-center gap-0.5';
+export const W_STEP_BTN = cn(ROUND, "relative size-7 text-title after:absolute after:-inset-1.5 after:content-['']");
+export const W_BAR = 'h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-(--progress-track)';
 
 /** The character's face, ringed in the character's colour. */
 export const PHOTO = 'cb-photo inline-flex flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold text-[#0a0c14] shadow-[0_0_0_2px_var(--char-color,var(--brand))] [&_img]:block [&_img]:size-full [&_img]:object-cover';
@@ -75,7 +71,7 @@ export const SEGMENT = 'relative z-1 flex cursor-pointer items-center rounded-md
 // The pinned character's banner under the toolbar (desktop). It stops before
 // the open drawer, so the bar looks the same whether the character is hovered
 // or pinned.
-export const BANNER = 'char-banner flex flex-wrap items-center gap-3 border-b bg-muted/50 px-[22px] py-2 text-body shadow-[inset_3px_0_0_var(--char-color,var(--brand))] in-[.app:not(.touch).drawer-open]:pr-[402px]';
+export const BANNER = 'char-banner flex flex-wrap items-center gap-3 border-b bg-muted/50 px-[22px] py-2 text-body shadow-[inset_3px_0_0_var(--char-color,var(--brand))] in-[.app:not(.touch).drawer-open]:pr-[calc(var(--drawer-w)+22px)]';
 export const BANNER_WHO = 'cb-who mr-auto flex min-w-0 flex-col [&_b]:truncate [&_b]:text-heading [&_b]:font-medium [&_b]:text-foreground';
 export const BANNER_SUB = 'cb-sub truncate text-caption text-muted-foreground';
 export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-[7px] px-3 text-body whitespace-nowrap');
@@ -84,7 +80,10 @@ export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-
 // Share in it, the name gets back what
 // Share costs: more width, a smaller photo, tighter gaps.
 export const PILL = 'char-pill absolute bottom-3 left-1/2 z-45 flex w-[min(420px,calc(100%-24px))] -translate-x-1/2 animate-[mrise_220ms_cubic-bezier(.2,.8,.2,1)] flex-col gap-2 motion-reduce:animate-none has-[.cb-share]:w-[min(420px,calc(100%-16px))]';
-export const PILL_BAR = 'cp-bar group/pill flex items-center gap-1 data-[fit=1]:gap-0.5 data-[fit=2]:gap-0.5 rounded-full border bg-popover p-1 text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,.5),inset_0_0_0_1px_color-mix(in_oklab,var(--char-color)_30%,transparent)] backdrop-blur-md';
+// The widgets' radius and shadow (WIDGET above; Andre, 2026-11-16) until the
+// pinned character gets its own pass (Notion "Connections with a character
+// pinned: the banner and selected card").
+export const PILL_BAR = 'cp-bar group/pill flex items-center gap-1 data-[fit=1]:gap-0.5 data-[fit=2]:gap-0.5 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-sm backdrop-blur-md';
 export const PILL_WHO = 'cp-who flex min-w-0 flex-auto items-center gap-[9px] pr-1 in-[.char-pill:has(.cb-share)]:gap-[7px] in-[.char-pill:has(.cb-share)]:pr-0 group-data-[fit=1]/pill:gap-[5px] group-data-[fit=2]/pill:gap-[5px]';
 export const PILL_PHOTO = cn(PHOTO, 'size-[38px] in-[.char-pill:has(.cb-share)]:size-[34px] group-data-[fit=1]/pill:size-[30px] group-data-[fit=2]/pill:size-[30px]');
 // The name fits by measuring (fitCharPill in app.tsx): tighter gaps and a

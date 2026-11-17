@@ -147,8 +147,9 @@ const inspect = () => {
     if (r.probe !== 1) err(`${name}: Where to watch should sit right after the synopsis (got offset ${r.probe})`);
     if (r.guides.rows !== r.guides.expected) err(`${name}: Part of lists ${r.guides.rows} guides, expected ${r.guides.expected}`);
     if (r.guides.expected ? r.guides.at !== 1 : r.guides.at !== null) err(`${name}: the Guides slot should ${r.guides.expected ? 'follow Where to watch' : 'be absent'} (got ${r.guides.at})`);
-    // The cast is a collapsible section (open by default) after the details.
-    const castAfter = phone ? ['td-acc', 'm-apply'] : ['td-acc'];
+    // The cast is a collapsible section (open by default) after the details,
+    // then Follow the thread (Notion "Explore E 4/5") for a title with one.
+    const castAfter = phone ? ['td-acc', 'td-thread-wrap', 'm-apply'] : ['td-acc', 'td-thread-wrap'];
     if (r.after.join(',') !== castAfter.join(',')) err(`${name}: after the details came ${r.after.join(', ')}, expected ${castAfter.join(', ')}`);
     if (r.heroText.join(',') !== 'td-eyebrow,td-title,release-line,story-year') err(`${name}: hero text is ${r.heroText.join(', ')}`);
     if (r.thumb[0] !== 66 || r.thumb[1] !== 99) err(`${name}: poster thumbnail is ${r.thumb.join('×')}, expected 66×99`);

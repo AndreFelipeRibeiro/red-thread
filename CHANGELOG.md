@@ -13,6 +13,169 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 design — Connections: a selected title's ring, legible at first sight
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Selecting a title on the desktop canvas frames it and its first circle
+  (the six titles sharing the most characters) at a readable zoom: about 73%
+  at 1440px, 63% at 1280 and 85% at 1920, where it used to fit all of The
+  Avengers' 30 at about 31%. The outer circles run off the edges.
+- The ring draws only the selected title's own lines: one per connected
+  title, in its first shared character's color, thicker the more characters
+  they share, labeled "Tony Stark +3" on the first circle. The lines among
+  the other titles are left out. Hovering a person narrows it to their thread.
+- Verified: `qa/test-threads.js` checks the No Way Home → Spider-Man line on
+  the canvas with nothing selected (a ring no longer draws it); screenshots of
+  The Avengers, Thor and Endgame at 1280, 1440 and 1920, light and dark;
+  full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+- Limits: the selected card has no mark of its own in the thread's row.
+
+## V5 feature — Explore E 5/5: a phone tap opens the details, and the phone canvas
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Phones: a tap on a card opens its details with no focus ring or pop card;
+  the canvas dims every title not connected to it and outlines it, and
+  stays where it is. Desktop keeps the ring.
+- The phone canvas still opens at the reading zoom around Up next (Andre
+  kept the larger cards); a double-tap on empty canvas switches to an
+  overview of about four posters across, where each card shows its title
+  alone at a new art size (`text-card-title-ov`), and back. A pinch or
+  double-tap sets the zoom for the rest of the visit.
+- The All titles widget on the phone canvas shows Up next always and, when
+  the Up next card is panned off screen, points to it ("↖ off screen");
+  tapping it flies there and opens the details.
+- With a guide open, the phone canvas fits the guide's whole path above its
+  dock.
+- Every phone sheet opens up to one height, 32px below the top (the
+  picker's full-height sheet too); shorter content stays shorter.
+- From Andre's review: the pinned character's phone pill takes the
+  widgets' radius and soft shadow (a fuller pass is on its ticket), and
+  stepping through a character's titles in the Titles list keeps the row
+  above the pill (and above the docked widget or a guide's dock). The
+  Guides page's promo on phones shows four small posters beside the next
+  stop (three below 390px, two below 360px) and "Start guide" on one line.
+- Verified: test-cards, test-skip, test-camera (its phone part now gated),
+  test-nextup, test-refocus, test-micro and test-typescale updated;
+  screenshots at 390×844 light and dark against the Figma board, and the
+  promo at 320, 375 and 390 in English and Portuguese; full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+- Limits: marking a title seen doesn't glide the canvas to the next one; the
+  optional first-visit ease-in isn't done; a long guide's fit is far out on
+  phones. `qa/test-bgclick.js` and `qa/test-ringfocus.js` (not in regress)
+  fail the same way on the previous commit. Not checked on a real iPhone.
+
+## V5 feature — Explore E 4/5: Follow the thread and a character's trail
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- **Follow the thread · N titles**, a red button after the cast, lists every
+  title connected to the open one on a red line, by year, with who connects
+  them ("2012 · via Tony Stark, Pepper Potts +1") and their colors. A row
+  opens that title's details and ‹ comes back to the list; "‹ Back to
+  details" leaves it. No path is built inside the panel (Andre).
+- Tapping a person in Cast and connections opens their **trail**: their
+  titles through the timeline on one line in their color, the title you came
+  from marked "you're here", "Actor · N titles · first–last". A row opens
+  its details (‹ back to the trail); See on canvas (Highlight in Titles in
+  Titles) pins them, which is what tapping a person used to do.
+- Desktop: both fill the panel; in Connections the thread lays its titles
+  out in one row by release (about five and a half cards across), the
+  threads arcing below, and a hovered row glides its card into view; the
+  trail keeps the character lit. Escape leaves either first. Phones: both
+  fill the sheet.
+- Verified: `qa/test-explore.js` extended (the count, open, hop and back,
+  Escape and ‹, the row on the canvas, Pepper Potts's 7-title trail, the
+  pin); eight checks that pinned by tapping a person now tap the trail's pin
+  (test-align2, test-layers, test-micro, test-threads, test-escpin,
+  test-urlstate, test-dlist, test-recastname); test-details expects the
+  button; full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 feature — Explore E 3/5: Cast and connections
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- Featured cast becomes Cast and connections: "Cast and connections · 4" and
+  "17 connected titles"; each person says "in N more", and a chevron opens
+  those titles as posters (everyone closed to start). A poster hops the
+  details (‹ comes back).
+- Desktop: hovering a person lights their thread on the canvas, and the whole
+  block keeps it lit across the gaps; hovering a poster marks its card.
+- Verified: new `qa/test-explore.js` (desktop and phone); full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 feature — Explore E 2/5: one details component, sections collapsed, a back stack
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The desktop panel and the phone sheet share one details component. Where
+  to watch and Part of start collapsed; chevrons point down closed, up open.
+- A hop from inside the details (a poster, a thread row) pushes the title
+  you were on: ‹ names it and goes back; ✕ closes the stack; opening a title
+  any other way starts over.
+- Verified: `qa/test-explore.js`; test-partof and test-guides open Part of
+  first; full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 design — Connections by Phase: minimal phase pills, and Titles' headings
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The canvas's phase labels are plain pills with the phase and its count
+  ("Phase 1 · 4/6"), no dashed meter. Titles' group headings read "Phase 1"
+  in the phase color and the count, with no dashes or dot.
+- Verified: test-progress (band counts, `dl-group-num`); full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 improvement — Phone: the All titles and guide widgets, less obtrusive
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- One compact layout for both widgets on every viewport: Up next's (or the
+  stop's) poster, "All titles · 37/60 · Up next" over its name, × in the
+  corner, the progress under them. No check in any widget: the details mark
+  titles seen.
+- The guide's widget shows the stop you're on while stepping ("Stop 3 of 10")
+  and the next one at rest, with ‹ › together at the bottom right beside its
+  dashes; unseen dashes are a tint of the progress red, the current one
+  outlined.
+- Verified: test-guidemode (a 375×667 stepping check, no check in the dock),
+  test-nextup and test-micro; full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 design — Size steps 3/3: the details panel
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- From a 1600px window the details panel is 440px wide (`--drawer-w`) and
+  takes the Large step: lines, poster, portraits and buttons grow with it.
+  Below 1600px it is as before. The canvas framing reads the width.
+- Verified: full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 design — Size steps 2/3: the Guides pages
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- A guide's page is its own container with the size steps: stop rows,
+  posters, titles and controls take Regular or Large from its width.
+- Verified: full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 design — Size steps 1/3: shared tokens, used by the Titles list
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- One set of sizes in two steps, Regular and Large (from 84rem of the
+  surface's own container), as `--step-*` tokens under `step-sizes` in
+  `src/index.css`; the desktop Titles list reads them. AGENTS.md records the
+  rule.
+- Verified: test-fit, test-dlist; full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
+## V5 fix — Spatial: the zoom control no longer covers cards
+
+Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+
+- The zoom control stays at the bottom left (Andre's decision); the desktop
+  landing frame keeps 52px clear above it, so a grid that fits is centered
+  above it and no card sits under it.
+- Verified: test-layers (no card under the zoom control on landing);
+  full `qa/regress.sh` on the final tree: 69 of 70 runs clean; the one failure was test-guidemode still expecting the phone guide framed on its next stop, updated for the whole-path fit and rerun alone clean.
+
 ## V5 feature — Phone lists: swipe a row to mark it seen or add it to the Watchlist
 
 Recorded: 2026-11-16 15:44 EST (-0500). Pushed to `version/5.0` (V5 staging);

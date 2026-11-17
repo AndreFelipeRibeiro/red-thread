@@ -45,6 +45,22 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   The header is the same on Connections and Titles; neither has a second
   row. "See connections" in a title's details selects
   it on the canvas.
+- Exploring a title (Explore E, V5 Batch 10): the details are one component,
+  a panel on desktop and a sheet on phones, with Where to watch and Part of
+  collapsed. **Cast and connections** lists each person with "in N more"; a
+  chevron opens their other titles as posters, and a poster hops the details
+  (‹ comes back). Tapping a person opens their **trail**: their titles on one
+  line in their color, the one you came from marked, with See on canvas (or
+  Highlight in Titles) to pin them. **Follow the thread** lists every
+  connected title on a red line, by year, with who connects them; on desktop
+  Connections lays those titles out in one row by release while it is open.
+  A selected title's ring frames its first circle at a readable zoom and
+  draws only its own lines, one per title ("Tony Stark +3"). On phones a tap
+  opens the details with no ring (the canvas dims what isn't connected
+  behind them), a double-tap on empty canvas switches to a zoomed-out
+  overview where cards show their titles alone, and the All titles widget
+  points "↖ off screen" when Up next is panned away. Every phone sheet opens
+  up to the same height, 32px below the top.
 - A context summary shows what the controls don't: how many titles match and
   which filters are on. On desktop it floats at the top-left of Spatial: the
   count, a removable chip per active filter (search, collection, type, one per
@@ -180,8 +196,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   is marked in its Titles row with a red edge, an "Up next" pill and a filled
   "Mark seen", and on Connections its card has a red outline (an open
   guide's next stop too); the list opens with that row in view. The compact card
-  ("All titles 43/60 +4" with ✕ in its header, then Up next with ✓; laid out
-  like an open guide's card) is the same card in the
+  (Up next's poster and name under "All titles · 43/60 +4 · Up next", ✕ in
+  the corner and the progress under them; no ✓, the details mark it; laid
+  out like an open guide's card) is the same card in the
   same place on Connections and Titles: the top-right corner on desktop,
   docked above the bottom bar on phones (the list's last row scrolls clear
   of it). ✕ hides it, and the outline, until the next visit. Phone
@@ -278,10 +295,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   and Watchlist (Seen alone on phones, where a swipe adds to the Watchlist),
   and the next stop with the red edge, "Up next" and filled check. On Connections
   one card sits top right on desktop (where Up next sits without a guide),
-  and on phones one dock at the bottom; both carry the guide, its next stop
-  (its poster, with Seen), its red
-  progress and the stepper, and the canvas opens on the next stop; Seen with
-  the camera on another stop glides back to the one being marked,
+  and on phones one dock at the bottom; both are the compact card: the next
+  stop's poster and name under "Before Doomsday · 3/5" (the poster and name
+  open its details, where it is marked seen), ✕ in the corner, then the red
+  progress with ‹ › at its end and the current stop outlined; the canvas
+  opens on the next stop,
   and `?guide=` shares it. The guide you are following reopens when you come
   back to the home page (until you close or finish it). Returning visitors
   are offered one guide they haven't finished, once per guide on each device:

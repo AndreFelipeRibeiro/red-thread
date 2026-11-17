@@ -136,9 +136,10 @@ export function Synopsis({ title, className = '' }: { title: Title; className?: 
 
 // Open or closed is kept for the visit, so a section stays as the visitor
 // left it while they move between titles; a reload restores the defaults.
-// Nothing is stored. "Part of" keeps two states: open while no guide is open,
-// closed while one is, since the banner already says it there.
-const detailOpen: Record<string, boolean> = { cast: true, watch: false, guides: true, guidesInGuide: false };
+// Nothing is stored. Where to watch and "Part of" start closed (Notion
+// "Explore E 2/5"); "Part of" keeps two states, so opening it outside a guide
+// doesn't open it inside one, where the banner already says it.
+const detailOpen: Record<string, boolean> = { cast: true, watch: false, guides: false, guidesInGuide: false };
 const detailOpenListeners = new Set<() => void>();
 export function useDetailOpen(key: string): [boolean, (v: boolean) => void] {
   const [, bump] = React.useReducer((x: number) => x + 1, 0);
@@ -152,8 +153,11 @@ export function useDetailOpen(key: string): [boolean, (v: boolean) => void] {
 // watch's Change), and the body. `labelClass` and `bodyClass` carry each
 // surface's own spacing. `stateKey` (default: the id) names the remembered
 // open/closed state, so one section can keep separate states.
-export function DetailSection({ id, stateKey, label, labelClass = '', bodyClass = '', className = '', extra, children }: {
+export function DetailSection({ id, stateKey, label, note, labelClass = '', bodyClass = '', className = '', extra, children }: {
   id: string; stateKey?: string; label: React.ReactNode; labelClass?: string; bodyClass?: string; className?: string;
+  /** A quiet line at the end of the heading, before the chevron (Cast and
+   *  connections' "17 connected titles"). */
+  note?: React.ReactNode;
   extra?: React.ReactNode; children?: React.ReactNode;
 }) {
   const [open, setOpen] = useDetailOpen(stateKey || id);
@@ -165,7 +169,9 @@ export function DetailSection({ id, stateKey, label, labelClass = '', bodyClass 
           <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)}
             className={cn('td-acc-btn flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-md text-left text-body font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [&:hover_.td-acc-label]:underline [&:hover_.td-acc-label]:underline-offset-4', labelClass)}>
             <span className="td-acc-label">{label}</span>
-            <svg className={cn('td-acc-chev ml-auto flex-none text-muted-foreground transition-transform duration-200 motion-reduce:transition-none', !open && '-rotate-90')}
+            {note && <span className="td-acc-note ml-auto text-caption font-normal text-muted-foreground tabular-nums">{note}</span>}
+            {/* Down while closed, up while open (Notion "Explore E 2/5"). */}
+            <svg className={cn('td-acc-chev flex-none', note ? 'ml-2' : 'ml-auto', 'text-muted-foreground transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-180')}
               width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
           </button>
         </h3>
@@ -229,8 +235,13 @@ const TD_SURFACE = {
   },
 };
 
-export function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast, extras, onExplore }: {
+export function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast, extras, onExplore, onThread, back = null }: {
   title: Title; surface: 'drawer' | 'sheet'; search?: string;
+  /** Follow the thread (Notion "Explore E 4/5"): the red button after the cast. */
+  onThread?: (() => void) | null;
+  /** After a hop (a poster in Cast and connections): the title to go back to
+   *  (Notion "Explore E 2/5"); ✕ still closes the whole stack. */
+  back?: { label: string; onBack: () => void } | null;
   headingRef?: React.Ref<HTMLHeadingElement>; headingId?: string;
   cast?: React.ReactNode; extras?: React.ReactNode;
   /** Desktop, from My list and Guides: show the title on the Explore canvas. */
@@ -245,6 +256,15 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
   return (
     <>
       <div className={cn('td-head', `td-${surface}`, c.head)}>
+        {/* On the phone it sits in the sheet's top row, opposite ✕, as in the
+            Figma (placed on the sheet, so it stays while the details scroll). */}
+        {back && (
+          <button type="button" onClick={back.onBack} aria-label={tr('details.backTo', { title: back.label })}
+            className="td-back -mt-1 -ml-1.5 mb-2 in-[.m-sheet]:absolute in-[.m-sheet]:top-2 in-[.m-sheet]:left-3 in-[.m-sheet]:z-2 in-[.m-sheet]:m-0 inline-flex h-9 max-w-[calc(100%-40px)] cursor-pointer items-center gap-1 rounded-md px-1.5 text-body font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4 [&_svg]:flex-none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            <span className="truncate">{back.label}</span>
+          </button>
+        )}
         <div className={cn('td-hero flex items-start gap-3.5', c.hero)}>
           <div className={cn('td-thumb h-[99px] w-[66px] flex-[0_0_66px] rounded-lg', THUMB)} aria-hidden="true"><PosterArt title={title}/></div>
           <div className="td-hero-text min-w-0">
@@ -285,6 +305,7 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
         <DetailSlot name="guides" title={title}/>
       </div>
       {cast}
+      {onThread && <FollowThreadButton title={title} onThread={onThread} className={surface === 'drawer' ? 'px-6 pb-6' : ''}/>}
       {extras}
     </>
   );
@@ -303,8 +324,16 @@ export function DrawerFrame({ asideRef, scrollRef, open, onClose, onSlid, childr
 }) {
   return (
     <aside ref={asideRef} aria-hidden={!open} aria-labelledby="drawer-title"
-      className={cn('drawer in-[.app.touch]:hidden fixed top-(--tb-h,0px) right-0 z-60 flex h-[calc(100vh-var(--tb-h,0px))] w-[380px] flex-col border-l border-border bg-popover text-popover-foreground shadow-lg',
+      className={cn('drawer step-sizes in-[.app.touch]:hidden fixed top-(--tb-h,0px) right-0 z-60 flex h-[calc(100vh-var(--tb-h,0px))] w-(--drawer-w) flex-col border-l border-border bg-popover text-popover-foreground shadow-lg',
         'transition-transform duration-360 ease-[cubic-bezier(.2,.8,.2,1)] max-[900px]:w-full max-[900px]:max-w-[380px]',
+        // Size steps (Notion "Size steps 3/3"): from a 1600px window the drawer
+        // is 440px (--drawer-w) and takes the Large step. Its lines read the
+        // shared --step-meta; its own pieces (poster, portraits, buttons) grow
+        // with it. Below 1600px it is as before.
+        '[&_.td-eyebrow]:text-(length:--step-meta) [&_.td-release]:text-(length:--step-meta) [&_.td-story]:text-(length:--step-meta) [&_.actor-name]:text-(length:--step-meta)',
+        'min-[1600px]:[&_.drawer-header]:px-7 min-[1600px]:[&_.td-thumb]:h-[120px] min-[1600px]:[&_.td-thumb]:w-20 min-[1600px]:[&_.td-thumb]:basis-20 min-[1600px]:[&_.td-hero]:gap-4',
+        'min-[1600px]:[&_.td-tsa_.tsa-btn]:min-h-[max(44px,2.75rem)] min-[1600px]:[&_.td-share]:size-[max(44px,2.75rem)]',
+        'min-[1600px]:[&_.char-name]:text-heading',
         open ? 'open translate-x-0' : 'translate-x-full')}
       onTransitionEnd={(e) => { if (e.target === e.currentTarget) onSlid(); }}>
       {/* The close button sits in the panel's corner, outside the scrolling
@@ -318,35 +347,106 @@ export function DrawerFrame({ asideRef, scrollRef, open, onClose, onSlid, childr
   );
 }
 
-/** The drawer's cast: a menu row per character, hovered or active in the
- *  muted fill; hovering one lights its thread on the canvas. */
-export function DrawerCast({ title, activeChar, activeChars, search, onCharacterClick, onCharacterHover }: {
-  title: Title; activeChar?: string | null; activeChars?: string[] | null; search?: string;
-  onCharacterClick: (id: string) => void; onCharacterHover: (id: string | null) => void;
+// ---------------------------------------------------------------------------
+// Cast and connections (Notion "Explore E 3/5"), in the drawer and the sheet
+// ---------------------------------------------------------------------------
+
+// A character's whole identity, as the canvas's lines join it (Captain Carter
+// rides Peggy Carter's thread).
+const primeOfChar = (id: string) => { const c = window.CHARACTERS[id] as { prime?: string } | undefined; return (c && c.prime) || id; };
+/** The other titles a character appears in, across the catalog, in release order. */
+function titlesWith(ch: string, exceptId: string): Title[] {
+  const p = primeOfChar(ch);
+  return window.TITLES.filter((t) => t.id !== exceptId && t.cast.some((c) => primeOfChar(c) === p))
+    .sort((a, b) => String(a.release || '').localeCompare(String(b.release || '')));
+}
+
+/** Featured cast becomes Cast and connections: each person keeps their color
+ *  dot and says where else they appear ("in 11 more"); a chevron opens a row
+ *  of those titles as posters (all closed to start, Andre 2026-11-16). A poster
+ *  hops the details to that title (‹ comes back, E 2/5); the person pins their
+ *  thread, as before (their trail arrives with E 4/5). Desktop: hovering a
+ *  person lights their thread on the canvas. */
+export function CastConnections({ title, surface, activeChar, activeChars, search, onCharacterClick, onCharacterHover }: {
+  title: Title; surface: 'drawer' | 'sheet'; activeChar?: string | null; activeChars?: string[] | null; search?: string;
+  onCharacterClick: (id: string) => void; onCharacterHover?: (id: string | null) => void;
 }) {
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
+  const drawer = surface === 'drawer';
+  const others = React.useMemo(() => {
+    const m: Record<string, Title[]> = {};
+    title.cast.forEach((ch) => { m[ch] = titlesWith(ch, title.id); });
+    return m;
+  }, [title.id]);
+  const connected = React.useMemo(() => new Set(Object.values(others).flat().map((t) => t.id)).size, [others]);
+  const [openSet, setOpenSet] = React.useState<Set<string>>(() => new Set());
+  React.useEffect(() => { setOpenSet(new Set()); }, [title.id]);
+  const toggle = (ch: string) => setOpenSet((s) => { const n = new Set(s); if (n.has(ch)) n.delete(ch); else n.add(ch); return n; });
   return (
-    <DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })}
-      labelClass="drawer-section-label px-6 pt-3 pb-2 text-label text-muted-foreground" bodyClass="cast-list px-3 pb-6">
+    <DetailSection id="cast" label={tr('details.castConnections', { n: title.cast.length })}
+      labelClass={drawer ? 'drawer-section-label px-6 pt-3 pb-2 text-label text-muted-foreground' : 'm-flab mb-0 min-h-11 p-0 text-label text-muted-foreground'}
+      bodyClass={drawer ? 'cast-list px-3 pb-6' : 'm-castlist flex flex-col'}
+      note={connected ? <span className="td-connected">{tr('details.connectedTitles', { n: connected })}</span> : null}>
       {title.cast.length === 0 && <div className="empty-cast px-4 py-5 text-label text-muted-foreground italic">{tr('details.noCast')}</div>}
       {title.cast.map((ch) => {
         const c = window.CHARACTERS[ch];
         if (!c) return null;
+        const list = others[ch];
+        const open = openSet.has(ch) && list.length > 0;
         const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
+        const name = I18N().charName(ch);
+        const rowId = 'td-with-' + ch;
         return (
-          <button key={ch} type="button" data-char={ch} style={{ '--match-color': c.color } as React.CSSProperties}
-            className={cn('cast-row flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50', MARKS, isActive && 'active bg-muted')}
-            onClick={() => onCharacterClick(ch)} onMouseEnter={() => onCharacterHover(ch)} onMouseLeave={() => onCharacterHover(null)}>
-            <div className="portrait flex size-[38px] flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold tracking-[.5px] text-(--on-color) shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
-              style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
-              <window.Portrait url={window.castPortrait(title, ch)} alt={I18N().charName(ch)} initials={c.initials}/>
+          // Desktop: the whole block (the row, its posters and the gaps
+          // between them) keeps this person's thread lit, so it doesn't
+          // flicker as the pointer crosses a gutter (Andre, 2026-11-16).
+          <div key={ch} className={cn('cast-person', !drawer && 'border-t border-border first:border-t-0')} style={{ '--match-color': c.color } as React.CSSProperties}
+            onMouseEnter={drawer && onCharacterHover ? () => onCharacterHover(ch) : undefined}
+            onMouseLeave={drawer && onCharacterHover ? () => { onCharacterHover(null); window.MCU_peekTitle(null); } : undefined}>
+            <div className={cn('flex items-center gap-2', drawer ? 'pr-1' : '')}>
+              <button type="button" data-char={ch}
+                className={cn(drawer ? 'cast-row px-3 py-2 hover:bg-muted' : 'm-crow min-h-[max(62px,3.875rem)] py-2',
+                  'flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50', MARKS,
+                  isActive && (drawer ? 'active bg-muted' : 'on [&_.m-cn]:text-primary'))}
+                onClick={() => onCharacterClick(ch)}>
+                <span className={cn(drawer ? 'portrait' : 'm-port', 'flex size-[46px] flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold text-(--on-color) shadow-[0_0_0_2px_var(--match-color)] [&_img]:block [&_img]:size-full [&_img]:object-cover')}
+                  style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
+                  <window.Portrait url={window.castPortrait(title, ch)} alt={name} initials={c.initials}/>
+                </span>
+                <span className="cast-text min-w-0 flex-1">
+                  <span className={cn(drawer ? 'char-name' : 'm-cn', 'block truncate text-body font-semibold')}><Highlight text={name} query={search}/></span>
+                  <span className={cn(drawer ? 'actor-name' : 'm-an', 'cast-sub mt-px block truncate text-label text-muted-foreground')}><Highlight text={window.MCU_credit(title, ch)} query={search}/></span>
+                </span>
+              </button>
+              {list.length > 0 && <span className="cast-more flex-none text-caption whitespace-nowrap text-muted-foreground tabular-nums">{tr('details.inMore', { n: list.length })}</span>}
+              <span className={cn(drawer ? 'cast-color-dot' : 'm-cdot', 'size-2.5 flex-none rounded-full')} style={{ background: c.color }} aria-hidden="true"/>
+              {list.length > 0 ? (
+                <button type="button" aria-expanded={open} aria-controls={rowId} onClick={() => toggle(ch)}
+                  aria-label={tr(open ? 'details.hideWith' : 'details.showWith', { name })}
+                  className="cast-chev inline-flex size-9 flex-none cursor-pointer items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-3.5">
+                  <svg className={cn('transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-180')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+              ) : <span className="size-9 flex-none" aria-hidden="true"/>}
             </div>
-            <div className="cast-text min-w-0 flex-1">
-              <div className="char-name truncate text-body font-medium"><Highlight text={I18N().charName(ch)} query={search}/></div>
-              <div className="actor-name cast-sub mt-px truncate text-label text-muted-foreground"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
-            </div>
-            <div className="cast-color-dot size-2 flex-none rounded-full" style={{ background: c.color }}/>
-          </button>
+            {open && (
+              <div id={rowId} role="group" aria-label={tr('details.withName', { name })}
+                className={cn('cast-titles flex gap-2.5 overflow-x-auto overscroll-x-contain pt-1 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', drawer ? 'px-3' : '')}>
+                {list.map((t) => (
+                  <button key={t.id} type="button" data-title={t.id} onClick={() => window.MCU_hopTitle(t.id)}
+                    // Desktop: the card under the pointer is marked on the
+                    // canvas (the block above keeps the thread lit).
+                    onMouseEnter={drawer ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                    onFocus={drawer && onCharacterHover ? () => { onCharacterHover(ch); window.MCU_peekTitle(t.id); } : undefined}
+                    onBlur={drawer && onCharacterHover ? () => { onCharacterHover(null); window.MCU_peekTitle(null); } : undefined}
+                    aria-label={tr('details.openTitle', { title: I18N().titleName(t) })}
+                    className="cast-title w-[74px] flex-none cursor-pointer rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+                    <span className={cn('block h-[111px] w-[74px] rounded-md', THUMB)} aria-hidden="true"><window.PosterArt title={t}/></span>
+                    <span className="mt-1 block truncate text-caption font-medium text-foreground" aria-hidden="true">{I18N().titleName(t)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         );
       })}
     </DetailSection>
@@ -354,54 +454,252 @@ export function DrawerCast({ title, activeChar, activeChars, search, onCharacter
 }
 
 // ---------------------------------------------------------------------------
+// Follow the thread, and a character's trail (Notion "Explore E 4/5")
+// ---------------------------------------------------------------------------
+
+/** Every title connected to `title` (sharing a character, by identity), in
+ *  release order, with the characters that connect each one. */
+export function threadOf(title: Title): { title: Title; via: string[] }[] {
+  const mine = new Map<string, string>();
+  title.cast.forEach((ch) => { const p = primeOfChar(ch); if (!mine.has(p)) mine.set(p, ch); });
+  const rows: { title: Title; via: string[] }[] = [];
+  window.TITLES.forEach((t) => {
+    if (t.id === title.id) return;
+    const via: string[] = [];
+    t.cast.forEach((ch) => { const own = mine.get(primeOfChar(ch)); if (own && via.indexOf(own) === -1) via.push(own); });
+    if (via.length) rows.push({ title: t, via });
+  });
+  return rows.sort((a, b) => String(a.title.release || '').localeCompare(String(b.title.release || '')));
+}
+
+const BACK_BTN = 'inline-flex h-9 min-w-9 max-w-full cursor-pointer items-center gap-1 rounded-md px-1.5 text-body font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4 [&_svg]:flex-none';
+const Chevron = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>;
+/** "2012 · Film · Phase 1" */
+const metaLine = (t: Title) => `${t.year} · ${tr(t.type === 'film' ? 'type.film.one' : 'type.series.one')} · ${tr('phase.label', { n: t.phase })}`;
+
+/** The top row both views share: ‹ (with what it goes back to, or the
+ *  view's name), and room on the right for the frame's own ✕. */
+function ExploreHead({ backLabel, backAria, label, onBack }: {
+  backLabel?: string; backAria: string; label?: string; onBack: () => void;
+}) {
+  return (
+    <div className="ex-head flex min-h-9 items-center gap-2 pr-11 in-[.m-sheet]:pr-8">
+      <button type="button" className={cn('ex-back', BACK_BTN, '-ml-1.5')} onClick={onBack} aria-label={backAria}>
+        <Chevron/>{backLabel && <span className="truncate">{backLabel}</span>}
+      </button>
+      {label && <span className="ex-label min-w-0 flex-1 truncate text-body text-muted-foreground">{label}</span>}
+    </div>
+  );
+}
+
+/** Follow the thread: the title, and every title it connects to on one red
+ *  line, by year, with who connects them. A row opens that title's details
+ *  (‹ comes back here); no path is built inside the panel, which would only
+ *  re-create the canvas (Andre, 2026-11-16). */
+export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen }: {
+  id: string; surface: 'drawer' | 'sheet'; headingId?: string; headingRef?: React.Ref<HTMLHeadingElement>;
+  onLeave: () => void; onOpen: (id: string) => void;
+}) {
+  const title = window.TITLES.find((t) => t.id === id);
+  const rows = React.useMemo(() => (title ? threadOf(title) : []), [id]);
+  const listRef = React.useRef<HTMLOListElement>(null);
+  React.useEffect(() => {
+    const scroller = listRef.current && listRef.current.closest('.drawer-scroll, .m-sheet-body');
+    if (scroller) scroller.scrollTop = 0;
+  }, [id]);
+  if (!title) return null;
+  const drawer = surface === 'drawer';
+  const PosterArt = window.PosterArt;
+  return (
+    <div className={cn('ex-thread', drawer ? 'pt-[18px]' : '')}>
+      <div className={cn('ex-top border-b border-border pb-4', drawer ? 'px-6' : '')}>
+        {/* "‹ Back to details", the caret against its words (Andre, 2026-11-16). */}
+        <ExploreHead backLabel={tr('thread.back')} backAria={tr('details.backTo', { title: I18N().titleName(title) })} onBack={onLeave}/>
+        <div className="ex-hero mt-3 flex items-start gap-3.5">
+          <div className={cn('ex-poster h-[120px] w-20 flex-none rounded-lg shadow-[0_0_0_2px_var(--brand)]', THUMB)} aria-hidden="true"><PosterArt title={title}/></div>
+          <div className="min-w-0 flex-1">
+            <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}
+              className="ex-title m-0 font-display text-display font-normal tracking-[-0.01em] text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{I18N().titleName(title)}</h2>
+            <div className="ex-meta mt-1 text-label text-muted-foreground tabular-nums">{metaLine(title)}</div>
+            <div className="ex-count mt-2.5 text-body font-semibold text-(--brand) tabular-nums">{tr('thread.connected', { n: rows.length })}</div>
+          </div>
+        </div>
+      </div>
+      <ol ref={listRef} aria-label={tr('thread.listLabel', { title: I18N().titleName(title) })}
+        className={cn('ex-list relative m-0 list-none pb-6', drawer ? 'px-3' : '-mx-[18px] px-1.5')}>
+        {rows.map(({ title: t, via }) => {
+          const names = via.map((ch) => I18N().charName(ch));
+          const shown = names.slice(0, 2).join(', ') + (names.length > 2 ? ' +' + (names.length - 2) : '');
+          return (
+            <li key={t.id}>
+              <button type="button" data-title={t.id} onClick={() => onOpen(t.id)}
+                onMouseEnter={drawer ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                aria-label={tr('thread.hopTo', { title: I18N().titleName(t), names: names.join(', ') })}
+                className="ex-row relative flex w-full cursor-pointer items-center gap-3 rounded-md py-1.5 pr-2 pl-9 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50">
+                {/* The rail runs through every row; each row draws its piece. */}
+                <span className="absolute inset-y-0 left-[13px] w-3.5" aria-hidden="true">
+                  <span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-(--brand)"/>
+                  <span className="absolute top-1/2 left-0 size-3.5 -translate-y-1/2 rounded-full border-2 border-(--brand) bg-popover"/>
+                </span>
+                <span className={cn('h-[60px] w-10 flex-none rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body font-semibold text-foreground">{I18N().titleName(t)}</span>
+                  <span className="mt-0.5 block truncate text-label text-muted-foreground tabular-nums">{t.year} · {tr('thread.via', { names: shown })}</span>
+                </span>
+                <span className="flex flex-none items-center gap-[3px]" aria-hidden="true">
+                  {via.slice(0, 4).map((ch) => <span key={ch} className="size-2 rounded-full" style={{ background: (window.CHARACTERS[ch] || { color: 'var(--muted-foreground)' }).color }}/>)}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/** A character's trail: everything they appear in, through the timeline on
+ *  one line in their color. The title you came from is marked; a row opens
+ *  that title's details. See on canvas pins their thread on the map (what
+ *  tapping a person used to do). */
+export function TrailView({ char, from, surface, headingId, headingRef, inCanvas = true, onLeave, onOpen, onPin }: {
+  char: string; from: string; surface: 'drawer' | 'sheet'; headingId?: string; headingRef?: React.Ref<HTMLHeadingElement>;
+  /** In Connections the pin reads See on canvas; in Titles, Highlight in Titles. */
+  inCanvas?: boolean;
+  onLeave: () => void; onOpen: (id: string) => void; onPin: () => void;
+}) {
+  const c = window.CHARACTERS[char];
+  const fromTitle = window.TITLES.find((t) => t.id === from);
+  const list = React.useMemo(() => titlesWith(char, ''), [char]);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const scroller = rootRef.current && rootRef.current.closest('.drawer-scroll, .m-sheet-body');
+    if (scroller) scroller.scrollTop = 0;
+  }, [char, from]);
+  if (!c || !fromTitle) return null;
+  const drawer = surface === 'drawer';
+  const PosterArt = window.PosterArt;
+  const name = I18N().charName(char);
+  const years = list.map((t) => t.year).filter(Boolean);
+  const span = years.length ? (years[0] === years[years.length - 1] ? String(years[0]) : `${years[0]}–${years[years.length - 1]}`) : '';
+  const color = c.color;
+  return (
+    <div ref={rootRef} className={cn('ex-trail', drawer ? 'pt-[18px]' : '')} style={{ '--match-color': color } as React.CSSProperties}>
+      <div className={cn('ex-top border-b border-border pb-4', drawer ? 'px-6' : '')}>
+        <ExploreHead backLabel={I18N().titleName(fromTitle)} backAria={tr('details.backTo', { title: I18N().titleName(fromTitle) })} onBack={onLeave}/>
+        <div className="ex-hero mt-3 flex items-center gap-3.5">
+          <span className="flex size-14 flex-none items-center justify-center overflow-hidden rounded-full text-label font-bold text-(--on-color) shadow-[0_0_0_2px_var(--match-color)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
+            style={{ background: `linear-gradient(135deg, ${color}, ${color}88)` }}>
+            <window.Portrait url={window.castPortrait(fromTitle, char)} alt="" initials={c.initials}/>
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}
+              className="ex-title m-0 font-display text-display font-normal tracking-[-0.01em] text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{name}</h2>
+            <div className="ex-meta mt-1 text-label text-muted-foreground tabular-nums">
+              {tr('trail.meta', { actor: window.MCU_credit(fromTitle, char), n: list.length, years: span })}
+            </div>
+          </div>
+        </div>
+        <Button variant="outline" className="trail-pin mt-3 h-[max(40px,2.5rem)] w-full gap-[7px] text-label [&_svg]:size-[14px]" onClick={onPin}
+          aria-label={tr(inCanvas ? 'trail.pinAria' : 'trail.pinListAria', { name })}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
+          {tr(inCanvas ? 'trail.pin' : 'trail.pinList')}
+        </Button>
+      </div>
+      <ol aria-label={tr('trail.listLabel', { name })} className={cn('ex-list relative m-0 list-none pb-6', drawer ? '' : '-mx-[18px]')}>
+        {list.map((t, i) => {
+          const here = t.id === from;
+          return (
+            <li key={t.id}>
+              <button type="button" data-title={t.id} onClick={() => onOpen(t.id)} aria-current={here ? 'true' : undefined}
+                onMouseEnter={drawer && !here ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                aria-label={tr('details.openTitle', { title: I18N().titleName(t) })}
+                className={cn('ex-row relative flex w-full cursor-pointer items-center gap-3 py-1.5 pr-4 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
+                  drawer ? 'pl-6' : 'pl-[18px]', here && 'here bg-muted/70 hover:bg-muted')}>
+                <span className="w-10 flex-none text-right text-label font-medium text-muted-foreground tabular-nums" aria-hidden="true">{t.year}</span>
+                {/* Each row draws its piece of the rail, first dot to last. */}
+                <span className="relative mx-1.5 -my-1.5 flex flex-none items-center self-stretch" aria-hidden="true">
+                  {list.length > 1 && <span className={cn('absolute left-1/2 w-0.5 -translate-x-1/2 bg-(--match-color)', i === 0 ? 'top-1/2' : 'top-0', i === list.length - 1 ? 'bottom-1/2' : 'bottom-0')}/>}
+                  <span className={cn('relative size-3.5 rounded-full border-2 border-(--match-color)', here ? 'bg-(--match-color)' : 'bg-popover')}/>
+                </span>
+                <span className={cn('h-[60px] w-10 flex-none rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body font-semibold text-foreground">{I18N().titleName(t)}</span>
+                  <span className={cn('mt-0.5 block truncate text-label', here ? 'text-(--brand)' : 'text-muted-foreground')}>
+                    {tr(t.type === 'film' ? 'type.film.one' : 'type.series.one')} · {tr('phase.label', { n: t.phase })}{here && <> · {tr('trail.here')}</>}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/** The red button at the end of the details: "Follow the thread · 17 titles ›". */
+export function FollowThreadButton({ title, onThread, className = '' }: { title: Title; onThread: () => void; className?: string }) {
+  const n = React.useMemo(() => threadOf(title).length, [title.id]);
+  if (!n) return null;
+  return (
+    <div className={cn('td-thread-wrap', className)}><Button className="td-thread mt-4 h-[max(48px,3rem)] w-full gap-1.5 text-body font-semibold [&_svg]:size-4" onClick={onThread}>
+      {tr('details.followThread', { n })}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </Button></div>
+  );
+}
+
+/** The drawer's cast: Cast and connections (E 3/5). */
+export function DrawerCast(props: {
+  title: Title; activeChar?: string | null; activeChars?: string[] | null; search?: string;
+  onCharacterClick: (id: string) => void; onCharacterHover: (id: string | null) => void;
+}) {
+  return <CastConnections surface="drawer" {...props}/>;
+}
+
+// ---------------------------------------------------------------------------
 // Phones: the title sheet
 // ---------------------------------------------------------------------------
 
-export function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, onGoSpatial, inSpatial, search }: {
-  title: Title | null; onClose: () => void; onCharacterClick: (id: string) => void;
+/** What app.tsx hands the details for Follow the thread and the trail (E 4/5). */
+export type ExploreState = { kind: 'thread' } | { kind: 'trail'; char: string; from: string };
+export type ExploreProps = {
+  explore: ExploreState | null; onThread: () => void; onTrail: (ch: string) => void; onLeave: () => void;
+  onOpen: (id: string) => void; onPin?: () => void; inCanvas?: boolean;
+};
+
+export function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, onGoSpatial, inSpatial, search, back = null, ex = null }: {
+  title: Title | null; onClose: () => void; onCharacterClick: (id: string) => void; back?: { label: string; onBack: () => void } | null;
+  ex?: ExploreProps | null;
   activeChar?: string | null; activeChars?: string[] | null; onGoSpatial: () => void; inSpatial?: boolean; search?: string;
 }) {
   if (!title) return null;
+  const explore = ex ? ex.explore : null;
   const Sheet = window.Sheet;
   const Highlight = window.Highlight as unknown as React.FC<{ text: string; query?: string }>;
   return (
-    <Sheet onClose={onClose} tall label={tr('details.sheetLabel', { title: I18N().titleName(title) })}>
+    <Sheet onClose={onClose} tall label={tr('details.sheetLabel', { title: I18N().titleName(title) })}
+      // Full height while following the thread or a trail (the Figma's full screen).
+      className={explore ? 'ex-sheet h-[calc(100dvh-32px-env(safe-area-inset-top,0px))] [&_.m-grab]:hidden [&_.m-sheet-body]:pt-2' : ''}>
       <div className="contents">
-        <TitleDetailsBody title={title} surface="sheet" search={search}
-          cast={
-            <DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })}
-              labelClass="m-flab mb-0 min-h-11 p-0 text-label text-muted-foreground" bodyClass="m-castlist flex flex-col">
-              {title.cast.length === 0 && <div className="m-empty-cast py-2.5 text-label text-muted-foreground">{tr('details.noCast')}</div>}
-              {title.cast.map((ch) => {
-                const c = window.CHARACTERS[ch];
-                if (!c) return null;
-                const on = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
-                return (
-                  <button key={ch} type="button" style={{ '--match-color': c.color } as React.CSSProperties} onClick={() => onCharacterClick(ch)}
-                    className={cn('m-crow flex min-h-[max(56px,3.5rem)] w-full cursor-pointer items-center gap-[11px] border-t border-border py-[9px] text-left outline-none first:border-t-0 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset', MARKS, on && 'on [&_.m-cn]:text-primary')}>
-                    <div className="m-port flex size-10 flex-[0_0_40px] items-center justify-center overflow-hidden rounded-full text-label font-bold text-[#0a0c14] [&_img]:block [&_img]:size-full [&_img]:object-cover"
-                      style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
-                      <window.Portrait url={window.castPortrait(title, ch)} alt={I18N().charName(ch)} initials={c.initials}/>
-                    </div>
-                    <div className="m-ctext min-w-0 flex-1">
-                      <div className="m-cn truncate text-body font-semibold"><Highlight text={I18N().charName(ch)} query={search}/></div>
-                      <div className="m-an cast-sub mt-px truncate text-label text-muted-foreground"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
-                    </div>
-                    <span className="m-cdot size-2 flex-[0_0_8px] rounded-full" style={{ background: c.color }}/>
-                  </button>
-                );
-              })}
-            </DetailSection>
-          }
+        {explore && ex && explore.kind === 'thread' ? (
+          <ThreadView key="thread" id={title.id} surface="sheet" onLeave={ex.onLeave} onOpen={ex.onOpen}/>
+        ) : explore && ex && explore.kind === 'trail' ? (
+          <TrailView key="trail" char={explore.char} from={explore.from} surface="sheet" inCanvas={ex.inCanvas} onLeave={ex.onLeave} onOpen={ex.onOpen} onPin={ex.onPin || (() => {})}/>
+        ) : (
+        <TitleDetailsBody title={title} surface="sheet" search={search} back={back} onThread={ex ? ex.onThread : null}
+          cast={<CastConnections title={title} surface="sheet" search={search} activeChar={activeChar} activeChars={activeChars} onCharacterClick={onCharacterClick}/>}
           extras={!inSpatial && (
             <Button variant="outline" className="m-apply ghost mt-3.5 h-auto min-h-10 w-full" onClick={onGoSpatial}>{tr('details.goSpatial')}</Button>
           )}/>
+        )}
       </div>
     </Sheet>
   );
 }
 
-Object.assign(window, { Hourglass, StoryYear, ReleaseLine, ReleaseBadge, Synopsis, useDetailOpen, DetailSection, TitleDetailsBody, DrawerFrame, DrawerCast, CastSheet });
+Object.assign(window, { Hourglass, StoryYear, ReleaseLine, ReleaseBadge, Synopsis, useDetailOpen, DetailSection, TitleDetailsBody, DrawerFrame, DrawerCast, CastConnections, CastSheet, ThreadView, TrailView });
 
 // ---------------------------------------------------------------------------
 // Phones: the frame every sheet shares
@@ -415,18 +713,18 @@ export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describ
   sheetRef: React.Ref<HTMLDivElement>; onClose: () => void; tall?: boolean; label?: string;
   labelledBy?: string; describedBy?: string; className?: string; children: React.ReactNode;
 }) {
-  // Height (Andre, 2026-11-16: the sheets looked short): a sheet is as tall
-  // as its content, up to the screen less a strip of the page above it (the
-  // scrim, tap to close), so a long sheet uses the phone's height and a short
-  // phone still shows the strip. dvh follows the browser's own bars.
+  // Height (Andre, 2026-11-16): one standard for every sheet. A sheet is as
+  // tall as its content, up to the screen less a 32px strip of the page above
+  // it (the scrim, tap to close); one that would scroll opens at that full
+  // height, the Follow the thread sheet's. dvh follows the browser's bars.
   return (
     <>
       <div className="m-scrim fixed inset-0 z-90 animate-[mfade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none" onClick={onClose} aria-hidden="true"/>
       <div ref={sheetRef} role="dialog" aria-modal="true" aria-label={labelledBy ? undefined : (label || tr('details.label'))}
         aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}
-        className={cn('m-sheet fixed inset-x-0 bottom-0 z-100 flex max-h-[calc(100dvh-64px-env(safe-area-inset-top,0px))] touch-pan-y flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-lg outline-none',
+        className={cn('m-sheet fixed inset-x-0 bottom-0 z-100 flex max-h-[calc(100dvh-32px-env(safe-area-inset-top,0px))] touch-pan-y flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-lg outline-none',
           'animate-[mrise_240ms_cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none min-[600px]:left-auto min-[600px]:w-[min(440px,100%)]',
-          tall && 'tall max-h-[calc(100dvh-32px-env(safe-area-inset-top,0px))]', className)}>
+          tall && 'tall', className)}>
         <button type="button" className="m-grab relative mx-auto mt-2 mb-1 h-8 w-[46px] flex-none cursor-pointer border-0 bg-transparent p-0 after:absolute after:inset-x-1 after:top-2 after:h-1 after:rounded-[2px] after:bg-muted-foreground/30 after:content-['']"
           onClick={onClose} aria-label={tr('details.close')} tabIndex={-1}/>
         {/* The ghost button says its own transparent fill. */}

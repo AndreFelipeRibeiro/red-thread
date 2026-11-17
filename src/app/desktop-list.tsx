@@ -37,30 +37,26 @@ import { EmptyState, ScoreChip, XS, THUMB } from './list-parts';
 //
 // Two sizes, by the list's own width (a container query on .dlist: the
 // details drawer narrows the list, the window alone can't tell): Regular,
-// and Large from 84rem (1344px at the default text size). Every size is a
-// `--dl-*` variable set once here, so the Notion task "Desktop size steps"
-// can lift them into shared tokens for the Guides pages and the details
-// panel. Fixed steps rather than a fluid height, so the pinned header and the
-// scroll to Up next keep exact sizes; Settings' Text size still scales them.
-const SIZE = '[--dl-cols:2.25rem_minmax(0,1fr)_7rem_5.5rem_5.5rem_max(172px,10.75rem)] [--dl-gap:1rem]'
-  + ' [--dl-poster-w:40px] [--dl-poster-h:60px] [--dl-row-h:76px] [--dl-head-h-min:max(40px,2.5rem)]'
-  + ' [--dl-title:var(--fs-heading)] [--dl-meta:var(--fs-label)] [--dl-fig:var(--fs-body)] [--dl-group:var(--fs-heading)] [--dl-group-pt:1.25rem]'
-  + ' [--dl-chip-h:max(32px,2rem)] [--dl-ctl-h:max(36px,2.25rem)] [--dl-btn:max(34px,2.125rem)] [--dl-icon:15px]'
-  + ' @min-[84rem]:[--dl-cols:2.75rem_minmax(0,1fr)_8.5rem_6.5rem_6.5rem_max(196px,12.25rem)] @min-[84rem]:[--dl-gap:1.5rem]'
-  + ' @min-[84rem]:[--dl-poster-w:52px] @min-[84rem]:[--dl-poster-h:78px] @min-[84rem]:[--dl-row-h:96px] @min-[84rem]:[--dl-head-h-min:max(44px,2.75rem)]'
-  + ' @min-[84rem]:[--dl-title:var(--fs-title)] @min-[84rem]:[--dl-meta:var(--fs-body)] @min-[84rem]:[--dl-fig:var(--fs-heading)] @min-[84rem]:[--dl-group:var(--fs-title)] @min-[84rem]:[--dl-group-pt:1.75rem]'
-  + ' @min-[84rem]:[--dl-chip-h:max(40px,2.5rem)] @min-[84rem]:[--dl-ctl-h:max(44px,2.75rem)] @min-[84rem]:[--dl-btn:max(40px,2.5rem)] @min-[84rem]:[--dl-icon:17px]';
-const GRID = 'grid items-center grid-cols-(--dl-cols) gap-(--dl-gap)';
+// and Large from 84rem (1344px at the default text size). The sizes are the
+// shared size-step tokens (`step-sizes`, `--step-*` in src/index.css; Notion
+// "Size steps 1/3"), which the Guides pages and the details panel read too;
+// only the columns (`--dl-cols`) are the list's own.
+const SIZE = 'step-sizes [--dl-cols:2.25rem_minmax(0,1fr)_7rem_5.5rem_5.5rem_max(172px,10.75rem)]'
+  + ' @min-[84rem]:[--dl-cols:2.75rem_minmax(0,1fr)_8.5rem_6.5rem_6.5rem_max(196px,12.25rem)]';
+const GRID = 'grid items-center grid-cols-(--dl-cols) gap-(--step-gap)';
 // The list's width: the heading, the controls and the rows line up. As wide
 // as the list was before Titles 1/5, so a large screen isn't a narrow column.
 const WIDTH = cn('mx-auto w-full max-w-[1480px]', SIZE);
-const ROW_SIZE = 'min-h-(--dl-row-h) py-2';
-const THUMB_SIZE = 'h-(--dl-poster-h) w-(--dl-poster-w) flex-[0_0_var(--dl-poster-w)]';
-const FIG = 'text-(length:--dl-fig) tabular-nums';
+const ROW_SIZE = 'min-h-(--step-row-h) py-2';
+const THUMB_SIZE = 'h-(--step-poster-h) w-(--step-poster-w) flex-[0_0_var(--step-poster-w)]';
+const FIG = 'text-(length:--step-figure) tabular-nums';
 // The reorder animation's leaving copies sit in a layer under the scroll area,
-// outside the table that sets the sizes: they take the `--dl-*` values along
+// outside the table that sets the sizes: they take those values along
 // (or they flash unstyled, full-size posters and all, on a tab switch).
-const FLIP_OPTS = { inside: true, vars: { from: '.dl-table', names: [...new Set(SIZE.match(/--dl-[a-z-]+/g))] } };
+// The size-step tokens (src/index.css) plus the list's own columns.
+const STEP_VARS = ['--step-gap', '--step-poster-w', '--step-poster-h', '--step-row-h', '--step-head-h', '--step-title', '--step-meta',
+  '--step-figure', '--step-group', '--step-group-pt', '--step-chip-h', '--step-control-h', '--step-button', '--step-icon'];
+const FLIP_OPTS = { inside: true, vars: { from: '.dl-table', names: ['--dl-cols', ...STEP_VARS] } };
 
 // Column key -> sort mode it drives.
 const DL_SORT_FOR = { title: 'title', release: 'release', imdb: 'imdb', rt: 'rt' };
@@ -228,37 +224,22 @@ function DlSortHeader({ col, label, end = false, sort, sortDir, setSort, setSort
 // marks read unlike every other meter, and like the dot before the name). A plain heading, not a fold: the list opens at Up next, and the
 // Unseen tab hides what you've seen. Progress counts released titles in the
 // catalogue's filters, not the tab (app.tsx `groupProgress`), so Seen does not
-// always read 100%. Hooks: `dl-group`, `dl-group-head`, `dl-group-count`,
-// `dl-group-marks`. `phone`: the same heading over the phone List's rows
+// always read 100%. Hooks: `dl-group`, `dl-group-head`, `dl-group-count`
+// (the sentence), `dl-group-num` ("4/6"). `phone`: the same heading over the phone List's rows
 // (Notion "Titles 4/5"), outside a table and at the phone's sizes.
 function GroupHeader({ g, prog, phone = false }) {
   const tr = window.MCU_I18N.tr;
   const has = !!(prog && prog.released > 0);
   const done = has && prog.seen >= prog.released;
-  // Marks while they stay small enough to tell apart; a short bar past that.
-  const marks = has && prog.released <= 24;
   return (
     <div role={phone ? undefined : 'row'} className={cn('dl-group', phone && 'm-ghead [.m-group:first-child>&]:-mt-1')}>
       <span role={phone ? undefined : 'cell'} className={cn('dl-group-head flex items-center gap-2.5 font-semibold text-foreground',
-        phone ? 'pt-5 pb-2.5 text-heading' : 'pt-(--dl-group-pt) pb-2.5 text-(length:--dl-group)')}>
-        <span className="size-2 flex-[0_0_8px] rounded-full" style={{ background: g.color || 'var(--muted-foreground)' }} aria-hidden="true"/>
-        <span className="dl-group-label whitespace-nowrap">{g.label}</span>
-        {has && (
-          <span className="ml-1 inline-flex items-center gap-2" aria-hidden="true">
-            {marks ? (
-              // 12px a segment up to 8, then sharing 96px (as wide as the
-              // plain bar past 24), so a long phase doesn't push the count off.
-              <span className="dl-group-marks seg flex h-1 items-center gap-[3px]" style={{ width: prog.released <= 8 ? prog.released * 15 - 3 : 120 }}>
-                {Array.from({ length: prog.released }, (_, i) => (
-                  <span key={i} className={cn('h-full min-w-0 flex-1 rounded-[1px]', i < prog.seen ? 'on bg-(--progress)' : 'bg-[color-mix(in_oklab,var(--muted-foreground)_32%,transparent)]')}/>
-                ))}
-              </span>
-            ) : (
-              <span className="dl-group-marks block h-1 w-[120px] overflow-hidden rounded-[1px] bg-muted"><span className="block h-full rounded-full bg-(--progress)" style={{ width: Math.round((prog.seen / prog.released) * 100) + '%' }}/></span>
-            )}
-            <span className="text-label font-medium text-muted-foreground tabular-nums">{prog.seen}/{prog.released}</span>
-          </span>
-        )}
+        phone ? 'pt-5 pb-2.5 text-heading' : 'pt-(--step-group-pt) pb-2.5 text-(length:--step-group)')}>
+        {/* "Phase 1 4/6": the name in its phase color, the count in the
+            foreground, as the canvas's phase pills (Andre, 2026-11-16: no
+            dashes, no dot; the colored name says the phase). */}
+        <span className="dl-group-label whitespace-nowrap" style={g.color ? { color: g.color } : undefined}>{g.label}</span>
+        {has && <span className="dl-group-num tabular-nums text-foreground" aria-hidden="true">{prog.seen}/{prog.released}</span>}
         {has && <span className="dl-group-count story-sr">{done ? tr('list.groupAll', { n: prog.released }) : tr('progress.seen', { seen: prog.seen, n: prog.released })}</span>}
       </span>
     </div>
@@ -301,7 +282,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   });
   let n = 0;
   return (
-    <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[402px] [&>.m-flip-layer]:z-4', flat && 'ranked')}
+    <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[calc(var(--drawer-w)+22px)] [&>.m-flip-layer]:z-4', flat && 'ranked')}
       ref={flipRef} role="main" aria-label={tr('view.list')}>
       {/* The compact card (All titles and Up next), in the same place as on
           Connections: the top-right corner (Andre, 2026-11-15: same card,
@@ -320,7 +301,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
       ) : (
         <div className={cn('dl-table text-body text-muted-foreground', WIDTH)} role="table" aria-label={tr('view.list')}
           ref={tableRef} onKeyDown={onTableKey}>
-          <div className={cn(GRID, 'dl-row dl-head h-(--dl-head-h-min) border-b text-label @min-[84rem]:text-body')} role="row">
+          <div className={cn(GRID, 'dl-row dl-head h-(--step-head-h) border-b text-label @min-[84rem]:text-body')} role="row">
             <span className="dl-h c-rank text-right tabular-nums" role="columnheader"><span aria-hidden="true">#</span><span className="story-sr">{tr('list.col.rank')}</span></span>
             <DlSortHeader col="title" label={tr('list.col.title')} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             <DlSortHeader col="release" label={tr('list.col.release')} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
@@ -370,7 +351,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                         </span>
                         <span className="flex min-w-0 flex-col items-start">
                           <span className="flex max-w-full min-w-0 items-center gap-2">
-                            <button className="dl-open min-w-0 cursor-pointer truncate text-left text-(length:--dl-title) font-semibold text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50" aria-expanded={openId === t.id}
+                            <button className="dl-open min-w-0 cursor-pointer truncate text-left text-(length:--step-title) font-semibold text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50" aria-expanded={openId === t.id}
                               onClick={e => { e.stopPropagation(); onOpen(t.id); }}>
                               <window.Highlight text={I.titleName(t)} query={search}/>
                             </button>
@@ -380,7 +361,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                               </span>
                             )}
                           </span>
-                          <span className="dl-meta mt-0.5 truncate text-(length:--dl-meta) text-muted-foreground">{meta}</span>
+                          <span className="dl-meta mt-0.5 truncate text-(length:--step-meta) text-muted-foreground">{meta}</span>
                           <window.ReleaseBadge title={t} className="dl-release mt-[5px] flex w-max"/>
                           {/* Which character matched the search. */}
                           <window.MatchBadge matchedChars={matched} query={search} title={t}/>
@@ -390,7 +371,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                       <span className="c-imdb flex justify-end" role="cell">{t.imdb != null ? <ScoreChip kind="imdb" title={t} className="w-max"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
                       <span className="c-rt flex justify-end" role="cell">{t.rt != null ? <ScoreChip kind="rt" title={t} className="w-max"/> : <span className="dl-none text-muted-foreground">—</span>}</span>
                       <span className="c-actions flex justify-end" role="cell" onClick={e => e.stopPropagation()}>
-                        <window.TitleStatusActions title={t} upNext={isNext} className="dl-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-(--dl-btn) [&_.tsa-btn:not(.tsa-next)_svg]:size-(--dl-icon) [&_.tsa-next]:h-(--dl-btn) @min-[84rem]:[&_.tsa-next]:text-body [&_.tsa-gap]:order-0"/>
+                        <window.TitleStatusActions title={t} upNext={isNext} className="dl-tsa static z-auto flex-row gap-1.5 [transform:none] [&_.tsa-btn:not(.tsa-next)]:size-(--step-button) [&_.tsa-btn:not(.tsa-next)_svg]:size-(--step-icon) [&_.tsa-next]:h-(--step-button) @min-[84rem]:[&_.tsa-next]:text-body [&_.tsa-gap]:order-0"/>
                       </span>
                     </div>
                   );

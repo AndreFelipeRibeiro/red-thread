@@ -173,7 +173,7 @@ function SeenPicker({ touch, onClose }) {
       )}
     </div>
   );
-  if (touch) return <window.Sheet onClose={onShellClose} tall className="pk-sheet h-[calc(100dvh-24px)] max-h-none [&_.m-sheet-body]:flex-1 [&_.m-sheet-body]:pb-0" label={pktr('picker.title')}>{body}</window.Sheet>;
+  if (touch) return <window.Sheet onClose={onShellClose} tall className="pk-sheet h-[calc(100dvh-32px-env(safe-area-inset-top,0px))] max-h-none [&_.m-sheet-body]:flex-1 [&_.m-sheet-body]:pb-0" label={pktr('picker.title')}>{body}</window.Sheet>;
   return <window.ModalDialog onClose={onShellClose} labelledBy="pk-title" className="pk-dialog flex h-[calc(100vh-64px)] w-[min(1000px,calc(100vw-48px))] flex-col overflow-hidden p-0">{body}</window.ModalDialog>;
 }
 

@@ -134,10 +134,10 @@ came to be.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (63 check scripts in 65 runs plus the accessibility scan in English,
-    Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
+    (65 check scripts in 67 runs plus the accessibility scan in English,
+    Portuguese and English in the dark theme, about 9 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **68 check runs clean**
+    output, not just the exit code. A good run is **70 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -418,7 +418,8 @@ rules carry over unchanged.
   own scale (`text-xs` … `text-9xl`) is cleared, so it renders nothing.
   Never write a size into a class or a style. The only other sizes are the
   **art sizes**, fixed compositions that keep px: the Spatial cards
-  (`text-card-title`, `-meta`, `-micro` and their `-lg` / `-pop` steps; the
+  (`text-card-title`, `-meta`, `-micro` and their `-lg` / `-pop` steps, plus
+  `text-card-title-ov`, the phone overview's title-only card; the
   shared pieces a card borrows are pinned to them inside `.card`), poster
   tags (`text-tag`) and the promo countdown (`text-numeral`,
   `text-numeral-word`). A new size is a new token in `src/index.css` and in
@@ -433,6 +434,13 @@ rules carry over unchanged.
   spacing unit is `max(0.25rem, 4px)`. At Large everything grows in step; at
   Small nothing gets smaller than its default, so touch targets keep their
   size. Thumbnails, avatars, icons and the Spatial canvas stay in px.
+- **Desktop surfaces that size to their room use the size steps**: one set
+  of sizes in two steps, Regular and Large (from 84rem of the surface's own
+  container), as `--step-*` tokens under the `step-sizes` class in
+  `src/index.css` (poster, row height, title, meta, figures, group heading,
+  chips, controls, icon buttons, gap). Put `step-sizes` inside the surface's
+  `@container` and read the tokens; keep only layout that is the surface's
+  own (a list's columns) local.
 - **A row of controls that can run out of room fits by measuring**
   (`window.useFitSteps`, `src/app/mobile.tsx`): its stylesheet keys more
   compact steps on `data-fit`, and the hook keeps the first that fits, on

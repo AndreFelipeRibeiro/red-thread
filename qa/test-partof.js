@@ -2,9 +2,8 @@
 // the details, closed while a guide is open"):
 // - a DetailSection with a count in its label and a real button heading, on
 //   the desktop drawer and the phone sheet;
-// - open when the details come from anywhere but a guide, closed while a guide
-//   is open; each context keeps its own state for the visit, a reload restores
-//   the defaults;
+// - closed by default, in a guide or not (Notion "Explore E 2/5"); each
+//   context keeps its own state for the visit, a reload restores the defaults;
 // - titles in no guide show no section; rows still open their guide;
 // - Enter and Space toggle; Portuguese label.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
@@ -84,12 +83,13 @@ const PART = () => {
   // ---- Desktop -----------------------------------------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
-    // From the List, no guide: open.
+    // From the List, no guide: closed (Notion "Explore E 2/5": Where to watch
+    // and Part of start collapsed).
     await page.goto(URL + '?view=list&title=loki-s2'); await settle(page);
     let p = await page.evaluate(PART);
     out.deskList = p;
     expect(p.present && p.isButton && p.controls, `desktop List: ${JSON.stringify(p)}`);
-    expect(p.expanded === 'true' && p.rowsVisible >= 1, `desktop List: not open: ${JSON.stringify(p)}`);
+    expect(p.expanded === 'false' && p.rowsVisible === 0, `desktop List: should start closed: ${JSON.stringify(p)}`);
     expect(/^Part of · \d+ guides?$/.test(p.label || ''), `desktop label "${p.label}"`);
     // Inside the Doomsday guide: closed.
     await page.goto(URL + '?view=list&guide=before-doomsday&title=loki-s2'); await settle(page);
@@ -113,9 +113,13 @@ const PART = () => {
     await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
     await page.locator('.dl-row[data-row-id="endgame"] .dl-open').click(); await page.waitForTimeout(700);
     p = await page.evaluate(PART);
-    expect(p.present && p.expanded === 'true', `outside the guide it should be open: ${JSON.stringify(p)}`);
-    // Close it outside (Space); the in-guide state is untouched (still open).
+    expect(p.present && p.expanded === 'false', `outside the guide it should still be closed: ${JSON.stringify(p)}`);
+    // Open it outside (Space), then close it again; the in-guide state is
+    // untouched (still open).
     await page.locator('.drawer .td-acc-guides .td-acc-btn').focus();
+    await page.keyboard.press('Space'); await page.waitForTimeout(300);
+    p = await page.evaluate(PART);
+    expect(p.expanded === 'true', 'Space did not open it');
     await page.keyboard.press('Space'); await page.waitForTimeout(300);
     p = await page.evaluate(PART);
     expect(p.expanded === 'false', 'Space did not close it');
@@ -130,7 +134,7 @@ const PART = () => {
     // A reload restores the defaults.
     await page.goto(URL + '?view=list&title=endgame'); await settle(page);
     p = await page.evaluate(PART);
-    expect(p.expanded === 'true', `after a reload, outside a guide: ${JSON.stringify(p)}`);
+    expect(p.expanded === 'false', `after a reload, outside a guide (closed by default): ${JSON.stringify(p)}`);
     // A title in no guide: no section (found from the data, since Guides 4/4
     // put The Incredible Hulk in one).
     const lone = await page.evaluate(() => { const inGuide = new Set(window.GUIDES.flatMap(g => g.stops.map(s => s.id).concat(g.target ? [g.target] : [])));
@@ -143,6 +147,7 @@ const PART = () => {
     }
     // A row still opens its guide.
     await page.goto(URL + '?view=list&title=loki-s2'); await settle(page);
+    await page.locator('.drawer .td-acc-guides .td-acc-btn').click(); await page.waitForTimeout(300);
     await page.locator('.drawer .g-partof-row').first().click(); await page.waitForTimeout(700);
     const g = await page.evaluate(() => new URLSearchParams(location.search).get('guide'));
     expect(!!g, 'a Part of row did not open its guide');
@@ -151,7 +156,7 @@ const PART = () => {
   }
 
   // ---- Phone sheet ----------------------------------------------------------------
-  for (const [q, want] of [['?view=list', 'true'], ['?view=list&guide=before-doomsday', 'false']]) {
+  for (const [q, want] of [['?view=list', 'false'], ['?view=list&guide=before-doomsday', 'false']]) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE);
     await page.goto(URL + q); await settle(page);
     const row = q.includes('guide') ? '.g-stop[data-row-id="loki-s2"] .g-open' : '.m-lrow[data-row-id="loki-s2"] .m-lrow-open';

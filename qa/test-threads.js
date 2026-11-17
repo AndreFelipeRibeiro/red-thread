@@ -124,7 +124,8 @@ const lit = (prime, ch) => {
   // Pinning each character that has variants.
   for (const c of plan.varied) {
     await go('?title=' + plan.home[c]);
-    await page.locator('.drawer.open .cast-row[data-char="' + c + '"]').click(); await page.waitForTimeout(900);
+    await page.locator('.drawer.open .cast-row[data-char="' + c + '"]').click(); await page.waitForTimeout(300);
+    await page.locator('.drawer.open .trail-pin').click(); await page.waitForTimeout(900);
     const r = await page.evaluate(([p, x]) => (0, eval)('(' + window.__lit + ')')(p, x), [primeOf(c), c]);
     out.pins++;
     if (!(await page.locator('.char-banner.pinned').count())) errors.push('pin ' + c + ': no pinned banner');
@@ -158,6 +159,10 @@ const lit = (prime, ch) => {
     if (!toDoom) errors.push('example: no lit line into Avengers: Doomsday');
   }
   // No Way Home → Your Friendly Neighborhood Spider-Man is Holland's Peter.
+  // On the canvas with nothing selected: a selected title's ring draws only
+  // its own lines (Notion "Connections: a selected title's ring, legible at
+  // first sight").
+  await go('?sort=phase');
   {
     const chs = await page.$$eval('path[data-a="no-way-home"][data-b="friendly-spidey"]', ps => ps.map(p => p.getAttribute('data-ch')));
     out.nwhLine = chs;

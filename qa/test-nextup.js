@@ -200,11 +200,13 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
   r = await page.evaluate(() => ({ cards: document.querySelectorAll('.m-card').length, rows: document.querySelectorAll('.m-lrow').length }));
   if (r.cards || !r.rows) err(`?view=grid on a phone: ${JSON.stringify(r)}, expected the List`);
 
-  // 10. Phone Spatial: the same card, docked in the same place; its Up next
+  // 10. Phone Spatial: the same card, docked in the same place, Up next in
+  //     it (always, Andre 2026-11-16) and on the ringed card; its Up next
   //     opens the details.
   await page.goto(URL + '?view=spatial'); await settle(page);
-  const chip = await page.evaluate(() => (document.querySelector('.spatial-overall.docked .un-slide > :not(.un-leave) .un-title') || {}).textContent);
-  if (chip !== name(out.expect.release)) err(`phone Spatial card shows ${chip}`);
+  const chip = await page.evaluate(() => ({ title: (document.querySelector('.spatial-overall.docked .un-slide > :not(.un-leave) .un-title') || {}).textContent || null,
+    up: (document.querySelector('.card.up-next') || { dataset: {} }).dataset.id || null }));
+  if (chip.title !== name(out.expect.release) || chip.up !== out.expect.release) err(`phone Spatial: Up next in the card and on the canvas (${out.expect.release}): ${JSON.stringify(chip)}`);
   await page.locator('.spatial-overall .un-open').click(); await page.waitForTimeout(1200);
   const sheet = await page.evaluate(() => (document.querySelector('.m-sheet .td-title') || {}).textContent);
   if (sheet !== name(out.expect.release)) err(`the card should open ${name(out.expect.release)}'s details, opened ${sheet}`);
@@ -328,7 +330,12 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
       if (!r.text.includes(`${seenIds.length}/${byRelease.length}`) || !r.text.includes(`+${notOut}`)) err(`the compact card should read ${seenIds.length}/${byRelease.length} and +${notOut}: ${r.text}`);
       if (r.next !== name(byRelease[5].id)) err(`the card's Up next is ${r.next}, expected ${name(byRelease[5].id)}`);
     }
-    await page.locator('.spatial-overall .un-mrow .tsa-btn.seen').click(); await page.waitForTimeout(900);
+    await page.evaluate(() => {
+      // The card has no ✓ (Andre, 2026-11-16: marking is in the details);
+      // mark its Up next through the collection, as the buttons do.
+      const t = document.querySelector('.spatial-overall .un-mrow .un-slide > :not(.un-leave) .un-title').textContent;
+      window.MCU_COLLECTION.toggleSeen(window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id);
+    }); await page.waitForTimeout(900);
     r = await card(); out.widget.marked = r;
     if (!r || r.next !== name(byRelease[6].id)) err(`after ✓ the card's Up next is ${r && r.next}, expected ${name(byRelease[6].id)}`);
     // Titles: the same card, bottom right, with the same Up next as the list.

@@ -104,7 +104,9 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   await page.locator('.dl-row:not(.dl-head)', { hasText: 'Thor: Ragnarok' }).first().locator('.tsa-btn').first().click(); await page.waitForTimeout(400);
   out.toggleSeen = { before, after: await page.locator('.dl-row:not(.dl-head)', { hasText: 'Thor: Ragnarok' }).first().getAttribute('class'), drawer: (await st()).drawer };
   // character highlight from drawer dims rows
-  await page.locator('.drawer .cast-row, .drawer [class*="cast"] button, .drawer .char-row').first().click().catch(() => {}); await page.waitForTimeout(300);
+  // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
+  await page.locator('.drawer.open .cast-row').first().click().catch(() => {}); await page.waitForTimeout(300);
+  await page.locator('.drawer.open .trail-pin').click().catch(() => {}); await page.waitForTimeout(300);
   out.dimmed = await page.evaluate(() => document.querySelectorAll('.dl-row.dim').length);
   // switch to Spatial with the drawer open: that card is selected
   await page.locator('.nav-tabs button', { hasText: 'Connections' }).click(); await page.waitForTimeout(1200);

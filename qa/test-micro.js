@@ -67,7 +67,12 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
       const tick = () => { window.__w.push(fill()); if (performance.now() - t0 < 1300) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, FILL.toString());
-    await page.locator('.un-mrow button[aria-pressed]').first().click();
+    // The card has no ✓ (Andre, 2026-11-16): mark its Up next through the
+    // collection, as the buttons do.
+    await page.evaluate(() => {
+      const t = document.querySelector('.un-mrow .un-slide > :not(.un-leave) .un-title').textContent;
+      window.MCU_COLLECTION.toggleSeen(window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id);
+    });
     await page.waitForTimeout(1400);
     const widths = await page.evaluate(() => window.__w);
     const after = widths[widths.length - 1];
@@ -186,7 +191,9 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
   // an instant swap with nothing leaving.
   for (const [label, opts, extra, row] of [
     ['desktop', DESK, '', '.un-mrow'], ['phone', PHONE, '', '.spatial-overall .un-mrow'], ['reduced', DESK, REDUCED, '.un-mrow']]) {
-    const { ctx, page, errors: e } = await ctxPage(browser, opts, opts === PHONE ? { ...prefs, viewMode: 'spatial' } : prefs, seenBefore('she-hulk'), extra);
+    // The phone in Titles: on Connections the widget folds to its header
+    // while the Up next card is on screen (Notion "Explore E 5/5").
+    const { ctx, page, errors: e } = await ctxPage(browser, opts, opts === PHONE ? { ...prefs, viewMode: 'list' } : prefs, seenBefore('she-hulk'), extra);
     await page.goto(URL); await settle(page);
     const READ = (row) => {
       const r = document.querySelector(row);
@@ -211,8 +218,12 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
       const tick = () => { window.__frames.push(read(row)); if (performance.now() - t0 < 900) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, [row, READ.toString()]);
-    const btn = page.locator(row + ' .tsa-btn.seen').first();
-    if (opts === PHONE) await btn.tap(); else await btn.click();
+    // The card has no ✓ (Andre, 2026-11-16): mark its Up next through the
+    // collection, as the buttons do.
+    await page.evaluate((row) => {
+      const t = document.querySelector(row + ' .un-slide > :not(.un-leave) .un-title').textContent;
+      window.MCU_COLLECTION.toggleSeen(window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id);
+    }, row);
     await page.waitForTimeout(950);
     const frames = await page.evaluate(() => window.__frames);
     const mid = frames.find(f => f && f.leaving) || frames.find(f => f && f.current !== before.current) || null;
@@ -252,7 +263,9 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
       const tick = () => { const s = segs(); if (s.length) window.__t.push(s); if (performance.now() - t0 < 2500) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }, SEGS.toString());
+    // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
     await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click();
+    await page.locator('.drawer.open .trail-pin').click();
     await page.waitForTimeout(2600);
     const early = (await page.evaluate(() => window.__t))[0] || [];
     const late = await page.evaluate(SEGS);

@@ -312,11 +312,19 @@ function scrollInArea(el, block = 'nearest', smooth = false) {
   while (area && !(area.scrollHeight > area.clientHeight && /(auto|scroll)/.test(getComputedStyle(area).overflowY))) area = area.parentElement;
   if (!area) return;
   const a = area.getBoundingClientRect(), r = el.getBoundingClientRect();
+  // Whatever floats over the bottom of the area (the pinned character's pill,
+  // the docked widget, a guide's dock) is not room to show the row in: a step
+  // through a character's titles stopped behind the pill (Andre, 2026-11-16).
+  let bottom = a.bottom;
+  document.querySelectorAll('.char-pill, .spatial-overall.docked, .g-dock').forEach((d) => {
+    const b = d.getBoundingClientRect();
+    if (b.height && b.top > a.top && b.top < bottom) bottom = b.top - 8;
+  });
   let delta = 0;
-  if (block === 'center') delta = (r.top + r.height / 2) - (a.top + a.height / 2);
+  if (block === 'center') delta = (r.top + r.height / 2) - (a.top + (bottom - a.top) / 2);
   else if (block === 'start') delta = r.top - a.top;
   else if (r.top < a.top) delta = r.top - a.top;
-  else if (r.bottom > a.bottom) delta = Math.min(r.bottom - a.bottom, r.top - a.top);
+  else if (r.bottom > bottom) delta = Math.min(r.bottom - bottom, r.top - a.top);
   if (delta) area.scrollBy({ top: delta, behavior: smooth ? 'smooth' : 'auto' });
 }
 window.MCU_scrollInArea = scrollInArea;

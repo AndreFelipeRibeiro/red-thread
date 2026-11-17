@@ -128,8 +128,9 @@ const CAMERA = (id) => {
   // ---- Phone Spatial: the first view -----------------------------------------
   // Once something is Seen, each order opens on its Up next title (V3 Tasks,
   // "Phone Spatial: open on Up next once you've started"): centred across, wholly
-  // on screen above the compact card docked at the bottom, at 60% or more and at one card size in all
-  // six orders (the phone's reading zoom). Switching order lands on
+  // on screen above the compact card docked at the bottom, at 60% or more and
+  // at one card size in all six orders (the phone's reading zoom; Andre kept
+  // it over E 5/5's zoomed-out overview, 2026-11-16). Switching order lands on
   // that order's Up next too. A first visit (nothing seen) keeps the bird's-eye
   // view: the order's first title at the left edge.
   const landWidths = [];
@@ -137,8 +138,9 @@ const CAMERA = (id) => {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: 'spatial', desktopView: 'spatial', sort, sortDir: sort === 'imdb' || sort === 'rt' ? 'desc' : 'asc' }, states);
     await page.goto(URL); await settle(page); await page.waitForTimeout(400);
     const land = await page.evaluate((cam) => {
-      const t = document.querySelector('.spatial-overall .un-mrow .un-title').textContent;
-      const id = window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id;
+      // The widget folds to its header while Up next is on screen (E 5/5):
+      // the ringed card says which title it is.
+      const id = document.querySelector('.card.up-next').dataset.id;
       const r = document.querySelector(`.card[data-id="${id}"]`).getBoundingClientRect();
       const chip = document.querySelector('.spatial-overall.docked').getBoundingClientRect();
       const vp = document.querySelector('.viewport').getBoundingClientRect();
@@ -166,16 +168,17 @@ const CAMERA = (id) => {
     await ctx.close();
   }
 
-  // ---- Phone Spatial: from the compact card's Up next, in three orders -------
-  // Closing the details of a title opened from Up next clears its selection
-  // (no connections ring left behind), centres the title at 60% or more, and
-  // brings the card back, in Release, By Phase and IMDb order alike
-  // (a title already on screen used to keep the old view in the grid orders).
+  // ---- Phone Spatial: tapping the Up next card, in three orders --------------
+  // A tap opens the details with no ring or selection (Notion "Explore E
+  // 5/5"); closing them leaves the canvas where it was (the title still
+  // centred at the reading zoom) and the card docked, in Release, By Phase
+  // and IMDb order alike.
   for (const sort of ['release', 'phase', 'imdb']) {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { version: 1, viewMode: 'spatial', desktopView: 'spatial', sort, sortDir: sort === 'imdb' ? 'desc' : 'asc' }, states);
     await page.goto(URL); await settle(page);
-    const id = await page.evaluate(() => { const t = document.querySelector('.spatial-overall .un-mrow .un-title').textContent; return window.TITLES.find(x => window.MCU_I18N.titleName(x) === t).id; });
-    await page.locator('.spatial-overall .un-open').tap(); await page.waitForTimeout(1200);
+    const id = await page.evaluate(() => document.querySelector('.card.up-next').dataset.id);
+    const before = await page.evaluate(CAMERA, id);
+    await page.locator('.card.up-next').tap({ force: true }); await page.waitForTimeout(1200);
     await page.locator('.m-sheet .m-sheet-x').tap(); await page.waitForTimeout(1400);
     const after = await page.evaluate(CAMERA, id);
     after.id = id;
@@ -183,7 +186,7 @@ const CAMERA = (id) => {
     after.chip = await page.evaluate(() => !!document.querySelector('.spatial-overall.docked'));
     out['phoneSpatial_' + sort] = after;
     expect(after.selected === 0 && after.chip, `phone ${sort}: closing the details left ${JSON.stringify(after)}`);
-    expect(Math.abs(after.dx) <= 4 && Math.abs(after.dy) <= 4, `phone ${sort}: ${id} not centred: ${JSON.stringify(after)}`);
+    expect(Math.abs(after.dx - before.dx) <= 4 && Math.abs(after.dy - before.dy) <= 4, `phone ${sort}: closing should leave ${id} where it was: ${JSON.stringify({ before, after })}`);
     expect(after.scale >= 0.6, `phone ${sort}: zoom ${after.scale} below 0.6`);
     errors.push(...e);
     await ctx.close();

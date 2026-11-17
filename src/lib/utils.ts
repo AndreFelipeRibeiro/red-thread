@@ -6,7 +6,7 @@ import { createCn } from 'cn/config';
 // qa/test-typescale.js checks this list against the stylesheet.
 export const TEXT_SIZES = [
   'display', 'title', 'heading', 'body', 'label', 'caption',
-  'card-title', 'card-title-lg', 'card-title-pop', 'card-meta', 'card-meta-lg', 'card-meta-pop', 'card-micro',
+  'card-title', 'card-title-lg', 'card-title-pop', 'card-title-ov', 'card-meta', 'card-meta-lg', 'card-meta-pop', 'card-micro',
   'tag', 'numeral', 'numeral-word',
 ];
 

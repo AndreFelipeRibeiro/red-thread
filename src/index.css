@@ -110,6 +110,9 @@
     --text-card-title: 15px;
     --text-card-title-lg: 17px;
     --text-card-title-pop: max(17px, 1.0625rem);
+    /* The phone canvas zoomed out (Notion "Explore E 5/5"): the title alone,
+       about 11px on screen at the overview's zoom. */
+    --text-card-title-ov: 24px;
     --text-card-meta: 11px;
     --text-card-meta-lg: 12px;
     --text-card-meta-pop: max(13px, 0.8125rem);
@@ -217,6 +220,10 @@
          --primary is deeper so white ink holds AA, too deep for text). */
       --progress: var(--brand);
       --progress-done: var(--seen);
+      /* The part of a progress bar still ahead: a faint tint of the bar's own
+         color, not gray (Andre, 2026-11-16: gray means "not in this guide" on
+         the canvas, so gray dashes read as stops outside the guide). */
+      --progress-track: color-mix(in oklab, var(--progress) 22%, transparent);
       /* Seen is one green (Andre, 2026-11-16), three roles, like the red:
          --seen fills and draws (the seen mark on posters, the Seen count,
          buttons, progress once complete, the confetti), the same in both
@@ -471,3 +478,67 @@
    selection (.seg-pill) keeps its slide: it is placed absolutely, so the
    measure skips it, and the section tabs sit in the desktop row. */
 .fit-measure, .fit-measure *:not(.seg-pill) { transition: none !important; }
+
+/* Desktop size steps (Notion "Desktop size steps: one set of sizes for
+   Titles, Guides and the details panel"): one set of sizes, in two steps.
+   Regular, and Large once the surface's own container is 84rem wide (1344px
+   at the default text size): its own width, not the window's, because the
+   details drawer narrows a list and the window alone can't tell. Fixed steps
+   rather than fluid sizes, so pinned headers and scroll-to positions keep
+   exact sizes; Text size still scales them (rem, and the type roles).
+   A surface puts `step-sizes` on an element inside its @container and reads
+   the --step-* tokens; layout that is its own (a list's columns) stays local.
+   The names say what each one sizes. */
+.step-sizes {
+  --step-gap: 1rem;                      /* between columns or items */
+  --step-poster-w: 40px;                 /* a row's poster */
+  --step-poster-h: 60px;
+  --step-row-h: 76px;                    /* a title row's minimum height */
+  --step-head-h: max(40px, 2.5rem);      /* a list's column header */
+  --step-title: var(--fs-heading);       /* a row's title */
+  --step-meta: var(--fs-label);          /* its meta line */
+  --step-figure: var(--fs-body);         /* figures in columns (scores, budget) */
+  --step-group: var(--fs-heading);       /* a group heading (a phase, an era) */
+  --step-group-pt: 1.25rem;              /* the room above a group heading */
+  --step-chip-h: max(32px, 2rem);        /* score chips */
+  --step-control-h: max(36px, 2.25rem);  /* buttons with words */
+  --step-button: max(34px, 2.125rem);    /* square icon buttons (Seen, Watchlist) */
+  --step-icon: 15px;                     /* their icons */
+}
+@container (min-width: 84rem) {
+  .step-sizes {
+    --step-gap: 1.5rem;
+    --step-poster-w: 52px;
+    --step-poster-h: 78px;
+    --step-row-h: 96px;
+    --step-head-h: max(44px, 2.75rem);
+    --step-title: var(--fs-title);
+    --step-meta: var(--fs-body);
+    --step-figure: var(--fs-heading);
+    --step-group: var(--fs-title);
+    --step-group-pt: 1.75rem;
+    --step-chip-h: max(40px, 2.5rem);
+    --step-control-h: max(44px, 2.75rem);
+    --step-button: max(40px, 2.5rem);
+    --step-icon: 17px;
+  }
+}
+
+/* The desktop details drawer's width (Notion "Size steps 3/3", Andre
+   2026-11-16): 380px, 440px from a 1600px window, where the list beside it
+   still keeps about 1480px at 1920. Everything that makes room for the drawer
+   reads it (the lists' right padding, the guide's card, the camera). */
+:root { --drawer-w: 380px; }
+@media (min-width: 1600px) { :root { --drawer-w: 440px; } }
+/* The drawer's width is fixed, so it takes the Large step by the window,
+   from the width that widens it (the values the list's Large step uses). */
+@media (min-width: 1600px) {
+  .drawer.step-sizes {
+    --step-meta: var(--fs-body);
+    --step-title: var(--fs-title);
+    --step-figure: var(--fs-heading);
+    --step-control-h: max(44px, 2.75rem);
+    --step-button: max(40px, 2.5rem);
+    --step-icon: 17px;
+  }
+}

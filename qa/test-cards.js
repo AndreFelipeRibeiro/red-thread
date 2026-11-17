@@ -136,26 +136,40 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     await page.goto(URL); await settle(page); await page.waitForTimeout(600);
     // Phone canvas cards: a 17px title and a 12px line (Andre, 2026-11-16),
     // inside the card's fixed size on every card.
-    const pc = await page.evaluate(() => {
+    const TEXT = () => {
       const cards = [...document.querySelectorAll('.canvas .card')];
       const c0 = cards[0];
-      return { title: getComputedStyle(c0.querySelector('.card-title')).fontSize, line: getComputedStyle(c0.querySelector('.card-year')).fontSize,
+      const line = c0.querySelector('.card-year');
+      return { title: getComputedStyle(c0.querySelector('.card-title')).fontSize, line: line ? getComputedStyle(line).fontSize : null,
         out: cards.filter(c => { const b = c.getBoundingClientRect(), l = c.querySelector('.card-meta').lastElementChild.getBoundingClientRect(); return l.bottom > b.bottom + 0.5; }).map(c => c.dataset.id) };
-    });
+    };
+    const pc = await page.evaluate(TEXT);
     out.phoneCards = pc;
     expect(pc.title === '17px' && pc.line === '12px' && !pc.out.length, `phone: canvas card text: ${JSON.stringify(pc)}`);
-    // A card fully on screen, away from the chrome.
+    // Double-tap on empty canvas: the overview (Notion "Explore E 5/5"), where
+    // each card shows its title alone, larger; again, back to reading.
+    const bg = await page.evaluate(() => { for (let y = 200; y < innerHeight - 200; y += 20) for (let x = 20; x < innerWidth - 20; x += 20) { const e = document.elementFromPoint(x, y); if (e && !e.closest('.card') && e.closest('.viewport')) return { x, y }; } return null; });
+    await page.touchscreen.tap(bg.x, bg.y); await page.waitForTimeout(120); await page.touchscreen.tap(bg.x, bg.y); await page.waitForTimeout(900);
+    const ov = out.phoneOverview = await page.evaluate(TEXT);
+    expect(ov.title === '24px' && !ov.line && !ov.out.length, `phone: overview card text after a double-tap: ${JSON.stringify(ov)}`);
+    await page.touchscreen.tap(bg.x, bg.y); await page.waitForTimeout(120); await page.touchscreen.tap(bg.x, bg.y); await page.waitForTimeout(900);
+    // A card fully on screen, away from the chrome: a tap opens its details
+    // straight away, with no pop card or ring; it is outlined and what it
+    // doesn't connect to dims behind the sheet.
     const pt = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('.card')].map(c => c.getBoundingClientRect()).find(r => r.left > 10 && r.right < innerWidth - 10 && r.top > 220 && r.bottom < innerHeight - 160);
-      return c && { x: c.left + c.width / 2, y: c.top + 40 };
+      const c = [...document.querySelectorAll('.card')].find(c => { const r = c.getBoundingClientRect(); return r.left > 10 && r.right < innerWidth - 10 && r.top > 160 && r.bottom < innerHeight - 160; });
+      if (!c) return null;
+      const r = c.getBoundingClientRect();
+      return { id: c.dataset.id, x: r.left + r.width / 2, y: r.top + 30 };
     });
     await page.touchscreen.tap(pt.x, pt.y); await page.waitForTimeout(900);
-    const p = await page.evaluate(CARD, '.m-focuspop');
-    out.phone = p;
-    expect(p && !p.over.length && !p.washed && Math.abs(p.ratio - 2 / 3) < 0.01 && p.titlePx >= 15 && p.linePx >= 13 && !p.acts,
-      `phone: the selected card: ${JSON.stringify(p)}`);
-    await page.locator('.m-focuspop .m-fp-open').tap(); await page.waitForTimeout(900);
-    expect(await page.locator('.m-sheet .td-title').count() >= 1, 'phone: a tap on the selected card did not open the details');
+    const tap = out.phoneTap = await page.evaluate((id) => {
+      const c = document.querySelector(`.card[data-id="${id}"]`);
+      return { pop: !!document.querySelector('.m-focuspop'), sheet: (document.querySelector('.m-sheet .td-title') || {}).textContent || null,
+        name: window.MCU_I18N.titleName(window.TITLES.find(t => t.id === id)), outlined: /border-\(--phase-color\)/.test(c.className),
+        dimmed: document.querySelectorAll('.card.opacity-22').length };
+    }, pt.id);
+    expect(!tap.pop && tap.sheet === tap.name && tap.outlined && tap.dimmed > 0, `phone: a tap should open the details, outline the card and dim the rest: ${JSON.stringify(tap)}`);
     errors.push(...e);
     await ctx.close();
   }
