@@ -632,6 +632,14 @@ Write "color", "gray", "center", "favorite", "behavior", "canceled",
 passing (a rename of a token or hook is its own change); new and edited text
 follows the rule.
 
+**One name per idea:** [docs/glossary.md](docs/glossary.md) lists the name
+each idea takes in English and Portuguese (Connections, Titles, Guides, Seen,
+Unseen, Watchlist / "Quero ver", Story order, Phase 1, Tomatometer…) and the
+names that must not come back. Check it before writing a string, and add a
+row when you name something new. Errors a visitor sees are plain sentences
+and never name a library, service or error code; the detail goes to the
+console.
+
 User-facing text is translated: never hard-code UI strings in components. Add a
 key to `locales/en.js` (the complete base), translate it in every other
 `locales/*.js`, and read it with `tr()` (app.tsx), `mtr()` (mobile.tsx) or

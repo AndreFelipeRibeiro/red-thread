@@ -128,6 +128,22 @@ const STATE = () => ({
     s = await page.evaluate(STATE);
     out.guideClosed = s;
     expect(s.tab === 'Guides' && s.gallery >= 5 && !/guide=/.test(s.url), `closing a guide: ${JSON.stringify(s)}`);
+
+    // On Guides the Seen pill opens Titles with Seen on, even when it already
+    // shows as on (Notion "Seen and Watchlist pills on Guides open Titles,
+    // filtered"); in Titles a second press goes back to All.
+    const pressed = () => page.evaluate(() => (document.querySelector('.toolbar .status-counts [aria-pressed="true"]') || { dataset: {} }).dataset.coll || 'all');
+    for (const round of [1, 2]) {
+      await page.locator('.toolbar .status-counts [data-coll="seen"]').click(); await page.waitForTimeout(800);
+      s = await page.evaluate(STATE);
+      const rows = await page.evaluate(() => [...document.querySelectorAll('.dl-row[data-row-id]')].map(r => r.getAttribute('data-row-id')).sort().join());
+      expect(s.tab === 'Titles' && s.myList && (await pressed()) === 'seen' && rows === 'incredible-hulk,iron-man',
+        `Seen pill on Guides (round ${round}): ${JSON.stringify({ tab: s.tab, url: s.url, coll: await pressed(), rows })}`);
+      if (round === 1) { await TAB(page, 'Guides'); await page.waitForTimeout(800); }
+    }
+    await page.locator('.toolbar .status-counts [data-coll="seen"]').click(); await page.waitForTimeout(400);
+    expect((await pressed()) === 'all' && (await page.evaluate(STATE)).tab === 'Titles', 'in Titles, a second press of Seen should go back to All');
+    await TAB(page, 'Guides'); await page.waitForTimeout(800);
     // My list with a guide open closes the guide.
     await page.locator('.g-page .g-row').first().click(); await page.waitForTimeout(900);
     await TAB(page, 'Titles'); await page.waitForTimeout(800);

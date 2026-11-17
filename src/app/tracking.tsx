@@ -365,7 +365,9 @@ function CollectionProvider({ children }) {
         commit(cur);
         w.desired = back;
         w.confirmed = back;
-        setTitleError(titleId, (e && e.message) ? e.message : window.MCU_I18N.tr('error.save'));
+        // Plain words only: the error's own message can name the service or
+        // a database rule (docs/glossary.md). The detail goes to the console.
+        setTitleError(titleId, window.MCU_I18N.tr(e && connectionUnavailable(e) ? 'error.connection' : 'error.save'));
         console.warn('[mcu] write failed for', titleId, e);
       } finally {
         w.running = false;
@@ -580,7 +582,7 @@ function CollectionProvider({ children }) {
         if (connectionUnavailable(e) && continueAsGuest) {
           continueAsGuest(window.MCU_I18N.tr('error.connection'));
         } else {
-          setSyncError((e && e.message) ? e.message : window.MCU_I18N.tr('error.syncFailed'));
+          setSyncError(window.MCU_I18N.tr('error.syncFailed'));
         }
       } finally {
         if (current()) setRemoteLoading(false);

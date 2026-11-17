@@ -13,11 +13,12 @@
 /** The app root: one viewport tall, everything scrolls inside it. */
 export const APP = 'app flex h-screen flex-col overflow-hidden p-0 [&.touch]:h-dvh';
 
-/** Spatial's viewport: a dot grid on the theme's page; in the light theme an
- *  ambient surface with depth (a warm wash from the top left, a cool one from
- *  the bottom right) instead of flat white. It is painted on the viewport,
- *  outside the canvas, so it costs nothing when zooming or panning. */
-export const VIEWPORT = "viewport relative flex-1 cursor-grab overflow-hidden select-none active:cursor-grabbing before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle,color-mix(in_oklab,var(--foreground)_4%,transparent)_1px,transparent_1px)] before:bg-size-[32px_32px] before:content-[''] not-dark:bg-[radial-gradient(55%_60%_at_0%_0%,oklch(0.94_0.035_27/.7),transparent_70%),radial-gradient(60%_65%_at_100%_100%,oklch(0.94_0.03_255/.65),transparent_70%),linear-gradient(180deg,oklch(0.995_0.001_27),oklch(0.965_0.004_27))] not-dark:before:bg-[radial-gradient(circle,color-mix(in_oklab,var(--foreground)_9%,transparent)_1px,transparent_1px)] in-[.app.touch]:cursor-default in-[.app.touch]:touch-none in-[.app.touch]:active:cursor-default";
+/** Spatial's viewport: a dot grid on the canvas ground (`--canvas-*` in
+ *  src/index.css): the page's own black in the dark theme, a neutral paper a
+ *  step below the cards in the light theme (Notion "Design light mode on
+ *  purpose"). It is painted on the viewport, outside the canvas, so it costs
+ *  nothing when zooming or panning. */
+export const VIEWPORT = "viewport relative flex-1 cursor-grab overflow-hidden select-none active:cursor-grabbing bg-linear-to-b from-(--canvas-top) to-(--canvas-bottom) before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle,var(--canvas-dot)_1px,transparent_1px)] before:bg-size-[32px_32px] before:content-[''] in-[.app.touch]:cursor-default in-[.app.touch]:touch-none in-[.app.touch]:active:cursor-default";
 export const CANVAS_BG = 'canvas-bg pointer-events-none absolute inset-0';
 /** Nothing inside the canvas may blur what is behind it: zoomed far out, iOS
  *  Safari runs out of memory (AGENTS.md, Spatial canvas performance). The

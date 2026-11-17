@@ -123,8 +123,12 @@ function AllTitlesWidget({ info, all, label, onClose, collapsed = false, offScre
   const t = info && info.result.kind === 'next' ? info.result.title : null;
   const done = !!all && all.released > 0 && all.seen >= all.released;
   const count = all && <>
-    <span className="pgh-label">{label}</span> · <span className={cn('pgh-count tabular-nums', done && 'text-(--seen-text)')}>{all.seen}/{all.released}</span>
-    {all.upcoming ? <span className="pgh-up tabular-nums"> +{all.upcoming}</span> : null}
+    {/* "All titles · 40/60 seen": words, not a bare "40/60 +4"
+        (docs/glossary.md). The titles still to come are left to the Titles
+        meters, which have the room to say "4 coming". */}
+    {/* When the line runs out of room (Portuguese), only the label gives
+        way: the count and the Up next tag always show in full. */}
+    <span className="pgh-label min-w-0 truncate">{label}</span><span className="shrink-0 whitespace-pre"> · </span><span className={cn('pgh-count shrink-0 tabular-nums', done && 'text-(--seen-text)')}>{untr('progress.count', { seen: all.seen, n: all.released })}</span>
   </>;
   const close = (
     <button type="button" className={cn('un-hide', B.W_CLOSE)} onClick={(e) => { e.stopPropagation(); onClose(); }}
@@ -135,12 +139,15 @@ function AllTitlesWidget({ info, all, label, onClose, collapsed = false, offScre
       {t && info && !collapsed ? (
         <section className="un-mrow pointer-events-auto flex min-w-0 items-center gap-2.5" aria-label={untr('upnext.announce', { title: UpNI18N.titleName(t) })}>
           <UpNextSlide id={t.id} className="un-mrow-body">
-            <button type="button" className={cn(OPEN, B.W_OPEN)} onClick={() => info.onOpen(t.id)}>
+            {/* w-full: a button sizes to its text, so without it a long
+                kicker (Portuguese) pushes the row past the card instead of
+                truncating. */}
+            <button type="button" className={cn(OPEN, B.W_OPEN, 'w-full')} onClick={() => info.onOpen(t.id)}>
               <span className={cn('un-mposter', B.W_POSTER, THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
               <span className={cn('un-mtext', B.W_TEXT)}>
-                <span className={B.W_KICKER}>
-                  {count}{count && ' · '}
-                  <span className="un-tag" title={`${info.lead} · ${info.detail}. ${untr('upnext.rule')}`}>{info.lead}</span>
+                <span className={cn(B.W_KICKER, 'flex min-w-0')}>
+                  {count}{count && <span className="shrink-0 whitespace-pre"> · </span>}
+                  <span className="un-tag shrink-0" title={`${info.lead} · ${info.detail}. ${untr('upnext.rule')}`}>{info.lead}</span>
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5">
                   <span className={cn('un-title block min-w-0', B.W_TITLE)}>{UpNI18N.titleName(t)}</span>
@@ -154,7 +161,7 @@ function AllTitlesWidget({ info, all, label, onClose, collapsed = false, offScre
         </section>
       ) : (
         <div className={cn(B.W_ROW, 'pointer-events-auto')}>
-          <span className={cn(B.W_TITLE, 'flex-1')}>{count}</span>
+          <span className={cn(B.W_TITLE, 'flex min-w-0 flex-1')}>{count}</span>
           {close}
         </div>
       )}

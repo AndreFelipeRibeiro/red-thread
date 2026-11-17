@@ -194,7 +194,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
         {section !== 'guides' && <Off off={guideOn}><FiltersMenu {...{ collectionFilter: collection, setCollectionFilter: setCollection, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter }}/></Off>}
         {guideOn && section === 'explore' && <window.GuideOffHint/>}
         <div className="tb-end flex flex-[0_0_auto] items-center gap-2 max-[1100px]:gap-1.5 group-data-[fit=2]/toprow:gap-1.5 group-data-[fit=3]/toprow:gap-1.5 group-data-[fit=4]/toprow:gap-1.5 [&_.settings-btn]:size-10">
-          <StatusCounts value={collection} onChange={setCollection}/>
+          <StatusCounts value={collection} onChange={setCollection} keepOn={section === 'guides'}/>
           <PickerButton/>
           <window.SyncStatus/>
           {/* Theme and language live in Settings (Notion "Settings menu"). */}

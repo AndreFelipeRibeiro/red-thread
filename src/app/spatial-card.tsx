@@ -44,7 +44,9 @@ const MOVE = '[transition:transform_600ms_cubic-bezier(.2,.8,.2,1),box-shadow_22
 
 // Box shadows, in the order the states override each other.
 const SHADOW = {
-  base: 'shadow-sm not-dark:shadow-[0_1px_2px_rgb(0_0_0/.05),0_10px_24px_-14px_rgb(0_0_0/.22)]',
+  // Light theme: a short contact shadow and a soft, cool one below, so a
+  // card rests on the paper canvas rather than hovering over it.
+  base: 'shadow-sm not-dark:shadow-[0_1px_2px_rgb(20_24_40/.06),0_8px_20px_-12px_rgb(20_24_40/.25)]',
   drag: 'shadow-[0_24px_50px_-8px_rgba(0,0,0,0.6),0_0_0_1px_var(--phase-color)]',
   // Hover is a slight lift, nothing more.
   hover: 'hover:shadow-[0_18px_36px_-12px_rgb(0_0_0/.55)] not-dark:hover:shadow-[0_16px_32px_-14px_rgb(0_0_0/.3)]',

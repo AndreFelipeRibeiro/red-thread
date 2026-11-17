@@ -223,7 +223,8 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     const released = window.TITLES.filter(t => window.MCU_isReleased(t)).length;
     return { text: el ? el.textContent : null, released };
   });
-  if (R.overallList.text !== `1/${R.overallList.released}`) {
+  const wantOverall = await page.evaluate(n => window.MCU_I18N.tr('progress.count', { seen: 1, n }), R.overallList.released);
+  if (R.overallList.text !== wantOverall) {
     errors.push(`the All titles card in Titles reads "${R.overallList.text}"; with one title seen it should be 1/${R.overallList.released}`);
   }
 
