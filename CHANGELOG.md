@@ -15,8 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 workflow — Connect Figma to code: Figma leads
 
-Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
-pushed yet.
+Recorded: 2026-11-17 18:05 EST (-0500). Pushed to `version/5.0` (V5
+staging); full regression clean (69 runs).
 
 - AGENTS.md now says Figma leads: a change to the look starts in the Red
   Thread – Design System file; agents read a component with the Figma MCP
@@ -30,8 +30,8 @@ pushed yet.
 
 ## V5 design — The Red Thread component library in Figma
 
-Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
-pushed yet.
+Recorded: 2026-11-17 18:05 EST (-0500). Pushed to `version/5.0` (V5
+staging); full regression clean (69 runs).
 
 - The Design System file gains a Cover (Light and Dark side by side), Icons
   (31), the shadcn primitives the app uses (Button with 24 variants, Icon
@@ -60,8 +60,8 @@ pushed yet.
 
 ## V5 design — Figma foundations and the primitive palette
 
-Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
-pushed yet.
+Recorded: 2026-11-17 18:05 EST (-0500). Pushed to `version/5.0` (V5
+staging); full regression clean (69 runs).
 
 - `src/index.css` gains a primitive palette (42 colors named by hue and
   lightness, `red-55`, `neutral-98`); every theme color points at one, with
@@ -73,8 +73,8 @@ pushed yet.
 
 ## V5 maintenance — Token cleanup before the Figma foundations
 
-Recorded: 2026-11-17 18:05 EST (-0500). Committed to `version/5.0`; not
-pushed yet.
+Recorded: 2026-11-17 18:05 EST (-0500). Pushed to `version/5.0` (V5
+staging); full regression clean (69 runs).
 
 - Unused shadcn chart and sidebar tokens removed; every shadow is one of
   seven elevation tokens (`shadow-mark` … `shadow-lift`); the stray raw
