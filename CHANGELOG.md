@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 design — Connections: a selected title's ring, legible at first sight
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Selecting a title on the desktop canvas frames it and its first circle
   (the six titles sharing the most characters) at a readable zoom: about 73%
@@ -33,7 +34,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Explore E 5/5: a phone tap opens the details, and the phone canvas
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Phones: a tap on a card opens its details with no focus ring or pop card;
   the canvas dims every title not connected to it and outlines it, and
@@ -67,7 +69,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Explore E 4/5: Follow the thread and a character's trail
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - **Follow the thread · N titles**, a red button after the cast, lists every
   title connected to the open one on a red line, by year, with who connects
@@ -93,7 +96,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Explore E 3/5: Cast and connections
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - Featured cast becomes Cast and connections: "Cast and connections · 4" and
   "17 connected titles"; each person says "in N more", and a chevron opens
@@ -105,7 +109,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 feature — Explore E 2/5: one details component, sections collapsed, a back stack
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - The desktop panel and the phone sheet share one details component. Where
   to watch and Part of start collapsed; chevrons point down closed, up open.
@@ -117,7 +122,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Connections by Phase: minimal phase pills, and Titles' headings
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - The canvas's phase labels are plain pills with the phase and its count
   ("Phase 1 · 4/6"), no dashed meter. Titles' group headings read "Phase 1"
@@ -126,7 +132,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 improvement — Phone: the All titles and guide widgets, less obtrusive
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - One compact layout for both widgets on every viewport: Up next's (or the
   stop's) poster, "All titles · 37/60 · Up next" over its name, × in the
@@ -141,7 +148,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Size steps 3/3: the details panel
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - From a 1600px window the details panel is 440px wide (`--drawer-w`) and
   takes the Large step: lines, poster, portraits and buttons grow with it.
@@ -150,7 +158,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Size steps 2/3: the Guides pages
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - A guide's page is its own container with the size steps: stop rows,
   posters, titles and controls take Regular or Large from its width.
@@ -158,7 +167,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 design — Size steps 1/3: shared tokens, used by the Titles list
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - One set of sizes in two steps, Regular and Large (from 84rem of the
   surface's own container), as `--step-*` tokens under `step-sizes` in
@@ -168,7 +178,8 @@ Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
 
 ## V5 fix — Spatial: the zoom control no longer covers cards
 
-Recorded: 2026-11-16 20:01 EST (-0500). Pushed to `version/5.0` (V5 staging).
+Recorded: 2026-11-16 20:02 EST (-0500). Pushed to `version/5.0` (V5 staging);
+merged to `main` (production) on 2026-11-16 after Andre's approval.
 
 - The zoom control stays at the bottom left (Andre's decision); the desktop
   landing frame keeps 52px clear above it, so a grid that fits is centered
