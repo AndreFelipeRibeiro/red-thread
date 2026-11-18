@@ -13,6 +13,40 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 16 — Welcome: one calm first moment
+
+Recorded: 2026-11-18 01:35 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 75 of 76 runs clean (test-camera's
+glide-timing step missed once under full load; clean on three solo reruns).
+
+- The welcome keeps to what Red Thread is, Ways to explore as open rows, and
+  one pinned strip holding only the actions: the promoted guide as a banner in
+  the Guides hero's style (poster, kicker, size and time, Start the guide),
+  then Mark what I've seen and Start exploring. No language choice (Settings
+  switches it), no Credits or Share (About keeps both); a 28px heading, the new
+  type role `text-display-sm`. Commit [7a8e264](https://github.com/AndreFelipeRibeiro/red-thread/commit/7a8e264).
+
+## V5 Batch 16 — About and What's new
+
+Recorded: 2026-11-18 01:35 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 75 of 76 runs clean (test-camera's
+glide-timing step missed once under full load; clean on three solo reruns).
+
+- About takes the welcome's heading, copy and rows, quieter credits, and a
+  What's new row with the version. What's new (`src/app/whats-new.tsx`):
+  versions 5 to 2 in English and Portuguese, opened in place; Escape, × and
+  Back step back one layer. `qa/test-whatsnew.js`. Commit [7a8e264](https://github.com/AndreFelipeRibeiro/red-thread/commit/7a8e264).
+
+## V5 Batch 16 — Guides: a copy pass on every stop's reason
+
+Recorded: 2026-11-18 01:35 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 75 of 76 runs clean (test-camera's
+glide-timing step missed once under full load; clean on three solo reruns).
+
+- Every stop of the 26 guides says what it gives the guide's destination, in
+  one short line (the table Andre approved): 128 rewritten, 12 kept, in both
+  languages; every guide reviewed 2026-11-18. Commit [2dd037d](https://github.com/AndreFelipeRibeiro/red-thread/commit/2dd037d).
+
 ## V5 Batch 15 — Welcome: start the promoted guide
 
 Recorded: 2026-11-18 00:24 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
