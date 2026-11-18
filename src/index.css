@@ -197,6 +197,7 @@
       --neutral-100: oklch(1 0 0);
       --neutral-98: oklch(0.985 0 0);
       --neutral-97: oklch(0.97 0 0);
+      --neutral-95: oklch(0.948 0 0);
       --neutral-92: oklch(0.922 0 0);
       --neutral-71: oklch(0.708 0 0);
       --neutral-52: oklch(0.52 0 0);
@@ -205,8 +206,6 @@
       --neutral-15: oklch(0.145 0 0);
       --neutral-100-a10: oklch(1 0 0 / 10%);
       --neutral-100-a15: oklch(1 0 0 / 15%);
-      --slate-97: oklch(0.968 0.003 255);
-      --slate-95: oklch(0.948 0.004 255);
       --slate-93: #e6e8f0;
       --slate-72: #9ea4b8;
       --slate-63: #8389a1;
@@ -321,13 +320,14 @@
       --elevation-lift: 0 24px 50px -8px rgb(0 0 0 / 0.6);
       --logo: var(--crimson-53);
       /* The Connections canvas (Notion "Design light mode on purpose", 2026-11-16):
-         in the light theme a neutral, slightly cool paper a step below the
-         white of the cards and bars, so the cards and their dark poster art
-         sit on a ground instead of floating on white, with no colored wash
-         (the warm one read as a pink cast). The dot grid and the resting
-         threads are quieter than in the dark theme, where they glow on black. */
-      --canvas-top: var(--slate-97);
-      --canvas-bottom: var(--slate-95);
+         in the light theme a neutral gray paper a step below the white of the
+         cards and bars, so the cards and their dark poster art sit on a
+         ground instead of floating on white, with no colored wash (the warm
+         one read as a pink cast; the slightly cool slate read blue, Andre,
+         2026-11-18). The dot grid and the resting threads are quieter than
+         in the dark theme, where they glow on black. */
+      --canvas-top: var(--neutral-97);
+      --canvas-bottom: var(--neutral-95);
       --canvas-dot: color-mix(in oklab, var(--foreground) 10%, transparent);
       --thread-rest: 0.42;
       --background: var(--neutral-100);
