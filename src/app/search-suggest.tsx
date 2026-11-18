@@ -230,7 +230,7 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
               onMouseDown={e => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => pick(item)}>
               <SsThumb item={item}/>
               <span className="ss-text flex min-w-0 flex-1 flex-col">
-                <span className="ss-main truncate text-body text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))] [&_b]:font-bold [&_b]:text-foreground"><SsLabel text={item.label} query={value}/></span>
+                <span className="ss-main truncate text-body text-(--dim) [&_b]:font-bold [&_b]:text-foreground"><SsLabel text={item.label} query={value}/></span>
                 <span className="ss-sub truncate text-caption text-muted-foreground">{secondary(item)}</span>
               </span>
               {item.kind !== 'title' && item.kind !== 'guide' && <span className="ss-count flex-none text-caption tabular-nums text-muted-foreground">{tr('header.count', { n: item.n })}</span>}

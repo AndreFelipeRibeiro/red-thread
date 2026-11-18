@@ -63,7 +63,7 @@ function UpNextHide({ info, className = '' }: { info: UpNextInfo; className?: st
 function UpNextStatus({ info, title, variant, className = '' }: { info: UpNextInfo; title: Title; variant?: 'overlay' | 'inline'; className?: string }) {
   return (
     <window.TitleStatusActions title={title} variant={variant}
-      className={cn('un-tsa', variant !== 'inline' && 'static flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn:not(.on)]:border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))] [&_.tsa-btn:not(.on)]:bg-muted',
+      className={cn('un-tsa', variant !== 'inline' && 'static flex-row gap-1.5 [transform:none] [&_.tsa-btn]:size-[max(36px,2.25rem)] [&_.tsa-btn:not(.on)]:border-(--border-strong) [&_.tsa-btn:not(.on)]:bg-muted',
         info.watchScope && 'un-nowatch [&_.tsa-btn.watch]:hidden', className)}/>
   );
 }

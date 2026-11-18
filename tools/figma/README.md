@@ -1,7 +1,8 @@
 # tools/figma — code ⇄ Figma
 
 Development tools that keep the [Red Thread – Design System](https://www.figma.com/design/P92ZRC9X0R6WoCmoB8MG8P)
-Figma file and the code in agreement (Notion epic "Design system: Figma as
+Figma file (and the [Red Thread – Screens](https://www.figma.com/design/FBDC4AxFAi5gyABtpdJM8Z)
+file built from its instances) and the code in agreement (Notion epic "Design system: Figma as
 the source of truth"). Nothing in the app imports them; Vercel never runs
 them.
 
@@ -39,9 +40,11 @@ them.
 
 ## What the builder knows about Figma
 
-- Figma drops a paint's opacity when it is bound to a variable, and again on
-  instances: `RT.paint` sets it after binding, and instances made later need
-  the same opacity copied from their main component.
+- A paint bound to a variable takes its opacity from the variable's alpha.
+  Opacity set by hand after binding (`RT.paint`) holds inside the library
+  but is recomputed in every file that uses it, so translucent colors need
+  a token with alpha (the paint's opacity then equals that alpha). A solid
+  token plus opacity looks right in the library and solid everywhere else.
 - CSS borders take room in the box: strokes are inside and included in the
   layout (auto-layout frames only).
 - A ring (`box-shadow: 0 0 0 Npx`) is an outside stroke.
@@ -49,3 +52,17 @@ them.
   then becomes a fixed size.
 - Theme-dependent values that aren't one token (`dark:bg-input/30`) can't be
   bound: name them as tokens first (see "Controls" in `docs/design-tokens.md`).
+
+## Building screens (the Screens file)
+
+- Import by key (`figma.importComponentByKeyAsync`); only published
+  components import, so publish the library first.
+- Each screen frame sets the Color collection explicitly (Light or Dark);
+  the Dark copy is a clone with the mode switched.
+- Inside an instance you can override fills, text, visibility and swap
+  nested instances, but not move or resize layers. After an override Figma
+  may rebuild the instance's sublayers, so find nodes again rather than
+  reusing references.
+- A `use_figma` script that throws is rolled back as a whole.
+- The view switch, seen state and phase colors are overrides on the
+  instances (no variants for them yet).

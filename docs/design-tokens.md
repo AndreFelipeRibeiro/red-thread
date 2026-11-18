@@ -29,9 +29,11 @@ removed the tokens nothing used and named every shadow and stray color.
 
 The `@primitives` block at the top of `src/index.css`: every color in the
 app, named by hue family and OKLCH lightness × 100 (`red-55` is L 0.55;
-`-aNN` is that color at NN% opacity): `neutral-*`, `slate-*`, `red-*`,
-`coral-68`, `rose-*`, `crimson-53`, `tomato-*`, `yellow-84`, `gold-*`,
-`green-*`, `blue-*`, `purple-*`. In Figma they're hidden from the pickers
+`-aNN` is that color at NN% opacity): `neutral-*`, `slate-*`, `red-*`
+(three: `red-50`, `red-55`, `red-68`), `rose-*`, `crimson-53`, `tomato-*`,
+`yellow-84`, `gold-*`, `green-*`, `blue-*`, `purple-*`; 38 in all since the
+2026-11-17 merges (`red-70`, `red-58`, `red-52` and `coral-68` folded into
+their neighbors). In Figma they're hidden from the pickers
 (no scopes): designers pick the semantic colors below. Components never use a
 primitive directly, in code or in Figma.
 
@@ -55,6 +57,7 @@ opacity, 42% / 55%) lives here too, as a number.
 | Score marks (same in both modes) | `imdb`, `rt`, `rt-text` |
 | Connections canvas | `canvas-top`, `canvas-bottom`, `canvas-dot` |
 | Controls (shadcn at rest) | `field`, `button-outline`, `button-outline-border`, `destructive-tint`, `switch-track`, `switch-thumb`, `switch-thumb-off`, `invalid-border`, `invalid-ring` |
+| Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `highlight-border`, `control-surface`, `chip`, `chip-border`, `chip-imdb`, `chip-rt`, `chip-muted` |
 
 **Controls** (2026-11-17, Notion "Build the Red Thread component library in
 Figma"): shadcn writes some resting colors as a token in Light and another
@@ -127,6 +130,38 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
   `step-group-pt`, `step-chip-h`, `step-control-h`, `step-button`,
   `step-icon`.
 
+### Grid (modes: Phone, Tablet, Desktop, Extra wide)
+
+The layout grid (Notion "Define a layout grid", 2026-11-17). In code, CSS
+variables in `src/index.css` that change with the window; in Figma, the
+**Grid** collection, one mode per range.
+
+| Range | Mode | `grid-columns` | `grid-gutter` | `grid-margin` |
+| --- | --- | --- | --- | --- |
+| below 600 | Phone | 4 | 16 | 16 |
+| 600–899 | Tablet | 8 | 24 | 24 |
+| 900–1599 | Desktop | 12 | 24 | 24 |
+| 1600 and up | Extra wide | 12 | 24 | 32 |
+
+- `content-max` 1128: reading pages (Guides, a guide). 12 columns of 72;
+  a Guide card spans 3 (264), a Continue card 6 (552).
+- `list-max` 1488: lists (Titles). 12 columns of 102.
+- Breakpoints, named once in `@theme`: `tab` 600, `desk` 900, `wide` 1280,
+  `xwide` 1600 (`wide:in-[.app.drawer-open]:…`). Older one-off widths
+  (1000, 1100, 1560 …) stay where a component needs them.
+- `layout-grid`: a 12-column row (`grid-template-columns` from
+  `--grid-columns`, gap `--grid-gutter`); place children with `col-span-*`.
+- The details drawer (380, 440 from 1600) sits outside the grid; the grid
+  fills the room to its left. The Connections canvas is free-form, and the
+  cards that float over a view (Up next, the title count, zoom) keep their
+  own 16px inset on Connections and Titles alike.
+- Figma grid styles: **Grid/Columns** (bound to the three variables, so it
+  follows the frame's Grid mode), **Grid/Reading 1128**, **Grid/List 1488**.
+  Set a frame's Grid mode like its Color mode. The App bar and Character
+  banner bind their side padding to `grid-margin` (Desktop mode).
+- Phones keep their own 14–16px insets for now; moving them onto the 16
+  margin is a follow-up.
+
 ### Motion (one mode)
 
 Not tokens in code yet: the two curves AGENTS.md names (layout moves 600ms
@@ -165,11 +200,9 @@ uses a token.
 
 ## Still open
 
-- **The mixed colors**: about 55 `color-mix(…)` recipes in the components
-  (the dimmed text, brand and seen tints at several strengths, the score
-  chip) and some `dark:`-only colors have no token, so the library keeps
-  their light value. Notion "Name the mixed colors" streamlines and names
-  them (fewer reds and greys, as Andre suggested).
+- **Data colors** stay raw on purpose (see above). Shadows that mix a color
+  in (the selected and highlighted cards' rings) are effect styles, not
+  color tokens.
 
 - **The visual direction** (Notion "Choose a visual direction on three key
   screens"). The foundations mirror today's values and can start now; the

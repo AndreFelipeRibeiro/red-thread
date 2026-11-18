@@ -26,7 +26,7 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 
 // A step between foreground and muted text (V3's "dim"), which holds AA on
 // every surface in both themes.
-const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const DIM = 'text-(--dim)';
 // A poster thumbnail: the art fills the box.
 const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_svg]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover';
 // Search matches in a cast row, underlined in the character's colour.
@@ -98,7 +98,7 @@ export function ReleaseBadge({ title, className = '' }: { title: Title | null | 
   return (
     <Badge variant="outline" title={full}
       className={cn('release-badge ml-[7px] h-auto px-2 py-0.5 align-[1px] text-label leading-none font-medium in-[.card]:text-card-micro', r.status,
-        r.status === 'expected' ? cn('border-dashed border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]', DIM) : 'text-foreground', className)}>
+        r.status === 'expected' ? cn('border-dashed border-(--border-strong)', DIM) : 'text-foreground', className)}>
       <span aria-hidden="true">{tr('release.badge.' + r.status)}</span>
       <span className="story-sr">{full}</span>
     </Badge>

@@ -162,7 +162,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
   const guideOn = !!guideId;
   const Off = window.GuideOff;
   return (
-    <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col border-b border-border bg-background/95 px-[22px] py-2.5 backdrop-blur-md max-[1560px]:px-4" role="banner">
+    <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col border-b border-border bg-background/95 px-(--grid-margin) py-2.5 backdrop-blur-md" role="banner">
       <div ref={topRow} className="tb-row tb-top-row group/toprow flex min-w-0 items-center gap-3 max-[1100px]:gap-2">
         {/* The logo is a link home: it resets the app in place (onHome). */}
         <a className="brand group/brand flex min-w-0 shrink-0 items-center gap-3 rounded-lg text-inherit no-underline outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -180,7 +180,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
         </nav>
         <div className="min-w-0 flex-1"/>
         {/* Search, then (on Connections) Sort and Filters. */}
-        <div ref={searchRef} className="search-wrap relative flex h-10 w-[300px] min-w-[180px] shrink items-center gap-2 rounded-md border border-input bg-transparent px-3 text-muted-foreground shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30 max-[1280px]:w-[240px] max-[1100px]:min-w-[150px] group-data-[fit=2]/toprow:min-w-[150px] group-data-[fit=3]/toprow:min-w-[120px] group-data-[fit=4]/toprow:min-w-[120px] [&_input]:min-w-0 [&_input]:flex-1 [&_input]:border-0 [&_input]:bg-transparent [&_input]:text-body [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
+        <div ref={searchRef} className="search-wrap relative flex h-10 w-[300px] min-w-[180px] shrink items-center gap-2 rounded-md border border-input bg-(--field) px-3 text-muted-foreground shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 max-[1280px]:w-[240px] max-[1100px]:min-w-[150px] group-data-[fit=2]/toprow:min-w-[150px] group-data-[fit=3]/toprow:min-w-[120px] group-data-[fit=4]/toprow:min-w-[120px] [&_input]:min-w-0 [&_input]:flex-1 [&_input]:border-0 [&_input]:bg-transparent [&_input]:text-body [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
           <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
           <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
             ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={null}/>

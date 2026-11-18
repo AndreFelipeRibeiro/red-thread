@@ -294,6 +294,41 @@ RT.textProp = function textProp(cs, prop, layer) {
   return key;
 };
 
+/** Instances lose the opacity of variable-bound paints: copy it from each
+ *  layer's main-component counterpart. */
+RT.fixOpacity = async function fixOpacity(root) {
+  let fixed = 0;
+  const insts = root.type === 'INSTANCE' ? [root] : root.findAll((n) => n.type === 'INSTANCE');
+  for (const inst of insts) {
+    for (const n of [inst, ...inst.findAll(() => true)]) {
+      const m = n.id.match(/;([^;]+)$/) || (n === inst && inst.mainComponent ? [null, inst.mainComponent.id] : null);
+      if (!m) continue;
+      const src = await figma.getNodeByIdAsync(m[1]);
+      if (!src) continue;
+      for (const prop of ['fills', 'strokes']) {
+        if (!(prop in n) || !(prop in src) || n[prop] === figma.mixed || src[prop] === figma.mixed) continue;
+        const a = n[prop], b = src[prop];
+        if (a.length !== b.length) continue;
+        if (a.some((p, i) => p.boundVariables && p.boundVariables.color && Math.abs((p.opacity == null ? 1 : p.opacity) - (b[i].opacity == null ? 1 : b[i].opacity)) > 0.001)) {
+          n[prop] = a.map((p, i) => ({ ...p, opacity: b[i].opacity == null ? 1 : b[i].opacity }));
+          fixed++;
+        }
+      }
+    }
+  }
+  return fixed;
+};
+
+/** Re-lays a component set's variants in a grid after their sizes change. */
+RT.regrid = function regrid(cs, cols, gap = 24) {
+  let x = gap, y = gap, rowH = 0;
+  cs.children.forEach((c, i) => {
+    if (i && i % cols === 0) { x = gap; y += rowH + gap; rowH = 0; }
+    c.x = x; c.y = y; x += c.width + gap; rowH = Math.max(rowH, c.height);
+  });
+  cs.resizeWithoutConstraints(Math.max(...cs.children.map((c) => c.x + c.width)) + gap, y + rowH + gap);
+};
+
 /** Lays nodes out in a row (or grid) starting at x, y on the current page. */
 RT.row = function row(nodes, x, y, gap = 40) {
   let cx = x;

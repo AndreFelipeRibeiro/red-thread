@@ -39,7 +39,7 @@ const useCollection = () => window.useCollection() as unknown as CollectionView;
 /** The caption role (12px), with its line height. */
 export const XS = 'text-caption leading-[1.4]';
 /** A step between foreground and muted text (V3's "dim"); AA on every surface. */
-export const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+export const DIM = 'text-(--dim)';
 /** A poster thumbnail: the art fills the box. */
 export const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_svg]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover';
 
@@ -58,7 +58,7 @@ export const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-
 // (List rows and columns, the cards' covers, the details), at the 12px floor
 // and growing only with the Large text size; tighter padding.
 const SC_TEXT = 'text-caption leading-[1.25]';
-const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-white/14 bg-(--on-image-base) px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums not-dark:border-border not-dark:bg-card not-dark:text-foreground';
+const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-(--chip-border) bg-(--chip) px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums';
 const TAG = 'tg rounded-[2px] px-[3px] py-0 font-extrabold tracking-[.2px]';
 
 export function ScoreChip({ kind, title, compact = false, className }: { kind: 'imdb' | 'rt'; title: Title; compact?: boolean; className?: string }) {
@@ -66,11 +66,11 @@ export function ScoreChip({ kind, title, compact = false, className }: { kind: '
   if (value == null) return null;
   const pad = compact && 'px-[4px] py-[1.5px]';
   return kind === 'imdb' ? (
-    <div className={cn(CHIP, SC_TEXT, 'imdb text-(--imdb)', pad, className)} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
+    <div className={cn(CHIP, SC_TEXT, 'imdb text-(--chip-imdb)', pad, className)} title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
       <span className={cn(TAG, 'imdb-tag bg-(--imdb) text-black')}>IMDb</span>{value.toFixed(1)}
     </div>
   ) : (
-    <div className={cn(CHIP, SC_TEXT, 'rt text-(--rt-text)', pad, className)} title={tr('score.rt')}>
+    <div className={cn(CHIP, SC_TEXT, 'rt text-(--chip-rt)', pad, className)} title={tr('score.rt')}>
       <span className={cn(TAG, 'rt-tag bg-(--rt) text-white')}>RT</span>{value}%
     </div>
   );
@@ -81,7 +81,7 @@ export function ScoreChip({ kind, title, compact = false, className }: { kind: '
 export function ScoreBadges({ title, lead, compact, className }: { title: Title; lead?: 'rt' | 'imdb'; compact?: boolean; className?: string }) {
   const wrap = cn('m-scores flex gap-[5px]', compact && 'compact pointer-events-none absolute right-[7px] bottom-[7px] left-[7px] z-2 flex-wrap items-end gap-1', className);
   if (title.imdb == null && title.rt == null) {
-    return <div className={wrap}><div className={cn(CHIP, SC_TEXT, 'none font-medium text-(--on-image-muted) not-dark:text-muted-foreground', compact && 'px-[5px] py-[2.5px]')}>{tr('score.none')}</div></div>;
+    return <div className={wrap}><div className={cn(CHIP, SC_TEXT, 'none font-medium text-(--chip-muted)', compact && 'px-[5px] py-[2.5px]')}>{tr('score.none')}</div></div>;
   }
   const imdb = <ScoreChip key="i" kind="imdb" title={title} compact={compact}/>;
   const rt = <ScoreChip key="r" kind="rt" title={title} compact={compact}/>;
@@ -273,7 +273,7 @@ export const LIST = 'm-list flex flex-col gap-[9px]';
 // outline. Each is a <div> around a dedicated open button, because Seen and
 // Watchlist are buttons too and a nested <button> is invalid HTML.
 const SURFACE = 'rounded-xl border bg-card text-left text-card-foreground shadow-sm active:border-ring';
-const WATCH = 'watch border-[color-mix(in_oklab,var(--status-watch)_75%,transparent)]';
+const WATCH = 'watch border-(--status-watch-border)';
 const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--brand))]';
 
 type RowProps = {
@@ -302,7 +302,7 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
     <div data-flip-id={t.id} data-row-id={t.id}
       className={cn('m-lrow relative flex min-h-[78px] w-full scroll-mt-3 scroll-mb-[calc(var(--dock-h,0px)+12px)] items-center gap-2 py-2 pr-2.5 pl-2', SURFACE,
         seen && 'seen', watch && WATCH, current && CURRENT,
-        upNext && 'up-next border-[color-mix(in_oklab,var(--brand)_45%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_6%,var(--card))]')}>
+        upNext && 'up-next border-(--brand-border) bg-(--brand-tint)')}>
       {upNext && <span className="m-next-bar absolute top-3 bottom-3 left-[-1px] w-[3px] animate-[un-in_260ms_ease_both] rounded-full bg-(--brand) motion-reduce:animate-none" aria-hidden="true"/>}
       <button className="m-lrow-open flex min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => onSelect(t.id)}>
         <div className={cn('m-lthumb relative h-[60px] w-10 flex-[0_0_40px] rounded-[5px]', THUMB)}>
@@ -318,7 +318,7 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
               Story order, the score in a score order. */}
           <div className={cn('m-lmeta mt-0.5 flex flex-wrap items-center gap-x-[7px] gap-y-1 tabular-nums text-muted-foreground', XS)}>
             {upNext && <>
-              <span className="m-next-pill animate-[un-in_260ms_ease_both] font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">{tr('upnext.label')}</span>
+              <span className="m-next-pill animate-[un-in_260ms_ease_both] font-semibold whitespace-nowrap text-(--brand-text) motion-reduce:animate-none">{tr('upnext.label')}</span>
               {dot}
             </>}
             <span>{t.year}</span>

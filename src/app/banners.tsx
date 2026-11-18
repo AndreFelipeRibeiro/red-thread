@@ -11,7 +11,7 @@
 // `cp-*`, `pinned`.
 import { cn } from '@/lib/utils';
 
-const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const DIM = 'text-(--dim)';
 
 /** Icon buttons shrink a little while pressed (Notion V4 Tasks,
  *  "Micro-interaction: a press effect on icon buttons"); none with Reduce
@@ -19,7 +19,7 @@ const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foregrou
 export const PRESS = 'transition-[scale,background-color,color,border-color,box-shadow] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100';
 
 /** shadcn's outline Button, as the banner's and module's controls use it. */
-export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-md border bg-background p-0 leading-none text-foreground shadow-xs outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-background dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:disabled:hover:bg-input/30', PRESS);
+export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 leading-none text-foreground shadow-xs outline-none hover:bg-(--field-hover) focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-(--button-outline) border-(--button-outline-border)', PRESS);
 
 // Desktop: the banner and the guide's module.
 export const STEP = 'cb-step inline-flex flex-none items-center gap-1';
@@ -71,7 +71,7 @@ export const SEGMENT = 'relative z-1 flex cursor-pointer items-center rounded-md
 // The pinned character's banner under the toolbar (desktop). It stops before
 // the open drawer, so the bar looks the same whether the character is hovered
 // or pinned.
-export const BANNER = 'char-banner flex flex-wrap items-center gap-3 border-b bg-muted/50 px-[22px] py-2 text-body shadow-[inset_3px_0_0_var(--char-color,var(--brand))] in-[.app:not(.touch).drawer-open]:pr-[calc(var(--drawer-w)+22px)]';
+export const BANNER = 'char-banner flex flex-wrap items-center gap-3 border-b bg-muted/50 px-(--grid-margin) py-2 text-body shadow-[inset_3px_0_0_var(--char-color,var(--brand))] in-[.app:not(.touch).drawer-open]:pr-[calc(var(--drawer-w)+var(--grid-margin))]';
 export const BANNER_WHO = 'cb-who mr-auto flex min-w-0 flex-col [&_b]:truncate [&_b]:text-heading [&_b]:font-medium [&_b]:text-foreground';
 export const BANNER_SUB = 'cb-sub truncate text-caption text-muted-foreground';
 export const BANNER_GUIDE = cn('cb-guide', OUTLINE, 'h-[max(34px,2.125rem)] gap-[7px] px-3 text-body whitespace-nowrap');
@@ -90,7 +90,7 @@ export const PILL_PHOTO = cn(PHOTO, 'size-[38px] in-[.char-pill:has(.cb-share)]:
 // smaller photo first (data-fit 1), then two lines (2), never cut short.
 export const PILL_NAME = 'cp-name truncate text-body font-medium text-foreground group-data-[fit=2]/pill:line-clamp-2 group-data-[fit=2]/pill:whitespace-normal';
 export const PILL_ACTOR = 'cp-actor truncate text-caption text-muted-foreground';
-export const PILL_GUIDE = cn('cp-guide', ROUND, 'size-[max(38px,2.375rem)] bg-[color-mix(in_oklab,var(--brand)_16%,transparent)] active:bg-[color-mix(in_oklab,var(--brand)_28%,transparent)]');
+export const PILL_GUIDE = cn('cp-guide', ROUND, 'size-[max(38px,2.375rem)] bg-(--brand-tint-strong) active:bg-(--brand-tint-strong)');
 /** Share in the pill: the stepper's borderless circle. */
 export const PILL_SHARE = 'cb-share size-[max(38px,2.375rem)] rounded-full border-0 bg-transparent shadow-none active:bg-foreground/8 dark:bg-transparent';
 export const BANNER_SHARE = 'cb-share size-[max(32px,2rem)]';

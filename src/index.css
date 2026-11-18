@@ -64,6 +64,14 @@
        stay at least their default size at Small). The V3 stylesheets size
        their controls the same way: max(Npx, N/16 rem). */
     --spacing: max(0.25rem, 4px);
+    /* The layout grid's breakpoints (Notion "Define a layout grid",
+       2026-11-17): tab 600, desk 900, wide 1280, xwide 1600. In rem so they
+       sort with Tailwind's own; media queries read rem at the browser's
+       16px, not at the Text size. */
+    --breakpoint-tab: 37.5rem;
+    --breakpoint-desk: 56.25rem;
+    --breakpoint-wide: 80rem;
+    --breakpoint-xwide: 100rem;
 }
 
 @theme inline {
@@ -197,13 +205,9 @@
       --slate-63: #8389a1;
       --slate-16: rgb(10 12 20);
       --slate-16-a82: rgb(10 12 20 / 0.82);
-      --red-70: oklch(0.704 0.191 22.216);
       --red-68: oklch(0.68 0.17 23);
-      --red-58: oklch(0.58 0.2 27);
       --red-55: oklch(0.55 0.2 27);
-      --red-52: oklch(0.52 0.245 27.325);
       --red-50: oklch(0.50 0.19 25);
-      --coral-68: #e86a6a;
       --rose-67: #e5677a;
       --rose-50: oklch(0.50 0.21 10);
       --crimson-53: #c41e3a;
@@ -337,12 +341,10 @@
       --muted-foreground: var(--neutral-54);
       --accent: var(--neutral-97);
       --accent-foreground: var(--neutral-20);
-      /* Darkened from the library's 0.577. Vega draws the destructive button and
-         badge as `text-destructive` on `bg-destructive/10`, and on that tint the
-         default measured 3.97:1 — below AA for its 14px text. Same hue and
-         chroma, lightness down to 0.52: 4.65:1 on the tint, 5.61:1 on white
-         (qa/test-contrast.js). */
-      --destructive: var(--red-52);
+      /* The brand red (Andre, 2026-11-17, palette proposal P4; was its own
+         red-52): on its 10% tint it measures 4.62:1, AA for the destructive
+         button's text, and 5.37:1 on white (qa/test-contrast.js). */
+      --destructive: var(--red-55);
       --border: var(--neutral-92);
       --input: var(--neutral-92);
       /* CONTROLS (Notion "Build the Red Thread component library in Figma"):
@@ -359,6 +361,43 @@
       --switch-thumb-off: var(--background);
       --invalid-border: var(--destructive);
       --invalid-ring: color-mix(in oklab, var(--destructive) 20%, transparent);
+      /* MIXED ROLES (Notion "Name the mixed colors and streamline the
+         palette", 2026-11-17): colors the components used to mix in their
+         classes, named so Figma has a variable for each. These keep the exact
+         recipes they replace; mixes of other tokens resolve in each theme.
+         Merges of near-duplicates wait for Andre's picks. */
+      --dim: color-mix(in oklch, var(--foreground) 40%, var(--muted-foreground));
+      --brand-text: color-mix(in oklch, var(--brand) 78%, var(--foreground));
+      --status-watch-text: color-mix(in oklch, var(--status-watch) 70%, var(--foreground));
+      --status-watch-tint: color-mix(in oklab, var(--status-watch) 16%, transparent);
+      --status-watch-tint-strong: color-mix(in oklab, var(--status-watch) 28%, transparent);
+      --seen-hover: color-mix(in oklab, var(--seen) 88%, black);
+      --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
+      --highlight-border: color-mix(in oklab, var(--foreground) 22%, transparent);
+      --control-surface: var(--background);
+      --chip: var(--card);
+      --chip-border: var(--border);
+      --chip-imdb: var(--foreground);
+      --chip-rt: var(--foreground);
+      --chip-muted: var(--muted-foreground);
+      /* The merged roles (Andre, 2026-11-17: "all as recommended" on the
+         palette proposal): near-duplicate tints, veils and borders folded
+         into one strength each. */
+      --brand-tint: color-mix(in oklab, var(--brand) 10%, transparent);
+      --brand-tint-strong: color-mix(in oklab, var(--brand) 20%, transparent);
+      --seen-tint: color-mix(in oklab, var(--seen) 14%, transparent);
+      --seen-tint-strong: color-mix(in oklab, var(--seen) 22%, transparent);
+      --neutral-tint: color-mix(in oklab, var(--foreground) 8%, transparent);
+      --veil: color-mix(in oklab, var(--background) 90%, transparent);
+      --veil-light: color-mix(in oklab, var(--background) 50%, transparent);
+      --border-strong: color-mix(in oklch, var(--foreground) 20%, var(--background));
+      --seen-border: color-mix(in oklab, var(--seen) 55%, var(--border));
+      --seen-line: color-mix(in oklab, var(--seen) 30%, var(--background));
+      --brand-border: color-mix(in oklab, var(--brand) 45%, var(--border));
+      --status-watch-border: color-mix(in oklab, var(--status-watch) 45%, var(--border));
+      --destructive-border: color-mix(in oklab, var(--destructive) 35%, transparent);
+      --field-hover: var(--muted);
+      --segment-on: var(--background);
       --ring: var(--brand);
       --radius: 0.625rem;
   }
@@ -370,7 +409,7 @@
          dark surface (Andre's decision, 2026-11-01). */
       --phase-1: var(--gold-74);
       --phase-2: var(--blue-64);
-      --phase-3: var(--coral-68);
+      --phase-3: var(--red-68);
       --phase-4: var(--purple-60);
       --phase-5: var(--green-66);
       --phase-6: var(--rose-67);
@@ -397,10 +436,10 @@
       --card-foreground: var(--neutral-98);
       --popover: var(--neutral-20);
       --popover-foreground: var(--neutral-98);
-      /* A deeper red than the dark theme's --brand, so white ink holds AA
-         (4.73:1); the lines and fills keep the lighter --brand (6.35:1 on
-         the background). */
-      --primary: var(--red-58);
+      /* The same red as Light's primary (Andre, 2026-11-17, palette proposal
+         P3; was red-58): white ink at 5.37:1; the lines and fills keep the
+         lighter --brand (6.35:1 on the background). */
+      --primary: var(--red-55);
       --primary-foreground: var(--neutral-98);
       --secondary: var(--neutral-27);
       --secondary-foreground: var(--neutral-98);
@@ -408,7 +447,7 @@
       --muted-foreground: var(--neutral-71);
       --accent: var(--neutral-27);
       --accent-foreground: var(--neutral-98);
-      --destructive: var(--red-70);
+      --destructive: var(--red-68);
       --border: var(--neutral-100-a10);
       --input: var(--neutral-100-a15);
       --field: color-mix(in oklab, var(--input) 30%, transparent);
@@ -420,6 +459,16 @@
       --switch-thumb-off: var(--foreground);
       --invalid-border: color-mix(in oklab, var(--destructive) 50%, transparent);
       --invalid-ring: color-mix(in oklab, var(--destructive) 40%, transparent);
+      --highlight-border: color-mix(in oklab, var(--foreground) 53%, transparent);
+      --control-surface: color-mix(in oklab, var(--input) 30%, var(--background));
+      --chip: var(--on-image-base);
+      --chip-border: color-mix(in oklab, #fff 14%, transparent);
+      --chip-imdb: var(--imdb);
+      --chip-rt: var(--rt-text);
+      --chip-muted: var(--on-image-muted);
+      --neutral-tint: color-mix(in oklab, var(--foreground) 10%, transparent);
+      --field-hover: color-mix(in oklab, var(--input) 50%, transparent);
+      --segment-on: color-mix(in oklab, var(--input) 60%, transparent);
       --ring: var(--brand);
   }
 }
@@ -619,6 +668,25 @@
    reads it (the lists' right padding, the guide's card, the camera). */
 :root { --drawer-w: 380px; }
 @media (min-width: 1600px) { :root { --drawer-w: 440px; } }
+
+/* The layout grid (Notion "Define a layout grid", 2026-11-17;
+   docs/design-tokens.md "Grid"). Phone 4 columns, 16 gutter and margin;
+   from 600, 8 columns, 24; from 900, 12 columns; from 1600, a 32 margin.
+   Reading pages (Guides, a guide) stop at 1128, which lands on whole
+   columns: 72 each, a Guide card spans 3 (264), a Continue card 6 (552).
+   Lists stop at 1488 (columns of 102). The details drawer sits outside the
+   grid; the grid fills the room to its left. The Connections canvas is
+   free-form; cards floating over a view keep their own 16px inset. */
+:root {
+  --grid-columns: 4;
+  --grid-gutter: 16px;
+  --grid-margin: 16px;
+  --content-max: 1128px;
+  --list-max: 1488px;
+}
+@media (min-width: 600px) { :root { --grid-columns: 8; --grid-gutter: 24px; --grid-margin: 24px; } }
+@media (min-width: 900px) { :root { --grid-columns: 12; } }
+@media (min-width: 1600px) { :root { --grid-margin: 32px; } }
 /* The drawer's width is fixed, so it takes the Large step by the window,
    from the width that widens it (the values the list's Large step uses). */
 @media (min-width: 1600px) {
@@ -630,4 +698,11 @@
     --step-button: max(40px, 2.5rem);
     --step-icon: 17px;
   }
+}
+
+/* A row on the layout grid; place children with col-span-*. */
+@utility layout-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
 }

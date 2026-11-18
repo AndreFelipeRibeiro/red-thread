@@ -113,11 +113,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   let border = 'border-border', shadow = SHADOW.base, z = 'z-10', fade = '', lift = '';
   if (isDragging) { z = 'z-30'; shadow = SHADOW.drag; }
   if (isSelected) { border = 'border-(--phase-color)'; shadow = SHADOW.selected; z = 'z-25'; }
-  if (isHighlighted) { border = 'border-[color-mix(in_oklab,var(--foreground)_53%,transparent)] not-dark:border-[color-mix(in_oklab,var(--foreground)_22%,transparent)]'; shadow = SHADOW.highlighted; z = 'z-22'; }
+  if (isHighlighted) { border = 'border-(--highlight-border)'; shadow = SHADOW.highlighted; z = 'z-22'; }
   if (isDimmed) fade = 'opacity-22 saturate-40';
-  if (listed) border = 'border-[color-mix(in_oklab,var(--status-watch)_45%,var(--border))]';
+  if (listed) border = 'border-(--status-watch-border)';
   if (isCollDimmed) fade = 'opacity-26 saturate-30';
-  if (skipped) border = 'border-dashed border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))]';
+  if (skipped) border = 'border-dashed border-(--border-strong)';
   if (isCurrent) { border = 'border-(--cur-color,var(--brand))'; shadow = SHADOW.current; z = 'z-28'; fade = 'filter-none'; lift = '[--lift:1.08] motion-reduce:[--lift:1]'; }
   // The desktop ring's centre is the same card at the same size (Andre,
   // 2026-11-15); its outline and shadow mark it.

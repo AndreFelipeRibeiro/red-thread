@@ -46,7 +46,7 @@ const SIZE = 'step-sizes [--dl-cols:2.25rem_minmax(0,1fr)_7rem_5.5rem_5.5rem_max
 const GRID = 'grid items-center grid-cols-(--dl-cols) gap-(--step-gap)';
 // The list's width: the heading, the controls and the rows line up. As wide
 // as the list was before Titles 1/5, so a large screen isn't a narrow column.
-const WIDTH = cn('mx-auto w-full max-w-[1480px]', SIZE);
+const WIDTH = cn('mx-auto w-full max-w-(--list-max)', SIZE);
 const ROW_SIZE = 'min-h-(--step-row-h) py-2';
 const THUMB_SIZE = 'h-(--step-poster-h) w-(--step-poster-w) flex-[0_0_var(--step-poster-w)]';
 const FIG = 'text-(length:--step-figure) tabular-nums';
@@ -282,7 +282,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   });
   let n = 0;
   return (
-    <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-[22px] pt-3.5 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[calc(var(--drawer-w)+22px)] [&>.m-flip-layer]:z-4', flat && 'ranked')}
+    <div className={cn('dlist @container relative min-h-0 flex-1 overflow-y-auto px-(--grid-margin) pt-3.5 pb-12 wide:in-[.app.drawer-open]:pr-[calc(var(--drawer-w)+var(--grid-margin))] [&>.m-flip-layer]:z-4', flat && 'ranked')}
       ref={flipRef} role="main" aria-label={tr('view.list')}>
       {/* The compact card (All titles and Up next), in the same place as on
           Connections: the top-right corner (Andre, 2026-11-15: same card,
@@ -291,7 +291,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
           list's top padding. Rows scrolled into view stop below it. */}
       {floatingCard && (
         <div className="dl-card-wrap pointer-events-none sticky top-0 z-6 h-0">
-          <div className="absolute top-0 right-[-6px]">{floatingCard}</div>
+          <div className="absolute top-0 right-[calc(16px-var(--grid-margin))]">{floatingCard}</div>
         </div>
       )}
       {/* "64 titles" and the filter chips, only when they narrow the list. */}

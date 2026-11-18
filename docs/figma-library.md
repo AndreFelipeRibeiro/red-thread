@@ -12,6 +12,12 @@ Read a component with the Figma MCP from its link (`get_design_context`,
 `get_screenshot`, `get_metadata`); find its code here. Variables and styles
 are in [design-tokens.md](design-tokens.md).
 
+Published as a team library in the AFR folder (2026-11-17). Library key,
+for scoping MCP searches (`search_design_system` `includeLibraryKeys`):
+`lk-5749d6357a7c79740c5ccbfab85d638b1dde13ff537b2ef534703dfdf08d47d9c5ea5275930be18c258ae5bcbeef726e3599f4ecd88083be9c12f2d19cfaf6a2`.
+Only published components import into other files, so publish again after
+adding or changing components.
+
 Links: `https://www.figma.com/design/P92ZRC9X0R6WoCmoB8MG8P?node-id=<id>`
 (the node ids below with `:` written as `-`).
 
@@ -62,29 +68,88 @@ surface uses them, so they have no Figma counterpart until one does.
 | Guide card | `21:88` | `guides-ui.tsx` (guide shelves) |
 | Picker poster (Seen) | `23:13` | `src/app/picker.tsx` |
 | Picker dialog | `23:43` | `picker.tsx` |
+| Phone app bar | `34:662` | `src/app/phone-header.tsx` `MobileTopBar` |
+| Sort menu | `38:699` | `src/app/header-controls.tsx` `SortMenu` (desktop popover) |
+| Account menu | `38:729` | `src/app/account.tsx` `AccountPanel` |
+| Filters panel | `38:797` | `header-controls.tsx` `FiltersPanel` (desktop popover) |
+| Menu switch | `36:667` | `header-controls.tsx` `MenuSwitch` |
+| Filter chip | `36:675` | `phone-header.tsx` `ChipGroup` |
+| Filter sheet | `36:705` | `phone-header.tsx` `FilterSheet` |
+| Details sheet | `37:801` | `title-details.tsx` `SheetFrame` + `TitleDetailsBody` (phones) |
+| Settings panel | `40:810` | `src/app/settings.tsx` `SettingsPanel` (the phone sheet shows the same content) |
+| Search suggestion (Kind × State) | `41:759` | `src/app/search-suggest.tsx` (one row) |
+| Search suggestions | `41:773` | `search-suggest.tsx` (the list) |
+| Character banner | `42:655` | `src/app/banners.tsx` `BANNER` (desktop) |
+| Character pill | `43:656` | `banners.tsx` `PILL` (phones) |
+| Thread stop | `44:632` | `title-details.tsx` `ThreadView` row (also the rows of `TrailView`) |
+| Thread view | `44:650` | `title-details.tsx` `ThreadView` |
+| Guide header | `45:701` | `guides-ui.tsx` (g-head) |
+| Guide stop (Up next, Default) | `45:670` | `guides-ui.tsx` (g-stop) |
 
 Icons: the Icons page, one component per entry in `tools/figma/icons.js`.
+
+Foundations page: generated from the file's own variables and styles
+(2026-11-17), so it lists exactly what exists: the 38 primitives, every
+color role in Light and Dark over the page background, the text styles,
+spacing and radius (bound bars and boxes), the effect styles, the size
+steps and the grid. Regenerate it after adding or renaming tokens.
+
+Grid: the **Grid** collection and the grid styles Grid/Columns, Grid/Reading 1128 and Grid/List 1488, with a specimen on the Foundations page (`55:631`). See `design-tokens.md`, "Grid".
+
+## Screens
+
+[**Red Thread – Screens**](https://www.figma.com/design/FBDC4AxFAi5gyABtpdJM8Z)
+(same Figma folder) holds the key screens, built only from instances of the
+published library, so they follow every library update. Each screen has a
+Light and a Dark frame (the Dark one sets the Color collection to Dark).
+
+| Screen | Light | Dark |
+| --- | --- | --- |
+| Titles (desktop) | `16:4664` | `16:5009` |
+| Connections with a title open (desktop) | `16:6270` | `16:6661` |
+| Guides (desktop) | `17:2384` | `17:2624` |
+| Guide page, Thor (desktop) | `17:2641` | `17:2876` |
+| Follow the thread (desktop) | `17:2888` | `17:3142` |
+| Settings over Titles (desktop) | `16:5024` | `16:5152` |
+| Titles (phone) | `17:4759` | `17:4964` |
+| Details sheet over Titles (phone) | `17:4952` | `17:5267` |
+
+Posters are the app's TMDB posters, on the file's Posters page. The
+screens override only content (text, posters), the view switch, phase
+colors and unseen states; every other paint comes from the library, so
+don't copy fills or opacities onto instances (a copied fill stops taking
+library updates). The canvas
+lines on Connections are drawn by hand (the app computes them).
 
 ## Not in the library yet
 
 Built from the app as it was on 2026-11-17; these still need a Figma
 counterpart (same tools, `tools/figma/README.md`):
 
-- the phone top bar and filter sheet, the phone Grid card and canvas pop
-  card, the cast and details sheets on phones;
-- the Settings panel, About dialog, account menu, Sort and Filters popovers,
-  search suggestions, the character pill and banner, the thread view (Follow
-  the thread's list) and a character's trail, the guide page and its stops,
-  share sheet, toasts and celebration;
+- the phone Grid card and canvas pop card, the cast sheet on phones;
+- the About dialog, a character's trail header (its rows are Thread stops),
+  the share sheet, toasts and the celebration;
+- a seen Guide stop and a skipped one;
 - hover, focus and pressed states (rest states only today).
 
 ## Known gaps
 
-- **Colors without a token** (76 paints in the file) keep their light value
-  in Figma, so those spots don't switch in Dark: the score chip's surface and
-  number, the dimmed text (`color-mix(foreground 40%, muted-foreground)`),
-  the seen button's border, the Watchlist count's ink, overlays on posters.
-  Notion "Name the mixed colors" turns them into tokens.
+- **Translucent colors in other files.** A paint bound to a variable takes
+  its opacity from the variable's own alpha in any file that uses the
+  library; a hand-set paint opacity survives only inside the library. So a
+  translucent color must be a token that carries its alpha (`seen-tint`,
+  `brand-tint` …), with the paint's opacity equal to that alpha. These still
+  use a solid token plus opacity and show solid in the Screens file:
+  `background` 94–95% (app bar, guide shelves), `foreground` 10% (popover
+  rings), 85%; `border` 70%; `muted` 50%; `muted-foreground` 30%, 80%;
+  `on-image-base` 78%; `seen-foreground` 85%, 90%. They come from Tailwind
+  opacity modifiers in the code (`bg-background/95`, `ring-foreground/10`).
+
+- **Colors without a token** keep their light value in Figma, so those
+  spots don't switch in Dark: the seen button's border, overlays on
+  posters, the tints still waiting for the merge decision (Notion "Name the
+  mixed colors"). The score chips, dimmed text, Watchlist ink and zoom
+  control are bound since 2026-11-17.
 - **Data colors** stay raw on purpose: a character's color, a guide's color,
   a poster's own color (`docs/design-tokens.md`, "Not variables, on purpose").
 - **Sizes** are the desktop Default text size (phone components: the phone's

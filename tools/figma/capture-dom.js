@@ -27,6 +27,11 @@ const COLOR_TOKENS = [
   'on-image', 'on-image-dim', 'on-image-muted', 'on-image-ground', 'on-image-base', 'imdb', 'rt',
   'rt-text', 'canvas-top', 'canvas-bottom', 'canvas-dot', 'field', 'button-outline', 'button-outline-border',
   'destructive-tint', 'switch-track', 'switch-thumb', 'switch-thumb-off', 'invalid-border', 'invalid-ring',
+  'dim', 'brand-text', 'status-watch-text', 'status-watch-tint', 'status-watch-tint-strong', 'seen-hover',
+  'secondary-hover', 'highlight-border', 'control-surface', 'chip', 'chip-border', 'chip-imdb', 'chip-rt',
+  'chip-muted', 'brand-tint', 'brand-tint-strong', 'seen-tint', 'seen-tint-strong', 'neutral-tint', 'veil',
+  'veil-light', 'border-strong', 'seen-border', 'seen-line', 'brand-border', 'status-watch-border',
+  'destructive-border', 'field-hover', 'segment-on',
 ];
 // When several tokens give the same colors, the first that fits the property wins
 // (unless the element's own classes name one).
@@ -377,7 +382,9 @@ function frameNode(el, root, warnings, path, depth) {
     if (node.al.d === 'N') node.al = { ...node.al, d: 'H', g: 0, ai: s.textAlign === 'center' ? 'CENTER' : 'MIN', jc: s.textAlign === 'center' ? 'CENTER' : s.textAlign === 'right' || s.textAlign === 'end' ? 'MAX' : 'MIN' };
     kids.push(tn);
   } else {
-    for (const c of el.childNodes) {
+    // display: contents draws no box: its children belong to this layout.
+    const flat = (n) => [...n.childNodes].flatMap((c) => (c.nodeType === 1 && getComputedStyle(c).display === 'contents' ? flat(c) : [c]));
+    for (const c of flat(el)) {
       if (c.nodeType === 3) {
         if (!isText(c)) continue;
         const range = document.createRange(); range.selectNodeContents(c);
