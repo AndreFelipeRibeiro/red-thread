@@ -47,7 +47,10 @@ const MENUS = {
     await page.locator('.ss-item[data-kind="title"]', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
     await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(600);
     await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click(); await page.waitForTimeout(500);
-    await page.locator('.drawer.open .trail-pin').click(); await page.waitForTimeout(1300);
+    // (Desktop Connections: the cast already opens the character view, pinned,
+    // since the character view landed; the pin is only there elsewhere.)
+    if (await page.locator('.drawer.open .trail-pin').count()) await page.locator('.drawer.open .trail-pin').click();
+    await page.waitForTimeout(1300);
     for (const view of ['Spatial', 'List']) {
       await page.locator('.nav-tabs button', { hasText: view === 'Spatial' ? 'Connections' : 'Titles' }).click(); await page.waitForTimeout(900);
       const r = {};
@@ -62,8 +65,8 @@ const MENUS = {
       await page.fill('.search-wrap input', ''); await page.locator('.search-wrap input').evaluate(el => el.blur()); await page.waitForTimeout(300);
       r.zoom = view === 'Spatial' ? await covered(page, '.zoom-ctl') : '-';
       r.ctx = await covered(page, '.ctx-float');
-      r.bannerClose = await covered(page, '.char-banner .cb-close');
-      r.bannerNext = await covered(page, '.char-banner .cb-step button:last-child');
+      r.bannerClose = await covered(page, '.char-card .cb-close');
+      r.bannerNext = await covered(page, '.char-card .cb-step button:last-child');
       r.drawerClose = await covered(page, '.drawer.open .drawer-close, .drawer.open [aria-label="Close"]');
       if (view === 'List') r.dlHead = await covered(page, '.dl-head');
       out['d' + vw + view] = r;
@@ -92,7 +95,7 @@ const MENUS = {
     r.suggest = await covered(page, '.ss-pop');
     await page.locator('.m-search input, .m-searchrow input').first().fill(''); await page.locator('.m-search input, .m-searchrow input').first().evaluate(el => el.blur()); await page.waitForTimeout(300);
     await page.locator('.m-clear').click().catch(() => {}); await page.waitForTimeout(200);
-    r.pill = await covered(page, '.char-pill');
+    r.pill = await covered(page, '.char-card');
     r.ctx = await covered(page, view === 'list' ? '.ctx-line' : '.ctx-pill');
     if (view === 'spatial') r.zoom = await covered(page, '.zoom-ctl');
     out['m' + view] = r;

@@ -81,8 +81,8 @@ surface uses them, so they have no Figma counterpart until one does.
 | Settings panel | `40:810` | `src/app/settings.tsx` `SettingsPanel` (the phone sheet shows the same content) |
 | Search suggestion (Kind × State) | `41:759` | `src/app/search-suggest.tsx` (one row) |
 | Search suggestions | `41:773` | `search-suggest.tsx` (the list) |
-| Character banner | `42:655` | `src/app/banners.tsx` `BANNER` (desktop) |
-| Character pill | `43:656` | `banners.tsx` `PILL` (phones) |
+| Character card (Device = Desktop, Phone) | `81:729` | `src/app/char-card.tsx` `CharCard` (the pinned character's floating card; B.WIDGET, B.W_* in `banners.tsx`) |
+| Retired / Character banner, Retired / Character pill | `42:655`, `43:656` | Replaced by the Character card (2026-11-18); kept until the Screens file no longer uses them |
 | Thread stop | `44:632` | `title-details.tsx` `ThreadView` row (also the rows of `TrailView`) |
 | Thread view | `44:650` | `title-details.tsx` `ThreadView` |
 | Guide header | `45:701` | `guides-ui.tsx` (g-head) |

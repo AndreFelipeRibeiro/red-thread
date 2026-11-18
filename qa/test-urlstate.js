@@ -107,8 +107,8 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
   // ---- A pinned character -------------------------------------------------
   await at(page, '?char=bruce&title=incredible-hulk');
   R.char = await page.evaluate(() => ({
-    pinned: (document.querySelector('.char-banner.pinned .cb-who b') || {}).textContent || null,
-    pos: (document.querySelector('.char-banner.pinned .cb-pos') || {}).textContent || null,
+    pinned: (document.querySelector('.char-card .cb-who b') || {}).textContent || null,
+    pos: (document.querySelector('.char-card .cb-pos') || {}).textContent || null,
     drawer: (document.querySelector('.drawer.open #drawer-title') || {}).textContent || null,
   }));
   if (R.char.pinned !== 'Bruce Banner') errors.push(`char=bruce pinned ${JSON.stringify(R.char.pinned)}`);
@@ -150,7 +150,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
     const pin = document.querySelector('.m-sheet .trail-pin');
     if (!pin) return { error: 'no pin in James Rhodes\'s trail' };
     pin.click(); await new Promise(r => setTimeout(r, 1500));
-    return { pill: !!document.querySelector('.char-pill'), char: new URLSearchParams(location.search).get('char') };
+    return { pill: !!document.querySelector('.char-card'), char: new URLSearchParams(location.search).get('char') };
   });
   if (R.pin.error) errors.push(R.pin.error);
   else {

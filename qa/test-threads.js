@@ -46,7 +46,7 @@ const lit = (prime, ch) => {
     if (!isLit(card(a)) || !isLit(card(b))) bad.push(ch + ' ' + a + '→' + b);
     if (prime && primeOf(ch) !== prime) bad.push('off-thread ' + ch + ' ' + a + '→' + b);
   });
-  const sub = (document.querySelector('.char-banner .cb-sub') || {}).textContent || '';
+  const sub = (document.querySelector('.char-card .cb-sub') || {}).textContent || '';
   const m = sub.match(/(\d+)\s*\S*\s*$/);
   return {
     lines: lines.length, bad,
@@ -125,10 +125,13 @@ const lit = (prime, ch) => {
   for (const c of plan.varied) {
     await go('?title=' + plan.home[c]);
     await page.locator('.drawer.open .cast-row[data-char="' + c + '"]').click(); await page.waitForTimeout(300);
-    await page.locator('.drawer.open .trail-pin').click(); await page.waitForTimeout(900);
+    // (Desktop Connections: the cast already opens the character view, pinned,
+    // since the character view landed; the pin is only there elsewhere.)
+    if (await page.locator('.drawer.open .trail-pin').count()) await page.locator('.drawer.open .trail-pin').click();
+    await page.waitForTimeout(900);
     const r = await page.evaluate(([p, x]) => (0, eval)('(' + window.__lit + ')')(p, x), [primeOf(c), c]);
     out.pins++;
-    if (!(await page.locator('.char-banner.pinned').count())) errors.push('pin ' + c + ': no pinned banner');
+    if (!(await page.locator('.char-card').count())) errors.push('pin ' + c + ': no pinned banner');
     if (r.bad.length) errors.push('pin ' + c + ': lit line into a dim card: ' + r.bad.slice(0, 3).join(', '));
     if (!r.shared && r.count !== r.cards) errors.push('pin ' + c + ': banner says ' + r.count + ', ' + r.cards + ' cards lit');
     const want = await page.evaluate((p) => window.TITLES.filter(t => t.cast.some(x => ((window.CHARACTERS[x] && window.CHARACTERS[x].prime) || x) === p)).length, primeOf(c));

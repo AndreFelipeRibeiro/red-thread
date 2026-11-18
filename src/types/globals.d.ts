@@ -98,6 +98,10 @@ export interface GuideRuntime {
 
 declare global {
   interface Window {
+    /** Keyboard shortcuts' on/off switch (src/app/shortcuts.tsx). */
+    MCU_KEYS: { enabled(): boolean; set(on: boolean): void; subscribe(f: () => void): () => void };
+    /** First-use hints (src/app/hints.tsx). */
+    MCU_HINTS: { isDone(id: string): boolean; done(id: string): void; reset(): void; enabled(): boolean };
     // ---- The catalog (src/data) -------------------------------------------
     TITLES: Title[];
     CHARACTERS: Record<string, Character>;

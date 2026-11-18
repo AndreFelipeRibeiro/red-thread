@@ -33,6 +33,9 @@
 @source "./app/desktop-list.tsx";
 @source "./app/about.tsx";
 @source "./app/whats-new.tsx";
+@source "./app/hints.tsx";
+@source "./app/char-card.tsx";
+@source "./app/shortcuts.tsx";
 @source "./app/celebrate.tsx";
 @source "./app/picker.tsx";
 @source "./app/account.tsx";

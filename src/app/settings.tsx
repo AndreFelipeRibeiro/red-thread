@@ -474,6 +474,8 @@ function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
   const fromSystem = useTextSizeFromSystem();
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [guidesReset, setGuidesReset] = React.useState(false);
+  const [keysOn, setKeysOn] = React.useState(() => window.MCU_KEYS.enabled());
+  React.useEffect(() => window.MCU_KEYS.subscribe(() => setKeysOn(window.MCU_KEYS.enabled())), []);
   const regions = window.MCU_regionChoices();
   if (regions.indexOf(prefs.region) === -1) regions.push(prefs.region);
 
@@ -529,6 +531,16 @@ function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
             checked={prefs.celebrations} onChange={setCelebrations}/>
         </Group>
       </Section>
+
+      {/* Keyboard shortcuts (Notion "Keyboard shortcuts", 2026-11-18): the
+          single keys can be turned off (WCAG 2.1.4). Where there's a keyboard. */}
+      {keyboard && (
+        <Section id="settings-keys" title={tr('keys.settingsTitle')} footnote={<Footnote>{tr('keys.settingsHint')}</Footnote>}>
+          <Group>
+            <SwitchRow id="settings-keys-on" title={tr('keys.settingsSwitch')} checked={keysOn} onChange={(on) => window.MCU_KEYS.set(on)}/>
+          </Group>
+        </Section>
+      )}
 
       <Section id="settings-device" title={tr('settings.device')}
         footnote={guidesReset

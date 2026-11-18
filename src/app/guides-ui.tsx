@@ -968,7 +968,7 @@ function GuideMeter({ guide, includeOptional, className = '', bulk = false }) {
 //   an icon button, the stepper and ×.
 // It keeps the banner's hooks (guide-banner, cb-step, cb-pos, cb-close,
 // g-optcheck) so the stepper and close read the same everywhere.
-function GuideSegments({ guide, statusOf, done = false, currentId = null }) {
+function GuideSegments({ guide, statusOf, done = false, currentId = null, onJump = null }) {
   // One segment per essential stop that counts (released, not skipped), in
   // order: seen ones red, as in every other meter (green once the guide is
   // complete), the rest the plain track. Andre, 2026-11-16: the dark dashes
@@ -979,11 +979,15 @@ function GuideSegments({ guide, statusOf, done = false, currentId = null }) {
       const on = statusOf(s.id) === 'seen';
       // The stop the stepper is on gets a quiet gray outline (Andre,
       // 2026-11-16), so stepping shows where you are on the bar.
-      return <i key={s.id} className={cn('flex-1 rounded-[2px] transition-[background-color] duration-[260ms] motion-reduce:transition-none',
+      const bar = <i key={s.id} className={cn(B.W_SEG_BAR, !onJump && 'flex-1',
         done ? 'bg-(--progress-done)' : on ? 'on bg-(--progress)' : 'bg-(--progress-track)',
         currentId === s.id && 'cur outline-1 outline-offset-2 outline-muted-foreground/70')}/>;
+      // A dash pressed steps straight to its stop (B.W_SEG).
+      return onJump
+        ? <button key={s.id} type="button" tabIndex={-1} aria-hidden="true" className={B.W_SEG} title={GI18N.titleName(s.title)} onClick={() => onJump(s.id)}>{bar}</button>
+        : bar;
     });
-  return <span className="gm-segs flex h-1 gap-[3px]" aria-hidden="true">{segs}</span>;
+  return <span className={cn('gm-segs', B.W_SEGS)} aria-hidden={onJump ? undefined : true}>{segs}</span>;
 }
 
 // The open guide's card on Connections, the same on desktop (top right) and
@@ -998,7 +1002,7 @@ function GuideSegments({ guide, statusOf, done = false, currentId = null }) {
 // dash, the card and the details name the same title; at rest it shows the
 // next stop not yet seen ("Before Doomsday · Next"). The seen count is the
 // bar's (its label says it for screen readers).
-function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId = null, pos, stepCount, onOpenPage = null, onOpenNext, onPrev, onNext, onClose }) {
+function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId = null, pos, stepCount, onOpenPage = null, onOpenNext, onPrev, onNext, onJump = null, onClose }) {
   const { statusOf } = window.useCollection();
   const complete = p.complete;
   const date = MCU_GUIDE.targetDate(guide);
@@ -1035,7 +1039,7 @@ function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId
       </div>
       <div className={B.W_FOOT}>
         <span className="gm-meter g-dock-meter min-w-0 flex-1" role="img" aria-label={gtr('guide.partSeen', { seen: p.ess.seen, n: p.ess.released })}>
-          <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId}/>
+          <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId} onJump={onJump}/>
         </span>
         <div className={B.W_STEP}>
           <button type="button" className={B.W_STEP_BTN} onClick={onPrev} aria-label={gtr('guide.prev')} disabled={!stepCount}>‹</button>
@@ -1047,7 +1051,7 @@ function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId
   );
 }
 
-function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOptional, stepIndex, stepCount, currentId = null, onOpenNext, onSeenNext, onOpenPage, onPrev, onNext, onClose }) {
+function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOptional, stepIndex, stepCount, currentId = null, onOpenNext, onSeenNext, onOpenPage, onPrev, onNext, onJump = null, onClose }) {
   window.useI18n();
   const { statusOf, states } = window.useCollection();
   useGuideSkips();
@@ -1109,7 +1113,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
           'in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+16px)]', complete && 'done border-(--seen-border)')}>
         <GuideWidget guide={guide} p={p} next={next ? next.title : null} currentId={currentId} pos={pos} stepCount={stepCount}
           stepIndex={stepIndex} current={currentId ? window.TITLES.find(t => t.id === currentId) || null : null}
-          onOpenPage={onOpenPage} onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
+          onOpenPage={onOpenPage} onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onJump={onJump} onClose={onClose}/>
       </section>
     );
   }
@@ -1142,7 +1146,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
                 ? <span className="gm-check inline-flex size-4 flex-[0_0_16px] items-center justify-center rounded-full bg-(--seen) text-(--seen-foreground) [&_svg]:size-2.5" aria-hidden="true"><window.CheckIcon/></span>
                 : <span className={cn('gm-count tabular-nums text-foreground', XS)}>{p.ess.seen}/{p.ess.released}</span>}
             </span>
-            <GuideSegments guide={guide} statusOf={statusOf} done={complete}/>
+            <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId} onJump={onJump}/>
             {notes.length > 0 && <span className={cn('gm-notes font-medium text-muted-foreground', XS)}>{notes.join(' · ')}</span>}
           </div>
           {next ? (
@@ -1199,7 +1203,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
 // titles card and the old pill, and is the same card as the desktop guide's
 // (GuideWidget, Andre 2026-11-16). Once complete it turns green and says what
 // the guide was for.
-function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onSeenNext, onPrev, onNext, onClose }) {
+function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onSeenNext, onPrev, onNext, onJump = null, onClose }) {
   const { statusOf } = window.useCollection();
   window.useI18n();
   useGuideSkips();
@@ -1230,7 +1234,7 @@ function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onS
       <div className={cn('g-dock-card', B.WIDGET, 'in-[.g-dock.done]:border-(--seen-border)')}>
         <GuideWidget guide={guide} p={p} next={showNext} currentId={current ? current.id : null} pos={pos} stepCount={stepCount}
           stepIndex={stepIndex} current={current}
-          onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
+          onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onJump={onJump} onClose={onClose}/>
       </div>
     </div>
   );
@@ -1410,7 +1414,7 @@ function GuideSwitcher({ guide, phone, onPick, onAll }) {
 // title (the switcher), the blurb, progress, then Following / Stop
 // following, Share and Include optional. "Mark N more seen" stays at the end
 // of the progress row (the bulk action, with its Undo; Andre to confirm).
-function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack, onPick }) {
+function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack, onPick, onConnections = null }) {
   const { statusOf } = window.useCollection();
   useGuideSkips();
   useFollowedGuides();
@@ -1464,6 +1468,16 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
           {followed ? gtr('guide.following') : gtr('guide.follow')}
         </Button>
         {!phone && <GuideShare guide={guide} className="g-share h-10 px-3.5 in-[.g-desk]:h-(--step-control-h)"/>}
+        {/* The guide on the canvas (Notion "Guides: a See connections button",
+            2026-11-18): Connections with the guide open, landing as a shared
+            ?guide= link does. */}
+        {onConnections && (
+          <Button variant="outline" className="g-connections h-10 gap-1.5 px-3.5 text-body [&_svg]:size-3.5 in-[.g-desk]:h-(--step-control-h)"
+            onClick={onConnections}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
+            {gtr('guide.seeConnections')}
+          </Button>
+        )}
         {nOpt > 0 && (
           <label className="g-optrow inline-flex cursor-pointer items-center gap-2.5 text-body text-muted-foreground">
             {/* shadcn's Switch look. */}
@@ -1508,7 +1522,7 @@ function GuideDest({ guide, phone, current, onOpen }) {
 // the red edge, the "Up next" pill and the filled check; no dimming), each
 // with its number and its reason. Skip and Unskip as before. The phone List
 // (`surface` phone) and the desktop list.
-function GuideView({ guide, includeOptional, setIncludeOptional, surface, currentId, openId, onOpen, onFollow, onBack, onPick }) {
+function GuideView({ guide, includeOptional, setIncludeOptional, surface, currentId, openId, onOpen, onFollow, onBack, onPick, onConnections = null }) {
   const { statusOf } = window.useCollection();
   window.useI18n();
   // Desktop: ↑ ↓ / Home / End between stops, as in the List.
@@ -1608,7 +1622,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId, guide.id]);
   const announcer = <><span className="story-sr" aria-live="polite">{said}</span><span className="story-sr" aria-live="polite">{stepSaid}</span></>;
-  const header = <GuideHeader guide={guide} includeOptional={includeOptional} setIncludeOptional={setIncludeOptional} phone={phone} onBack={onBack} onPick={onPick}/>;
+  const header = <GuideHeader guide={guide} includeOptional={includeOptional} setIncludeOptional={setIncludeOptional} phone={phone} onBack={onBack} onPick={onPick} onConnections={onConnections}/>;
   const dest = <GuideDest guide={guide} phone={phone} current={!!guide.target && currentId === guide.target} onOpen={onOpen}/>;
 
   if (phone) {

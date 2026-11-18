@@ -205,11 +205,14 @@ const CANVAS = () => {
         // the stop selected (Andre, 2026-11-17: the fit-the-whole-path view of
         // Notion "Explore E 5/5" was a row of thumbnails on the guide line).
         centred: Math.abs((card.left + card.right) / 2 - (vp.left + vp.right) / 2) <= 40,
-        cardW: Math.round(card.width), at: [...document.querySelectorAll('.card.up-next, .card.guide-at')].map(c => c.dataset.id) };
+        cardW: Math.round(card.width),
+        // The landing zoom every strip lands at (Notion "Spatial: one landing
+        // for every strip", 2026-11-18): about 2.5 titles across.
+        landW: Math.round(170 * Math.min(1, vp.width / (170 * 1.15 * 2.5))), at: [...document.querySelectorAll('.card.up-next, .card.guide-at')].map(c => c.dataset.id) };
     });
     out.phoneDock = d;
     expect(d.sub === 'Iron Man' && !d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
-    expect(d.inView && d.centred && d.cardW >= 140, `phone guide should open on its next stop, centred at a readable size: ${JSON.stringify(d)}`);
+    expect(d.inView && d.centred && Math.abs(d.cardW - d.landW) <= 2, `phone guide should open on its next stop, centred at a readable size: ${JSON.stringify(d)}`);
     // The zoom control rests hidden and shows while zooming (a double-tap here).
     const z0 = await page.evaluate(() => document.querySelector('.zoom-ctl').classList.contains('rest'));
     const vp = await page.evaluate(() => { const r = document.querySelector('.viewport').getBoundingClientRect(); return { x: r.left + 12, y: r.top + 12 }; });

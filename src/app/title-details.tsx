@@ -594,8 +594,11 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
  *  one line in their color. The title you came from is marked; a row opens
  *  that title's details. See on canvas pins their thread on the map (what
  *  tapping a person used to do). */
-export function TrailView({ char, from, surface, headingId, headingRef, inCanvas = true, onLeave, onOpen, onPin }: {
+export function TrailView({ char, from, current, pinned = false, surface, headingId, headingRef, inCanvas = true, onLeave, onOpen, onPin }: {
   char: string; from: string; surface: 'drawer' | 'sheet'; headingId?: string; headingRef?: React.Ref<HTMLHeadingElement>;
+  /** The character view (desktop canvas): the stepper's title, marked as
+   *  where you are; and `pinned` hides See on canvas, already the view. */
+  current?: string | null; pinned?: boolean;
   /** In Connections the pin reads See on canvas; in Titles, Highlight in Titles. */
   inCanvas?: boolean;
   onLeave: () => void; onOpen: (id: string) => void; onPin: () => void;
@@ -632,15 +635,15 @@ export function TrailView({ char, from, surface, headingId, headingRef, inCanvas
             </div>
           </div>
         </div>
-        <Button variant="outline" className="trail-pin mt-3 h-[max(40px,2.5rem)] w-full gap-[7px] text-label [&_svg]:size-[14px]" onClick={onPin}
+        {!pinned && <Button variant="outline" className="trail-pin mt-3 h-[max(40px,2.5rem)] w-full gap-[7px] text-label [&_svg]:size-[14px]" onClick={onPin}
           aria-label={tr(inCanvas ? 'trail.pinAria' : 'trail.pinListAria', { name })}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
           {tr(inCanvas ? 'trail.pin' : 'trail.pinList')}
-        </Button>
+        </Button>}
       </div>
       <ol aria-label={tr('trail.listLabel', { name })} className={cn('ex-list relative m-0 list-none pb-6', drawer ? '' : '-mx-[18px]')}>
         {list.map((t, i) => {
-          const here = t.id === from;
+          const here = t.id === (current || from);
           return (
             <li key={t.id}>
               <button type="button" data-title={t.id} onClick={() => onOpen(t.id)} aria-current={here ? 'true' : undefined}
@@ -700,6 +703,8 @@ export type ExploreState = { kind: 'thread' } | { kind: 'trail'; char: string; f
 export type ExploreProps = {
   explore: ExploreState | null; onThread: () => void; onTrail: (ch: string) => void; onLeave: () => void;
   onOpen: (id: string) => void; onPin?: () => void; inCanvas?: boolean;
+  /** The character view on the desktop canvas (see TrailView). */
+  charView?: boolean; current?: string | null;
 };
 
 export function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, onGoSpatial, inSpatial, search, back = null, ex = null }: {
@@ -719,7 +724,7 @@ export function CastSheet({ title, onClose, onCharacterClick, activeChar, active
         {explore && ex && explore.kind === 'thread' ? (
           <ThreadView key="thread" id={title.id} surface="sheet" onLeave={ex.onLeave} onOpen={ex.onOpen}/>
         ) : explore && ex && explore.kind === 'trail' ? (
-          <TrailView key="trail" char={explore.char} from={explore.from} surface="sheet" inCanvas={ex.inCanvas} onLeave={ex.onLeave} onOpen={ex.onOpen} onPin={ex.onPin || (() => {})}/>
+          <TrailView key="trail" char={explore.char} from={explore.from} current={ex.current} pinned={ex.charView} surface="sheet" inCanvas={ex.inCanvas} onLeave={ex.onLeave} onOpen={ex.onOpen} onPin={ex.onPin || (() => {})}/>
         ) : (
         <TitleDetailsBody title={title} surface="sheet" search={search} back={back} onThread={ex ? ex.onThread : null}
           cast={<CastConnections title={title} surface="sheet" search={search} activeChar={activeChar} activeChars={activeChars} onCharacterClick={onCharacterClick}/>}

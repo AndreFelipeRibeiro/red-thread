@@ -52,7 +52,7 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     const v = await page.evaluate(VARS);
     out.production = v;
     expect(!v.btn && !v.style, `the lab shows outside development and previews: ${JSON.stringify(v)}`);
-    await page.locator('body').press('t'); await page.waitForTimeout(200);
+    await page.locator('body').press('Shift+T'); await page.waitForTimeout(200);
     expect(!(await page.locator('.theme-lab').count()), 'T opened the lab in production');
     errors.push(...e);
     await ctx.close();
@@ -68,12 +68,12 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     await page.locator('.search-wrap input').first().click(); await page.keyboard.press('t'); await page.waitForTimeout(200);
     expect(!(await page.locator('.theme-lab').count()), `${scheme}: a T typed in search opened the lab`);
     await page.locator('.search-wrap input').first().fill(''); await page.keyboard.press('Escape'); await page.locator('body').click({ position: { x: 5, y: 300 } }).catch(() => {});
-    await page.locator('body').press('t'); await page.waitForTimeout(200);
+    await page.locator('body').press('Shift+T'); await page.waitForTimeout(200);
     expect(await page.locator('.theme-lab').count() === 1, `${scheme}: T did not open the panel`);
     expect(await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-tl')) === 'preset', `${scheme}: T did not put focus in the panel`);
     await page.keyboard.press('Escape'); await page.waitForTimeout(200);
     expect(!(await page.locator('.theme-lab').count()), `${scheme}: Esc did not close the panel`);
-    await page.locator('body').press('t'); await page.waitForTimeout(200);
+    await page.locator('body').press('Shift+T'); await page.waitForTimeout(200);
     await pick(page, 'preset', 'editorial'); await page.waitForTimeout(300);
     const ed = await page.evaluate(VARS);
     out[scheme + ' editorial'] = ed;
@@ -91,9 +91,9 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     const again = await page.evaluate(VARS);
     out[scheme + ' reload'] = again;
     expect(again.bg === st.bg && again.radius === '1rem', `${scheme}: the choice did not survive a reload: ${JSON.stringify(again)}`);
-    // Closed again on every load; T opens it. A pasted export.
+    // Closed again on every load; Shift+T opens it (T alone sorts by Rotten Tomatoes). A pasted export.
     expect(!(await page.locator('.theme-lab').count()), `${scheme}: the panel reopened on its own after a reload`);
-    await page.locator('body').press('t'); await page.waitForTimeout(200);
+    await page.locator('body').press('Shift+T'); await page.waitForTimeout(200);
     await page.locator('.theme-lab details summary').click();
     await page.fill('[data-tl="paste"]', ':root { --background: #fafaf0; --primary: #8a2be2; }\n.dark { --background: #101010; --primary: #b388ff; }');
     await page.locator('[data-tl="paste-apply"]').click(); await page.waitForTimeout(300);

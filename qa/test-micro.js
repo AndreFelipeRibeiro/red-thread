@@ -265,7 +265,9 @@ const prefs = { version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'rel
     }, SEGS.toString());
     // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
     await page.locator('.drawer.open .cast-row', { hasText: 'Tony Stark' }).click();
-    await page.locator('.drawer.open .trail-pin').click();
+    // (Desktop Connections: the cast already opens the character view, pinned,
+    // since the character view landed; the pin is only there elsewhere.)
+    if (await page.locator('.drawer.open .trail-pin').count()) await page.locator('.drawer.open .trail-pin').click();
     await page.waitForTimeout(2600);
     const early = (await page.evaluate(() => window.__t))[0] || [];
     const late = await page.evaluate(SEGS);

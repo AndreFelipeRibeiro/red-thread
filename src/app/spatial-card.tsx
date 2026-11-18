@@ -78,6 +78,8 @@ export interface CardProps {
   /** An open guide's current stop, when it isn't Up next: where the guide's
    *  stepper stands. */
   isGuideAt?: boolean;
+  /** The character view's row: the current card is marked as a guide stop is. */
+  lineView?: boolean;
   curColor?: string;
   matchedChars?: string[] | null;
   searchQuery?: string;
@@ -97,7 +99,7 @@ export interface CardProps {
   overview?: boolean;
 }
 
-export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, isGuideAt = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
+export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, isGuideAt = false, lineView = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
   const I18N = window.MCU_I18N;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
@@ -121,7 +123,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (listed) border = 'border-(--status-watch-border)';
   if (isCollDimmed) fade = 'opacity-26 saturate-30';
   if (skipped) border = 'border-dashed border-(--border-strong)';
-  if (isCurrent) { border = 'border-(--cur-color,var(--brand))'; shadow = SHADOW.current; z = 'z-28'; fade = 'filter-none'; lift = '[--lift:1.08] motion-reduce:[--lift:1]'; }
+  // In the character view's row the stepper's title is marked as a guide's
+  // stop is (Andre, 2026-11-18): the quiet gray outline, no lift or glow;
+  // elsewhere it keeps the character's color and lifts.
+  if (isCurrent && lineView) { z = 'z-28'; fade = 'filter-none'; }
+  else if (isCurrent) { border = 'border-(--cur-color,var(--brand))'; shadow = SHADOW.current; z = 'z-28'; fade = 'filter-none'; lift = '[--lift:1.08] motion-reduce:[--lift:1]'; }
   // The desktop ring's centre is the same card at the same size (Andre,
   // 2026-11-15); its outline and shadow mark it.
   if (isRingFocus && !touch) z = 'z-27';
@@ -146,7 +152,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         // (no clicks, no tab stop) and come back when the selection closes.
         isRingHidden && 'pointer-events-none invisible opacity-0 [transition:transform_600ms_cubic-bezier(.2,.8,.2,1),opacity_200ms,filter_200ms,visibility_0s_200ms]',
         // The pinned character's other titles step back while the stepper is on one.
-        isHighlighted && !isCurrent && '[.canvas:has(.card.current)_&:not(:hover)]:border-border [.canvas:has(.card.current)_&:not(:hover)]:shadow-none [.canvas:has(.card.current)_&:not(:hover)]:brightness-72 [.canvas:has(.card.current)_&:not(:hover)]:saturate-80',
+        isHighlighted && !isCurrent && !lineView && '[.canvas:has(.card.current)_&:not(:hover)]:border-border [.canvas:has(.card.current)_&:not(:hover)]:shadow-none [.canvas:has(.card.current)_&:not(:hover)]:brightness-72 [.canvas:has(.card.current)_&:not(:hover)]:saturate-80',
         // On the phone the selected card hides behind its focus card.
         touch && isSelected && 'pointer-events-none opacity-0',
         enter && 'animate-[card-enter_300ms_ease-out_backwards] motion-reduce:animate-none',
@@ -160,7 +166,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         // The stop a guide's stepper stands on, when it isn't Up next: the
         // quiet gray (--guide-current), a step thinner than Up next's red, so
         // stepping through a guide shows where you are (Andre, 2026-11-17).
-        isGuideAt && !isUpNext && 'guide-at outline-2 outline-offset-[3px] outline-(--guide-current)')}
+        (isGuideAt || (isCurrent && lineView)) && !isUpNext && 'guide-at outline-2 outline-offset-[3px] outline-(--guide-current)')}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
