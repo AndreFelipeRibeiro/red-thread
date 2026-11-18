@@ -447,7 +447,8 @@ rules carry over unchanged.
 - Text on the dark overlays that sit on posters uses `--on-image` (fixed light
   values): the overlay stays dark in both themes because it sits on an image.
 - **Font sizes are the type roles** (Notion "Set a real type system"):
-  `text-display` (36px, phones 24), `text-title` (20), `text-heading` (16),
+  `text-display` (36px, phones 24), `text-display-sm` (28, the welcome's
+  heading), `text-title` (20), `text-heading` (16),
   `text-body` (15, phones 14), `text-label` (13) and `text-caption` (12),
   declared in `src/index.css` (`@theme`, on the `--fs-*` sizes, in rem) so
   all text follows the browser's default font size and Settings' Text size.

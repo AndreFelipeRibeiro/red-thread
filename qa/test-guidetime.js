@@ -6,7 +6,8 @@
 // - the Encore: Endgame's details say "Also available: Encore", its Titles
 //   row says "Encore on Disney+", the Doomsday guide recommends the cut, and
 //   once Endgame is seen its stop shows the quiet seen line;
-// - the welcome on a first visit offers the promoted guide first; Start the
+// - the welcome on a first visit offers the promoted guide first (one button,
+//   "Get ready for …", Notion "Welcome: streamline the first moment"); Start the
 //   guide follows it and opens it.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8245; // regress/quick give each check its own port
@@ -117,9 +118,9 @@ const text = (sel) => (document.querySelector(sel) || {}).textContent || null;
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { welcome: true });
     await page.goto(URL + '?welcome'); await appReady(page); await page.waitForTimeout(800);
     const w = await page.evaluate(() => ({ q: (document.querySelector('.welcome-guide-q') || {}).textContent || null,
-      first: (() => { const b = [...document.querySelectorAll('.welcome-pick button')]; return b.length ? b[0].textContent : null; })() }));
+      first: (() => { const b = [...document.querySelectorAll('.welcome-pick button')]; return b.length ? (b[0].classList.contains('welcome-guide-go') ? (() => { const c = b[0].cloneNode(true); c.querySelectorAll('.welcome-guide-art').forEach(n => n.remove()); return c.textContent; })() : b[0].textContent) : null; })() }));
     out.welcome = w;
-    expect(!!w.q && w.first === 'Start the guide', `the welcome should offer the guide first: ${JSON.stringify(w)}`);
+    expect(!!w.q && /Get ready for Avengers: Doomsday/.test(w.first || '') && /Start the guide/.test(w.first || ''), `the welcome should offer the guide first, as its primary button: ${JSON.stringify(w)}`);
     if (w.q) {
       await page.locator('.welcome-guide-go').click(); await page.waitForTimeout(900);
       const after = await page.evaluate(() => ({ url: location.search, followed: window.MCU_GUIDE.followed(), open: !!document.querySelector('.welcome-pick') }));

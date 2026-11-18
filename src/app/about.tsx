@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { XIcon } from 'lucide-react';
+import { XIcon, ChevronRightIcon, SparklesIcon } from 'lucide-react';
+import { WhatsNew, RELEASES, releaseMonth } from './whats-new';
 import { Button } from '@/components/ui/button';
 import type { Guide, Title } from '@/types/catalog';
 
@@ -84,9 +85,6 @@ function useScrolledToEnd(ref: React.RefObject<HTMLElement | null>) {
   return end;
 }
 
-// A step between foreground and muted text (V3's "dim"); AA on every surface.
-const DIM = 'text-(--dim)';
-
 /** The recipes the small dialogs share (About, the sign-in reminder, the
  *  bulk confirmation, the picker's leave prompt): body, heading row, title,
  *  lead paragraph, the stacked actions and their two buttons. */
@@ -106,13 +104,13 @@ export const DIALOG = {
 // or else an evergreen one, so the welcome stays right after Doomsday.
 export type WelcomeGuide = { guide: Guide; title: Title | null; days: number | null };
 
-function AboutContent({ titleId, welcome, onClose, onPick, guide, onGuide }: {
+function AboutContent({ titleId, welcome, onClose, onPick, guide, onGuide, onNews, newsRef }: {
   titleId?: string; welcome?: boolean; onClose: () => void; onPick?: () => void;
   guide?: WelcomeGuide | null; onGuide?: () => void;
+  onNews?: () => void; newsRef?: React.Ref<HTMLButtonElement>;
 }) {
-  // Subscribed, so the welcome redraws in a language picked on it.
-  const { tr, lang, setLang, languages } = window.useI18n();
-  const langs = languages();
+  // Subscribed, so it redraws when Settings switches the language.
+  const { tr, lang } = window.useI18n();
   const ways = [['connect', 'about.connect'], ['follow', 'about.follow'], ['order', 'about.order'], ['track', 'about.track']];
   const pickRef = React.useRef<HTMLDivElement>(null);
   const atEnd = useScrolledToEnd(pickRef);
@@ -121,81 +119,115 @@ function AboutContent({ titleId, welcome, onClose, onPick, guide, onGuide }: {
       <div className={DIALOG.head}>
         <div className="brand-mark logo-mark size-8 flex-[0_0_32px]" aria-hidden="true"/>
         <div>
-          <h2 id={titleId} className={DIALOG.title}>{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
+          <h2 id={titleId} className={cn(DIALOG.title, 'in-[.about-dialog]:text-display-sm')}>{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
           <div className="about-tag mt-[3px] text-body text-muted-foreground">{tr('about.tagline')}</div>
         </div>
       </div>
-      {/* The language menu lives in Settings now, so a first visit that can't
-          read the guessed language can still switch here. Each option is
-          written in its own language. */}
-      {welcome && langs.length > 1 && (
-        <div className="welcome-lang mt-3.5 flex flex-wrap items-center gap-2.5" role="group" aria-labelledby="welcome-lang-label">
-          <span id="welcome-lang-label" className="welcome-lang-label text-body font-medium text-muted-foreground">{tr('lang.label')}</span>
-          <div className="segmented inline-flex rounded-lg bg-muted p-[3px]">
-            {langs.map((l) => (
-              <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code} onClick={() => setLang(l.code)}
-                className={cn('min-h-[max(36px,2.25rem)] rounded-md px-3.5 text-body font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50',
-                  lang === l.code && 'on bg-(--button-outline) text-foreground shadow-sm')}>{l.name}</button>
-            ))}
-          </div>
-        </div>
-      )}
-      <p className={DIALOG.lead}>{tr('about.lead')}</p>
+      {/* No language choice here (Andre, 2026-11-18): the browser's language
+          is the guess, and Settings switches it. */}
+      <p className={cn(DIALOG.lead, 'leading-[1.45]')}>{tr('about.lead')}</p>
       <h3 className="about-h mt-[22px] mb-2.5 text-label font-medium text-muted-foreground">{tr('about.waysTitle')}</h3>
-      <ul className="about-ways grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
+      {/* Open rows, not boxed cards (Andre, 2026-11-18): the icon in its grey
+          tile beside its line, two columns on wide screens. */}
+      <ul className="about-ways grid grid-cols-2 gap-x-6 gap-y-4 max-[520px]:grid-cols-1 max-[520px]:gap-y-3.5">
         {ways.map(([icon, key]) => (
-          <li key={key} className="flex flex-col items-start gap-2.5 rounded-lg border bg-card p-3.5 text-card-foreground max-[520px]:flex-row max-[520px]:gap-3 max-[520px]:border-0 max-[520px]:bg-transparent max-[520px]:p-0">
+          <li key={key} className="flex items-start gap-3">
             <span className={DIALOG.ic}><AboutIcon kind={icon}/></span>
-            <span><b className="block text-body font-medium">{tr(key + '.title')}</b><span className="mt-0.5 block text-body leading-normal text-muted-foreground">{tr(key + '.text')}</span></span>
+            <span><b className="block text-body font-medium">{tr(key + '.title')}</b><span className="mt-0.5 block max-w-[28ch] text-body leading-snug text-pretty text-muted-foreground">{tr(key + '.text')}</span></span>
           </li>
         ))}
       </ul>
-      <h3 className="about-h mt-[22px] mb-2.5 text-label font-medium text-muted-foreground">{tr('about.creditsTitle')}</h3>
-      <div className="about-credits text-label leading-[1.55] text-muted-foreground [&_p]:mb-2">
-        <p>{tr('about.tmdb')} {tr('about.tmdbNotice')}</p>
-        <p>{tr('about.justwatch')}</p>
-        <p>{tr('about.ratings')}</p>
-        <p>{tr('about.fan')}</p>
-      </div>
-      {/* Share the app (Notion "Share 1/3"). */}
-      <div className="about-share-row mt-[18px] flex">
-        <window.ShareButton text={tr('share.appLabel')} label={tr('share.appLabel')} payload={() => ({ text: tr('share.appText') })}/>
-      </div>
+      {/* Credits and Share belong to About; the welcome stays on what Red
+          Thread is and where to start (Notion "Welcome: streamline the first
+          moment", Andre 2026-11-18). About from the menu keeps both. */}
+      {!welcome && (<>
+        {/* What's new: the version, and what each release brought (Notion
+            "What's new: a changelog in the app"). A row in the style of the
+            welcome's guide offer, without its wash. */}
+        {onNews && (
+          <button type="button" ref={newsRef} onClick={onNews}
+            className="about-news mt-[22px] flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-card p-3 text-left text-card-foreground outline-none hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50">
+            <span className={DIALOG.ic}><SparklesIcon className="size-[18px]" aria-hidden="true"/></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-body font-medium">{tr('news.title')}</span>
+              <span className="block text-label text-muted-foreground">{tr('news.version', { n: RELEASES[0].version })} · {releaseMonth(RELEASES[0].month, lang)}</span>
+            </span>
+            <ChevronRightIcon className="size-4 flex-none text-muted-foreground" aria-hidden="true"/>
+          </button>
+        )}
+        {/* Credits, quieter: small print under a rule (TMDB requires its
+            notice in About or Credits). Share closes the dialog's content. */}
+        <div className="about-credits-block mt-[22px] border-t pt-4">
+          <h3 className="about-h mb-2 text-label font-medium text-muted-foreground">{tr('about.creditsTitle')}</h3>
+          <div className="about-credits flex flex-col gap-1.5 text-caption leading-snug text-muted-foreground">
+            <p>{tr('about.tmdb')} {tr('about.tmdbNotice')}</p>
+            <p>{tr('about.justwatch')}</p>
+            <p>{tr('about.ratings')}</p>
+            <p>{tr('about.fan')}</p>
+          </div>
+        </div>
+        {/* Share the app (Notion "Share 1/3"). */}
+        <div className="about-share-row mt-4 flex">
+          <window.ShareButton text={tr('share.appLabel')} label={tr('share.appLabel')} payload={() => ({ text: tr('share.appText') })}/>
+        </div>
+      </>)}
       {welcome && (onPick ? (
         // First visit: offer the "What have you seen?" picker (picker.tsx),
         // pinned to the bottom of the dialog or sheet.
         <div ref={pickRef}
-          className={cn("welcome-pick sticky bottom-[-26px] -mx-[30px] mt-[22px] -mb-[26px] border-t bg-popover px-[30px] pt-4 pb-[22px]",
-            'in-[.m-sheet]:bottom-[calc(-24px-env(safe-area-inset-bottom,0px))] in-[.m-sheet]:-mx-[18px] in-[.m-sheet]:-mb-[calc(24px+env(safe-area-inset-bottom,0px))] in-[.m-sheet]:px-[18px] in-[.m-sheet]:pt-3.5 in-[.m-sheet]:pb-[calc(20px+env(safe-area-inset-bottom,0px))]',
+          className={cn("welcome-pick sticky bottom-[-26px] -mx-[30px] mt-[22px] -mb-[26px] border-t bg-popover px-[30px] pt-3.5 pb-3",
+            'in-[.m-sheet]:bottom-[calc(-24px-env(safe-area-inset-bottom,0px))] in-[.m-sheet]:-mx-[18px] in-[.m-sheet]:-mb-[calc(24px+env(safe-area-inset-bottom,0px))] in-[.m-sheet]:px-[18px] in-[.m-sheet]:pt-3 in-[.m-sheet]:pb-[calc(6px+env(safe-area-inset-bottom,0px))]',
             "before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-12 before:bg-linear-to-b before:from-transparent before:to-popover before:transition-opacity before:duration-200 before:content-['']",
             atEnd && 'before:opacity-0')}>
-          {/* The guide first while there is one to offer (Andre, 2026-11-17):
-              its poster, the question, its size and countdown, and Start the
-              guide; then Mark what I've seen; then Start exploring. */}
-          {guide && onGuide && (() => {
+          {/* Only the actions are pinned (Andre, 2026-11-18: the guide's
+              block and the picker's question took most of a phone's sheet).
+              One primary: the promoted guide, as a button that carries its
+              poster, name, size and countdown, or else Mark what I've seen.
+              Then the rest side by side, quiet. */}
+          {(() => {
             const G = window.MCU_GUIDE;
-            const art = guide.title || (G.stops(guide.guide, false)[0] || {}).title;
-            const n = G.stops(guide.guide, false).length;
-            const meta = [tr('guide.stops', { n }), guide.days != null && guide.days > 0 ? tr('guide.hero.daysLeft', { n: guide.days }) : null].filter(Boolean).join(' · ');
-            return (
-              <div className="welcome-guide mb-3.5 border-b pb-3.5">
-                <div className="flex items-center gap-3">
-                  {art && <div className={cn('welcome-guide-art h-[60px] w-10 flex-none overflow-hidden rounded-md bg-muted [&>:first-child]:block [&>:first-child]:size-full [&_img]:size-full [&_img]:object-cover [&_svg]:size-full')} aria-hidden="true"><window.PosterArt title={art}/></div>}
-                  <div className="min-w-0 flex-1">
-                    <div className="welcome-guide-q text-heading leading-snug font-semibold">{guide.title ? tr('welcome.guideQ', { title: window.MCU_I18N.titleName(guide.title) }) : G.name(guide.guide)}</div>
-                    <div className={cn('welcome-guide-meta mt-0.5 text-label tabular-nums', DIM)}>{meta}</div>
-                  </div>
-                </div>
-                <Button className="welcome-guide-go mt-3 h-auto min-h-10 w-full" onClick={onGuide}>{tr('guide.promoStart')}</Button>
-              </div>
+            const offer = guide && onGuide ? guide : null;
+            const art = offer ? offer.title || (G.stops(offer.guide, false)[0] || {}).title : null;
+            const n = offer ? G.stops(offer.guide, false).length : 0;
+            // Each part of the second line stays whole when it wraps ("faltam
+            // 30 dias" never splits).
+            // As the Guides hero: the kicker ("Coming up · Dec 18 · 30 days to
+            // go") in the brand red, the question, the guide's size and time.
+            const date = offer && offer.days != null && offer.days > 0 ? G.targetDate(offer.guide) : null;
+            // Phones drop the date so the kicker keeps to one line.
+            const kicker = offer && offer.days != null && offer.days > 0 ? <>{tr('guide.group.coming')}{date && <span className="in-[.m-sheet]:hidden"> · {date}</span>} · {tr('guide.hero.daysLeft', { n: offer.days })}</> : null;
+            // Each part stays whole when the line wraps ("14 h 30 min").
+            const meta = offer ? String(G.size(offer.guide) || tr('guide.stops', { n })).split(' · ')
+              .map((part, i) => <React.Fragment key={i}>{i > 0 && ' · '}<span className="whitespace-nowrap">{part}</span></React.Fragment>) : null;
+            const pick = <Button variant={offer ? 'outline' : 'default'} className={cn('picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]', offer && 'min-w-[min(100%,11rem)] flex-1')} onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>;
+            const start = <Button variant={offer ? 'ghost' : 'outline'} className={cn('nudge-later welcome-start h-auto', offer ? 'min-h-9 min-w-[min(100%,11rem)] flex-1' : 'min-h-10')} onClick={onClose}>{tr('about.start')}</Button>;
+            return offer ? (
+              <>
+                {/* Dressed as the Guides page's hero (Andre, 2026-11-18): the card
+                    surface with the brand wash from the left, dark text, the
+                    kicker's red for the action. */}
+                <button type="button" onClick={onGuide}
+                  className="welcome-guide-go flex w-full cursor-pointer items-center gap-4 rounded-xl border bg-card p-3 pr-4 text-left text-card-foreground transition-[filter] outline-none hover:brightness-[.97] focus-visible:ring-3 focus-visible:ring-ring/50 dark:hover:brightness-110 in-[.m-sheet]:gap-3 in-[.m-sheet]:p-2.5"
+                  style={{ backgroundImage: 'linear-gradient(90deg, color-mix(in oklab, var(--brand) 22%, transparent) 0%, transparent 85%)' }}>
+                  {art && <span className="welcome-guide-art h-[84px] w-14 flex-none overflow-hidden rounded-md bg-muted shadow-sm [&>:first-child]:block [&>:first-child]:size-full [&_img]:size-full [&_img]:object-cover [&_svg]:size-full in-[.m-sheet]:h-[72px] in-[.m-sheet]:w-12" aria-hidden="true"><window.PosterArt title={art}/></span>}
+                  <span className="min-w-0 flex-1">
+                    {kicker && <span className="welcome-guide-kicker block text-caption font-semibold tracking-[.04em] text-(--brand-text) uppercase in-[.m-sheet]:tracking-normal in-[.m-sheet]:normal-case">{kicker}</span>}
+                    <span className="welcome-guide-q mt-1 block text-heading leading-snug font-semibold text-foreground in-[.m-sheet]:mt-0.5 in-[.m-sheet]:text-body">{offer.title ? tr('welcome.guideGo', { title: window.MCU_I18N.titleName(offer.title) }) : G.name(offer.guide)}</span>
+                    <span className="welcome-guide-meta mt-0.5 block text-label leading-snug text-muted-foreground tabular-nums">{meta}</span>
+                  </span>
+                  {/* The action, said: a pill on wide screens; a chevron on
+                      phones, where the words stay for screen readers. */}
+                  <span className="welcome-guide-cta inline-flex h-9 flex-none items-center gap-1 rounded-full bg-primary px-3.5 text-label font-medium text-primary-foreground in-[.m-sheet]:size-9 in-[.m-sheet]:justify-center in-[.m-sheet]:px-0">
+                    <span className="in-[.m-sheet]:sr-only">{tr('guide.promoStart')}</span>
+                    <ChevronRightIcon className="hidden size-4 in-[.m-sheet]:block" aria-hidden="true"/>
+                  </span>
+                </button>
+                <div className="about-cta-row mt-2 flex flex-wrap items-stretch gap-2">{pick}{start}</div>
+              </>
+            ) : (
+              <div className="about-cta-row flex flex-col items-stretch gap-2">{pick}{start}</div>
             );
           })()}
-          <div className="welcome-q text-heading font-semibold">{tr('picker.welcomeQ')}</div>
-          <p className={cn('welcome-qs mt-1 text-label leading-normal', DIM)}>{tr('picker.welcomeText')}</p>
-          <div className="about-cta-row mt-3 flex flex-col items-stretch gap-2">
-            <Button variant={guide && onGuide ? 'outline' : 'default'} className="picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>
-            <Button variant="outline" className="nudge-later welcome-start h-auto min-h-10" onClick={onClose}>{tr('about.start')}</Button>
-          </div>
         </div>
       ) : (
         <div className={DIALOG.actions}>
@@ -259,19 +291,35 @@ function ModalDialog({ onClose, labelledBy, describedBy, className = '', childre
   );
 }
 
+// What's new opens in place of About's content; Escape, × and Back step back
+// to About first (one layer per press), and focus returns to its row.
+function useNewsView(onClose: () => void) {
+  const [news, setNews] = React.useState(false);
+  const newsRef = React.useRef<HTMLButtonElement>(null);
+  const back = React.useRef(false);
+  React.useEffect(() => { if (!news && back.current) { back.current = false; newsRef.current?.focus(); } }, [news]);
+  const leave = () => { back.current = true; setNews(false); };
+  const close = (): void | boolean => { if (news) { leave(); return false; } onClose(); };
+  return { news, open: () => setNews(true), leave, close, newsRef };
+}
+
 function AboutDialog({ onClose, welcome, onPick, guide, onGuide }: { onClose: () => void; welcome?: boolean; onPick?: () => void; guide?: WelcomeGuide | null; onGuide?: () => void }) {
+  const v = useNewsView(onClose);
   return (
-    <ModalDialog onClose={onClose} labelledBy="about-title">
-      <AboutContent titleId="about-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide}/>
+    <ModalDialog onClose={v.close} labelledBy="about-title">
+      {v.news ? <WhatsNew titleId="about-title" onBack={v.leave}/>
+        : <AboutContent titleId="about-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide} onNews={welcome ? undefined : v.open} newsRef={v.newsRef}/>}
     </ModalDialog>
   );
 }
 
 function AboutSheet({ onClose, welcome, onPick, guide, onGuide }: { onClose: () => void; welcome?: boolean; onPick?: () => void; guide?: WelcomeGuide | null; onGuide?: () => void }) {
   const Sheet = window.Sheet;
+  const v = useNewsView(onClose);
   return (
-    <Sheet onClose={onClose} tall label={window.MCU_I18N.tr(welcome ? 'about.welcomeTitle' : 'about.title')}>
-      <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide}/>
+    <Sheet onClose={v.close} tall label={window.MCU_I18N.tr(v.news ? 'news.title' : welcome ? 'about.welcomeTitle' : 'about.title')}>
+      {v.news ? <WhatsNew titleId="about-sheet-title" onBack={v.leave}/>
+        : <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide} onNews={welcome ? undefined : v.open} newsRef={v.newsRef}/>}
     </Sheet>
   );
 }
