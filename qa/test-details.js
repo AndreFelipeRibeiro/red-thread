@@ -151,7 +151,9 @@ const inspect = () => {
     // then Follow the thread (Notion "Explore E 4/5") for a title with one.
     const castAfter = phone ? ['td-acc', 'td-thread-wrap', 'm-apply'] : ['td-acc', 'td-thread-wrap'];
     if (r.after.join(',') !== castAfter.join(',')) err(`${name}: after the details came ${r.after.join(', ')}, expected ${castAfter.join(', ')}`);
-    if (r.heroText.join(',') !== 'td-eyebrow,td-title,release-line,story-year') err(`${name}: hero text is ${r.heroText.join(', ')}`);
+    // The runtime follows the story line (Notion "Time to finish"); a title
+    // with another cut adds its edition lines (Endgame's Encore).
+    if (!/^td-eyebrow,td-title,release-line,story-year(,td-runtime)?(,td-edition)*$/.test(r.heroText.join(','))) err(`${name}: hero text is ${r.heroText.join(', ')}`);
     if (r.thumb[0] !== 66 || r.thumb[1] !== 99) err(`${name}: poster thumbnail is ${r.thumb.join('×')}, expected 66×99`);
     if (r.scores !== 2) err(`${name}: expected IMDb and RT badges for ${pick.released.id}, saw ${r.scores}`);
     if (r.budget !== pick.released.budget || r.budgetLabel !== pick.strings.budget) err(`${name}: budget reads "${r.budgetLabel} ${r.budget}", expected "${pick.strings.budget} ${pick.released.budget}"`);

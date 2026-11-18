@@ -327,6 +327,8 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
               ? (t[lead] != null ? <ScoreChip kind={lead} title={t} compact className="m-score"/> : <span className="m-score">{tr('score.none')}</span>)
               : <span style={{ color: phaseColor(t.phase) }}>{tr('phase.label', { n: t.phase })}</span>}
             {story && t.story && <>{dot}<StoryYear title={t}/></>}
+            {/* Another cut on streaming (Endgame's Encore), kept small. */}
+            {t.editions && t.editions[0] && <>{dot}<span className="m-ledition">{tr('edition.tag', { name: t.editions[0].name[I.lang] || t.editions[0].name.en, service: t.editions[0].service })}</span></>}
             <ReleaseBadge title={t} className="m-lrelease ml-1.5"/>
           </div>
           <MatchBadge matchedChars={matchedChars} query={search} title={t}/>

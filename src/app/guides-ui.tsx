@@ -93,12 +93,44 @@ const MCU_GUIDE = {
         .format(new Date(t.release + 'T00:00:00Z'));
     } catch (e) { return t.release; }
   },
-  // "5 stops + 3 optional"
+  // "5 stops · about 11 h" (Notion "Time to finish"): the stops' runtimes,
+  // released ones only.
   size(g) {
     const all = MCU_GUIDE.stops(g, true);
     const e = all.filter(s => !s.optional).length, o = all.length - e;
     const base = gtr('guide.stops', { n: e });
-    return o ? gtr('guide.plusOptional', { base, n: o }) : base;
+    const min = MCU_GUIDE.minutes(g, null).total;
+    const sized = o ? gtr('guide.plusOptional', { base, n: o }) : base;
+    return min ? sized + ' · ' + MCU_GUIDE.duration(min, true) : sized;
+  },
+  // A guide's watching time: `total` over its released stops (skipped ones
+  // out), `left` over those not yet seen. Minutes.
+  minutes(g, statusOf) {
+    const stops = MCU_GUIDE.stops(g, false).filter(s => window.MCU_isReleased(s.title)
+      && !(statusOf ? MCU_GUIDE.skippedNow(g, s.id, statusOf) : MCU_GUIDE.isSkipped(g, s.id)));
+    const total = stops.reduce((a, s) => a + (s.title.runtime || 0), 0);
+    const left = statusOf ? stops.filter(s => statusOf(s.id) !== 'seen').reduce((a, s) => a + (s.title.runtime || 0), 0) : total;
+    return { total, left };
+  },
+  // Minutes as words. Totals (`about`): to the nearest half hour, "about
+  // 11 h", "about 10 h 30 min"; under an hour, minutes. A title's own
+  // runtime is exact: "2 h 6 min".
+  duration(min, about, word = true) {
+    if (!min) return '';
+    let text;
+    if (about && min >= 60) {
+      const half = Math.round(min / 30) * 30, h = Math.floor(half / 60), m = half % 60;
+      text = m ? gtr('runtime.hm', { h, m }) : gtr('runtime.h', { h });
+    } else {
+      const h = Math.floor(min / 60), m = min % 60;
+      text = h && m ? gtr('runtime.hm', { h, m }) : h ? gtr('runtime.h', { h }) : gtr('runtime.m', { m });
+    }
+    return about && word ? gtr('runtime.about', { t: text }) : text;
+  },
+  // "about 4 h left", or '' when nothing is left.
+  left(g, statusOf) {
+    const { left } = MCU_GUIDE.minutes(g, statusOf);
+    return left ? gtr('runtime.left', { t: MCU_GUIDE.duration(left, true, false) }) : '';
   },
 };
 window.MCU_GUIDE = MCU_GUIDE;
@@ -588,7 +620,7 @@ function GuidesHero({ guide, followed, onPick }) {
     <div className={cn('g-hero-prog flex items-center gap-3 text-label font-semibold text-muted-foreground tabular-nums', cls)}>
       {followed ? <>
         <span className="g-hero-bar h-1 w-[100px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:flex-1" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
-        <span aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}</span>
+        <span aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}{MCU_GUIDE.left(guide, statusOf) ? ' · ' + MCU_GUIDE.left(guide, statusOf) : ''}</span>
       </> : <span>{p.ess.seen ? gtr('guide.seenOf', { seen: p.ess.seen, n: p.ess.released }) : gtr('guide.hero.notStarted', { size: MCU_GUIDE.size(guide) })}</span>}
     </div>
   );
@@ -763,7 +795,7 @@ function ContinueCard({ guide, onPick }) {
         <span className="flex-1"/>
         <div className="mt-2 flex items-center gap-3 text-label text-muted-foreground tabular-nums">
           <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-(--progress-track)" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
-          <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}</span>
+          <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}{MCU_GUIDE.left(guide, statusOf) ? ' · ' + MCU_GUIDE.left(guide, statusOf) : ''}</span>
         </div>
         <span className="mt-1.5 text-label font-medium text-foreground in-[.app.touch]:hidden" aria-hidden="true">{gtr('guide.continue.open')}</span>
       </div>
@@ -1033,7 +1065,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
     ? gtr('guide.destPos')
     : stepIndex >= 0
     ? gtr(spatial ? 'guide.stepShort' : 'guide.stepOf', { i: stepIndex + 1, n: stepCount })
-    : gtr('guide.stops', { n: stepCount });
+    : gtr('guide.stops', { n: stepCount }) + (!spatial && MCU_GUIDE.left(guide, statusOf) ? ' · ' + MCU_GUIDE.left(guide, statusOf) : '');
   const step = (
     <div className={cn(B.STEP, 'gap-0.5')}>
       <button type="button" className={B.STEP_BTN} onClick={onPrev} aria-label={gtr('guide.prev')} disabled={!stepCount}>‹</button>
@@ -1421,7 +1453,7 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
           <span className={cn('block h-full rounded-full', p.complete ? 'bg-(--seen)' : 'bg-(--brand)')} style={{ width: pct + '%' }}/>
         </span>
         <span className="pgh-count" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>
-          {gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}{nOpt ? ' · ' + gtr('guide.optN', { n: nOpt }) : ''}{skipped ? ' · ' + gtr('guide.skippedCount', { n: skipped }) : ''}
+          {gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}{nOpt ? ' · ' + gtr('guide.optN', { n: nOpt }) : ''}{skipped ? ' · ' + gtr('guide.skippedCount', { n: skipped }) : ''}{MCU_GUIDE.left(guide, statusOf) ? ' · ' + MCU_GUIDE.left(guide, statusOf) : ''}
         </span>
         <window.BulkHeaderAction ids={ids} group={name}/>
       </div>
@@ -1549,6 +1581,9 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
             </span>}
             {/* The stop's note: two lines at most on a phone. */}
             {!skipped && phone && why && <span className={cn('g-why mt-0.5 line-clamp-2 text-label leading-[1.4]', DIM)}>{why}</span>}
+            {/* A quiet extra once the stop is seen (Endgame: "Seen the
+                original? The Encore adds…"); it changes no progress. */}
+            {!skipped && seen && s.seenNote && <span className={cn('g-seen-note mt-0.5 text-label leading-[1.4]', DIM)}>{gloc(s.seenNote)}</span>}
             <window.ReleaseBadge title={t} className="g-release mt-1"/>
           </span>
         </button>

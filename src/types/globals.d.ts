@@ -83,6 +83,8 @@ export interface GuideRuntime {
   stops(guide: Guide, includeOptional: boolean): Array<{ id: string; title: Title; weight: string }>;
   skippedNow(guide: Guide, id: string, statusOf: (id: string) => string | null): boolean;
   name(guide: Guide): string;
+  /** Minutes as words (Notion "Time to finish"); `about` rounds a total to the half hour. */
+  duration(min: number, about?: boolean, word?: boolean): string;
   short(guide: Guide): string;
   kind(guide: Guide): string;
   blurb(guide: Guide): string;

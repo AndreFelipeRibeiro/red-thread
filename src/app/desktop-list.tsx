@@ -324,7 +324,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                   // "Set in 2010" for a time; a setting that isn't one
                   // ("Outside time") reads on its own.
                   const story = t.story ? (/\d/.test(t.story) ? tr('story.setIn', { story: I.storyLabel(t.story) }) : I.storyLabel(t.story)) : null;
-                  const meta = [tr('phase.label', { n: t.phase }), story].filter(Boolean).join(' · ');
+                  // Another cut on streaming (Endgame's Encore): a small tag in the caption.
+                  const edition = t.editions && t.editions[0] ? tr('edition.tag', { name: t.editions[0].name[I.lang] || t.editions[0].name.en, service: t.editions[0].service }) : null;
+                  const meta = [tr('phase.label', { n: t.phase }), story, edition].filter(Boolean).join(' · ');
                   const isNext = t.id === upNextId;
                   return (
                     <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
@@ -361,7 +363,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                               </span>
                             )}
                           </span>
-                          <span className="dl-meta mt-0.5 truncate text-(length:--step-meta) text-muted-foreground">{meta}</span>
+                          <span className="dl-meta mt-0.5 max-w-full truncate text-(length:--step-meta) text-muted-foreground">{meta}</span>
                           <window.ReleaseBadge title={t} className="dl-release mt-[5px] flex w-max"/>
                           {/* Which character matched the search. */}
                           <window.MatchBadge matchedChars={matched} query={search} title={t}/>
