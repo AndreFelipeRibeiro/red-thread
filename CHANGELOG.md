@@ -13,6 +13,154 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 14 — Keep the highlighted title in view
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- Stepping through a character's titles, and hovering or focusing a row in
+  Follow the thread, keep the card in view: the camera reads where the card
+  really is (a ring, a trail or the thread's row move cards), stays still when
+  it is fully visible, and otherwise pans just far enough, with a margin. Reduce
+  motion jumps. Thread rows now follow keyboard focus too.
+- `qa/test-keepinview.js`: every outlined card stays visible stepping through
+  Happy Hogan's titles at 1440, 1100 and 390; thread rows; Reduce motion.
+
+## V5 Batch 14 — The filter lens
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- Seen, Unseen and Watchlist on Connections pack their titles into one row
+  (Release, Story) or their grid (other orders) and hide the rest; the camera
+  flies out to the set, then lands on the last seen title (Seen) or the first.
+  The lens takes its titles when the filter changes, so marking a title under
+  it never moves the canvas. Replaces V3-SPEC §7.1's dim-in-place rule for
+  these filters (docs/decisions.md).
+- `qa/test-lens.js`: desktop, unmarking under the lens, Watchlist, clearing,
+  phone, Reduce motion.
+
+## V5 Batch 14 — The guide line
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- An open guide on Connections shows only its stops and target, in one row;
+  closing it glides everything back. The stop the stepper is on gets a gray
+  outline (`--guide-current`) when it isn't Up next. Phones open on the next
+  stop at the reading zoom, with it selected.
+- Figma: `guide-current` variable; the Spatial card's Ring property (None, Up
+  next, Guide stop).
+
+## V5 Batch 14 — Guides open on the next stop; Mark seen moves on, Undo steps back
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- A guide opened onto Connections selects its next unseen stop (desktop opens
+  its details). Mark seen moves on to the next stop after 0.7s; Undo takes the
+  mark back and returns to the title.
+- `qa/test-guidemode.js`: the line, landing, Mark seen → next and Undo.
+
+## V5 Batch 14 — Link straight to Follow the thread
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- `?title=…&explore=thread` opens a title with its thread laid out, on
+  desktop and phones; the address keeps it while the thread is open.
+
+## V5 Batch 14 — Headlines in Inter; Theme lab pairings
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- The thread and trail titles, the last headlines on the display face, are
+  Inter Semi Bold. The dev-only Theme lab tries the five headline pairings on
+  every headline and title name, each scaled to read as large as Inter;
+  Figma's title names follow the Typeface collection too.
+
+## V5 Batch 14 — Figma: screens map
+
+Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 65 of 66 runs clean (test-settings' slide check, which
+counts animation frames, missed the drawer under full load; clean on three solo reruns).
+
+- docs/figma-library.md: the Screens file's frames, the phone components and
+  the Foundations sections.
+
+## V5 Batch 13 — Shared links land on their content
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs; one test-camera click timeout, clean on
+six reruns).
+
+- A first visit through a shared link (`?guide=`, `?title=`, `?char=`) lands
+  on the guide, title or character, with no welcome on top; the visit counts
+  as decided, so the welcome doesn't come back on reload. Promotions still
+  wait for a returning visit. Ships ahead of the Nov 18 launch post
+  (`?guide=before-doomsday`).
+- `qa/test-welcome.js` checks the three links on desktop and phone.
+
+## V5 Batch 13 — A layout grid
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs).
+
+- 4 columns on phones, 8 from 600, 12 from 900; gutters 16 then 24;
+  margins 16, 24, and 32 from 1600. Reading pages stop at 1128, lists at
+  1488. Tokens `--grid-*`, `--content-max`, `--list-max`, named breakpoints
+  (tab, desk, wide, xwide) and a `layout-grid` utility.
+- The app bar, character banner, Titles, Guides and a guide page use it:
+  the desktop margin is 24 (it was 16–22, 48 on Guides), Guides is 1128
+  wide (was 1120) with cards on whole columns (264 and 552), Titles 1488.
+- Figma: a Grid collection (Phone, Tablet, Desktop, Extra wide) and grid
+  styles; `docs/design-tokens.md` "Grid".
+- The desktop header re-measures its compact steps when a control in it
+  grows or a font loads (it ran 15px over at 1440 in Portuguese).
+
+## V5 Batch 13 — The palette named and streamlined
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs).
+
+- The 49 colors the components mixed by hand became 30 named roles (dim,
+  brand-text, the seen and Watchlist tints, control-surface, chips …), the
+  near-duplicate washes merged (brand tint 10%, seen tint 14%), and the reds
+  went from five to three; 38 primitives.
+- Grey secondary text is a touch darker (oklch 0.52) so it keeps 4.5:1 on
+  the brand tint of an Up next row.
+
+## V5 Batch 13 — The Figma library finished, and a Screens file
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs).
+
+- New components: Filters panel, Settings panel, search suggestions,
+  character banner and pill, thread view and stops, guide header and stops,
+  the phone rows, Up next card, guide header, stops and promo, and the
+  Welcome dialog; the Foundations page is generated from the variables.
+- Translucent colors are tokens that carry their alpha, so they hold in
+  other files; the builder no longer copies opacities onto instances.
+- Red Thread – Screens: the key desktop and phone screens, Light and Dark,
+  built only from library instances (`docs/figma-library.md`).
+- The library is published as a team library from the AFR folder.
+
+## V5 Batch 13 — Tickets link exact Figma frames
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production).
+
+- AGENTS.md: a ticket's Figma field is a node link to the exact frame, with
+  behavior notes as Dev Mode annotations; and the "Shipping a batch"
+  checklist (regression and push, CHANGELOG, close tickets, calendar, recap).
+
 ## V5 workflow — Connect Figma to code: Figma leads
 
 Recorded: 2026-11-17 18:05 EST (-0500). Pushed to `version/5.0` (V5

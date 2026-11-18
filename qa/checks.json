@@ -9,7 +9,7 @@
     "test-nudgeundo", "test-pickperson", "test-escpin", "test-back", "test-mviewport", "test-inertia", "test-portrait",
     "test-recastname", "test-bannerhold", "test-progress", "test-release", "test-urlstate", "test-bulk",
     "test-details", "test-nextup", "test-watch", "test-guides", "test-picker", "test-listkeys", "test-promo",
-    "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode",
+    "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode", "test-lens", "test-keepinview",
     "test-contrast", "test-gpage", "test-follow", "test-pagescroll", "test-monogram", "test-v4scope", "test-retap", "test-logo", "test-threads", "test-settings", "test-share", "test-previews", "test-textsize", "test-stepzoom", "test-segpill", "test-micro", "test-nav", "test-cards", "test-themelab", "test-typescale", "test-swipe", "test-explore",
     { "check": "a11y-scan", "env": { "LOC": "en-US" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true },
@@ -19,7 +19,7 @@
   "files": {
     "src/": ["test-typescale"],
     "src/app/theme-lab.tsx": ["test-themelab"],
-    "src/app/app.tsx": ["test-nav", "test-micro", "test-segpill", "test-stepzoom", "test-textsize", "test-share", "test-settings", "test-threads", "test-logo", "test-back", "test-guidemode", "test-panel", "test-esc", "test-escpin", "test-urlstate", "test-home", "test-refocus", "test-listkeys", "test-layers", "test-camera", "test-explore"],
+    "src/app/app.tsx": ["test-nav", "test-micro", "test-segpill", "test-stepzoom", "test-textsize", "test-share", "test-settings", "test-threads", "test-logo", "test-back", "test-guidemode", "test-panel", "test-esc", "test-escpin", "test-urlstate", "test-home", "test-refocus", "test-listkeys", "test-layers", "test-camera", "test-explore", "test-lens", "test-keepinview"],
     "src/app/mobile.tsx": ["test-pagescroll", "test-retap", "test-textsize", "test-share", "test-settings", "test-logo", "test-back", "test-guidemode", "test-v2", "test-panel", "test-details", "test-mviewport", "test-align2", "test-progress"],
     "src/app/desktop-list.tsx": ["test-nav", "test-textsize", "test-dlist", "test-bulk", "test-listkeys", "test-progress", "test-home", "test-unreleased", "test-layers", "test-anim", "test-contrast", "test-nextup"],
     "src/data/guides.ts": ["test-guides", "test-promo", "test-partof", "test-skip"],

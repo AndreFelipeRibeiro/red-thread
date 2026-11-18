@@ -339,6 +339,11 @@
          --secondary — the surfaces it is most often used on. 0.54 gives 4.61:1
          there and 5.02:1 on white (qa/test-contrast.js). */
       --muted-foreground: var(--neutral-52);
+      /* The outline on an open guide's current stop when it isn't Up next:
+         a quiet gray, lighter than Muted text, so Up next's red ring stays
+         the one that stands out (Andre, 2026-11-17). Solid, so Figma draws
+         it the same. */
+      --guide-current: var(--neutral-71);
       --accent: var(--neutral-97);
       --accent-foreground: var(--neutral-20);
       /* The brand red (Andre, 2026-11-17, palette proposal P4; was its own
@@ -445,6 +450,7 @@
       --secondary-foreground: var(--neutral-98);
       --muted: var(--neutral-27);
       --muted-foreground: var(--neutral-71);
+      --guide-current: var(--neutral-52);
       --accent: var(--neutral-27);
       --accent-foreground: var(--neutral-98);
       --destructive: var(--red-68);

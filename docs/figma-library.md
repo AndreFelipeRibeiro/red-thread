@@ -45,7 +45,7 @@ surface uses them, so they have no Figma counterpart until one does.
 
 | Figma | Node | Code |
 | --- | --- | --- |
-| Spatial card (Seen × Release) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
+| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
 | List row (Seen) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
@@ -117,6 +117,10 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Guide page, Thor (desktop) | `17:2641` | `17:2876` |
 | Follow the thread (desktop) | `17:2888` | `17:3142` |
 | Settings over Titles (desktop) | `16:5024` | `16:5152` |
+| Search open (desktop) | `19:3906` | `19:4033` |
+| Filters open (desktop) | `19:4050` | `19:4138` |
+| What have you seen? (desktop) | `19:4155` | `19:4252` |
+| Character pinned, Titles (desktop) | `19:4270` | `19:4565` |
 | Titles (phone) | `17:4759` | `17:4964` |
 | Details sheet over Titles (phone) | `17:4952` | `17:5267` |
 

@@ -75,6 +75,9 @@ export interface CardProps {
   isUpNext?: boolean;
   /** The card whose poster is hovered in Cast and connections (desktop). */
   isPeek?: boolean;
+  /** An open guide's current stop, when it isn't Up next: where the guide's
+   *  stepper stands. */
+  isGuideAt?: boolean;
   curColor?: string;
   matchedChars?: string[] | null;
   searchQuery?: string;
@@ -94,7 +97,7 @@ export interface CardProps {
   overview?: boolean;
 }
 
-export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
+export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, isGuideAt = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
   const I18N = window.MCU_I18N;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
@@ -153,7 +156,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         // Up next: a red outline clear of the card's own border and shadow, so
         // it reads with any other state (Andre, 2026-11-16: it looked like
         // every other card). An outline is not clipped by overflow-hidden.
-        isUpNext && 'up-next outline-3 outline-offset-[3px] outline-(--brand)')}
+        isUpNext && 'up-next outline-3 outline-offset-[3px] outline-(--brand)',
+        // The stop a guide's stepper stands on, when it isn't Up next: the
+        // quiet gray (--guide-current), a step thinner than Up next's red, so
+        // stepping through a guide shows where you are (Andre, 2026-11-17).
+        isGuideAt && !isUpNext && 'guide-at outline-2 outline-offset-[3px] outline-(--guide-current)')}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),

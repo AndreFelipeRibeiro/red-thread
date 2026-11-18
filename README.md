@@ -340,7 +340,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   order and catalogue filters live in the URL (for example
   `?sort=chrono&phase=3&title=thor-ragnarok`), so a view can be bookmarked or
   sent. A link opens exactly that state; what it leaves out takes the app's
-  defaults. The Seen / Unseen / Watchlist filter, the search text, the language
+  defaults. `&explore=thread` with a title opens its Follow the thread (the
+  horizontal line on Connections and the timeline in the panel; the thread
+  sheet on phones), and leaves the address when you go back to the details.
+  The Seen / Unseen / Watchlist filter, the search text, the language
   and anything from the account never go in. On phones, Back and Forward close
   and reopen the details.
 - Release status at the precision it is known: "Released May 2, 2008",
@@ -460,8 +463,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   phones; it waits until any open sheet or dialog closes).
 - Released-title completion computed from release dates and the local calendar
   date, with a separate watchlist count. Unreleased titles do not affect completion.
-- In Spatial view, collection filters dim non-matching titles in place; Grid/List
-  filter their contents. Changing a title's status does not reflow the canvas.
+- On Connections, Seen, Unseen and Watchlist pack their titles into one row
+  (Release, Story) or their grid (the other orders) and hide the rest; the
+  camera flies out to the set, then lands on the last seen title (Seen) or the
+  first (the others). Titles and the phone lists filter their contents.
+  Changing a title's status while a filter is on does not reflow the canvas.
 - Named mobile dialogs, keyboard focus handling and accessible pressed states.
 
 ## The data
@@ -830,8 +836,8 @@ commercial licence first.
   announcements and release dates can change.
 - Some titles have no shared-character connections with the rest of the graph.
 - Cold loads require the CDN libraries; there is no service worker/offline bundle.
-- Changing the collection filter itself intentionally recenters Spatial to frame
-  matches. Changing a title's tracking status under that filter does not recenter.
+- Changing the collection filter itself intentionally repacks and reframes
+  Connections. Changing a title's tracking status under that filter does not.
 - Active filters/view preferences are device-scoped; only collection rows sync.
 - Email/password signup, recovery and SMTP are deferred to Phase 6.
 

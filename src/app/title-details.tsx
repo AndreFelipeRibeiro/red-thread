@@ -519,7 +519,7 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
           <div className={cn('ex-poster h-[120px] w-20 flex-none rounded-lg shadow-[0_0_0_2px_var(--brand)]', THUMB)} aria-hidden="true"><PosterArt title={title}/></div>
           <div className="min-w-0 flex-1">
             <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}
-              className="ex-title m-0 font-display text-display font-normal tracking-[-0.01em] text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{I18N().titleName(title)}</h2>
+              className="ex-title m-0 text-display leading-[1.12] font-semibold tracking-tight text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{I18N().titleName(title)}</h2>
             <div className="ex-meta mt-1 text-label text-muted-foreground tabular-nums">{metaLine(title)}</div>
             <div className="ex-count mt-2.5 text-body font-semibold text-(--brand) tabular-nums">{tr('thread.connected', { n: rows.length })}</div>
           </div>
@@ -534,6 +534,7 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
             <li key={t.id}>
               <button type="button" data-title={t.id} onClick={() => onOpen(t.id)}
                 onMouseEnter={drawer ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                onFocus={drawer ? () => window.MCU_peekTitle(t.id) : undefined} onBlur={drawer ? () => window.MCU_peekTitle(null) : undefined}
                 aria-label={tr('thread.hopTo', { title: I18N().titleName(t), names: names.join(', ') })}
                 className="ex-row relative flex w-full cursor-pointer items-center gap-3 rounded-md py-1.5 pr-2 pl-9 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50">
                 {/* The rail runs through every row; each row draws its piece. */}
@@ -594,7 +595,7 @@ export function TrailView({ char, from, surface, headingId, headingRef, inCanvas
           </span>
           <div className="min-w-0 flex-1">
             <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}
-              className="ex-title m-0 font-display text-display font-normal tracking-[-0.01em] text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{name}</h2>
+              className="ex-title m-0 text-display leading-[1.12] font-semibold tracking-tight text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{name}</h2>
             <div className="ex-meta mt-1 text-label text-muted-foreground tabular-nums">
               {tr('trail.meta', { actor: window.MCU_credit(fromTitle, char), n: list.length, years: span })}
             </div>
@@ -613,6 +614,7 @@ export function TrailView({ char, from, surface, headingId, headingRef, inCanvas
             <li key={t.id}>
               <button type="button" data-title={t.id} onClick={() => onOpen(t.id)} aria-current={here ? 'true' : undefined}
                 onMouseEnter={drawer && !here ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                onFocus={drawer && !here ? () => window.MCU_peekTitle(t.id) : undefined} onBlur={drawer ? () => window.MCU_peekTitle(null) : undefined}
                 aria-label={tr('details.openTitle', { title: I18N().titleName(t) })}
                 className={cn('ex-row relative flex w-full cursor-pointer items-center gap-3 py-1.5 pr-4 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
                   drawer ? 'pl-6' : 'pl-[18px]', here && 'here bg-muted/70 hover:bg-muted')}>

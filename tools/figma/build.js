@@ -35,7 +35,9 @@ RT.ctx = async function ctx() {
 
 const WEIGHT = { 100: 'Thin', 200: 'Extra Light', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'Semi Bold', 700: 'Bold', 800: 'Extra Bold', 900: 'Black' };
 RT.font = async function font(C, fam, fw, it) {
-  const family = fam === 'display' ? 'Instrument Serif' : 'Inter';
+  // Headlines are Inter in the live app (Andre, 2026-11-17); other faces are
+  // tried through the Typeface variable modes, not drawn into components.
+  const family = 'Inter';
   let style = family === 'Inter' ? WEIGHT[Math.round((fw || 400) / 100) * 100] || 'Regular' : 'Regular';
   if (it) style = style === 'Regular' ? 'Italic' : style + ' Italic';
   const f = { family, style };
