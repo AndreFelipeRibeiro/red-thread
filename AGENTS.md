@@ -304,6 +304,13 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
     lost; the colors cycle brown, orange, yellow, green, blue, purple, pink,
     red, gray), then claim. A missing option is never a reason to leave Batch
     empty.
+  - **A batch is a release chunk, not a set of tickets** (Andre, 2026-11-18):
+    it is everything that ships in one push. Until the current batch is
+    pushed, every ticket claimed, created, reworked or held back for more
+    work joins it, however late it was added. Never open a new batch for new
+    tickets or to set work aside: the next batch starts only after the
+    current one ships. If the user wants part of a batch to ship first, ask
+    which tickets, and ship those as the current batch.
   - Batches restart at **Batch 1** for each version, so a batch is named by
     Version and Batch together (V5 Batch 1 is not V4 Batch 1). Add the next
     Batch option only when a version needs one it does not have. Tickets

@@ -5,6 +5,9 @@
 // than `any`. Delete this line and type the file; the shared surface it reads
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
+import { FirstHint, MCU_HINTS, useHintsVersion } from './hints'
+import { CharCard } from './char-card';
+import { MCU_KEYS, ShortcutsDialog, SORT_BY_KEY, SECTION_BY_KEY, STATUS_BY_KEY, keyIsTaken } from './shortcuts';
 import React from 'react';
 import * as B from './banners';
 import * as S from './shell';
@@ -63,6 +66,23 @@ const PHONE_OVERVIEW_BELOW = 0.6;
 // "Desktop Spatial: character and guide stepping zoom to 70%"), so the cards
 // keep the size the landing showed them at.
 const deskReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 7.5));
+// The landing zoom (Notion "Spatial: one landing for every strip", Andre,
+// 2026-11-18): where every strip lands and steps, a pinned character's row,
+// a guide's route and the filter lens alike. Phones: the reading zoom, or the
+// zoom a pinch or double-tap set for the visit. Desktop: its reading zoom.
+const landScale = (w, touch) => touch ? (phoneZoom || phoneReadScale(w)) : Math.max(0.05, deskReadScale(w));
+// Phones: how far down the canvas the room above whatever is docked at its
+// bottom reaches (a guide's dock, the pinned character's card, the All
+// titles card), in the canvas's own coordinates.
+const dockTop = (viewport, rect) => {
+  let bottom = rect.height;
+  const main = viewport.closest('.m-main') || document;
+  main.querySelectorAll('.g-dock, .char-card.docked, .spatial-overall.docked').forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.height && r.top > rect.top) bottom = Math.min(bottom, r.top - rect.top - 8);
+  });
+  return bottom;
+};
 // How far above its row a band label's pill starts, in canvas units. The pill
 // is drawn there and the camera leaves room for it, so both read this one
 // number: when they disagreed, By Phase cut the first pill off at the top and
@@ -370,7 +390,7 @@ function CastDrawer({ title: current, back = null, ex = null, onClose, onCharact
         <window.ThreadView id={title.id} surface="drawer" headingRef={headingRef} headingId="drawer-title"
           onLeave={ex.onLeave} onOpen={ex.onOpen}/>
       ) : explore && explore.kind === 'trail' ? (
-        <window.TrailView char={explore.char} from={explore.from} surface="drawer" headingRef={headingRef} headingId="drawer-title" inCanvas={ex.inCanvas}
+        <window.TrailView char={explore.char} from={explore.from} current={ex.current} pinned={ex.charView} surface="drawer" headingRef={headingRef} headingId="drawer-title" inCanvas={ex.inCanvas}
           onLeave={ex.onLeave} onOpen={ex.onOpen} onPin={ex.onPin}/>
       ) : (
       <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title" back={current ? back : null}
@@ -425,10 +445,14 @@ function connectionCounts(titles) {
 // How far below a row the arc joining two of its cards may dip (see control()).
 const ARC_MAX = 80;
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null, quiet = false }) {
   // An open guide: one route through its stops in guide order, dashed on to
-  // the destination, in place of the character threads. A single path in the
-  // existing layer, so the canvas performance rules hold.
+  // the destination. It used to be drawn in place of the character threads;
+  // since the guide line puts the stops in one row, the threads among them
+  // arc under it as in Follow the thread, and the route runs in the gaps
+  // between the cards (Notion "Guide line: draw the character connections
+  // among its stops", Andre, 2026-11-18).
+  let routeEl = null;
   if (route) {
     const centre = (id) => { const p = positions[id]; return p && { x: p.x + CARD_W / 2, y: p.y + CARD_H / 2 }; };
     const pts = route.ids.map(centre).filter(Boolean);
@@ -442,7 +466,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       const sag = Math.min(90, 20 + dist * 0.12);
       return `M ${a.x} ${a.y} Q ${mx - dy / dist * sag} ${my + dx / dist * sag} ${b.x} ${b.y}`;
     };
-    return (
+    routeEl = (
       <svg className={`${S.THREADS} guide-route`} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
         {segs.map(([a, b, dashed], i) => (
           <path key={i} d={d(a, b)} fill="none" style={{ stroke: 'var(--brand)' }} strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
@@ -645,7 +669,10 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 
       return (
         <g key={ch+i+conn.a+conn.b}>
-          {emphasized && (
+          {/* The pinned character's row draws its thread plain, as the guide
+              line does (Notion "Connections with a character pinned"): no
+              halo and no glow. */}
+          {emphasized && !quiet && (
             <path d={curve(p1,p2,offset,i,isPair)} fill="none" stroke={charObj.color} strokeWidth={strokeW + 6} opacity={0.25} filter="url(#strong-glow)" strokeLinecap="round"
               {...(draw ? { className: draw.className, pathLength: draw.pathLength, style: draw.style } : {})}/>
           )}
@@ -663,12 +690,12 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
             strokeWidth={strokeW}
             opacity={baseOpacity}
             strokeLinecap="round"
-            filter={emphasized ? 'url(#line-glow)' : undefined}
+            filter={emphasized && !quiet ? 'url(#line-glow)' : undefined}
             pointerEvents="stroke"
             onMouseEnter={(e)=>onHoverConnection({a:conn.a,b:conn.b,characters:conn.characters,x:e.clientX,y:e.clientY})}
             onMouseLeave={()=>onHoverConnection(null)}
           />
-          {emphasized && (
+          {emphasized && !quiet && (
             <>
               <circle cx={p1.x + CARD_W/2} cy={p1.y + CARD_H/2} r={5} fill={charObj.color} opacity={0.9} filter="url(#strong-glow)"/>
               <circle cx={p2.x + CARD_W/2} cy={p2.y + CARD_H/2} r={5} fill={charObj.color} opacity={0.9} filter="url(#strong-glow)"/>
@@ -736,6 +763,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 
   return (
     <>
+    {routeEl}
     <svg className={S.THREADS} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
       <defs>
         <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -904,6 +932,8 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   // Settings: a panel on desktop, a sheet on phones (sheet === 'settings').
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // The list of keyboard shortcuts (? opens it; src/app/shortcuts.tsx).
+  const [keysOpen, setKeysOpen] = useState(false);
   // Settings stays on screen while it slides away (settingsShown), and the
   // details drawer waits for it, so closing Settings onto a title reads as one
   // move: Settings out, then the details in.
@@ -1416,7 +1446,20 @@ function App() {
     row.forEach((t, i) => { positions[t.id] = { x: x0 + i * step, y: y0 }; });
     return { ...computeLayout(titles, sort, sortDir), positions, bands: [], width: x0 * 2 + row.length * step, height: y0 * 2 + CARD_H };
   }, [lensIds, filtered, sort, sortDir, sort === 'title' ? lang : '']);
+  // The character view (Notion "Character view: one view, their titles in a
+  // row", 2026-11-18): a pinned character's titles (Their titles) in one row
+  // in the current order, as the guide line and the filter lens do, instead
+  // of each phase's row stepping down like stairs.
+  const charLine = !!pinnedTitleIds && (charOnly || isTouch) && !guide && (isTouch ? viewMode === 'spatial' : desktopView === 'spatial');
+  const charLineIds = useMemo(() => charLine ? sortTitles(filtered, sort, sortDir).map(t => t.id) : null,
+    [charLine, filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const layout = useMemo(() => {
+    if (charLineIds && charLineIds.length && !lensLayout) {
+      const step = CARD_W + LINE_GAP, x0 = 240, y0 = 320;
+      const positions = { ...sortLayout.positions };
+      charLineIds.forEach((id, i) => { positions[id] = { x: x0 + i * step, y: y0 }; });
+      return { ...sortLayout, positions, bands: [], width: x0 * 2 + charLineIds.length * step, height: y0 * 2 + CARD_H };
+    }
     if (lensLayout && !(guideLineIds && guideLineIds.length)) {
       // The titles left out keep their places (hidden), so clearing the
       // filter glides every card back.
@@ -1427,7 +1470,7 @@ function App() {
     const positions = { ...sortLayout.positions };
     guideLineIds.forEach((id, i) => { positions[id] = { x: x0 + i * step, y: y0 }; });
     return { ...sortLayout, positions, bands: [], width: Math.max(sortLayout.width, x0 * 2 + guideLineIds.length * step), height: Math.max(sortLayout.height, y0 * 2 + CARD_H) };
-  }, [sortLayout, guideLineIds, lensLayout]);
+  }, [sortLayout, guideLineIds, lensLayout, charLineIds]);
   const basePositions = layout.positions;
   // A new layout (sort, order, filters, a pinned character) makes the cards
   // glide for 600ms while the lines would be drawn at their final places at
@@ -1621,7 +1664,7 @@ function App() {
     let left = 24, right = rect.width - 24, top = isTouch ? 56 : 52, bottom = rect.height - (isTouch ? 16 : 60);
     if (!isTouch && drawerIdRef.current) right -= drawerW();
     if (isTouch) {
-      document.querySelectorAll('.g-dock, .char-pill, .spatial-overall.docked').forEach((el) => {
+      document.querySelectorAll('.g-dock, .char-pill, .char-card.docked, .spatial-overall.docked').forEach((el) => {
         const r = el.getBoundingClientRect();
         if (r.height && r.top > rect.top + rect.height / 2) bottom = Math.min(bottom, r.top - rect.top - 12);
       });
@@ -1678,8 +1721,9 @@ function App() {
     hoppingRef.current = true;
     setDetailBack(b => b.concat({ id: drawerId, explore }));
     setDrawerId(id);
-    // Desktop Connections: the canvas follows the details.
-    if (!isTouch && desktopView === 'spatial') setSelectedId(id);
+    // Desktop Connections: the canvas follows the details (a pinned
+    // character keeps their row: no ring).
+    if (!isTouch && desktopView === 'spatial' && !highlightedChar) setSelectedId(id);
   };
   const hopBack = () => {
     const prev = detailBack[detailBack.length - 1];
@@ -1688,7 +1732,7 @@ function App() {
     exploreRestoreRef.current = prev.explore || null;
     setDetailBack(b => b.slice(0, -1));
     setDrawerId(prev.id);
-    if (!isTouch && desktopView === 'spatial') setSelectedId(prev.id);
+    if (!isTouch && desktopView === 'spatial' && !highlightedChar) setSelectedId(prev.id);
   };
   window.MCU_hopTitle = hopTo;
   // Desktop: a poster hovered in Cast and connections marks its card; the
@@ -1704,16 +1748,45 @@ function App() {
     onBack: hopBack,
   } : null;
   const exploreDesk = !isTouch && desktopView === 'spatial';
-  const exploreLeave = () => { setExplore(null); if (exploreDesk && drawerId) setSelectedId(drawerId); };
+  // The character view: on the desktop canvas a character from the cast opens
+  // straight onto their titles in a row (pinned, `?char=`), with their trail
+  // in the panel; ‹ goes back to the title, unpinned. Phones and Titles keep
+  // the trail on its own, with its pin button.
+  const charView = !!explore && explore.kind === 'trail' && !!highlightedChar && highlightedChar === explore.char;
+  const exploreLeave = () => {
+    // A pinned character's trail closes back to the details of the title it
+    // was opened on; the card and the row stay.
+    if (charView) { setExplore(null); return; }
+    setExplore(null); if (exploreDesk && drawerId) setSelectedId(drawerId);
+  };
   const exploreProps = {
     explore,
     onThread: () => { setHoveredCharacter(null); setPeekId(null); setExplore({ kind: 'thread' }); },
-    onTrail: (ch) => { setHoveredCharacter(null); setPeekId(null); setExplore({ kind: 'trail', char: ch, from: drawerId }); },
+    onTrail: (ch) => {
+      setHoveredCharacter(null); setPeekId(null);
+      // Desktop Connections pins them straight away: their row on the canvas,
+      // their card as the stepper, and the panel keeps this title's details
+      // as the current one. Their trail opens from the card's photo.
+      if (exploreDesk) { pinSubject([ch], null, drawerId); return; }
+      setExplore({ kind: 'trail', char: ch, from: drawerId });
+    },
     onLeave: exploreLeave,
     // A row in the thread or a trail opens that title's details; ‹ comes back
     // to the list (Andre, 2026-11-16: no path built inside the panel, which
     // would only re-create the canvas).
-    onOpen: (id) => { if (id !== drawerId) { setPeekId(null); hopTo(id); } else exploreLeave(); },
+    onOpen: (id) => {
+      setPeekId(null);
+      if (charView) {
+        // A row steps there and opens its details; ‹ (the character's name)
+        // comes back to the trail.
+        stepTo(id, { details: false });
+        hoppingRef.current = id !== drawerId;
+        setDetailBack(b => b.concat({ id: drawerId, explore }));
+        if (id !== drawerId) setDrawerId(id); else setExplore(null);
+        return;
+      }
+      if (id !== drawerId) hopTo(id); else exploreLeave();
+    },
   };
   // Desktop: the trail's character stays lit on the canvas, around the title
   // it started from.
@@ -1819,6 +1892,7 @@ function App() {
   // zooms out to 17%": fitting every stop landed at an unreadable zoom).
   // Read through a ref for the same reason.
   const guideFrameRef = useRef(null);
+  const charFrameRef = useRef(null);
   // Phones fit the guide's whole path instead (E 5/5): its stops' ids.
   guideFrameRef.current = guide
     ? ((window.MCU_GUIDE.next(guide, guideOptional, statusOf) || {}).id || (guideStepTitles[0] && guideStepTitles[0].id) || null)
@@ -1947,17 +2021,34 @@ function App() {
     });
   }, [applyScale]);
 
-  // opts.fit frames the filter lens's whole set rather than its anchor;
-  // opts.glide moves the camera there smoothly (the lens's landing flight).
-  const resetView = useCallback((opts: { fit?: boolean; glide?: boolean } = {}) => {
+  // opts.fit frames a strip's whole set (the filter lens's matches, a pinned
+  // character's titles, a guide's route) rather than its anchor; opts.glide
+  // moves the camera there smoothly; opts.dry only works the view out and
+  // returns it (flyIn compares the two legs); opts.drawer keeps the desktop
+  // details panel's width clear even before it has opened.
+  const resetView = useCallback((opts: { fit?: boolean; glide?: boolean; dry?: boolean; drawer?: boolean } = {}) => {
     // Every framing goes through here, so a later reframe can tell whether
     // the visitor has moved the camera since.
-    const frame = (v) => { lastResetViewRef.current = v; if (opts.glide) glideTo(v); else setView(v); };
-    if (!viewportRef.current) return;
-    // A layout change or Recenter supersedes any remembered pre-selection view.
-    selectionReturnRef.current = null;
-    cameraFramedRef.current = true;
+    const frame = (v) => {
+      if (opts.dry) return v;
+      lastResetViewRef.current = v;
+      if (opts.glide) glideTo(v); else setView(v);
+      return v;
+    };
+    if (!viewportRef.current) return null;
+    if (!opts.dry) {
+      // A layout change or Recenter supersedes any remembered pre-selection view.
+      selectionReturnRef.current = null;
+      cameraFramedRef.current = true;
+    }
     const rect = viewportRef.current.getBoundingClientRect();
+    // The landing zoom every strip lands and steps at (landScale, above).
+    const land = landScale(rect.width, isTouch);
+    // Desktop: the room left of the details panel, when it is (or is about
+    // to be) open.
+    const side = !isTouch && (opts.drawer || drawerIdRef.current) ? drawerW() : 0;
+    // Phones: the room above whatever is docked at the bottom.
+    const bottom = isTouch ? dockTop(viewportRef.current, rect) : rect.height;
     const colW = CARD_W + 60;
     const gridSort = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
     // Height of the floating chrome at the top of the viewport that content has
@@ -1984,20 +2075,19 @@ function App() {
     // Phones, a guide open: its next stop, centred at the readable zoom this
     // layout opens at, between the top chrome and the guide pill. The route
     // line leads on to the other stops.
-    const guideStop = !selectedIdRef.current ? guideFrameRef.current : null;
+    const guideStop = !selectedIdRef.current && !opts.fit ? guideFrameRef.current : null;
     const gp = guideStop && basePositions[guideStop];
     // Desktop: the reading zoom this order opens at (never the fit-everything
     // zoom), the stop centred below the guide's module at the top; the guide's
     // arrows step on from there, and − / Fit still show the whole route.
     if (gp && !isTouch) {
-      const scale = Math.max(defaultScale, Math.max(ZOOM_MIN, deskReadScale(rect.width)), 0.5);
-      const top = chromeTop + (deskGuideRef.current ? 72 : 0), bottom = 24;
-      frame({
-        x: rect.width / 2 - (gp.x + CARD_W / 2) * scale,
-        y: top + (rect.height - top - bottom) / 2 - (gp.y + CARD_H / 2) * scale,
+      const scale = Math.max(land, 0.5);
+      const top = chromeTop + (deskGuideRef.current ? 72 : 0), pad = 24;
+      return frame({
+        x: (rect.width - side) / 2 - (gp.x + CARD_W / 2) * scale,
+        y: top + (rect.height - top - pad) / 2 - (gp.y + CARD_H / 2) * scale,
         scale,
       });
-      return;
     }
     // Phones: the guide's next stop at the reading zoom, like every other
     // order (Andre, 2026-11-17). The canvas used to zoom out to fit the
@@ -2006,17 +2096,29 @@ function App() {
     // route line lead on along the row.
     if (gp) {
       // In a guide the phone canvas has no top chrome (the count, meter and
-      // zoom control step aside); the dock covers the bottom. At least 85%, so
-      // the stop reads comfortably in every order (the grid orders open at
-      // about 50% otherwise), with its neighbours peeking in at the sides.
-      const scale = Math.max(defaultScale, 0.85);
-      const top = 12, bottomChrome = 130;
-      frame({
-        x: rect.width / 2 - (gp.x + CARD_W / 2) * scale,
-        y: top + (rect.height - top - bottomChrome) / 2 - (gp.y + CARD_H / 2) * scale,
-        scale,
+      // zoom control step aside); the dock covers the bottom. The landing
+      // zoom, as everywhere (it was 85% here until 2026-11-18), with the
+      // stop's neighbours peeking in at the sides.
+      const top = 12;
+      return frame({
+        x: rect.width / 2 - (gp.x + CARD_W / 2) * land,
+        y: top + (bottom - top) / 2 - (gp.y + CARD_H / 2) * land,
+        scale: land,
       });
-      return;
+    }
+
+    // A pinned character: the title the stepper is on, or their first in the
+    // current order, at the landing zoom and where a step puts it (stepTo):
+    // centred left of the details panel on desktop, above the docked card on
+    // phones. Pinning flies in to it over their whole row (flyIn).
+    const charStop = !selectedIdRef.current && !opts.fit ? charFrameRef.current : null;
+    const cp = charStop && basePositions[charStop];
+    if (cp) {
+      return frame({
+        x: (rect.width - side) / 2 - (cp.x + CARD_W / 2) * land,
+        y: bottom / 2 - (cp.y + CARD_H / 2) * land,
+        scale: land,
+      });
     }
 
     // Phones, once you've started (at least one title Seen): each order opens
@@ -2025,7 +2127,7 @@ function App() {
     // neighbours peeking in. A dimming filter
     // frames its matches instead (below), and first-time visitors and anyone
     // caught up keep the bird's-eye view of the order's start.
-    const upStop = isTouch && !selectedIdRef.current && !(recenterFocusRef.current && recenterFocusRef.current.size)
+    const upStop = isTouch && !selectedIdRef.current && !opts.fit && !(recenterFocusRef.current && recenterFocusRef.current.size)
       ? upNextFrameRef.current : null;
     const up = upStop && basePositions[upStop];
     if (up) {
@@ -2035,13 +2137,11 @@ function App() {
       const cr = card && card.getBoundingClientRect();
       const bottom = cr && cr.height ? cr.top - rect.top - 8 : rect.height - 14;
       const top = chromeTop;
-      const v = {
+      return frame({
         x: rect.width / 2 - (up.x + CARD_W / 2) * scale,
         y: top + (bottom - top) / 2 - (up.y + CARD_H / 2) * scale,
         scale,
-      };
-      frame(v);
-      return;
+      });
     }
 
     // The filter lens lands on its anchor at the reading zoom (Watchlist and
@@ -2059,12 +2159,11 @@ function App() {
         const cr = card && card.getBoundingClientRect();
         if (cr && cr.height) bottom = cr.top - rect.top - 8;
       }
-      frame({
+      return frame({
         x: rect.width / 2 - (ap.x + CARD_W / 2) * scale,
         y: chromeTop + (bottom - chromeTop) / 2 - (ap.y + CARD_H / 2) * scale,
         scale,
       });
-      return;
     }
 
     // A dimming filter is active: frame exactly what it matches. Card positions
@@ -2087,21 +2186,23 @@ function App() {
         // 70px with its margin): frame the stops below it.
         const topIn = deskGuideRef.current ? 72 : 0;
         const w = fx1 - fx0, h = fy1 - fy0;
+        // Phones keep the strip above the docked card; desktop keeps it left
+        // of the details panel.
+        const below = rect.height - bottom;
         // Always fit the whole match set, however far apart it is. On the
         // release and chronological layouts two matches at opposite ends only
         // fit at around 9%, which is small — but seeing where everything is and
         // zooming in beats being shown a subset with no clue the rest exists.
         // ZOOM_MIN is the only floor.
         const scale = Math.min(1, Math.max(ZOOM_MIN, Math.min(
-          (rect.width - pad * 2) / w,
-          (rect.height - topIn - pad * 2) / h
+          (rect.width - side - pad * 2) / w,
+          (rect.height - topIn - below - pad * 2) / h
         )));
-        frame({
-          x: rect.width / 2 - (fx0 + w / 2) * scale,
-          y: topIn + (rect.height - topIn) / 2 - (fy0 + h / 2) * scale,
+        return frame({
+          x: (rect.width - side) / 2 - (fx0 + w / 2) * scale,
+          y: topIn + (rect.height - topIn - below) / 2 - (fy0 + h / 2) * scale,
           scale,
         });
-        return;
       }
     }
 
@@ -2148,7 +2249,7 @@ function App() {
         }
       }
       const scale = best ? best.s : defaultScale;
-      frame({ x: 14 - xs[0] * scale, y: (best ? best.top : 14) - ys[0] * scale, scale });
+      return frame({ x: 14 - xs[0] * scale, y: (best ? best.top : 14) - ys[0] * scale, scale });
     } else if (gridSort) {
       // Grid layouts: match the grid's width (mobile keeps a legibility floor of ~3 columns)
       const scale = defaultScale;
@@ -2157,7 +2258,7 @@ function App() {
       // By Phase is the one grid layout with band labels: leave room above the
       // first row for its pill, below the count pill, as the timelines do.
       const top = sort === 'phase' ? chromeTop + BAND_LABEL_H * scale : 14;
-      frame({
+      return frame({
         x: zoomed ? 14 - minX * scale : (rect.width - canvasW * scale) / 2,
         y: canvasH * scale <= rectH - 32 ? (rectH - canvasH * scale) / 2 : top - minY * scale,
         scale,
@@ -2192,12 +2293,34 @@ function App() {
           if (leading && (leading.y + CARD_H) * scale + y > rectH - 14) y = rectH - 14 - (leading.y + CARD_H) * scale;
         }
       }
-      frame({ x: 14 - minX * scale, y, scale });
+      return frame({ x: 14 - minX * scale, y, scale });
     }
   }, [canvasW, canvasH, basePositions, sort, isTouch, glideTo]);
+  const resetViewRef = useRef(resetView);
+  resetViewRef.current = resetView;
+
+  // The flight every strip lands with (Notion "Spatial: one landing for every
+  // strip", Andre, 2026-11-18; first the filter lens's, 2026-11-17): out to
+  // the whole strip, a beat, then in to its anchor at the landing zoom. A
+  // strip that already shows at about that zoom, or Reduce motion, lands
+  // straight away. A press, touch or wheel stops it (stopGlide). A canvas
+  // nobody has framed yet starts on the whole strip rather than gliding out
+  // to it.
+  const FLY_HOLD = 1000;
+  const flyIn = (opts: { drawer?: boolean } = {}) => {
+    clearTimeout(lensFlightRef.current);
+    lensFlightRef.current = null;
+    const there = resetView({ ...opts, dry: true });
+    if (!there) return;
+    const strip = recenterFocusRef.current;
+    const whole = strip && strip.size > 1 && !window.MCU_MOTION.reduced() ? resetView({ ...opts, fit: true, dry: true }) : null;
+    if (!whole || whole.scale >= there.scale * 0.9) { resetView({ ...opts, glide: cameraFramedRef.current && !window.MCU_MOTION.reduced() }); return; }
+    resetView({ ...opts, fit: true, glide: cameraFramedRef.current });
+    lensFlightRef.current = setTimeout(() => { lensFlightRef.current = null; resetViewRef.current({ ...opts, glide: true }); }, FLY_HOLD);
+  };
 
   // Reset view whenever layout changes
-  useLayoutEffect(() => { if (!pendingStepRef.current) resetView(); }, [resetView]);
+  useLayoutEffect(() => { if (!pendingStepRef.current) frameCanvas(); }, [resetView]);
 
   // Recentering because the user changed a filter is intentional. Recentering
   // because the *contents* of the match set changed — someone marked a title
@@ -2219,11 +2342,7 @@ function App() {
     // out, then zoom in): out to the whole packed set while the cards pack,
     // a beat, then in to the anchor at the reading zoom. A press, touch or
     // wheel stops it (stopGlide). Reduce motion goes straight to the anchor.
-    if (lensAnchorRef.current && !window.MCU_MOTION.reduced()) {
-      resetView({ fit: true, glide: true });
-      lensFlightRef.current = setTimeout(() => { lensFlightRef.current = null; resetView({ glide: true }); }, 1000);
-      return;
-    }
+    if (lensAnchorRef.current) { flyIn(); return; }
     resetView();
   }, [collectionFilter, highlightedChar, resetView]);
   useEffect(() => () => clearTimeout(lensFlightRef.current), []);
@@ -2255,7 +2374,7 @@ function App() {
   }, [isTouch]);
   useLayoutEffect(() => {
     if (!spatialShown) { cameraFramedRef.current = false; return; }
-    if (!selectedIdRef.current && !pendingStepRef.current) resetView();
+    if (!selectedIdRef.current && !pendingStepRef.current) frameCanvas();
   }, [spatialShown]);
 
   // Remember the camera when a card becomes selected; when the selection clears,
@@ -2363,7 +2482,7 @@ function App() {
       const rect = viewportRef.current.getBoundingClientRect();
       const scale = phoneZoom || phoneReadScale(rect.width);
       let bottom = rect.height;
-      document.querySelectorAll('.g-dock, .char-pill, .spatial-overall.docked').forEach((el) => {
+      document.querySelectorAll('.g-dock, .char-pill, .char-card.docked, .spatial-overall.docked').forEach((el) => {
         const r = el.getBoundingClientRect();
         if (r.height && r.top > rect.top) bottom = Math.min(bottom, r.top - rect.top - 8);
       });
@@ -2625,7 +2744,20 @@ function App() {
   const upNextId = upNext && upNext.result.kind === 'next' ? upNext.result.title.id : null;
   // The card the Up next card or a guide's dock names, marked on the canvas;
   // it goes with the Up next card when that is hidden for the visit.
-  const upNextCardId = upNextId && (guide || !cardHidden) ? upNextId : null;
+  // Up next's outline belongs to the strip on screen (Notion "Connections: Up
+  // next's outline follows the open strip", Andre, 2026-11-18): a guide's
+  // next stop and a pinned character's first unseen title come scoped above;
+  // Follow the thread outlines the thread's first unseen title in the row's
+  // order, not the All titles one (a followed guide's next stop, say).
+  const threadUpId = useMemo(() => {
+    if (!threadLine || guide || !relatedIds || relatedIds.size < 2 || !collectionReady) return null;
+    const row = [...relatedIds].filter(id => positions[id]).sort((a, b) => positions[a].x - positions[b].x)
+      .map(id => window.TITLES.find(t => t.id === id)).filter(Boolean);
+    const r = window.MCU_nextUp(row, statusOf, { ordered: true });
+    return r.kind === 'next' ? r.title.id : null;
+  }, [threadLine, guide, relatedIds, positions, collectionStates, collectionReady]);
+  const upNextCardId = threadLine && !guide ? threadUpId
+    : upNextId && (guide || !cardHidden) ? upNextId : null;
   deskGuideRef.current = !isTouch && !!guide;
   upNextFrameRef.current = isTouch && !guide && upNextId
     && Object.values(collectionStates).some(s => s === 'seen') ? upNextId : null;
@@ -2696,7 +2828,7 @@ function App() {
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
     if (!isTouch && how.viaKeyboard) requestAnimationFrame(() => requestAnimationFrame(() => {
-      const next = document.querySelector('.char-banner.pinned .cb-step button:last-child');
+      const next = document.querySelector('.char-card .cb-step button:last-child');
       if (next) next.focus();
     }));
     return true;
@@ -2750,6 +2882,10 @@ function App() {
   // character's thread where you are, what tapping a person did before
   // E 4/5; already pinned, it stays pinned.
   exploreProps.inCanvas = spatialNow;
+  // The character view: the trail marks the stepper's title, and has no pin
+  // button (the canvas already shows the character).
+  exploreProps.charView = charView;
+  exploreProps.current = charView ? (stepId || (explore && explore.kind === 'trail' ? explore.from : null)) : null;
   exploreProps.onPin = () => {
     const ch = explore && explore.kind === 'trail' ? explore.char : null;
     if (!ch) return;
@@ -2781,6 +2917,11 @@ function App() {
     if (!pinnedCharIds) return [];
     return (spatialShown ? ordered : visible).filter(t => pinnedCharIds.has(t.id));
   }, [pinnedCharIds, ordered, visible, spatialShown]);
+  // Where the camera lands with a character pinned (resetView): the title
+  // the stepper is on, or their first in the current order.
+  charFrameRef.current = highlightedChar && !guide && pinnedTitles.length
+    ? (stepId && pinnedTitles.some(t => t.id === stepId) ? stepId : pinnedTitles[0].id)
+    : null;
   // Pinning a character switches the canvas to their titles in the current
   // order (the connections ring belongs to a selected title) and starts the
   // stepper on the title it was pinned from. Phones close the sheet so the
@@ -2830,6 +2971,7 @@ function App() {
     pinSubject(p.chars, name);
   };
   const unpinCharacter = () => {
+    pendingStepRef.current = null;
     setPinnedActor(null);
     setHighlightedChar(null);
     setHoveredCharacter(null);
@@ -2894,14 +3036,30 @@ function App() {
         // goes on to stop 2, as on desktop, but keep the landing's frame (the
         // reading zoom, above the dock) and leave the details sheet closed
         // (Andre, 2026-11-17).
-        if (first && isTouch) { resetView(); setStepId(first); return; }
-        if (first) { stepTo(first); return; }
+        // Both fly in over the route to the stop (flyIn).
+        if (first && isTouch) { setStepId(first); flyIn(); return; }
+        if (first) { stepTo(first, { camera: false }); flyIn({ drawer: true }); return; }
       }
       resetView();
     });
     return () => cancelAnimationFrame(id);
   }, [guideId, guideOptional, spatialShown, collectionReady]);
   useEffect(() => { if (!guideId) guideLandedRef.current = null; }, [guideId]);
+  // A guide about to land (above) frames itself with its flight, so the
+  // layout's own reframe leaves the camera alone until then.
+  const guideFlightDue = () => !!guide && spatialShown && guideLandedRef.current !== guideId
+    && !drawerIdRef.current && !selectedIdRef.current;
+  // The canvas framing itself (a layout change, Spatial opening): a guide
+  // about to land waits on its whole route for its flight; a flight under
+  // way is left to finish; a canvas that opens with a character already
+  // pinned (a shared ?char= link, or the Titles tab to Connections) flies in
+  // to their title as a pin does; anything else is framed as it lands.
+  const frameCanvas = () => {
+    if (guideFlightDue()) { resetView({ fit: true }); return; }
+    if (lensFlightRef.current) return;
+    if (!cameraFramedRef.current && charFrameRef.current) { flyIn(); return; }
+    resetView();
+  };
   // Phone Spatial frames itself before the collection has loaded, when there
   // is no Up next yet. Once it arrives, an untouched camera moves to Up next.
   useEffect(() => {
@@ -2977,6 +3135,59 @@ function App() {
     setPromo(pick);
   }, [collectionStates, collectionSettled]);
   const startPromo = () => { const id = promo.guide.id; setPromo(null); openGuide(id); };
+  // ---- First-use hints (Notion "First-use hints", 2026-11-18) -------------
+  // Which moment applies now, first in this order; none over the welcome, a
+  // sheet or a dialog. A shared link's landing skips the canvas hint (the
+  // visitor came for what it shows). Each is marked done by its action below.
+  const hintsV = useHintsVersion();
+  const landedOnLinkRef = useRef(['guide', 'title', 'char'].some(k => new URLSearchParams(window.location.search).has(k)));
+  const hintOverlay = welcome || !!sheet || aboutOpen || settingsOpen || pickerOpen || !!promo || keysOpen;
+  const hintId = useMemo(() => {
+    if (!MCU_HINTS.enabled() || hintOverlay || !spatialShown) return null;
+    const open = (id) => !MCU_HINTS.isDone(id);
+    if (guide && guideLineIds && guideLineIds.length) return open('guide') ? 'guide' : null;
+    if (highlightedChar) return open('char') ? 'char' : null;
+    if (!isTouch && ringIds && open('ring')) return 'ring';
+    if (!selectedId && !drawerId && !landedOnLinkRef.current && open('canvas')) return 'canvas';
+    return null;
+  }, [hintsV, hintOverlay, spatialShown, guide, guideLineIds, highlightedChar, isTouch, ringIds, selectedId, drawerId]);
+  const hintText = hintId ? tr('hint.' + (hintId === 'char' && isTouch ? 'charTouch' : hintId),
+    hintId === 'char' && highlightedChar ? { name: pinnedActor || I18N.charName(highlightedChar) } : undefined) : '';
+  // What each hint points at: Up next's card (or the card nearest the
+  // middle), the details' Cast and connections, the step arrows, the
+  // guide's ×. (Phones open a card's details on the first tap, so the
+  // ticket's "route to the details" needs no hint.)
+  const hintAnchor = useMemo(() => {
+    const visible = (sel) => [...document.querySelectorAll(sel)].find(el => { const r = el.getBoundingClientRect(); return r.width && r.height; }) || null;
+    if (hintId === 'canvas') return () => {
+      const up = document.querySelector('.card.up-next');
+      if (up) { const r = up.getBoundingClientRect(); if (r.top > 60 && r.bottom < innerHeight - 40 && r.left > 0 && r.right < innerWidth) return up; }
+      let best = null, bd = Infinity;
+      document.querySelectorAll('.card:not(.ring-hidden)').forEach(c => {
+        const r = c.getBoundingClientRect(); if (!r.width) return;
+        const d = Math.hypot((r.left + r.right) / 2 - innerWidth / 2, (r.top + r.bottom) / 2 - innerHeight / 2);
+        if (d < bd) { bd = d; best = c; }
+      });
+      return best;
+    };
+    if (hintId === 'ring') return '.drawer.open .td-acc-cast .td-acc-head';
+    if (hintId === 'char') return () => visible(`.char-card button[aria-label="${tr('highlight.next')}"]`);
+    if (hintId === 'guide') return () => visible(`button[aria-label="${tr('guide.close')}"]`);
+    return null;
+  }, [hintId, lang]);
+  // The actions that teach each one.
+  useEffect(() => { if (spatialShown && (drawerId || selectedId)) { MCU_HINTS.done('canvas'); landedOnLinkRef.current = false; } }, [drawerId, selectedId, spatialShown]);
+  useEffect(() => { if (highlightedChar) MCU_HINTS.done('ring'); }, [highlightedChar]);
+  const hintStepRef = useRef(null);
+  useEffect(() => {
+    if (highlightedChar && hintStepRef.current && stepId && stepId !== hintStepRef.current) MCU_HINTS.done('char');
+    hintStepRef.current = highlightedChar ? stepId : null;
+  }, [stepId, highlightedChar]);
+  const hintGuideRef = useRef(false);
+  useEffect(() => {
+    if (guide && guideLineIds && guideLineIds.length) hintGuideRef.current = true;
+    else if (!guide && hintGuideRef.current) { hintGuideRef.current = false; MCU_HINTS.done('guide'); }
+  }, [guide, guideLineIds]);
   // The welcome's guide offer (Notion "Welcome: offer to start the Doomsday
   // guide"): the promotion's pick while it is a guide to start (not a
   // caught-up moment). Starting it from the welcome counts as its promotion
@@ -3154,13 +3365,20 @@ function App() {
   const stepList = guide ? (guideTarget ? guideStepTitles.concat(guideTarget) : guideStepTitles) : pinnedTitles;
   const stepStops = guide ? guideStepTitles.length : stepList.length;
   const stepIndex = stepCurrent ? stepList.findIndex(t => t.id === stepCurrent) : -1;
-  const stepTo = (id, { details = true } = {}) => {
+  const stepTo = (id, { details = true, camera = true } = {}) => {
     setStepId(id);
     // Desktop opens each title's details; on phones the sheet would cover the
     // view, so the step only moves to the title (tap it to open). `details`
     // off moves the camera alone (Seen in a guide's dock or bar).
-    if (!isTouch && details) setDrawerId(id);
-    if (spatialShown && viewportRef.current) {
+    const trailShown = !!explore && explore.kind === 'trail' && highlightedChar === explore.char;
+    if (!isTouch && details && !trailShown) {
+      if (highlightedChar && detailBack.length && id !== drawerId) hoppingRef.current = true;
+      setDrawerId(id);
+    }
+    // camera off: the caller frames it (a pin or a guide flying in, flyIn).
+    if (spatialShown && !camera) {
+      if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
+    } else if (spatialShown && viewportRef.current) {
       // A selected card's focus ring would fight the glide: let it go without
       // its return trip.
       if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
@@ -3168,8 +3386,9 @@ function App() {
       if (!p) return;
       const rect = viewportRef.current.getBoundingClientRect();
       // A camera that was never framed (Spatial just opened) sits at 100%.
-      // Desktop steps at no less than the landing's reading zoom.
-      const floor = isTouch ? 0.6 : deskReadScale(rect.width);
+      // Steps go no further out than the landing zoom (landScale; phones
+      // stepped at 60% until 2026-11-18).
+      const floor = landScale(rect.width, isTouch);
       // Stepping through a character's titles, already at a reading zoom:
       // keep the outlined card in view, moving only as far as needed (above).
       // A guide's steps center their stop, as before.
@@ -3183,13 +3402,7 @@ function App() {
       // Phones: center in the room above whatever is docked at the bottom
       // (a guide's card, the pinned character's pill), as the landing frame
       // does, so a step never parks the card behind it (Andre, 2026-11-16).
-      let bottom = rect.height;
-      if (isTouch) {
-        document.querySelectorAll('.g-dock, .char-pill, .spatial-overall.docked').forEach((el) => {
-          const r = el.getBoundingClientRect();
-          if (r.height && r.top > rect.top) bottom = Math.min(bottom, r.top - rect.top - 8);
-        });
-      }
+      const bottom = isTouch ? dockTop(viewportRef.current, rect) : rect.height;
       glideTo({
         x: (rect.width - drawerSpace) / 2 - (p.x + CARD_W / 2) * scale,
         y: bottom / 2 - (p.y + CARD_H / 2) * scale,
@@ -3213,9 +3426,17 @@ function App() {
   useEffect(() => {
     const id = pendingStepRef.current;
     if (!id) return;
+    // A pin made from the address lands in the same pass as other changes to
+    // the titles: wait for the render that holds the character's own.
+    if (!highlightedChar || !pinnedTitles.length) return;
     pendingStepRef.current = null;
-    if (id !== '*' && pinnedTitles.some(t => t.id === id)) stepTo(id);
-    else if (spatialShown) resetView();
+    // In Spatial a pin flies in over the character's row to the title it was
+    // pinned from, or their first (flyIn); desktop opens that title's details.
+    if (id !== '*' && pinnedTitles.some(t => t.id === id)) {
+      if (!spatialShown) { stepTo(id); return; }
+      stepTo(id, { camera: false });
+      flyIn({ drawer: !isTouch });
+    } else if (spatialShown) flyIn();
   }, [pinnedTitles]);
   // The desktop List with a title's details open and no character or guide:
   // the arrows step through the titles in the order the List shows them (its
@@ -3264,20 +3485,50 @@ function App() {
   // a menu or dialog, or with a modifier held (browser shortcuts keep
   // working). Screen readers hear the new theme.
   const [themeAnnounce, setThemeAnnounce] = useState('');
+  // The rest of the single keys (Notion "Keyboard shortcuts", 2026-11-18):
+  // 1 2 3 the sections; R C P A I T the sorts (again flips the order); U S W 0
+  // what's shown; F Filters; ? the list of keys. All off with Settings →
+  // Keyboard shortcuts (WCAG 2.1.4). Each is announced, as D and L are.
+  const keysRef = useRef(null);
+  keysRef.current = { goSection: (v) => goSection(v), sort, sortDir, changeSort, setSortDir, collectionFilter, pickCollection: (v) => pickCollection(v) };
   useEffect(() => {
     let timer = null;
+    const say = (text) => { setThemeAnnounce(''); clearTimeout(timer); timer = setTimeout(() => setThemeAnnounce(text), 50); };
     const onKey = (e) => {
-      if (e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
+      if (keyIsTaken(e) || !MCU_KEYS.enabled()) return;
       const k = (e.key || '').toLowerCase();
-      if (k !== 'd' && k !== 'l') return;
-      const el = e.target;
-      if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
-      if (document.querySelector('[aria-modal="true"]')) return;
-      const next = k === 'd' ? 'dark' : 'light';
-      window.MCU_THEME.setChoice(next);
-      setThemeAnnounce('');
-      clearTimeout(timer);
-      timer = setTimeout(() => setThemeAnnounce(tr(next === 'dark' ? 'theme.darkOn' : 'theme.lightOn')), 50);
+      const K = keysRef.current;
+      if (k === 'd' || k === 'l') {
+        const next = k === 'd' ? 'dark' : 'light';
+        window.MCU_THEME.setChoice(next);
+        say(tr(next === 'dark' ? 'theme.darkOn' : 'theme.lightOn'));
+        return;
+      }
+      // The Theme lab (dev only) takes Shift+T; T alone is Rotten Tomatoes.
+      if (e.shiftKey && k !== '?') return;
+      if (k === '?') { e.preventDefault(); setKeysOpen(true); return; }
+      if (SECTION_BY_KEY[k]) { e.preventDefault(); K.goSection(SECTION_BY_KEY[k]); say(tr(SECTION_BY_KEY[k] === 'explore' ? 'nav.explore' : SECTION_BY_KEY[k] === 'mylist' ? 'nav.mylist' : 'nav.guides')); return; }
+      if (SORT_BY_KEY[k]) {
+        e.preventDefault();
+        const v = SORT_BY_KEY[k];
+        let dir = K.sortDir;
+        if (v === K.sort) { dir = K.sortDir === 'asc' ? 'desc' : 'asc'; K.setSortDir(dir); }
+        else { K.changeSort(v); dir = DEFAULT_SORT_DIR[v] || 'asc'; }
+        say(window.sortPhrase ? window.sortPhrase(v, dir) : tr('sortmenu.name.' + v));
+        return;
+      }
+      if (STATUS_BY_KEY[k]) {
+        e.preventDefault();
+        const v = STATUS_BY_KEY[k];
+        const next = v !== 'all' && K.collectionFilter === v ? 'all' : v;
+        K.pickCollection(next);
+        say(tr(next === 'all' ? 'keys.all' : 'collection.' + next));
+        return;
+      }
+      if (k === 'f') {
+        const pill = [...document.querySelectorAll('.filters-pill')].find(el => el.getClientRects().length);
+        if (pill) { e.preventDefault(); pill.click(); }
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer); };
@@ -3364,141 +3615,58 @@ function App() {
     params: { char: ch },
     text: tr('share.charText', { name: I18N.charName(ch), n: (charTitleIds(ch) || new Set()).size }),
   });
-  const charBanner = activeChar ? (() => {
-    const c = window.CHARACTERS[activeChar];
-    const media = window.MEDIA;
-    const pinned = !!highlightedChar && activeChar === highlightedChar;
-    // A performer with several portrayals is named as themselves, with their
-    // characters underneath, the way the search suggestion already reads.
-    const asActor = pinned && !!pinnedActor;
-    // Otherwise the name follows the title in view, because the credit belongs
-    // to the title: stepping onto The Incredible Hulk reads Edward Norton, not
-    // the character's default. With no single title in view there is nobody to
-    // name, so the roster speaks for the whole run instead.
-    const inView = !asActor && stepCurrent && window.TITLES.find(t => t.id === stepCurrent);
-    const creditedHere = inView && inView.cast.indexOf(activeChar) !== -1
-      ? window.MCU_credit(inView, activeChar) : null;
-    const roster = creditsByChar[activeChar] || [];
-    const named = asActor ? pinnedActor : (creditedHere || (roster[0] && roster[0].name) || c.actor);
-    const photo = window.performerPortrait(named, activeChar);
-    // When the subtitle names one performer, the count beside it is that
-    // performer's share — the same number the search suggestion shows for their
-    // row. The whole chain is already in the stepper ("6 of 8"), so repeating it
-    // here said Mike McGill was in 8 titles when he is in one.
-    // Only for a part several people played: with one performer the count is
-    // the titles lit, which for a variant includes its identity's other titles.
-    const namedRow = creditedHere && roster.length > 1 ? roster.find(r => r.name === creditedHere) : null;
-    const count = namedRow ? namedRow.n
-      : (pinned ? (pinnedVisibleIds || new Set()) : (charTitleIds(activeChar) || new Set())).size;
-    const who = asActor ? pinnedActor : I18N.charName(activeChar);
-    const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
-      : (creditedHere || roster.length < 2) ? named
-      : tr('credit.more', { name: named, n: roster.length - 1 });
-    return (
-      <div className={`${B.BANNER}${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
-        <span className={`${B.PHOTO} size-10`} style={{ background: c.color }}>
-          <window.Portrait url={photo} alt="" initials={c.initials}/>
-        </span>
-        <span className={B.BANNER_WHO}>
-          <b>{who}</b>
-          <span className={B.BANNER_SUB}>{sub} · {tr('header.count', { n: count })}</span>
-        </span>
-        {pinned && <>
-          {/* A character with its own guide offers it: the same titles,
-              curated, with a reason for each. */}
-          {window.MCU_GUIDE && window.MCU_GUIDE.forChar(activeChar) && (
-            <button type="button" className={B.BANNER_GUIDE} onClick={() => openGuide(window.MCU_GUIDE.forChar(activeChar).id)}>
-              <window.GuideIcon size={14}/>{tr('guide.seeCurated')}
-            </button>
-          )}
-          <div className={`${B.SEGMENTED} cb-mode h-[max(34px,2.125rem)]`} role="group" aria-label={tr('highlight.modeAria')}>
-            <window.SegPill value={charOnly}/>
-            <button className={`${B.SEGMENT}${charOnly ? ' on' : ''}`} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
-            <button className={`${B.SEGMENT}${!charOnly ? ' on' : ''}`} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
-          </div>
-          <div className={B.STEP}>
-            <button className={B.STEP_BTN} onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!pinnedTitles.length}>‹</button>
-            <span className={B.POS} aria-live="polite">{stepIndex >= 0
-              ? tr('highlight.position', { i: stepIndex + 1, n: pinnedTitles.length })
-              : tr('header.count', { n: pinnedTitles.length })}</span>
-            <button className={B.STEP_BTN} onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
-          </div>
-        </>}
-        {pinned && <window.ShareButton iconOnly size={15} className={B.BANNER_SHARE} label={tr('share.charLabel', { name: who })}
-          payload={() => charSharePayload(activeChar)}/>}
-        <button className={B.CLOSE} aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
-          onClick={unpinCharacter}>×</button>
-      </div>
-    );
-  })() : null;
-
-  // Phones: the pinned character floats as a pill near the bottom (thumb
-  // reach) instead of a banner. Phones always show only their titles, so there
-  // is no Their titles / All titles switch here.
-  const charPill = isTouch && highlightedChar ? (() => {
+  // The pinned character's card (char-card.tsx; Notion "Connections with a
+  // character pinned"): top right on desktop, on Connections and in Titles,
+  // where it takes the All titles card's place; docked above the bottom bar
+  // on phones. Hovering a character in a cast only lights their thread: the
+  // card comes with the pin.
+  const charCard = highlightedChar ? (inList) => {
     const ch = highlightedChar;
     const c = window.CHARACTERS[ch];
-    // Same rule as the desktop banner: the performer follows the title the
-    // stepper is on, so the pill never names one actor over another's title.
+    // The performer follows the title the stepper is on, because the credit
+    // belongs to the title: stepping onto The Incredible Hulk reads Edward
+    // Norton. With no single title in view the roster speaks for the run.
     const inView = !pinnedActor && stepCurrent && window.TITLES.find(t => t.id === stepCurrent);
     const creditedHere = inView && inView.cast.indexOf(ch) !== -1 ? window.MCU_credit(inView, ch) : null;
     const roster = creditsByChar[ch] || [];
     const named = pinnedActor || creditedHere || (roster[0] && roster[0].name) || c.actor;
     const photo = window.performerPortrait(named, ch);
-    const n = pinnedTitles.length;
+    const who = pinnedActor || I18N.charName(ch);
+    // When the line names one performer of a part several people played, the
+    // count beside it is that performer's share (the number their search
+    // suggestion shows); otherwise it is the titles lit.
+    const namedRow = creditedHere && roster.length > 1 ? roster.find(r => r.name === creditedHere) : null;
+    const count = namedRow ? namedRow.n : (pinnedVisibleIds || new Set()).size;
+    const performer = (pinnedActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
+      : (creditedHere || roster.length < 2) ? named
+      : tr('credit.more', { name: named, n: roster.length - 1 })) + ' · ' + tr('header.count', { n: count });
     const charGuide = window.MCU_GUIDE ? window.MCU_GUIDE.forChar(ch) : null;
-    return (
-      <div className={B.PILL} style={{ '--char-color': c.color }}>
-        <div className={B.PILL_BAR}>
-          <span className={B.PILL_WHO}>
-            <span className={B.PILL_PHOTO} style={{ background: c.color }}>
-              <window.Portrait url={photo} alt="" initials={c.initials}/>
-            </span>
-            <span className={B.PILL_TEXT}>
-              <span className={B.PILL_NAME}>{pinnedActor || I18N.charName(ch)}</span>
-              <span className={B.PILL_ACTOR}>{pinnedActor
-                ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
-                : (creditedHere || roster.length < 2) ? named
-                : tr('credit.more', { name: named, n: roster.length - 1 })}</span>
-            </span>
-          </span>
-          <div className={B.PILL_STEP}>
-            <button className={B.PILL_BTN} onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
-            {/* Before the first step just the number of titles (read out as
-                "13 titles"), so the name keeps its space; then "1/13". */}
-            <span className={B.PILL_POS} aria-live="polite">{stepIndex >= 0
-              ? tr('highlight.short', { i: stepIndex + 1, n })
-              : <>{n}<span className="story-sr"> {tr('highlight.titlesWord', { n })}</span></>}</span>
-            <button className={B.PILL_BTN} onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
-          </div>
-          {charGuide && (
-            <button type="button" className={B.PILL_GUIDE} aria-label={tr('guide.seeCurated')} title={tr('guide.seeCurated')}
-              onClick={() => openGuide(charGuide.id)}>
-              <window.GuideIcon size={16}/>
-            </button>
-          )}
-          <window.ShareButton iconOnly size={15} className={B.PILL_SHARE} label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
-            payload={() => charSharePayload(ch)}/>
-          <button className={B.PILL_CLOSE} aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
-        </div>
-      </div>
-    );
-  })() : null;
-  // The pinned character's name never cut short on phones: the pill steps
-  // tighter until it fits (B.PILL_* recipes, data-fit on the bar).
-  useLayoutEffect(() => {
-    const fit = () => {
-      const bar = document.querySelector('.char-pill .cp-bar');
-      const name = bar && bar.querySelector('.cp-name');
-      if (!name) return;
-      let step = 0;
-      for (; step < 2; step++) { bar.dataset.fit = String(step); if (name.scrollWidth <= name.clientWidth + 1) break; }
-      bar.dataset.fit = String(step);
+    // A title from the card opens its details (the sheet on phones) and
+    // becomes the current one.
+    const openTitle = (id) => { stepTo(id, { details: false }); setExplore(null); setDrawerId(id); };
+    // The photo opens their trail on the current title (the first, before a
+    // step); again, it closes.
+    const openTrail = () => {
+      if (charView) { setExplore(null); return; }
+      const from = stepIndex >= 0 ? stepList[stepIndex].id : pinnedTitles[0] && pinnedTitles[0].id;
+      if (!from) return;
+      const trail = { kind: 'trail', char: ch, from };
+      if (stepIndex < 0) setStepId(from);
+      if (drawerId === from) setExplore(trail);
+      else { exploreRestoreRef.current = trail; setDrawerId(from); }
     };
-    fit();
-    window.addEventListener('mcu:textsize', fit);
-    return () => window.removeEventListener('mcu:textsize', fit);
-  });
+    return (
+      <CharCard touch={isTouch} inList={inList} color={c.color} photo={photo} initials={c.initials}
+        name={who} performer={performer} titles={pinnedTitles} stepIndex={stepIndex}
+        guideLabel={charGuide ? tr('guide.seeCurated') : null} onGuide={charGuide ? () => openGuide(charGuide.id) : null}
+        charOnly={isTouch ? null : charOnly} setCharOnly={isTouch ? null : setCharOnly}
+        sharePayload={() => charSharePayload(ch)} shareLabel={tr('share.charLabel', { name: who })}
+        onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onJump={(id) => stepTo(id)} onOpen={openTitle} onTrail={openTrail}
+        onClose={() => { setExplore(null); unpinCharacter(); }}/>
+    );
+  } : null;
+  // Phones dock the card where the All titles card sits.
+  const charPill = isTouch && charCard ? charCard(false) : null;
 
   const focusPop = (() => {
     // Phones have no focus ring or pop card any more (E 5/5).
@@ -3565,7 +3733,7 @@ function App() {
       onOpenNext={(id) => { if (layout === 'list' || !upNext) { setStepId(id); setDrawerId(id); } else { setStepId(id); upNext.onOpen(id); } }}
       onSeenNext={layout === 'spatial' ? seenNextStop : undefined}
       onOpenPage={() => changeDesktopView('list')}
-      onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
+      onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onJump={(id) => stepTo(id)} onClose={closeGuide}/>
   );
 
   const canvasEl = (
@@ -3635,6 +3803,7 @@ function App() {
           activeChar={activeChar}
           activeChars={activeChars}
           drawChar={linesSettling ? null : highlightedChar}
+          quiet={charLine || !!guide}
           litIds={activeChar ? highlightedIds : null}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
@@ -3685,6 +3854,7 @@ function App() {
               isRingFocus={!!ringIds && selectedId === t.id}
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
+              lineView={charLine}
               isUpNext={upNextCardId === t.id} isPeek={!isTouch && peekId === t.id}
               isGuideAt={!!guide && (stepId || drawerId) === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
@@ -3722,7 +3892,7 @@ function App() {
           showing one ring, and while a guide is open (the guide carries its
           own progress). Its ✕ hides it for the visit. Phones dock it above
           the bottom bar instead (below). */}
-      {!selectedId && !guide && !isTouch && compactCard && compactCard(false)}
+      {!guide && !isTouch && (charCard ? charCard(false) : !selectedId && compactCard && compactCard(false))}
       {guide && !isTouch && guideModule('spatial')}
       {focusPop}
     </div>
@@ -3758,7 +3928,7 @@ function App() {
           {guide && viewMode !== 'spatial' && (
             <window.GuideView guide={guide} surface="phone" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
               currentId={stepCurrent} onOpen={(id) => { setStepId(id); setDrawerId(id); }}
-              onBack={() => closeGuide()} onPick={(id) => openGuide(id)}/>
+              onBack={() => closeGuide()} onPick={(id) => openGuide(id)} onConnections={() => goSection('explore')}/>
           )}
           {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage inMain onPick={(id) => openGuide(id)}/>}
           {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} groupProgress={groupProgress} markWatch={collectionFilter !== 'watchlist'} header={narrowed ? contextSummary('line') : null} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} sortDir={sortDir} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
@@ -3776,7 +3946,7 @@ function App() {
               current={stepIndex >= 0 ? stepList[stepIndex] : null}
               next={upNext && upNext.result && upNext.result.kind === 'next' ? upNext.result.title : null}
               onOpenNext={(id) => upNext && upNext.onOpen(id)} onSeenNext={seenNextStop}
-              onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
+              onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onJump={(id) => stepTo(id)} onClose={closeGuide}/>
           ) : charPill}
         </div>
         <window.MobileNavBar section={section} onSection={(v) => goSection(v)} onReselect={(v) => { if (v !== 'guides') return false; goSection(v); return true; }}/>
@@ -3801,7 +3971,7 @@ function App() {
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
         {sheet === 'settings' && (
           <window.SettingsSheet onClose={() => setSheet(null)}
-            onAbout={() => setSheet('about')} onShowWelcome={() => { setSheet(null); setWelcome(true); }}/>
+            onAbout={() => setSheet('about')} onShowWelcome={() => { setSheet(null); MCU_HINTS.reset(); setWelcome(true); }}/>
         )}
         {sheet === 'guides' && (
           <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
@@ -3818,6 +3988,8 @@ function App() {
         {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} guide={welcomeGuide} onGuide={startWelcomeGuide} onClose={() => setWelcome(false)}/>}
         {pickerOpen && <window.SeenPicker touch onClose={() => setPickerOpen(false)}/>}
         {promo && <window.GuidePromo promo={promo} touch onStart={startPromo} onClose={() => setPromo(null)}/>}
+        {hintId && hintAnchor && <FirstHint id={hintId} text={hintText} anchor={hintAnchor} touch/>}
+        {keysOpen && <ShortcutsDialog onClose={() => setKeysOpen(false)}/>}
         {drawerTitle && (
           <window.CastSheet
             title={drawerTitle} search={search} back={detailBackProp}
@@ -3872,14 +4044,12 @@ function App() {
 
       {/* An open guide shows its own module instead: at the top of the List,
           floating over the canvas in Spatial. */}
-      {!guide && charBanner}
-
       {/* Always present, so each step's title and position is read out. */}
       {desktopView === 'list' && <div className="story-sr" aria-live="polite">{listAnnounce}</div>}
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
             // "‹ Guides" and the title switcher (Notion "Guides 3/4").
-            onBack={() => closeGuide()} onPick={(id) => openGuide(id)}
+            onBack={() => closeGuide()} onPick={(id) => openGuide(id)} onConnections={() => goSection('explore')}
             // A stop opened by a click becomes the guide's current one too,
             // like ← → and ↑ ↓: the marker and "Stop n of N" follow it.
             currentId={stepCurrent} openId={drawerId} onOpen={(id) => { setStepId(id); toggleDetails(id); }}
@@ -3894,7 +4064,7 @@ function App() {
         : desktopView === 'list' && guidesPage
         ? <window.GuidesPage onPick={(id) => openGuide(id)}/>
         : desktopView === 'list'
-        ? <window.DesktopList upNext={upNext} titles={visible} floatingCard={compactCard && compactCard(true)}
+        ? <window.DesktopList upNext={upNext} titles={visible} floatingCard={charCard ? charCard(true) : compactCard && compactCard(true)}
             myList={{ collection: collectionFilter, setCollection: setCollectionFilter,
               filters: { phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter } }}
             groupProgress={groupProgress} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
@@ -3923,7 +4093,7 @@ function App() {
       {/* The drawer that comes back must not take focus from the gear. */}
       {(settingsOpen || settingsShown) && <window.SettingsPanel leaving={!settingsOpen} onGone={() => setSettingsShown(false)}
         onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
-        onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
+        onAbout={() => setAboutOpen(true)} onShowWelcome={() => { MCU_HINTS.reset(); setWelcome(true); }}/>}
       <CastDrawer
         title={settingsOpen || settingsShown ? null : drawerTitle} back={detailBackProp}
         onShowInExplore={section !== 'explore' ? showInExplore : null}
@@ -3947,6 +4117,8 @@ function App() {
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
       {pickerOpen && <window.SeenPicker touch={false} onClose={() => setPickerOpen(false)}/>}
       {promo && <window.GuidePromo promo={promo} touch={false} onStart={startPromo} onClose={() => setPromo(null)}/>}
+      {hintId && hintAnchor && <FirstHint id={hintId} text={hintText} anchor={hintAnchor}/>}
+      {keysOpen && <ShortcutsDialog onClose={() => setKeysOpen(false)}/>}
     </div>
   );
 }

@@ -328,7 +328,7 @@ function scrollInArea(el, block = 'nearest', smooth = false) {
   // the docked widget, a guide's dock) is not room to show the row in: a step
   // through a character's titles stopped behind the pill (Andre, 2026-11-16).
   let bottom = a.bottom;
-  document.querySelectorAll('.char-pill, .spatial-overall.docked, .g-dock').forEach((d) => {
+  document.querySelectorAll('.char-pill, .char-card.docked, .spatial-overall.docked, .g-dock').forEach((d) => {
     const b = d.getBoundingClientRect();
     if (b.height && b.top > a.top && b.top < bottom) bottom = b.top - 8;
   });

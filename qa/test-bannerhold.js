@@ -74,53 +74,45 @@ const go = async page => { await page.goto(URL); await settle(page); };
     li.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await new Promise(r => setTimeout(r, 1200));
 
-    const nextBtn = () => document.querySelector('.char-banner.pinned .cb-step button:last-child');
-    if (!nextBtn()) return { error: 'no pinned banner after picking a character' };
+    const nextBtn = () => document.querySelector('.char-card .cb-step button:last-child');
+    if (!nextBtn()) return { error: 'no character card after picking a character' };
     // Stepping opens the details panel.
     await click(nextBtn());
     const drawer = document.querySelector('.drawer');
-    const banner = document.querySelector('.char-banner.pinned');
+    const card = document.querySelector('.char-card');
     const db = drawer.getBoundingClientRect();
-    const bb = banner.getBoundingClientRect();
+    const cb = card.getBoundingClientRect();
     const tb = document.querySelector('.toolbar');
     return {
       drawerTop: Math.round(db.top), drawerLeft: Math.round(db.left),
       drawerBottom: Math.round(db.bottom), viewportH: window.innerHeight,
       toolbarBottom: tb ? Math.round(tb.getBoundingClientRect().bottom) : null,
-      bannerRight: Math.round(bb.right),
-      bannerPadRight: parseFloat(getComputedStyle(banner).paddingRight),
-      // Where the banner's own content actually stops.
-      contentRight: Math.round(bb.right) - parseFloat(getComputedStyle(banner).paddingRight),
+      cardRight: Math.round(cb.right), cardTop: Math.round(cb.top),
+      oldBanner: !!document.querySelector('[class~="char-banner"]'),
     };
   });
 
   const h = R.hold;
   if (h.error) errors.push(h.error);
   else {
-    // The pinned banner stops before the panel, exactly as the hover banner
-    // does. Andre chose this over the full-width bar that kept the stepper
-    // still: the bar changing width between hover and pinned read worse than
-    // the controls moving, so the stepper IS expected to shift here.
-    if (h.contentRight > h.drawerLeft + 1) {
-      errors.push(`the banner's content runs to ${h.contentRight}, past the panel edge at ${h.drawerLeft}`);
-    }
-    if (h.bannerPadRight < 100) {
-      errors.push(`the pinned banner is only indented by ${h.bannerPadRight}px; it should clear the panel`);
-    }
-    // The panel is no longer pushed down by the banner: it hangs from the
-    // toolbar and runs the full height, the same as with no character pinned.
+    // The pinned character's card (Notion "Connections with a character
+    // pinned", 2026-11-18) floats top right of the canvas, left of the open
+    // panel, as the All titles and guide cards do; no full-width banner.
+    if (h.oldBanner) errors.push('the old full-width banner is still drawn');
+    if (h.cardRight > h.drawerLeft + 1) errors.push(`the card runs to ${h.cardRight}, under the panel at ${h.drawerLeft}`);
+    if (h.toolbarBottom !== null && h.cardTop < h.toolbarBottom) errors.push(`the card starts at ${h.cardTop}, under the toolbar (${h.toolbarBottom})`);
+    // The panel hangs from the toolbar and runs the full height.
     if (h.toolbarBottom !== null && Math.abs(h.drawerTop - h.toolbarBottom) > 1) {
       errors.push(`the panel starts at ${h.drawerTop} but the toolbar ends at ${h.toolbarBottom}; it should hang from the toolbar`);
     }
     if (h.drawerBottom > h.viewportH + 1) errors.push(`the panel runs past the viewport bottom (${h.drawerBottom} > ${h.viewportH})`);
   }
 
-  // The hover banner must not move the panel out from under the pointer, and
-  // must be indented by the same amount as the pinned one — that equality is
-  // the whole point of the change.
+  // Hovering a character in the cast only lights their thread: no card and
+  // no banner until they're pinned, and the panel stays put.
   R.hover = await page.evaluate(async () => {
     const click = async (el, ms = 900) => { el.click(); await new Promise(r => setTimeout(r, ms)); };
-    await click(document.querySelector('.char-banner.pinned .cb-close'), 1200);
+    await click(document.querySelector('.char-card .cb-close'), 1200);
     const drawer = document.querySelector('.drawer');
     const topBefore = Math.round(drawer.getBoundingClientRect().top);
     const row = document.querySelector('.cast-row');
@@ -128,22 +120,17 @@ const go = async page => { await page.goto(URL); await settle(page); };
     row.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
     row.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
     await new Promise(r => setTimeout(r, 700));
-    const hb = document.querySelector('.char-banner');
     return {
       topBefore, topAfter: Math.round(drawer.getBoundingClientRect().top),
-      hoverPinned: hb ? hb.classList.contains('pinned') : null,
-      hoverPadRight: hb ? parseFloat(getComputedStyle(hb).paddingRight) : null,
+      card: !!document.querySelector('.char-card, .char-card'),
     };
   });
 
   const hv = R.hover;
   if (hv.error) errors.push(hv.error);
-  else if (hv.hoverPinned === false) {
+  else {
     if (hv.topBefore !== hv.topAfter) errors.push(`hovering a cast row moved the panel: ${hv.topBefore} -> ${hv.topAfter}`);
-    if (!hv.hoverPadRight) errors.push('the hover banner lost its indent, so its close button sits under the panel');
-    if (R.hold && !R.hold.error && Math.abs(hv.hoverPadRight - R.hold.bannerPadRight) > 1) {
-      errors.push(`hover indent ${hv.hoverPadRight}px but pinned ${R.hold.bannerPadRight}px; the bar must not change width between the two`);
-    }
+    if (hv.card) errors.push('hovering a cast row showed a character card; it should come only with the pin');
   }
 
   R.errors = errors;

@@ -104,7 +104,8 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     expect(await page.evaluate(() => history.length) === hist, 'drawer: sharing added a history entry');
 
     await go(page, '?char=peggy');
-    await reset(); await page.locator('.char-banner .cb-share').click(); await copiedShown('banner');
+    await page.locator('.char-card .cb-more').click(); await page.waitForTimeout(300);
+    await reset(); await page.locator('.cc-menu .cb-share').click(); await copiedShown('banner');
     goodLink(await clip(), '?char=peggy', 'desktop character');
 
     await go(page, '?guide=before-doomsday&view=list');
@@ -203,10 +204,11 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.evaluate(() => { window.__shareMode = ''; });
 
     await go(page, '?char=peggy');
-    const fit = await page.evaluate(() => { const e = document.querySelector('.cp-name'); return { sw: e.scrollWidth, cw: e.clientWidth }; });
+    const fit = await page.evaluate(() => { const e = document.querySelector('.cc-name'); return { sw: e.scrollWidth, cw: e.clientWidth }; });
     out.pillName = fit;
     expect(fit.sw <= fit.cw, 'phone pill: "Peggy Carter" is cut short at 375px ' + JSON.stringify(fit));
-    await page.locator('.char-pill .cb-share').click(); await page.waitForTimeout(200);
+    await page.locator('.char-card .cb-more').tap(); await page.waitForTimeout(300);
+    await page.locator('.cc-menu .cb-share').click(); await page.waitForTimeout(200);
     d = await last();
     goodLink(d && d.url, '?char=peggy', 'phone character');
     expect(d && /^Follow Peggy Carter across \d+ titles$/.test(d.text), 'phone character: message ' + JSON.stringify(d && d.text));
@@ -255,7 +257,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await go(page, '?title=iron-man');
     expect((await page.locator('#drawer-title').textContent()).trim() === 'Iron Man', 'link: ?title=iron-man did not open Iron Man');
     await go(page, '?char=peggy');
-    expect(await page.locator('.char-banner.pinned').count() === 1, 'link: ?char=peggy did not pin Peggy Carter');
+    expect(await page.locator('.char-card').count() === 1, 'link: ?char=peggy did not pin Peggy Carter');
     await go(page, '?guide=before-doomsday');
     expect(await page.locator('.g-module, .g-desk .g-head').count() === 1, 'link: ?guide=before-doomsday did not open the guide');
     await ctx.close();

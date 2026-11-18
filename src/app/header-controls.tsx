@@ -17,6 +17,7 @@
 // mobile.tsx) by setting `data-fit` on the row and checking for overflow, with
 // no render in between, so the compact steps are CSS keyed on the row:
 // `group/sortrow` (the desktop sort row) and `group/toolrow` (the phone toolbar row).
+import { SORT_BY_KEY, useKeysEnabled } from './shortcuts';
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,8 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 // carries `data-sort` and `data-dir` (its usual direction), and the Order
 // switch's options `data-order`.
 export const SORT_KEYS = ['release', 'chrono', 'phase', 'title', 'imdb', 'rt'] as const;
+// Each sort's single key (src/app/shortcuts.tsx): release R, chrono C, …
+const KEY_OF_SORT: Record<string, string> = Object.fromEntries(Object.entries(SORT_BY_KEY).map(([k, v]) => [v, k.toUpperCase()]));
 const MENU_KEYS = ['release', 'chrono', 'phase', 'imdb', 'rt', 'title'] as const;
 export const DEFAULT_DIR: Record<string, 'asc' | 'desc'> = { release: 'asc', chrono: 'asc', phase: 'asc', title: 'asc', imdb: 'desc', rt: 'desc' };
 
@@ -103,6 +106,7 @@ function SortList({ sort, sortDir, onPick, onFlip, phone }: {
   sort: string; sortDir: string; onPick: (k: string) => void; onFlip: (d: 'asc' | 'desc') => void; phone: boolean;
 }) {
   const first = DEFAULT_DIR[sort] || 'asc', second: 'asc' | 'desc' = first === 'asc' ? 'desc' : 'asc';
+  const keysOn = useKeysEnabled();
   return (
     <>
       <div className={MENU_HEAD}>{tr('sortmenu.title')}</div>
@@ -127,6 +131,8 @@ function SortList({ sort, sortDir, onPick, onFlip, phone }: {
                 </span>
                 <span className="truncate text-caption leading-[1.4] text-muted-foreground">{tr('sortmenu.desc.' + key)}</span>
               </span>
+              {/* Its key (Notion "Keyboard shortcuts"), while the keys are on. */}
+              {!phone && keysOn && <kbd aria-hidden="true" className="sort-key inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-[5px] border border-b-2 bg-background px-1 font-sans text-caption font-medium text-muted-foreground">{KEY_OF_SORT[key]}</kbd>}
             </button>
           );
         })}

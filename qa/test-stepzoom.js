@@ -42,7 +42,7 @@ const near = (a, b) => a !== null && Math.abs(a - b) < 0.01;
     await page.goto(URL + '?char=tony'); await settle(page);
     const read = await READ(page);
     r.read = Math.round(read * 1000) / 1000;
-    const next = '.char-banner .cb-step button';
+    const next = '.char-card .cb-step button';
     await page.locator(next).last().click(); await page.waitForTimeout(1200);
     r.charStep1 = await SCALE(page);
     await page.locator(next).last().click(); await page.waitForTimeout(1200);

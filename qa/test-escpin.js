@@ -81,7 +81,7 @@ const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
     await page.waitForTimeout(1400);
   };
   const st = () => page.evaluate(() => ({
-    banner: !!document.querySelector('.char-banner.pinned'),
+    banner: !!document.querySelector('.char-card'),
     drawer: !!document.querySelector('.drawer.open'),
     suggestions: !!document.querySelector('.ss-pop'),
     cards: document.querySelectorAll('.card').length,
@@ -132,9 +132,9 @@ const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
   R.phoneCastRow = !!row;
   // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
   if (row) { await row.click(); await m.waitForTimeout(600); await m.locator('.m-sheet .trail-pin').click(); await m.waitForTimeout(1400); }
-  R.phonePinned = await m.evaluate(() => !!document.querySelector('.char-pill'));
+  R.phonePinned = await m.evaluate(() => !!document.querySelector('.char-card'));
   await m.keyboard.press('Escape'); await m.waitForTimeout(700);
-  R.phoneAfterEscape = await m.evaluate(() => !!document.querySelector('.char-pill'));
+  R.phoneAfterEscape = await m.evaluate(() => !!document.querySelector('.char-card'));
   R.phoneEscapeClears = R.phonePinned && !R.phoneAfterEscape;
 
   R.errors = errors;

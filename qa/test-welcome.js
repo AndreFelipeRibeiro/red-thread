@@ -66,7 +66,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   // visit recorded as decided, no promotion (Notion "Shared links: the
   // welcome no longer covers the guide or title a first-time visitor came for")
   out.sharedErrors = [];
-  const LANDS = { '?guide=before-doomsday': '.g-head, .g-title-h, .guide-banner, .g-module', '?title=iron-man': '.drawer h2, .m-sheet h2, .td-title', '?char=tony': '.char-banner, .char-pill' };
+  const LANDS = { '?guide=before-doomsday': '.g-head, .g-title-h, .guide-banner, .g-module', '?title=iron-man': '.drawer h2, .m-sheet h2, .td-title', '?char=tony': '.char-card' };
   for (const [kind, opts] of [['d', { viewport: { width: 1440, height: 900 } }], ['m', { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }]]) {
     for (const [q, sel] of Object.entries(LANDS)) {
       ({ ctx, page, errors } = await ctxPage(browser, opts, ART));

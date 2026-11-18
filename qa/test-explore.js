@@ -80,15 +80,17 @@ const SURFACES = [
       await page.locator(`${root} .cast-title`).first().hover(); await page.waitForTimeout(400);
       const peek = out.peek = await page.evaluate((id) => { const c = document.querySelector(`.card[data-id="${id}"]`); return { id, marked: !!c && /\bz-29\b/.test(c.className) }; }, id);
       expect(peek.marked, `desktop: hovering a poster did not mark its card: ${JSON.stringify(peek)}`);
-      // The gap between two posters keeps the person's thread lit (the
-      // hover banner names them); leaving the block lets it go.
+      // The gap between two posters keeps the person's thread lit (their
+      // lines stay emphasized; hovering shows no card, Notion "Connections
+      // with a character pinned"); leaving the block lets it go.
       const gap = await page.evaluate((root) => { const t = [...document.querySelectorAll(root + ' .cast-title')];
         const a = t[0].getBoundingClientRect(), b2 = t[1].getBoundingClientRect(); return { x: (a.right + b2.left) / 2, y: a.top + a.height / 2 }; }, root);
       await page.mouse.move(gap.x, gap.y); await page.waitForTimeout(300);
-      const inGap = out.inGap = await page.evaluate(() => ({ banner: (document.querySelector('.char-banner') || {}).textContent || '', peek: !!document.querySelector('.card.z-29') }));
-      expect(/Tony Stark/.test(inGap.banner) && !inGap.peek, `desktop: in the gap between posters the thread should stay lit and no card marked: ${JSON.stringify(inGap)}`);
+      const inGap = out.inGap = await page.evaluate(() => ({ lit: !!document.querySelector('path[data-ch="tony"][data-em="1"]') && !document.querySelector('path[data-em="1"]:not([data-ch="tony"])'), card: !!document.querySelector('.char-card'), peek: !!document.querySelector('.card.z-29') }));
+      expect(inGap.lit && !inGap.card && !inGap.peek, `desktop: in the gap between posters the thread should stay lit and no card marked: ${JSON.stringify(inGap)}`);
       await page.mouse.move(5, 5); await page.waitForTimeout(300);
-      const left = await page.evaluate(() => /Tony Stark/.test((document.querySelector('.char-banner') || {}).textContent || ''));
+      // Let go, the ring's other threads are lit again.
+      const left = await page.evaluate(() => !document.querySelector('path[data-em="1"]:not([data-ch="tony"])'));
       expect(!left, 'desktop: leaving the person block should let their thread go');
       await page.goto(URL + '?view=list&title=iron-man'); await appReady(page); await page.waitForTimeout(1200);
       await page.locator(`${root} .cast-person .cast-chev`).first().click(); await page.waitForTimeout(300);
@@ -177,12 +179,22 @@ const SURFACES = [
 
     // The trail: a person opens it.
     await page.locator(`${root} [data-char="pepper"]`).click(); await page.waitForTimeout(800);
+    // Desktop Connections pins her straight away and keeps Iron Man's details;
+    // the photo on her card opens the trail (Notion "Connections with a
+    // character pinned", 2026-11-18).
+    if (label === 'desktop') {
+      const kept = out.pinKeepsDetails = await page.evaluate(() => ({ char: new URLSearchParams(location.search).get('char'), title: (document.querySelector('.drawer.open h2') || {}).textContent || null, trail: !!document.querySelector('.drawer .ex-trail') }));
+      expect(kept.char === 'pepper' && kept.title === 'Iron Man' && !kept.trail, `desktop: picking Pepper Potts should pin her and keep Iron Man's details: ${JSON.stringify(kept)}`);
+      await page.locator('.char-card .cc-badge').click(); await page.waitForTimeout(800);
+    }
     const tr0 = out[label].trail = await ex();
     expect(tr0 && tr0.view === 'trail' && tr0.title === 'Pepper Potts' && /^Gwyneth Paltrow · 7 titles · 2008–2019$/.test(tr0.meta || '') && tr0.rows === 7 && tr0.here === 'iron-man' && tr0.backLabel === 'Iron Man',
       `${label}: Pepper Potts's trail: ${JSON.stringify(tr0)}`);
-    expect(tr0 && tr0.pin === (label === 'desktop' ? 'See on canvas' : 'Highlight in Titles'), `${label}: the trail's pin reads ${tr0 && tr0.pin}`);
+    // Desktop Connections is the character view: already pinned, no pin
+    // button (Notion "Character view: one view", 2026-11-18).
+    expect(tr0 && tr0.pin === (label === 'desktop' ? null : 'Highlight in Titles'), `${label}: the trail's pin reads ${tr0 && tr0.pin}`);
     if (label === 'desktop') {
-      const lit = out.trailLit = await page.evaluate(() => /Pepper Potts/.test((document.querySelector('.char-banner') || {}).textContent || ''));
+      const lit = out.trailLit = await page.evaluate(() => !!document.querySelector('path[data-ch="pepper"][data-em="1"]'));
       expect(lit, 'desktop: the trail should keep Pepper Potts lit on the canvas');
     }
     // A row opens that title's details; ‹ (naming Pepper Potts) comes back to the trail.
@@ -193,7 +205,8 @@ const SURFACES = [
     const tr2 = await ex();
     expect(tr2 && tr2.view === 'trail' && tr2.title === 'Pepper Potts', `${label}: ‹ should come back to the trail: ${JSON.stringify(tr2)}`);
     // The pin pins them (the address says so).
-    await page.locator(`${root} .trail-pin`).click(); await page.waitForTimeout(1200);
+    if (await page.locator(`${root} .trail-pin`).count()) await page.locator(`${root} .trail-pin`).click();
+    await page.waitForTimeout(1200);
     const pinned = out[label].trailPin = await page.evaluate(() => new URLSearchParams(location.search).get('char'));
     expect(pinned === 'pepper', `${label}: the trail's pin should pin Pepper Potts (char=${pinned})`);
     await ctx.close();

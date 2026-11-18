@@ -169,9 +169,9 @@ const subjects = []
 
     let got = null;
     try {
-      await page.waitForFunction(() => !!document.querySelector('.char-banner.pinned'), null, { timeout: 4000 });
+      await page.waitForFunction(() => !!document.querySelector('.char-card'), null, { timeout: 4000 });
       got = await page.evaluate(() => {
-        const b = document.querySelector('.char-banner.pinned');
+        const b = document.querySelector('.char-card');
         const num = t => { const m = /(\d+)/.exec(t || ''); return m ? Number(m[1]) : null; };
         return {
           who: (b.querySelector('.cb-who b') || {}).textContent,

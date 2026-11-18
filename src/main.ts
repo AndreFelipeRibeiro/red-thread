@@ -31,6 +31,9 @@ startTheme();
 
 // Order matters and matches the order index.html used:
 import './config';          // window.MCU_CONFIG, read by supabase-client
+// Vercel Web Analytics, on production only (src/analytics.ts).
+import { startAnalytics } from './analytics';
+startAnalytics();
 import './supabase-client'; // window.mcuSupabase, window.MCU_SUPABASE_STATUS
 import './data/data';       // window.TITLES, CHARACTERS, BUDGETS, ratings, credits
 import './data/guides';     // window.GUIDES, window.CONTINUITY

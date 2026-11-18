@@ -90,7 +90,7 @@ const reload = async page => { await page.reload(); await settle(page); };
     }, label);
     await page.waitForTimeout(1400);
     return page.evaluate(() => {
-      const b = document.querySelector('.char-banner');
+      const b = document.querySelector('.char-card');
       if (!b) return { pinned: false };
       return {
         pinned: b.classList.contains('pinned'),

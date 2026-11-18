@@ -13,6 +13,138 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 17 — Character view: one view, their titles in a row
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- A person picked from a cast pins them: their titles in one row in the current order, the details of the title they were picked from kept in the panel; the photo badge opens their trail, × unpins. The thread is drawn plain in that row. `qa/test-charview.js`. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — The pinned character's card
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- `src/app/char-card.tsx` replaces the full-width banner (desktop) and the pill (phones): the title's poster with the character's photo, "Thor · 2 of 11" over its name, the progress with ‹ › and a ⋯ menu (who plays them, the curated path, Show all titles, Share). Top right on desktop, docked above the bottom bar on phones. Figma: Character card `81:729`; Screens frames updated, desktop and phone. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+- Limits: the phone ⋯ menu is a dropdown, not a sheet; not checked on a real iPhone.
+
+## V5 Batch 17 — First-use hints
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- `src/app/hints.tsx`: Connections, the character view and guides explained the first time they're used, in red bubbles. `qa/test-hints.js`. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — Keyboard shortcuts
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- `src/app/shortcuts.tsx`: single keys for sections, views, sorts and status, with a visible list; the Theme lab moves to Shift+T. `qa/test-keys.js`. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — Guides: See connections
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- A guide's page has See connections beside Following and Share: it opens the guide on Connections (desktop: its card and next stop's details; phones: its dock). Back doesn't return to the guide page, as the Connections tab never adds history. `qa/test-guidecanvas.js`. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — Spatial: one landing for every strip
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- A pinned character's row and a guide's route fly out to the whole strip, then in to their anchor; every landing and step uses one zoom (`landScale`: about 2.5 titles across on phones, 7.5 on desktop), retiring the 60% steps and 85% guide landing. Shared links fly too. `qa/test-flyin.js`. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — Up next's outline follows the open strip
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- Follow the thread outlines its own first unseen title instead of All titles' (a followed guide's next stop); pins and guides were already scoped. Desktop only. `qa/test-threadup.js`. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — Steppers: tap a dash to jump
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- On the character's and a guide's cards each dash jumps to its title, as ‹ › would; 16px press targets, hover names the title, out of the tab order. The meters speak as one hidden line, since buttons can't sit inside an image (axe, nested-interactive). `qa/test-segjump.js`. Commits [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b), [658e6c9](https://github.com/AndreFelipeRibeiro/red-thread/commit/658e6c9).
+
+## V5 Batch 17 — Guide line: the character threads among its stops
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- The threads among a guide's stops arc under its row, as in Follow the thread; the red route stays between the cards. `qa/test-guides.js` checks they join only the guide's cards. Commit [91cb43b](https://github.com/AndreFelipeRibeiro/red-thread/commit/91cb43b).
+
+## V5 Batch 17 — Analytics: Vercel Web Analytics on production
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- `src/analytics.ts` with `@vercel/analytics` 2.0.1 on redthread.tv only: cookieless, no banner; a page view keeps only `guide`, `view` and `ref`, and a repeat is dropped. `docs/PRIVACY-REVIEW.md` says what's recorded. `qa/test-analytics.js`. Commit [0fae441](https://github.com/AndreFelipeRibeiro/red-thread/commit/0fae441).
+- Web Analytics was switched on in the Vercel project on 2026-11-18; its script route answers after this deploy.
+
+## V5 Batch 17 — Connections canvas: a neutral gray
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- The light canvas moves from `slate-97`/`slate-95` (a faint blue) to `neutral-97` and a new `neutral-95`; the slate pair is retired, in code and in the Figma library, and the Screens canvases carry the gradient. Commit [90ae87c](https://github.com/AndreFelipeRibeiro/red-thread/commit/90ae87c).
+
+## V5 Batch 17 — Figma library: translucent colors render as in the app
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- Seven Figma color tokens that carry their alpha (`popover-ring`, `border-soft`, `background-glass`, `on-image-veil`, `seen-foreground-soft`, `foreground-strong`, `muted-soft`); published and checked in Screens (popover outlines at 10%). Docs commit [32d7770](https://github.com/AndreFelipeRibeiro/red-thread/commit/32d7770).
+
+## V5 Batch 17 — Workflow: a batch is a release chunk
+
+Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 78 of 81 runs clean on `90ae87c`
+(test-threads was killed under full load, test-settings' and test-segpill's
+slide timings missed under full load; each clean on three solo reruns;
+`32d7770` after it changes docs only).
+
+- AGENTS.md: until the current batch ships, every new or reworked ticket joins it. Commit [6bc6bad](https://github.com/AndreFelipeRibeiro/red-thread/commit/6bc6bad).
+
 ## V5 Batch 16 — Welcome: one calm first moment
 
 Recorded: 2026-11-18 01:35 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to

@@ -81,8 +81,8 @@ surface uses them, so they have no Figma counterpart until one does.
 | Settings panel | `40:810` | `src/app/settings.tsx` `SettingsPanel` (the phone sheet shows the same content) |
 | Search suggestion (Kind × State) | `41:759` | `src/app/search-suggest.tsx` (one row) |
 | Search suggestions | `41:773` | `search-suggest.tsx` (the list) |
-| Character banner | `42:655` | `src/app/banners.tsx` `BANNER` (desktop) |
-| Character pill | `43:656` | `banners.tsx` `PILL` (phones) |
+| Character card (Device = Desktop, Phone) | `81:729` | `src/app/char-card.tsx` `CharCard` (the pinned character's floating card; B.WIDGET, B.W_* in `banners.tsx`) |
+| Retired / Character banner, Retired / Character pill | `42:655`, `43:656` | Replaced by the Character card (2026-11-18); kept until the Screens file no longer uses them |
 | Thread stop | `44:632` | `title-details.tsx` `ThreadView` row (also the rows of `TrailView`) |
 | Thread view | `44:650` | `title-details.tsx` `ThreadView` |
 | Guide header | `45:701` | `guides-ui.tsx` (g-head) |
@@ -120,16 +120,21 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Search open (desktop) | `19:3906` | `19:4033` |
 | Filters open (desktop) | `19:4050` | `19:4138` |
 | What have you seen? (desktop) | `19:4155` | `19:4252` |
-| Character pinned, Titles (desktop) | `19:4270` | `19:4565` |
+| Character pinned, Titles (desktop): the Character card top right | `19:4270` | `19:4565` |
 | Titles (phone) | `17:4759` | `17:4964` |
 | Details sheet over Titles (phone) | `17:4952` | `17:5267` |
+| Character pinned, Titles (phone): their titles, the card docked | `33:7655` | `33:7876` |
 
 Posters are the app's TMDB posters, on the file's Posters page. The
 screens override only content (text, posters), the view switch, phase
 colors and unseen states; every other paint comes from the library, so
 don't copy fills or opacities onto instances (a copied fill stops taking
 library updates). The canvas
-lines on Connections are drawn by hand (the app computes them).
+lines on Connections are drawn by hand (the app computes them). The
+canvas frames of Connections and Follow the thread carry the app's
+top-to-bottom gradient, its stops bound to `canvas-top` and `canvas-bottom`
+(2026-11-18). The Character card's photo badge keeps the component's
+placeholder ring: the file has no portrait images yet.
 
 ## Not in the library yet
 
@@ -147,13 +152,16 @@ counterpart (same tools, `tools/figma/README.md`):
 - **Translucent colors in other files.** A paint bound to a variable takes
   its opacity from the variable's own alpha in any file that uses the
   library; a hand-set paint opacity survives only inside the library. So a
-  translucent color must be a token that carries its alpha (`seen-tint`,
-  `brand-tint` …), with the paint's opacity equal to that alpha. These still
-  use a solid token plus opacity and show solid in the Screens file:
-  `background` 94–95% (app bar, guide shelves), `foreground` 10% (popover
-  rings), 85%; `border` 70%; `muted` 50%; `muted-foreground` 30%, 80%;
-  `on-image-base` 78%; `seen-foreground` 85%, 90%. They come from Tailwind
-  opacity modifiers in the code (`bg-background/95`, `ring-foreground/10`).
+  translucent color is a token that carries its alpha, with the paint's
+  opacity equal to that alpha (`seen-tint`, `brand-tint`, and since
+  2026-11-18 `popover-ring`, `border-soft`, `background-glass`,
+  `on-image-veil`, `seen-foreground-soft`, `foreground-strong`,
+  `muted-soft`; `docs/design-tokens.md`). Published and checked in Screens
+  on 2026-11-18: the popover and dialog outlines resolve to 10%. Left: the
+  tokens whose alpha differs by mode, where one paint opacity can't match
+  both and the token's own alpha applies in other files, which is right:
+  `destructive-tint` (10% / 20%), `field` (0% / 5%; still to check against
+  the code) and `border-soft` (70% / 7%).
 
 - **Colors without a token** keep their light value in Figma, so those
   spots don't switch in Dark: the seen button's border, overlays on

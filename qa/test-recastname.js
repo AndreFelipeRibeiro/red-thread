@@ -104,7 +104,7 @@ const go = async page => { await page.goto(URL); await settle(page); };
     if (!li) return { error: 'no Edward Norton row to pick' };
     li.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await new Promise(r => setTimeout(r, 1000));
-    const b = document.querySelector('.char-banner');
+    const b = document.querySelector('.char-card');
     return {
       who: b ? b.querySelector('.cb-who b').textContent.trim() : null,
       sub: b ? b.querySelector('.cb-sub').textContent.trim() : null,
@@ -124,7 +124,7 @@ const go = async page => { await page.goto(URL); await settle(page); };
   R.banner = await page.evaluate(async () => {
     const click = async (el, ms = 900) => { el.click(); await new Promise(r => setTimeout(r, ms)); };
     // The previous case left a character pinned, which narrows the catalog.
-    const close = document.querySelector('.char-banner .cb-close');
+    const close = document.querySelector('.char-card .cb-close');
     if (close) await click(close, 600);
     // Rows carry data-row-id only in the desktop List (the Titles section),
     // and Connections is the default, so switch before looking for the title.
@@ -143,18 +143,19 @@ const go = async page => { await page.goto(URL); await settle(page); };
     if (!cast) return { error: 'no Bruce Banner cast row on The Incredible Hulk', attempts };
     // A person opens their trail (Notion "Explore E 4/5"); its pin pins them.
     await click(cast);
+    // Desktop Connections pins on the cast click (the character view); the
+    // pin is only there elsewhere.
     const pin = document.querySelector('.drawer.open .trail-pin');
-    if (!pin) return { error: 'no pin in Bruce Banner\'s trail' };
-    await click(pin);
+    if (pin) await click(pin);
     const sub = () => {
-      const el = document.querySelector('.char-banner .cb-sub');
+      const el = document.querySelector('.char-card .cb-sub');
       return el ? el.textContent.trim() : null;
     };
     // External images are blocked here, so the rendered <img> never appears.
     // Assert on the resolver that picks the URL instead, or the check would be
     // decorative (see qa/README.md).
     const first = { sub: sub(), photo: window.performerPortrait('Edward Norton', 'bruce') };
-    await click(document.querySelector('.char-banner .cb-step button:last-child'));
+    await click(document.querySelector('.char-card .cb-step button:last-child'));
     const second = { sub: sub(), photo: window.performerPortrait('Mark Ruffalo', 'bruce') };
     return { first, second, attempts };
   });

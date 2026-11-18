@@ -25,6 +25,10 @@ tracking, Google sign-in and cloud sync across devices.
 
 See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 [privacy review](docs/PRIVACY-REVIEW.md) for the repository audit and its limits.
+Production counts visits with Vercel Web Analytics: cookieless, with no
+consent banner, and only an open guide, the view and a post's `ref` kept from
+the address (`src/analytics.ts`; the privacy review lists what it records).
+It is switched on in the Vercel project's Analytics tab.
 
 ## Features
 
@@ -50,8 +54,16 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   collapsed. **Cast and connections** lists each person with "in N more"; a
   chevron opens their other titles as posters, and a poster hops the details
   (‹ comes back). Tapping a person opens their **trail**: their titles on one
-  line in their color, the one you came from marked, with See on canvas (or
-  Highlight in Titles) to pin them. **Follow the thread** lists every
+  line in their color, the one you came from marked. On desktop Connections
+  that is the **character view** (V5 Batch 17), where each surface has one
+  job: the person is pinned (`?char=`), their titles sit in one row in the
+  current order (the timeline), their **card** top right is the stepper, and
+  the panel keeps the details of the title you came from as the current one.
+  The stepper's title has the quiet gray outline and the thread is drawn
+  plain. The photo on the card opens their trail in the panel (a row opens
+  that title, ‹ the person comes back, ‹ the title closes it). Phones and
+  Titles keep the trail on its own, with See on canvas (or Highlight in
+  Titles) to pin them. **Follow the thread** lists every
   connected title on a red line, by year, with who connects them; on desktop
   Connections lays those titles out in one row by release while it is open.
   A selected title's ring frames its first circle at a readable zoom and
@@ -136,8 +148,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without
   accents ("Capitao" finds "Capitão").
-- Share: a title (details), a character's timeline (the pinned banner or
-  phone pill), a guide (its card, or once it is finished), your progress
+- Share: a title (details), a character's timeline (the ⋯ menu on their
+  card), a guide (its card, or once it is finished), your progress
   (account), the app (About, Settings) and a finished phase (the celebration
   toast). Phones open the system share sheet with a short message; desktop
   copies the link and says "Link copied". Links always point at
@@ -172,8 +184,19 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   visitors' settings sync to their account; signed out, they stay on the device.
   With a keyboard, D and L switch to the dark and light themes (not while
   typing or in a menu; the phone layout too, for a tablet or phone with a
-  keyboard), and opening a title closes Settings so its details show (Settings
+  keyboard). The other single keys (V5 Batch 17): 1 2 3 the sections; R C P A
+  I T the sorts (again flips the order; the Sort menu shows each key); U S W 0
+  what's shown (again shows all); F Filters; / search; ? the list of keys.
+  Settings → Keyboard shortcuts turns every single key off (WCAG 2.1.4). and opening a title closes Settings so its details show (Settings
   slides out, then the details slide in).
+- First-use hints (V5 Batch 17, `src/app/hints.tsx`): a small bubble whose
+  arrow points at what it's about, once per device: Connections' first visit
+  (a card), a title's ring (Cast and connections), the character view (the
+  step arrows), a guide on Connections (its ×). It goes when its action is
+  taken, or with × or Escape (Escape dismisses the hint alone). None over the
+  welcome, a sheet or a dialog, and no canvas hint on a shared link's landing.
+  Settings → Show the welcome again resets them. Automated browsers get them
+  only with `mcu.hints.qa` = '1' in localStorage.
 - In the toolbar's segmented groups (sort, type, collection, view, the filter
   choices) and the phone collection row, the selection slides to the item
   you pick rather than switching over; with Reduce motion it moves at once.
@@ -274,9 +297,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   titles that matter for its storyline (optional stops were dropped on
   2026-11-16), numbered in viewing order. An open
   guide works like a pinned character: the List and Grid show its stops in
-  order with the next one marked, Spatial dims the rest and draws the route
-  between its numbered cards (an arrow on an event guide's destination) and
-  opens on the next stop at a readable zoom (− or Fit shows the route), the
+  order with the next one marked, Spatial lays its stops out in one row, draws
+  the route between its numbered cards (an arrow on an event guide's
+  destination) with the character threads among them arcing underneath, as
+  in Follow the thread, and flies in to the next stop (− or Fit shows the
+  route), the
   stepper walks the stops and then an event guide's destination, Up next
   suggests the next stop, Escape, "‹ Guides" or the Guides tab closes
   it (closing is how to see every title again: a guide shows only its own),
@@ -292,7 +317,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   go"), the title as a switcher (the guides you follow with their progress,
   then the others, then All guides: a dropdown on desktop, a bottom sheet on
   phones), the blurb, progress with Mark N more seen, Following / Follow,
-  and Share; an event
+  Share, and See connections (V5 Batch 17), which opens Connections with the
+  guide on, landing as a shared guide link does; an event
   guide's "Where it leads" (the destination and its Watchlist) sits in the
   right column on desktop and after the stops on phones. Its stops are the
   Titles list in the guide's order: number, poster with the seen mark,
@@ -364,17 +390,20 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   in the current order (the rings belong to a selected title), with a Their
   titles / All titles switch (only their titles, or everything with the rest
   dimmed) and a stepper (‹ ›, or the arrow keys) that starts on the title you
-  came from and visits each of their titles. The current title is ringed in the
-  character's colour. Desktop shows this in a banner; phones close the details
-  sheet and show a floating pill above the sort bar (character, actor, stepper:
-  their number of titles, then 1/13 and so on)
-  and always show only that character's titles; stepping in List or Grid scrolls
-  the current title fully into view, clear of the pill and the top edge.
-  Recast characters (Bruce Banner, James Rhodes, Thaddeus Ross, Monica Rambeau)
-  keep one chain across all their performers: the banner names whoever plays
-  the character in the title in view, with that performer's own title count,
-  while the stepper counts the whole chain ("6 of 8"). On desktop the banner
-  stops at the details panel's edge, the same as its hover preview.
+  came from and visits each of their titles. The pinned character gets the
+  same floating card as All titles and a guide (top right on desktop, left of
+  the details panel; docked above the bottom bar on phones): the current
+  title's poster with the character's photo on its corner, "Thor · 2 of 11"
+  over its name, the progress through their titles with ‹ › at its end, and a
+  ⋯ menu with who plays them, See the curated path, Show all titles (desktop)
+  and Share. Hovering a character in a cast only lights their thread; the
+  card comes with the pin. Phones always show only that character's titles;
+  stepping in List or Grid scrolls the current title fully into view, clear
+  of the card and the top edge. Recast characters (Bruce Banner, James
+  Rhodes, Thaddeus Ross, Monica Rambeau) keep one chain across all their
+  performers: the menu names whoever plays the character in the title in
+  view, with that performer's own title count, while the stepper counts the
+  whole chain ("6 of 8").
 - On phones, watchlisted titles have a thin amber outline outside the
   Watchlist tab.
 - Phone sheets grow with their content up to nearly the screen's height,
@@ -467,6 +496,17 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   (Release, Story) or their grid (the other orders) and hide the rest; the
   camera flies out to the set, then lands on the last seen title (Seen) or the
   first (the others). Titles and the phone lists filter their contents.
+- Every strip on Connections lands the same way: a pinned character's row
+  and a guide's route fly out to the whole strip, then in to the title it was
+  pinned from (or their first) or the guide's next stop. Landings and ‹ ›
+  steps all use one zoom: about 2.5 titles across on phones (or the zoom a
+  pinch or double-tap set), about 7.5 on desktop. A strip that already fits,
+  or Reduce motion, lands straight away.
+- Up next's red outline belongs to the strip on screen: a guide's next stop,
+  a pinned character's first unseen title, or the first unseen title in
+  Follow the thread's row; with none open, All titles' (or a followed
+  guide's). On the character's and a guide's cards, pressing a dash jumps
+  straight to that title, as ‹ › would.
   Changing a title's status while a filter is on does not reflow the canvas.
 - Named mobile dialogs, keyboard focus handling and accessible pressed states.
 
@@ -548,7 +588,7 @@ a service worker.
 ### Theme lab (development and previews only)
 
 In development (`npm run dev`) and on Vercel previews (`*.vercel.app`), press
-**T** to open or close the Theme lab (Esc closes it too); on a phone, press and
+**Shift+T** to open or close the Theme lab (T alone sorts by Rotten Tomatoes) (Esc closes it too); on a phone, press and
 hold the Red Thread wordmark for about a second, or add `?lab` to the address.
 It starts closed on every load, with no button on screen. It swaps theme presets live
 on the real app: Default, Editorial (from the V5 navigation hi-fi screens) and

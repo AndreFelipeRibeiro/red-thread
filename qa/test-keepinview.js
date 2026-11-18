@@ -65,7 +65,7 @@ const PLACE = (id) => {
   const m = c.style.transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/);
   const vp = document.querySelector('.viewport').getBoundingClientRect();
   const drawer = document.querySelector('.drawer.open') && innerWidth > 700 ? (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--drawer-w')) || 380) : 0;
-  const pill = document.querySelector('.char-pill');
+  const pill = document.querySelector('.char-card.docked');
   const bottom = pill && pill.getBoundingClientRect().height ? pill.getBoundingClientRect().top - vp.top : vp.height;
   const w = c.offsetWidth, h = c.offsetHeight;
   const l = vx + +m[1] * s, tp = vy + +m[2] * s, r = l + w * s, b = tp + h * s;

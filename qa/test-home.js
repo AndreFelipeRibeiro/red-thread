@@ -75,7 +75,7 @@ const STATE = () => {
     search: search ? search.value : null,
     coll: coll ? coll.textContent.trim() : null,
     chips: document.querySelectorAll('.ctx-chip').length,
-    pinned: !!document.querySelector('.char-banner.pinned, .char-pill'),
+    pinned: !!document.querySelector('.char-card'),
     guide: !!document.querySelector('.guide-banner, .g-pill, .g-scroll, .g-desk .g-head'),
     drawer: !!document.querySelector('.drawer.open'),
     sheet: !!document.querySelector('.m-sheet'),

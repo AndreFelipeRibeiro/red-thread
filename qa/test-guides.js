@@ -179,7 +179,7 @@ const DATA = () => {
     url: new URLSearchParams(location.search).get('guide'),
     pop: !!document.querySelector('.g-page'),
     banner: !!document.querySelector('.g-desk .g-head'),
-    charBanner: !!document.querySelector('.char-banner:not(.guide-banner)'),
+    charBanner: !!document.querySelector('.char-card'),
     rows: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.dataset.rowId),
     nums: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest) .g-num')].map(n => n.textContent),
     dest: (document.querySelector('.g-desk .g-stop.dest') || {}).dataset ? document.querySelector('.g-desk .g-stop.dest').dataset.rowId : null,
@@ -308,16 +308,21 @@ const DATA = () => {
   if (plan.charGuide) {
     ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs({})));
     await page.goto(URL + `?view=list&char=${plan.charGuide.character}`); await settle(page);
-    const has = await page.locator('.char-banner .cb-guide').count();
-    if (has !== 1) err(`desktop: the ${plan.charGuide.character} banner has ${has} "See the curated path" buttons`);
+    // It sits in the card's ⋯ menu (Notion "Connections with a character pinned").
+    await page.locator('.char-card .cb-more').click(); await page.waitForTimeout(300);
+    const has = await page.locator('.cc-menu .cb-guide').count();
+    if (has !== 1) err(`desktop: the ${plan.charGuide.character} card's menu has ${has} "See the curated path" items`);
     if (has) {
-      await page.locator('.char-banner .cb-guide').click(); await page.waitForTimeout(600);
-      const r = await page.evaluate(() => ({ url: new URLSearchParams(location.search), guide: !!document.querySelector('.guide-banner, .g-desk .g-head'), pin: !!document.querySelector('.char-banner:not(.guide-banner)') }));
+      await page.locator('.cc-menu .cb-guide').click(); await page.waitForTimeout(600);
+      const r = await page.evaluate(() => ({ url: new URLSearchParams(location.search), guide: !!document.querySelector('.guide-banner, .g-desk .g-head'), pin: !!document.querySelector('.char-card') }));
       if (!r.guide || r.pin) err('desktop: "See the curated path" did not swap the pin for the guide');
     }
     if (plan.plain) {
       await page.goto(URL + `?view=list&char=${plan.plain}`); await settle(page);
-      if (await page.locator('.cb-guide').count()) err(`desktop: ${plan.plain} has no guide but offers one`);
+      await page.locator('.char-card .cb-more').click(); await page.waitForTimeout(300);
+      if (!(await page.locator('.cc-menu').count())) err(`desktop: ${plan.plain}'s card menu did not open`);
+      if (await page.locator('.cc-menu .cb-guide').count()) err(`desktop: ${plan.plain} has no guide but offers one`);
+      await page.keyboard.press('Escape'); await page.waitForTimeout(200);
     }
     await finish('char', ctx, errors);
   }
@@ -344,6 +349,14 @@ const DATA = () => {
   const sp = await page.evaluate(() => ({
     badges: [...document.querySelectorAll('.card-gnum')].map(b => b.textContent),
     route: document.querySelectorAll('.guide-route path').length,
+    // The character threads among the stops arc under the row (Notion "Guide
+    // line: draw the character connections among its stops", 2026-11-18):
+    // some are drawn, and every one joins two of the guide's cards.
+    threads: (() => {
+      const shown = new Set([...document.querySelectorAll('.card-gnum')].map(b => b.closest('.card').dataset.id));
+      const ps = [...document.querySelectorAll('path[data-ch]')];
+      return { n: ps.length, outside: ps.filter(p => !shown.has(p.dataset.a) || !shown.has(p.dataset.b)).length };
+    })(),
     // The meter is drawn (its count sits in the card's mini header since the
     // compact card); it names its progress in aria-label.
     meter: (() => { const m = document.querySelector('.g-module.spatial .gm-meter'); return m ? (m.getAttribute('aria-label') || m.textContent || '') : ''; })(),
@@ -355,6 +368,7 @@ const DATA = () => {
   if (sp.badges.filter(b => b === '✓').length !== 1) err(`desktop Spatial: expected one ✓ badge (${sp.badges.join(' ')})`);
   if (plan.target && sp.badges.indexOf('→') === -1) err('desktop Spatial: no → badge on the destination');
   if (!sp.route) err('desktop Spatial: no guide route drawn');
+  if (!sp.threads.n || sp.threads.outside) err(`desktop Spatial: the character threads should join the guide's stops: ${JSON.stringify(sp.threads)}`);
   if (!sp.meter) err('desktop Spatial: no guide meter in the floating module');
   if (sp.overall) err('desktop Spatial: the catalogue meter shows beside the guide module');
   await finish('spatial', ctx, errors);
@@ -451,17 +465,17 @@ const DATA = () => {
   if (nextExpected && !(chip.next && !chip.seen)) err('phone Spatial: the dock should offer the next stop, with no ✓ (it is marked in its details)');
   await finish('phone-grid', ctx, errors);
 
-  // A character with a guide: an icon button on the pill.
+  // A character with a guide: an item in the card's ⋯ menu.
   if (plan.charGuide) {
     ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs({})));
     await page.goto(URL + `?view=list&char=${plan.charGuide.character}`); await settle(page);
-    const b = page.locator('.char-pill .cp-guide');
-    if ((await b.count()) !== 1) err('phone: the character pill has no curated path button');
+    await page.locator('.char-card .cb-more').tap(); await page.waitForTimeout(300);
+    const b = page.locator('.cc-menu .cb-guide');
+    if ((await b.count()) !== 1) err('phone: the character card menu has no curated path item');
     else {
-      const name = await b.getAttribute('aria-label');
-      if (!name) err('phone: the curated path button has no name');
+      if (!(await b.innerText()).trim()) err('phone: the curated path item has no name');
       await b.click(); await page.waitForTimeout(600);
-      if (!(await page.locator('.guide-pill, .g-head').count())) err('phone: the pill button did not open the guide');
+      if (!(await page.locator('.guide-pill, .g-head').count())) err('phone: the menu item did not open the guide');
     }
     await finish('phone-char', ctx, errors);
   }

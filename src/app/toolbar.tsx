@@ -90,6 +90,8 @@ function useSlashToSearch(input: () => HTMLInputElement | null) {
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
+      // A single-key shortcut: off with Settings → Keyboard shortcuts.
+      if (window.MCU_KEYS && !window.MCU_KEYS.enabled()) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       const el = input();

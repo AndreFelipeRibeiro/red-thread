@@ -13,12 +13,11 @@
 //   radius and the density (the spacing unit every control is built from).
 // - The choice is kept on this device (localStorage) and applied before the
 //   panel is opened, on every visit.
-// - No button (Notion "Theme lab: hide the button; open it with T"): T opens
-//   and closes the panel on a keyboard, Esc closes it; on a phone, a long
-//   press on the Red Thread wordmark (about a second) or `?lab` in the address
-//   opens it. It starts closed on every load. T is temporary: the keyboard
-//   shortcuts ticket wants T for the RT sort; the lab moves (Shift+T, say)
-//   when that lands.
+// - No button (Notion "Theme lab: hide the button; open it with T"): Shift+T
+//   opens and closes the panel on a keyboard (T alone sorts by Rotten
+//   Tomatoes since the keyboard shortcuts landed, 2026-11-18), Esc closes it;
+//   on a phone, a long press on the Red Thread wordmark (about a second) or
+//   `?lab` in the address opens it. It starts closed on every load.
 //
 // It works by writing the shadcn variables (--background, --primary…,
 // --radius, --spacing, --font-sans) into one <style> element that outranks
@@ -232,7 +231,9 @@ function useLabOpeners(enabled: boolean, open: boolean, setOpen: React.Dispatch<
         // The lab is the top layer while it is open: Esc closes it and nothing else.
         e.preventDefault(); e.stopImmediatePropagation(); setOpen(false); return;
       }
-      if ((e.key || '').toLowerCase() !== 't' || e.shiftKey || e.defaultPrevented) return;
+      // Shift+T (Notion "Keyboard shortcuts", 2026-11-18): T alone sorts by
+      // Rotten Tomatoes now.
+      if ((e.key || '').toLowerCase() !== 't' || !e.shiftKey || e.defaultPrevented) return;
       if (el && el.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (!inLab && ((el && el.closest(TYPING)) || document.querySelector('[aria-modal="true"]'))) return;
       e.preventDefault(); openedBy = 'key'; setOpen((o) => !o);
