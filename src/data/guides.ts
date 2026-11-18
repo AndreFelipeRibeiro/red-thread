@@ -58,7 +58,7 @@ const ALL_GUIDES = [
     group: 'coming',
     target: 'doomsday',
     color: '#8a4a4a',
-    reviewed: '2026-10-29',
+    reviewed: '2026-11-17',
     name: { en: 'Catch up before Avengers: Doomsday', 'pt-BR': 'Prepare-se para Vingadores: Doomsday' },
     short: { en: 'Before Doomsday', 'pt-BR': 'Antes de Doomsday' },
     blurb: {
@@ -67,7 +67,8 @@ const ALL_GUIDES = [
     },
     done: { en: "Ready for Doomsday.", 'pt-BR': 'Pronto para Doomsday.' },
     stops: [
-      { id: 'endgame', weight: 'essential', why: { en: 'The last time the original Avengers stood together.', 'pt-BR': 'A última vez que os Vingadores originais estiveram juntos.' } },
+      { id: 'endgame', weight: 'essential', why: { en: 'Watch the Encore cut: its new scenes lead into Doomsday.', 'pt-BR': 'Veja a versão Encore: as cenas novas levam a Doomsday.' },
+        seenNote: { en: 'Seen the original? The Encore adds about 4 minutes that lead into Doomsday.', 'pt-BR': 'Já viu o original? A Encore traz cerca de 4 minutos que levam a Doomsday.' } },
       { id: 'loki-s2', weight: 'essential', why: { en: "Loki's latest chapter with the TVA.", 'pt-BR': 'O capítulo mais recente de Loki com a AVT.' } },
       { id: 'cap-brave', weight: 'essential', why: { en: "Sam Wilson's first film as Captain America.", 'pt-BR': 'O primeiro filme de Sam Wilson como Capitão América.' } },
       { id: 'thunderbolts', weight: 'essential', why: { en: 'Introduces a new team, with Yelena and Bucky.', 'pt-BR': 'Apresenta uma nova equipe, com Yelena e Bucky.' } },

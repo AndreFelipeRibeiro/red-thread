@@ -47,6 +47,28 @@ export interface Title {
   imdb?: number | null;
   /** Where the title sits relative to the main continuity. */
   continuity?: ContinuityMark;
+  /** Minutes to watch it (a series: the season's aired episodes, summed),
+   *  from RUNTIMES (tools/refresh-runtimes.cjs); absent until released. */
+  runtime?: number;
+  /** A series season's aired episodes. */
+  episodes?: number;
+  /** Other cuts of the same title (Endgame's Encore), from EDITIONS: not
+   *  titles of their own, so counts, progress and seen marks don't change. */
+  editions?: Edition[];
+}
+
+/** A cut of a title, such as Avengers: Endgame Encore. */
+export interface Edition {
+  id: string;
+  name: Localized;
+  /** `YYYY-MM-DD`: in theaters, then streaming. */
+  theatrical: string;
+  streaming: string;
+  /** The streaming service it is on. */
+  service: string;
+  /** About how many minutes it adds. */
+  extraMinutes: number;
+  note: Localized;
 }
 
 export interface Character {
@@ -66,6 +88,8 @@ export interface GuideStop {
   id: string;
   weight: StopWeight;
   why: Localized;
+  /** A quiet extra line once the stop is seen (Endgame: its Encore cut). */
+  seenNote?: Localized;
 }
 
 export interface Guide {

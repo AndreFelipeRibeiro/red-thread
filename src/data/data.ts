@@ -15,7 +15,7 @@
 // otherwise the Wikipedia MCU timeline article (see docs/CATALOG-AUDIT.md).
 // Omitted for unreleased titles.
 
-import type { Title, Character } from '../types/catalog';
+import type { Title, Character, Edition } from '../types/catalog';
 
 const TITLES: Title[] = [
   // Phase 1
@@ -324,3 +324,234 @@ TITLES.forEach(t => { t.rt = RT_SCORES[t.id] != null ? RT_SCORES[t.id] : null; }
 window.RT_SCORES = RT_SCORES;
 TITLES.forEach(t => { t.imdb = IMDB_RATINGS[t.id] || null; });
 window.IMDB_RATINGS = IMDB_RATINGS;
+
+// Other cuts of a title (Notion "Avengers: Endgame Encore: add it as a cut of
+// Endgame"). The Encore is the same film with about four minutes of new
+// scenes that lead into Avengers: Doomsday and a new color grade: in theaters
+// from 2026-09-25, on Disney+ since 2026-11-13 (Disney+ and press, 2026-11).
+// Not a title of its own, so it never counts twice.
+const EDITIONS: Record<string, Edition[]> = {
+  endgame: [{
+    id: 'encore', name: { en: 'Encore', 'pt-BR': 'Encore' },
+    theatrical: '2026-09-25', streaming: '2026-11-13', service: 'Disney+', extraMinutes: 4,
+    note: {
+      en: 'About 4 minutes of new scenes that lead into Avengers: Doomsday, and a new color grade.',
+      'pt-BR': 'Cerca de 4 minutos de cenas novas que levam a Vingadores: Doomsday, e uma nova correção de cor.',
+    },
+  }],
+};
+TITLES.forEach(t => { if (EDITIONS[t.id]) t.editions = EDITIONS[t.id]; });
+// Runtimes (Notion "Time to finish"): minutes to watch each released title
+// (a series: the season's aired episodes, summed, and how many). A dated TMDB
+// snapshot that tools/refresh-runtimes.cjs rewrites between the markers; do
+// not edit it by hand. It lives here rather than in a module of its own
+// because data.ts also runs on its own in Node (the link previews and the QA
+// checks' catalog loader), with no imports. Unreleased titles have none and
+// stay out of every total.
+// BEGIN RUNTIMES (checked 2026-11-17)
+const RUNTIMES: Record<string, { min: number; eps?: number }> = {
+ "iron-man": {
+  "min": 126
+ },
+ "incredible-hulk": {
+  "min": 114
+ },
+ "iron-man-2": {
+  "min": 124
+ },
+ "thor": {
+  "min": 115
+ },
+ "cap-first-avenger": {
+  "min": 124
+ },
+ "avengers": {
+  "min": 143
+ },
+ "iron-man-3": {
+  "min": 130
+ },
+ "thor-dark-world": {
+  "min": 112
+ },
+ "cap-winter-soldier": {
+  "min": 136
+ },
+ "gotg": {
+  "min": 121
+ },
+ "aou": {
+  "min": 141
+ },
+ "ant-man": {
+  "min": 117
+ },
+ "civil-war": {
+  "min": 147
+ },
+ "doctor-strange": {
+  "min": 115
+ },
+ "gotg-2": {
+  "min": 137
+ },
+ "homecoming": {
+  "min": 133
+ },
+ "thor-ragnarok": {
+  "min": 131
+ },
+ "black-panther": {
+  "min": 135
+ },
+ "infinity-war": {
+  "min": 149
+ },
+ "ant-man-wasp": {
+  "min": 119
+ },
+ "captain-marvel": {
+  "min": 124
+ },
+ "endgame": {
+  "min": 181
+ },
+ "far-from-home": {
+  "min": 129
+ },
+ "wandavision": {
+  "min": 363,
+  "eps": 9
+ },
+ "falcon-winter": {
+  "min": 330,
+  "eps": 6
+ },
+ "loki-s1": {
+  "min": 302,
+  "eps": 6
+ },
+ "black-widow": {
+  "min": 134
+ },
+ "what-if": {
+  "min": 323,
+  "eps": 9
+ },
+ "shang-chi": {
+  "min": 132
+ },
+ "eternals": {
+  "min": 156
+ },
+ "hawkeye": {
+  "min": 297,
+  "eps": 6
+ },
+ "no-way-home": {
+  "min": 148
+ },
+ "ms-marvel": {
+  "min": 289,
+  "eps": 6
+ },
+ "multiverse-madness": {
+  "min": 126
+ },
+ "thor-love": {
+  "min": 119
+ },
+ "moon-knight": {
+  "min": 302,
+  "eps": 6
+ },
+ "she-hulk": {
+  "min": 309,
+  "eps": 9
+ },
+ "wakanda-forever": {
+  "min": 162
+ },
+ "quantumania": {
+  "min": 125
+ },
+ "gotg-3": {
+  "min": 150
+ },
+ "secret-invasion": {
+  "min": 262,
+  "eps": 6
+ },
+ "loki-s2": {
+  "min": 313,
+  "eps": 6
+ },
+ "marvels": {
+  "min": 105
+ },
+ "what-if-s2": {
+  "min": 289,
+  "eps": 9
+ },
+ "echo": {
+  "min": 213,
+  "eps": 5
+ },
+ "deadpool-3": {
+  "min": 128
+ },
+ "agatha": {
+  "min": 379,
+  "eps": 9
+ },
+ "what-if-s3": {
+  "min": 253,
+  "eps": 8
+ },
+ "friendly-spidey": {
+  "min": 317,
+  "eps": 10
+ },
+ "cap-brave": {
+  "min": 119
+ },
+ "daredevil-born-again": {
+  "min": 455,
+  "eps": 9
+ },
+ "thunderbolts": {
+  "min": 127
+ },
+ "ironheart": {
+  "min": 305,
+  "eps": 6
+ },
+ "fantastic-four": {
+  "min": 115
+ },
+ "eyes-of-wakanda": {
+  "min": 125,
+  "eps": 4
+ },
+ "marvel-zombies": {
+  "min": 137,
+  "eps": 4
+ },
+ "wonder-man": {
+  "min": 267,
+  "eps": 8
+ },
+ "daredevil-born-again-s2": {
+  "min": 413,
+  "eps": 8
+ },
+ "brand-new-day": {
+  "min": 145
+ },
+ "visionquest": {
+  "min": 451,
+  "eps": 8
+ }
+};
+// END RUNTIMES
+TITLES.forEach(t => { const r = RUNTIMES[t.id]; if (r) { t.runtime = r.min; if (r.eps) t.episodes = r.eps; } });

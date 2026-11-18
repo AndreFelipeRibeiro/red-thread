@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { Guide, Title } from '@/types/catalog';
 
 // About Red Thread: what the app is, ways to explore it, and credits
 // (TMDB requires its logo and notice in an About or Credits section).
@@ -100,8 +101,14 @@ export const DIALOG = {
   secondary: 'nudge-later h-auto min-h-10',
 };
 
-function AboutContent({ titleId, welcome, onClose, onPick }: {
+// The guide a first visit is offered (Notion "Welcome: offer to start the
+// Doomsday guide"): MCU_GUIDE.promotion's pick, an event guide within 60 days
+// or else an evergreen one, so the welcome stays right after Doomsday.
+export type WelcomeGuide = { guide: Guide; title: Title | null; days: number | null };
+
+function AboutContent({ titleId, welcome, onClose, onPick, guide, onGuide }: {
   titleId?: string; welcome?: boolean; onClose: () => void; onPick?: () => void;
+  guide?: WelcomeGuide | null; onGuide?: () => void;
 }) {
   // Subscribed, so the welcome redraws in a language picked on it.
   const { tr, lang, setLang, languages } = window.useI18n();
@@ -162,10 +169,31 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
             'in-[.m-sheet]:bottom-[calc(-24px-env(safe-area-inset-bottom,0px))] in-[.m-sheet]:-mx-[18px] in-[.m-sheet]:-mb-[calc(24px+env(safe-area-inset-bottom,0px))] in-[.m-sheet]:px-[18px] in-[.m-sheet]:pt-3.5 in-[.m-sheet]:pb-[calc(20px+env(safe-area-inset-bottom,0px))]',
             "before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-12 before:bg-linear-to-b before:from-transparent before:to-popover before:transition-opacity before:duration-200 before:content-['']",
             atEnd && 'before:opacity-0')}>
+          {/* The guide first while there is one to offer (Andre, 2026-11-17):
+              its poster, the question, its size and countdown, and Start the
+              guide; then Mark what I've seen; then Start exploring. */}
+          {guide && onGuide && (() => {
+            const G = window.MCU_GUIDE;
+            const art = guide.title || (G.stops(guide.guide, false)[0] || {}).title;
+            const n = G.stops(guide.guide, false).length;
+            const meta = [tr('guide.stops', { n }), guide.days != null && guide.days > 0 ? tr('guide.hero.daysLeft', { n: guide.days }) : null].filter(Boolean).join(' · ');
+            return (
+              <div className="welcome-guide mb-3.5 border-b pb-3.5">
+                <div className="flex items-center gap-3">
+                  {art && <div className={cn('welcome-guide-art h-[60px] w-10 flex-none overflow-hidden rounded-md bg-muted [&>:first-child]:block [&>:first-child]:size-full [&_img]:size-full [&_img]:object-cover [&_svg]:size-full')} aria-hidden="true"><window.PosterArt title={art}/></div>}
+                  <div className="min-w-0 flex-1">
+                    <div className="welcome-guide-q text-heading leading-snug font-semibold">{guide.title ? tr('welcome.guideQ', { title: window.MCU_I18N.titleName(guide.title) }) : G.name(guide.guide)}</div>
+                    <div className={cn('welcome-guide-meta mt-0.5 text-label tabular-nums', DIM)}>{meta}</div>
+                  </div>
+                </div>
+                <Button className="welcome-guide-go mt-3 h-auto min-h-10 w-full" onClick={onGuide}>{tr('guide.promoStart')}</Button>
+              </div>
+            );
+          })()}
           <div className="welcome-q text-heading font-semibold">{tr('picker.welcomeQ')}</div>
           <p className={cn('welcome-qs mt-1 text-label leading-normal', DIM)}>{tr('picker.welcomeText')}</p>
           <div className="about-cta-row mt-3 flex flex-col items-stretch gap-2">
-            <Button className="picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>
+            <Button variant={guide && onGuide ? 'outline' : 'default'} className="picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>
             <Button variant="outline" className="nudge-later welcome-start h-auto min-h-10" onClick={onClose}>{tr('about.start')}</Button>
           </div>
         </div>
@@ -231,19 +259,19 @@ function ModalDialog({ onClose, labelledBy, describedBy, className = '', childre
   );
 }
 
-function AboutDialog({ onClose, welcome, onPick }: { onClose: () => void; welcome?: boolean; onPick?: () => void }) {
+function AboutDialog({ onClose, welcome, onPick, guide, onGuide }: { onClose: () => void; welcome?: boolean; onPick?: () => void; guide?: WelcomeGuide | null; onGuide?: () => void }) {
   return (
     <ModalDialog onClose={onClose} labelledBy="about-title">
-      <AboutContent titleId="about-title" welcome={welcome} onClose={onClose} onPick={onPick}/>
+      <AboutContent titleId="about-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide}/>
     </ModalDialog>
   );
 }
 
-function AboutSheet({ onClose, welcome, onPick }: { onClose: () => void; welcome?: boolean; onPick?: () => void }) {
+function AboutSheet({ onClose, welcome, onPick, guide, onGuide }: { onClose: () => void; welcome?: boolean; onPick?: () => void; guide?: WelcomeGuide | null; onGuide?: () => void }) {
   const Sheet = window.Sheet;
   return (
     <Sheet onClose={onClose} tall label={window.MCU_I18N.tr(welcome ? 'about.welcomeTitle' : 'about.title')}>
-      <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose} onPick={onPick}/>
+      <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide}/>
     </Sheet>
   );
 }

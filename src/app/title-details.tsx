@@ -88,6 +88,35 @@ export function ReleaseLine({ title, className = '' }: { title: Title | null | u
   );
 }
 
+/** How long it takes to watch (Notion "Time to finish"): "2 h 6 min", or for
+ *  a season "6 episodes · 5 h 20 min". Released titles only. */
+export function RuntimeLine({ title, className = '' }: { title: Title | null | undefined; className?: string }) {
+  if (!title || !title.runtime) return null;
+  const time = window.MCU_GUIDE.duration(title.runtime, false);
+  const text = title.episodes ? tr('runtime.episodes', { n: title.episodes }) + ' · ' + time : time;
+  return <span className={cn('td-runtime text-label tabular-nums', DIM, className)}>{text}</span>;
+}
+
+/** Another cut of the title (Endgame's Encore): "Also available: Encore
+ *  (2026) · about 4 minutes of new scenes", then where and since when it
+ *  streams. Not a title of its own (Notion "Avengers: Endgame Encore"). */
+export function EditionLines({ title, className = '' }: { title: Title | null | undefined; className?: string }) {
+  if (!title || !title.editions || !title.editions.length) return null;
+  const lang = I18N().lang || 'en';
+  const fmt = (d: string) => new Intl.DateTimeFormat(lang, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(d + 'T00:00:00Z'));
+  const pick = (o: Record<string, string>) => o[lang] || o.en;
+  return (
+    <>
+      {title.editions.map(ed => (
+        <span key={ed.id} className={cn('td-edition flex flex-col text-label', DIM, className)}>
+          <span><span className="font-medium text-foreground">{tr('edition.also', { name: pick(ed.name), year: ed.theatrical.slice(0, 4) })}</span> · {tr('edition.extra', { n: ed.extraMinutes })}</span>
+          <span>{tr('edition.streaming', { service: ed.service, date: fmt(ed.streaming) })}</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 // A small badge for cards and rows. Released titles get none: they are the
 // norm, and a badge on 56 of 64 titles would say nothing.
 export function ReleaseBadge({ title, className = '' }: { title: Title | null | undefined; className?: string }) {
@@ -274,6 +303,8 @@ export function TitleDetailsBody({ title, surface, search, headingRef, headingId
             </h2>
             <ReleaseLine title={title} className={cn('td-release', c.release)}/>
             <StoryYear title={title} detail className={cn('td-story', c.story)}/>
+            <RuntimeLine title={title}/>
+            <EditionLines title={title}/>
           </div>
         </div>
         <DetailScores title={title}/>

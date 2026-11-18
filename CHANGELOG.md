@@ -13,6 +13,42 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 15 — Welcome: start the promoted guide
+
+Recorded: 2026-11-18 00:24 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression all 72 runs clean.
+
+- The welcome leads with the guide the promotion would pick: its poster,
+  "Getting ready for Avengers: Doomsday?", its stops and days to go, and a
+  full-width Start the guide that follows and opens it (and counts as its
+  promotion, so no promo card follows). Mark what I've seen becomes the outline
+  button below it. Commit [216ac46](https://github.com/AndreFelipeRibeiro/red-thread/commit/216ac46).
+
+## V5 Batch 15 — Avengers: Endgame Encore
+
+Recorded: 2026-11-18 00:24 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression all 72 runs clean.
+
+- The Encore cut is an edition of Endgame, not a new title (counts and progress
+  unchanged): the details say it is also available, with its extra minutes and
+  when it reached Disney+; Titles rows tag it on both layouts. The Doomsday
+  guide recommends the cut and adds a quiet note once Endgame is seen.
+  Commit [24512f2](https://github.com/AndreFelipeRibeiro/red-thread/commit/24512f2).
+
+## V5 Batch 15 — Time to finish
+
+Recorded: 2026-11-18 00:24 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression all 72 runs clean.
+
+- Runtimes for every released title, from TMDB (`tools/refresh-runtimes.cjs`
+  rewrites the marked block in `data.ts`, which stays import-free so the link
+  previews and the QA loader can run it in Node). The details show "2 h 6 min",
+  or "6 episodes · 5 h 13 min" for a season; guides show their total ("5 stops ·
+  about 14 h 30 min") and, once followed, the time left.
+- `qa/test-guidetime.js`; test-details allows the runtime line; Titles row
+  captions truncate (the Encore tag overflowed at 1024 wide in Portuguese with
+  large text). Commit [24512f2](https://github.com/AndreFelipeRibeiro/red-thread/commit/24512f2).
+
 ## V5 Batch 14 — Keep the highlighted title in view
 
 Recorded: 2026-11-17 22:49 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
