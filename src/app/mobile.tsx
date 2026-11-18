@@ -74,13 +74,25 @@ function useFitSteps(ref, max, deps) {
   React.useEffect(() => {
     const row = ref.current;
     if (!row) return undefined;
-    let width = row.clientWidth;
-    const ro = typeof ResizeObserver === 'undefined' ? null
-      : new ResizeObserver(() => { if (row.clientWidth !== width) { width = row.clientWidth; refit(); } });
-    if (ro) ro.observe(row);
+    // The row's own width, and the size of what's in it: a control that grows
+    // after the first measure (the account button once sign-in state is known,
+    // a count) can push the row over without the row itself changing width.
+    // Coalesced to one measure per frame; a measure that changes nothing
+    // changes no sizes, so it settles.
+    let frame = 0;
+    const later = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; refit(); }); };
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(later);
+    if (ro) { ro.observe(row); for (const c of row.querySelectorAll(':scope > *, :scope > * > *')) ro.observe(c); }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    // fonts.ready can resolve before Inter has even started loading (it only
+    // starts once text needs it), so the row was measured in the fallback
+    // face and kept steps that overflow once Inter arrives (built site, 1440,
+    // Portuguese: the account button 15px past the edge). Measure again
+    // whenever a font finishes loading.
+    const fonts = document.fonts && document.fonts.addEventListener ? document.fonts : null;
+    if (fonts) fonts.addEventListener('loadingdone', refit);
     window.addEventListener('mcu:textsize', refit);
-    return () => { if (ro) ro.disconnect(); window.removeEventListener('mcu:textsize', refit); };
+    return () => { if (frame) cancelAnimationFrame(frame); if (ro) ro.disconnect(); if (fonts) fonts.removeEventListener('loadingdone', refit); window.removeEventListener('mcu:textsize', refit); };
   }, [ref, refit]);
   return fit;
 }
