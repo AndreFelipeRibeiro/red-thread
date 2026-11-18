@@ -30,9 +30,15 @@ function decideWelcome() {
     const ls = window.localStorage;
     if (ls.getItem(WELCOME_KEY)) { returningVisit = true; return false; }
     const returning = RETURNING_KEYS.some(k => ls.getItem(k) !== null);
-    ls.setItem(WELCOME_KEY, returning ? 'returning' : 'shown');
+    // A shared link (a guide, a title or a character) lands on what it points
+    // to: no welcome over it, and none on the next visit either (it is
+    // recorded as decided; About keeps it reachable). Promotions still wait
+    // for a returning visit (Notion "Shared links: the welcome no longer
+    // covers the guide or title a first-time visitor came for").
+    const shared = ['guide', 'title', 'char'].some(k => url.searchParams.has(k));
+    ls.setItem(WELCOME_KEY, returning ? 'returning' : shared ? 'shared' : 'shown');
     returningVisit = returning;
-    return !returning;
+    return !returning && !shared;
   } catch (e) {
     // No storage: it couldn't be remembered, so don't show it on every visit.
     return false;
