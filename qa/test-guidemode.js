@@ -201,15 +201,15 @@ const CANVAS = () => {
       return { next, sub: (document.querySelector('.g-dock .g-dock-next .gm-ntitle') || {}).textContent, seen: !!document.querySelector('.g-dock .tsa-btn.seen'),
         segs: document.querySelectorAll('.g-dock-meter i').length, chip: !!document.querySelector('.un-mrow'), meter: !!document.querySelector('.spatial-overall'),
         inView: card.top >= vp.top && card.bottom <= dock.top + 1,
-        // The phone fits the guide's whole path above its dock (Notion
-        // "Explore E 5/5"): every stop on screen, not just the next one.
-        allIn: window.MCU_GUIDE.stops(window.MCU_GUIDE.get('infinity-saga'), false).every((st) => {
-          const c = document.querySelector(`.card[data-id="${st.id}"]`); if (!c) return false;
-          const r = c.getBoundingClientRect(); return r.left >= vp.left - 1 && r.right <= vp.right + 1 && r.top >= vp.top - 1 && r.bottom <= dock.top + 1; }) };
+        // The phone opens on the next stop at the reading zoom, centred, with
+        // the stop selected (Andre, 2026-11-17: the fit-the-whole-path view of
+        // Notion "Explore E 5/5" was a row of thumbnails on the guide line).
+        centred: Math.abs((card.left + card.right) / 2 - (vp.left + vp.right) / 2) <= 40,
+        cardW: Math.round(card.width), at: [...document.querySelectorAll('.card.up-next, .card.guide-at')].map(c => c.dataset.id) };
     });
     out.phoneDock = d;
     expect(d.sub === 'Iron Man' && !d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
-    expect(d.inView && d.allIn, `phone guide should fit its whole path above the dock: ${JSON.stringify(d)}`);
+    expect(d.inView && d.centred && d.cardW >= 140, `phone guide should open on its next stop, centred at a readable size: ${JSON.stringify(d)}`);
     // The zoom control rests hidden and shows while zooming (a double-tap here).
     const z0 = await page.evaluate(() => document.querySelector('.zoom-ctl').classList.contains('rest'));
     const vp = await page.evaluate(() => { const r = document.querySelector('.viewport').getBoundingClientRect(); return { x: r.left + 12, y: r.top + 12 }; });
@@ -244,6 +244,43 @@ const CANVAS = () => {
     }
     out.shortPhoneSteps = steps;
     steps.forEach(s => expect(!s.missing && s.bottom <= s.dock, `short phone: stepping parked a card under the guide's card: ${JSON.stringify(s)}`));
+    errors.push(...e);
+    await ctx.close();
+  }
+
+  // Desktop Connections, the guide line (Notion "Guide line", 2026-11-17):
+  // only the guide's stops and its target stand on the canvas, in one row in
+  // guide order; a ?guide= link lands on the next stop with its details open;
+  // Mark seen moves on to the next stop, whose card carries the gray
+  // current-stop outline while Up next keeps the red one; Undo takes the mark
+  // back and steps back to the title.
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { lang: 'en' });
+    await page.goto(URL + '?guide=before-doomsday'); await appReady(page);
+    await page.waitForFunction(() => /title=endgame/.test(location.search), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(900);
+    const line = await page.evaluate(() => {
+      const shown = [...document.querySelectorAll('.card')].filter(c => !c.classList.contains('ring-hidden'));
+      const ids = shown.map(c => ({ id: c.dataset.id, x: Math.round(c.getBoundingClientRect().left), y: Math.round(c.getBoundingClientRect().top) })).sort((a, b) => a.x - b.x);
+      return { ids: ids.map(c => c.id), rows: new Set(ids.map(c => c.y)).size, url: location.search };
+    });
+    out.guideLine = line;
+    expect(line.ids.length === 6 && line.ids[0] === 'endgame' && line.ids[1] === 'loki-s2' && line.ids[5] === 'doomsday', `guide line: expected the 5 stops in order, then Doomsday: ${JSON.stringify(line)}`);
+    expect(line.rows === 1, `guide line: the stops are not in one row: ${JSON.stringify(line)}`);
+    expect(/title=endgame/.test(line.url), `guide landing: the first stop's details did not open: ${line.url}`);
+    await page.locator('.drawer.open button', { hasText: 'Mark seen' }).first().click();
+    await page.waitForFunction(() => /title=loki-s2/.test(location.search), null, { timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const moved = await page.evaluate(() => ({ url: location.search, at: [...document.querySelectorAll('.card.guide-at')].map(c => c.dataset.id), next: [...document.querySelectorAll('.card.up-next')].map(c => c.dataset.id) }));
+    out.guideSeenNext = moved;
+    expect(/title=loki-s2/.test(moved.url), `Mark seen did not move on to the next stop: ${moved.url}`);
+    expect(!moved.at.length || moved.at.join() === 'loki-s2', `the current-stop outline is on the wrong card: ${JSON.stringify(moved)}`);
+    await page.locator('.mt-undo').first().click();
+    await page.waitForFunction(() => /title=endgame/.test(location.search), null, { timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const back = await page.evaluate(() => ({ url: location.search, endgame: (JSON.parse(localStorage.getItem('mcu.collection.v1')).states || {}).endgame || 'unseen' }));
+    out.guideUndo = back;
+    expect(/title=endgame/.test(back.url) && back.endgame !== 'seen', `Undo after Mark seen did not step back to the title: ${JSON.stringify(back)}`);
     errors.push(...e);
     await ctx.close();
   }

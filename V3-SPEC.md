@@ -379,6 +379,8 @@ a cold load without cached CDN libraries is not supported.
 
 ### 7.1 Collection filtering — read this carefully
 
+> *Superseded in part, 2026-11-17* (docs/decisions.md, "The filter lens"): on the Spatial canvas, Seen, Unseen and Watchlist now pack their matching titles and hide the rest instead of dimming them in place. The rule's reason still holds: the lens takes its titles when the filter changes, so marking a title under a filter never reflows the canvas.
+
 There is an existing `filtered` memo in `App()` (~line 603) that chains
 phase → type → budget → search. It feeds `computeLayout(filtered, sort)` →
 `basePositions` → `positions`, and `resetView` is a `useCallback` with

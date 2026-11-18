@@ -534,6 +534,7 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
             <li key={t.id}>
               <button type="button" data-title={t.id} onClick={() => onOpen(t.id)}
                 onMouseEnter={drawer ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                onFocus={drawer ? () => window.MCU_peekTitle(t.id) : undefined} onBlur={drawer ? () => window.MCU_peekTitle(null) : undefined}
                 aria-label={tr('thread.hopTo', { title: I18N().titleName(t), names: names.join(', ') })}
                 className="ex-row relative flex w-full cursor-pointer items-center gap-3 rounded-md py-1.5 pr-2 pl-9 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50">
                 {/* The rail runs through every row; each row draws its piece. */}
@@ -613,6 +614,7 @@ export function TrailView({ char, from, surface, headingId, headingRef, inCanvas
             <li key={t.id}>
               <button type="button" data-title={t.id} onClick={() => onOpen(t.id)} aria-current={here ? 'true' : undefined}
                 onMouseEnter={drawer && !here ? () => window.MCU_peekTitle(t.id) : undefined} onMouseLeave={drawer ? () => window.MCU_peekTitle(null) : undefined}
+                onFocus={drawer && !here ? () => window.MCU_peekTitle(t.id) : undefined} onBlur={drawer ? () => window.MCU_peekTitle(null) : undefined}
                 aria-label={tr('details.openTitle', { title: I18N().titleName(t) })}
                 className={cn('ex-row relative flex w-full cursor-pointer items-center gap-3 py-1.5 pr-4 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
                   drawer ? 'pl-6' : 'pl-[18px]', here && 'here bg-muted/70 hover:bg-muted')}>

@@ -796,7 +796,7 @@ function readDisplayPrefs() {
 // to whoever opens the link), the search text, the language or anything from
 // the account. The names avoid code / state / error, which the sign-in
 // redirect uses (account.jsx stripAuthParams).
-const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char', 'guide'];
+const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char', 'guide', 'explore'];
 function readURLState() {
   const out = { any: false };
   let q;
@@ -813,6 +813,9 @@ function readURLState() {
   const t = q.get('title'); if (t && window.TITLES.some(x => x.id === t)) out.title = t;
   const c = q.get('char'); if (c && window.CHARACTERS && window.CHARACTERS[c]) out.char = c;
   const g = q.get('guide'); if (g && (window.GUIDES || []).some(x => x.id === g)) out.guide = g;
+  // ?title=…&explore=thread opens that title's Follow the thread (Notion
+  // "Link straight to a title's Follow the thread view"); only with a title.
+  if (out.title && q.get('explore') === 'thread') out.explore = 'thread';
   return out;
 }
 
@@ -1116,7 +1119,9 @@ function App() {
     setView(next);
     glideTimer.current = setTimeout(() => { glideTimer.current = null; setCameraGlide(false); }, 650);
   }, []);
+  const lensFlightRef = useRef(null);
   const stopGlide = useCallback(() => {
+    if (lensFlightRef.current) { clearTimeout(lensFlightRef.current); lensFlightRef.current = null; }
     if (!glideTimer.current) return;
     clearTimeout(glideTimer.current);
     glideTimer.current = null;
@@ -1365,7 +1370,64 @@ function App() {
     return { result, lead, detail: parts.join(' · '), scoped, watchScope };
   }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, collectionStates, lang, guide, guideStepTitles, followedV, skipsVersion]);
 
-  const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
+  const sortLayout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
+  // The guide line (Notion "Guide line: an open guide lays its stops out in a
+  // line on Connections"): an open guide shows only its own titles, in its
+  // order, one row, the destination last, as Follow the thread does; the rest
+  // keep their places, so closing the guide glides everything back. Skipped
+  // stops stay in the row with their dash. The camera, the route and stepping
+  // all read this layout.
+  const guideLineIds = useMemo(() => {
+    if (!guide || !(isTouch ? viewMode === 'spatial' : desktopView === 'spatial')) return null;
+    const ids = window.MCU_GUIDE.stops(guide, guideOptional).map(st => st.id);
+    if (guide.target && !ids.includes(guide.target)) ids.push(guide.target);
+    return ids.filter(id => window.TITLES.some(t => t.id === id));
+  }, [guide, guideOptional, isTouch, viewMode, desktopView]);
+  // The filter lens (Notion "Filter lens", 2026-11-17): with Seen, Unseen or
+  // Watchlist on, Connections packs the matching titles into their own
+  // timeline in the current order, and the rest fade out in place (as around
+  // a ring), instead of dimming them on a canvas laid out for every title,
+  // which only fit at about 20%. It replaces V3-SPEC §7.1's "status dims,
+  // never removes" for these filters on the canvas (Andre's decision). §7.1's
+  // reason still holds: marking a title while the lens is on must not reflow
+  // the canvas under the cursor. So the lens takes its titles once, when the
+  // filter (or the order, another filter, the collection's first load)
+  // changes; a title marked meanwhile just dims, as before.
+  const collStatesRef = useRef(collectionStates);
+  collStatesRef.current = collectionStates;
+  const lensOn = !guide && collectionFilter !== 'all' && (isTouch ? viewMode === 'spatial' : desktopView === 'spatial');
+  const lensIds = useMemo(() => {
+    if (!lensOn || !collectionReady) return null;
+    const ids = filtered.filter(t => window.matchesCollection(collStatesRef.current[t.id] || 'none', collectionFilter, t)).map(t => t.id);
+    return ids.length ? new Set(ids) : null;
+  }, [lensOn, collectionFilter, collectionReady, filtered]);
+  // The grid orders pack the lens into their grid. The timelines (release,
+  // story) put it in one row in order, as the guide line does: each phase is
+  // its own row there, so a few titles from different phases became a
+  // staircase of single cards.
+  const lensLayout = useMemo(() => {
+    if (!lensIds) return null;
+    const titles = filtered.filter(t => lensIds.has(t.id));
+    const grid = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
+    if (grid) return computeLayout(titles, sort, sortDir);
+    const row = sortTitles(titles, sort, sortDir);
+    const step = CARD_W + LINE_GAP, x0 = 240, y0 = 320;
+    const positions = {};
+    row.forEach((t, i) => { positions[t.id] = { x: x0 + i * step, y: y0 }; });
+    return { ...computeLayout(titles, sort, sortDir), positions, bands: [], width: x0 * 2 + row.length * step, height: y0 * 2 + CARD_H };
+  }, [lensIds, filtered, sort, sortDir, sort === 'title' ? lang : '']);
+  const layout = useMemo(() => {
+    if (lensLayout && !(guideLineIds && guideLineIds.length)) {
+      // The titles left out keep their places (hidden), so clearing the
+      // filter glides every card back.
+      return { ...lensLayout, positions: { ...sortLayout.positions, ...lensLayout.positions } };
+    }
+    if (!guideLineIds || !guideLineIds.length) return sortLayout;
+    const step = CARD_W + LINE_GAP, x0 = 240, y0 = 320;
+    const positions = { ...sortLayout.positions };
+    guideLineIds.forEach((id, i) => { positions[id] = { x: x0 + i * step, y: y0 }; });
+    return { ...sortLayout, positions, bands: [], width: Math.max(sortLayout.width, x0 * 2 + guideLineIds.length * step), height: Math.max(sortLayout.height, y0 * 2 + CARD_H) };
+  }, [sortLayout, guideLineIds, lensLayout]);
   const basePositions = layout.positions;
   // A new layout (sort, order, filters, a pinned character) makes the cards
   // glide for 600ms while the lines would be drawn at their final places at
@@ -1421,7 +1483,15 @@ function App() {
   // or carried over from Titles) does not turn the canvas into its ring
   // (Andre, 2026-11-16).
   const ringIds = !isTouch && !guide && !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
-  const lineTitles = useMemo(() => ringIds ? filtered.filter(t => ringIds.has(t.id)) : filtered, [filtered, ringIds]);
+  const lineTitles = useMemo(() => {
+    if (guideLineIds && guideLineIds.length) return guideLineIds.map(id => window.TITLES.find(t => t.id === id)).filter(Boolean);
+    if (ringIds) return filtered.filter(t => ringIds.has(t.id));
+    return lensIds ? filtered.filter(t => lensIds.has(t.id)) : filtered;
+  }, [filtered, ringIds, guideLineIds, lensIds]);
+  // The guide line shows only its own stops; the rest fade out in place,
+  // as around a ring.
+  const guideLineSet = useMemo(() => guideLineIds && guideLineIds.length ? new Set(guideLineIds) : null, [guideLineIds]);
+  const shownIds = guideLineSet || ringIds || lensIds;
   // Counted over what the filters show (not the ring), so a card's number
   // holds while you move around a selection.
   const connCounts = useMemo(() => connectionCounts(filtered), [filtered]);
@@ -1532,6 +1602,53 @@ function App() {
     return out;
   }, [basePositions, overrides, focusId, relatedIds, ringOrder, isTouch, pair, guide, threadLine]);
 
+  // Keep the title the app points at in view (Notion "Keep the highlighted
+  // title in view", 2026-11-17): one rule for stepping through a character's
+  // titles and the thread list's hover and focus. Reads where the card really
+  // is (a ring, a trail or the thread's row move cards off their base
+  // places), and the room left by the bars, the details panel, the zoom
+  // control and anything docked at the bottom. A card fully inside that room
+  // keeps the camera still; a cropped one is panned just far enough in, with
+  // a margin; the camera zooms out only when the card can't fit at all.
+  // Reduce motion jumps. A press or wheel stops the glide (stopCamera).
+  const positionsRef = useRef(positions);
+  positionsRef.current = positions;
+  const followCard = (id) => {
+    const vp = viewportRef.current;
+    const p = positionsRef.current && positionsRef.current[id];
+    if (!vp || !p) return;
+    const rect = vp.getBoundingClientRect();
+    let left = 24, right = rect.width - 24, top = isTouch ? 56 : 52, bottom = rect.height - (isTouch ? 16 : 60);
+    if (!isTouch && drawerIdRef.current) right -= drawerW();
+    if (isTouch) {
+      document.querySelectorAll('.g-dock, .char-pill, .spatial-overall.docked').forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.height && r.top > rect.top + rect.height / 2) bottom = Math.min(bottom, r.top - rect.top - 12);
+      });
+    }
+    const v = viewRef.current;
+    let scale = v.scale;
+    const fit = Math.min((right - left) / CARD_W, (bottom - top) / CARD_H);
+    if (scale > fit) scale = fit;
+    const cl = v.x + p.x * scale, ct = v.y + p.y * scale;
+    const cr = cl + CARD_W * scale, cb = ct + CARD_H * scale;
+    let dx = 0, dy = 0;
+    if (cl < left) dx = left - cl; else if (cr > right) dx = right - cr;
+    if (ct < top) dy = top - ct; else if (cb > bottom) dy = bottom - cb;
+    if (!dx && !dy && scale === v.scale) return;
+    const next = { x: v.x + dx, y: v.y + dy, scale };
+    if (window.MCU_MOTION.reduced()) setView(next); else glideTo(next);
+  };
+  // A step asks for the follow; it runs once the step has rendered, so it
+  // reads the card's place in the new layout.
+  const followPendingRef = useRef(null);
+  useLayoutEffect(() => {
+    const id = followPendingRef.current;
+    if (!id) return;
+    followPendingRef.current = null;
+    followCard(id);
+  });
+
   // Reset overrides when sort/filter changes the layout
   useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, search]);
 
@@ -1609,6 +1726,17 @@ function App() {
     if (collectionFilter === 'all') return ordered;
     return ordered.filter(t => window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter, t));
   }, [ordered, collectionFilter, collectionStates]);
+
+  // The filter lens's anchor, where its camera lands (resetView): the last
+  // seen title in order for Seen (where you left off), else the first (the
+  // next to watch).
+  const lensAnchorRef = useRef(null);
+  lensAnchorRef.current = useMemo(() => {
+    if (!lensIds) return null;
+    const inLens = ordered.filter(t => lensIds.has(t.id));
+    if (!inLens.length) return null;
+    return (collectionFilter === 'seen' ? inLens[inLens.length - 1] : inLens[0]).id;
+  }, [lensIds, ordered, collectionFilter]);
 
   // Only speak in collection terms when the collection filter is what emptied
   // the list — otherwise the generic "clear a filter or the search box" is right.
@@ -1692,8 +1820,6 @@ function App() {
   // Read through a ref for the same reason.
   const guideFrameRef = useRef(null);
   // Phones fit the guide's whole path instead (E 5/5): its stops' ids.
-  const guidePathRef = useRef(null);
-  guidePathRef.current = guide ? guideStepTitles.map(t => t.id) : null;
   guideFrameRef.current = guide
     ? ((window.MCU_GUIDE.next(guide, guideOptional, statusOf) || {}).id || (guideStepTitles[0] && guideStepTitles[0].id) || null)
     : null;
@@ -1821,10 +1947,12 @@ function App() {
     });
   }, [applyScale]);
 
-  const resetView = useCallback(() => {
+  // opts.fit frames the filter lens's whole set rather than its anchor;
+  // opts.glide moves the camera there smoothly (the lens's landing flight).
+  const resetView = useCallback((opts: { fit?: boolean; glide?: boolean } = {}) => {
     // Every framing goes through here, so a later reframe can tell whether
     // the visitor has moved the camera since.
-    const frame = (v) => { lastResetViewRef.current = v; setView(v); };
+    const frame = (v) => { lastResetViewRef.current = v; if (opts.glide) glideTo(v); else setView(v); };
     if (!viewportRef.current) return;
     // A layout change or Recenter supersedes any remembered pre-selection view.
     selectionReturnRef.current = null;
@@ -1871,28 +1999,11 @@ function App() {
       });
       return;
     }
-    // Phones (Notion "Explore E 5/5"): the canvas zooms out to fit the
-    // guide's whole path, above its dock; the rest is dimmed and its stops
-    // ride one red line. Tap a stop or step with ‹ › to read closer.
-    const path = isTouch && guidePathRef.current;
-    if (gp && path && path.length > 1) {
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      path.forEach(id => {
-        const p = basePositions[id];
-        if (!p) return;
-        x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x + CARD_W); y1 = Math.max(y1, p.y + CARD_H);
-      });
-      if (isFinite(x0)) {
-        const top = 56, bottomChrome = 150, side = 16;
-        const scale = Math.max(ZOOM_MIN, Math.min(0.85, (rect.width - side * 2) / (x1 - x0), (rect.height - top - bottomChrome) / (y1 - y0)));
-        frame({
-          x: rect.width / 2 - (x0 + x1) / 2 * scale,
-          y: top + (rect.height - top - bottomChrome) / 2 - (y0 + y1) / 2 * scale,
-          scale,
-        });
-        return;
-      }
-    }
+    // Phones: the guide's next stop at the reading zoom, like every other
+    // order (Andre, 2026-11-17). The canvas used to zoom out to fit the
+    // guide's whole path (Notion "Explore E 5/5"); since the guide line puts
+    // the stops in one row, that fit was a row of thumbnails. ‹ › and the
+    // route line lead on along the row.
     if (gp) {
       // In a guide the phone canvas has no top chrome (the count, meter and
       // zoom control step aside); the dock covers the bottom. At least 85%, so
@@ -1930,6 +2041,29 @@ function App() {
         scale,
       };
       frame(v);
+      return;
+    }
+
+    // The filter lens lands on its anchor at the reading zoom (Watchlist and
+    // Unseen: the first title in order, the next to watch; Seen: the last,
+    // where you left off), centred above whatever is docked at the bottom.
+    // Its whole set is the flight's first leg (opts.fit, below).
+    const anchor = !selectedIdRef.current && !opts.fit ? lensAnchorRef.current : null;
+    const ap = anchor && basePositions[anchor];
+    if (ap) {
+      const scale = isTouch ? (phoneZoom || phoneReadScale(rect.width)) : Math.max(ZOOM_MIN, deskReadScale(rect.width));
+      let bottom = rect.height - (isTouch ? 14 : 24);
+      if (isTouch) {
+        const dock = viewportRef.current.closest('.m-main');
+        const card = dock && dock.querySelector('.spatial-overall.docked');
+        const cr = card && card.getBoundingClientRect();
+        if (cr && cr.height) bottom = cr.top - rect.top - 8;
+      }
+      frame({
+        x: rect.width / 2 - (ap.x + CARD_W / 2) * scale,
+        y: chromeTop + (bottom - chromeTop) / 2 - (ap.y + CARD_H / 2) * scale,
+        scale,
+      });
       return;
     }
 
@@ -2060,7 +2194,7 @@ function App() {
       }
       frame({ x: 14 - minX * scale, y, scale });
     }
-  }, [canvasW, canvasH, basePositions, sort, isTouch]);
+  }, [canvasW, canvasH, basePositions, sort, isTouch, glideTo]);
 
   // Reset view whenever layout changes
   useLayoutEffect(() => { if (!pendingStepRef.current) resetView(); }, [resetView]);
@@ -2070,16 +2204,29 @@ function App() {
   // seen — is the bug §7.1 describes, so this keys off the filter identity
   // only and never off the matched ids.
   const prevFocusKey = useRef(null);
-  useEffect(() => {
+  // A layout effect, so the lens's flight starts before the first paint (the
+  // layout effect above has already put the camera on the anchor).
+  useLayoutEffect(() => {
     const key = `${collectionFilter}|${highlightedChar || ''}`;
     if (prevFocusKey.current === null) { prevFocusKey.current = key; return; }
     if (prevFocusKey.current === key) return;
     prevFocusKey.current = key;
+    clearTimeout(lensFlightRef.current);
     // A selected card owns the viewport — the ring-layout auto-fit below is
     // driving it, and stepping on that would fight it mid-animation.
     if (selectedIdRef.current || pendingStepRef.current) return;
+    // The filter lens lands in one motion (Andre, 2026-11-17: start zoomed
+    // out, then zoom in): out to the whole packed set while the cards pack,
+    // a beat, then in to the anchor at the reading zoom. A press, touch or
+    // wheel stops it (stopGlide). Reduce motion goes straight to the anchor.
+    if (lensAnchorRef.current && !window.MCU_MOTION.reduced()) {
+      resetView({ fit: true, glide: true });
+      lensFlightRef.current = setTimeout(() => { lensFlightRef.current = null; resetView({ glide: true }); }, 1000);
+      return;
+    }
     resetView();
   }, [collectionFilter, highlightedChar, resetView]);
+  useEffect(() => () => clearTimeout(lensFlightRef.current), []);
 
   // Entering Spatial (from List or Grid on touch, from List on desktop) mounts a
   // fresh canvas whose camera was never framed (it would open at 100% on the
@@ -2288,8 +2435,8 @@ function App() {
       scale,
     });
   }, [selectedId, relatedIds, isTouch, guide, threadLine]);
-  // Following the thread: a row hovered in the panel whose card is off
-  // screen brings it into view after a beat (scanning the list stays calm).
+  // Following the thread: a row hovered or focused in the panel brings its
+  // card into view as soon as it is cropped (scanning the list stays calm).
   // Not in the first moments: the pointer that pressed Follow the thread
   // lands on a row as the list appears, which is not a request to move.
   const lineSinceRef = useRef(0);
@@ -2297,17 +2444,9 @@ function App() {
   useEffect(() => {
     if (!threadLine || !peekId || !viewportRef.current) return undefined;
     if (performance.now() - lineSinceRef.current < 900) return undefined;
-    const id = setTimeout(() => {
-      const p = positions[peekId];
-      if (!p || !viewportRef.current) return;
-      const rect = viewportRef.current.getBoundingClientRect();
-      const v = viewRef.current, w = rect.width - drawerW();
-      const left = v.x + p.x * v.scale, right = left + CARD_W * v.scale;
-      let dx = 0;
-      if (left < 24) dx = 24 - left + w / 4;
-      else if (right > w - 24) dx = (w - 24) - right - w / 4;
-      if (dx) glideTo({ ...v, x: v.x + dx });
-    }, 250);
+    // A short beat, so running the pointer down the list doesn't jitter the
+    // camera; a card partly cropped counts (the follow rule, above).
+    const id = setTimeout(() => followCard(peekId), 120);
     return () => clearTimeout(id);
   }, [peekId, threadLine]);
 
@@ -2738,11 +2877,31 @@ function App() {
   // for the collection, since a phone frames the next stop, which depends on
   // what has been seen.
   // A selected title keeps the camera (centred on it, above).
+  // Desktop goes one step further when the guide opens with no title open (a
+  // shared ?guide= link, or the guide opened onto Connections): its next
+  // unseen stop is selected and its details open, so the stop and its Mark
+  // seen are right there (Andre, 2026-11-17). Phones select the stop as well
+  // but keep the canvas clear: the details sheet would cover it.
+  const guideLandedRef = useRef(null);
   useEffect(() => {
     if (!guide || !spatialShown || !collectionReady) return undefined;
-    const id = requestAnimationFrame(() => { if (!selectedIdRef.current) resetView(); });
+    const id = requestAnimationFrame(() => {
+      if (selectedIdRef.current) return;
+      if (!drawerIdRef.current && guideLandedRef.current !== guideId) {
+        guideLandedRef.current = guideId;
+        const first = (window.MCU_GUIDE.next(guide, guideOptional, statusOf) || {}).id || (guideStepTitles[0] && guideStepTitles[0].id);
+        // Phones select the stop too, so the dock reads "Stop 1 of 5" and ›
+        // goes on to stop 2, as on desktop, but keep the landing's frame (the
+        // reading zoom, above the dock) and leave the details sheet closed
+        // (Andre, 2026-11-17).
+        if (first && isTouch) { resetView(); setStepId(first); return; }
+        if (first) { stepTo(first); return; }
+      }
+      resetView();
+    });
     return () => cancelAnimationFrame(id);
   }, [guideId, guideOptional, spatialShown, collectionReady]);
+  useEffect(() => { if (!guideId) guideLandedRef.current = null; }, [guideId]);
   // Phone Spatial frames itself before the collection has loaded, when there
   // is no Up next yet. Once it arrives, an untouched camera moves to Up next.
   useEffect(() => {
@@ -2838,6 +2997,9 @@ function App() {
     if (urlTitle) p.title = urlTitle;
     if (urlChar) p.char = urlChar;
     if (guideId) p.guide = guideId;
+    // The thread is part of the address while it is on screen, so it can be
+    // copied at any moment; Back to details or closing drops it.
+    if (urlTitle && urlTitle === drawerId && explore && explore.kind === 'thread') p.explore = 'thread';
     return p;
   };
   // Applies a title and character from the address: once on load, and again
@@ -2853,7 +3015,14 @@ function App() {
       return;
     }
     if (urlChar) unpinCharacter();
-    if ((u.title || null) === drawerId) return;
+    const wantThread = u.explore === 'thread';
+    if ((u.title || null) === drawerId) {
+      if (u.title && wantThread !== !!(explore && explore.kind === 'thread')) setExplore(wantThread ? { kind: 'thread' } : null);
+      return;
+    }
+    // Opening the title restores the thread through the details' explore
+    // restore (the [drawerId] effect), as ‹ does.
+    if (u.title && wantThread) exploreRestoreRef.current = { kind: 'thread' };
     if (u.title) pickTitle(u.title);
     else { setDrawerId(null); if (!isTouch) setSelectedId(null); }
   };
@@ -2935,7 +3104,7 @@ function App() {
     if (urlAtLoad.title || urlAtLoad.char) applyURLSubject(urlAtLoad);
   }, []);
   useEffect(() => { writeURLState(urlParams()); },
-    [isTouch, viewMode, desktopView, guidesPage, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId]);
+    [isTouch, viewMode, desktopView, guidesPage, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId, explore && explore.kind]);
   // Back and Forward restore the title and the character, never the filters:
   // closing the phone filter sheet is itself a step back in history, and
   // restoring filters there would undo the choices just made in it. A step
@@ -2982,6 +3151,13 @@ function App() {
       // A camera that was never framed (Spatial just opened) sits at 100%.
       // Desktop steps at no less than the landing's reading zoom.
       const floor = isTouch ? 0.6 : deskReadScale(rect.width);
+      // Stepping through a character's titles, already at a reading zoom:
+      // keep the outlined card in view, moving only as far as needed (above).
+      // A guide's steps center their stop, as before.
+      if (!guide && cameraFramedRef.current && viewRef.current.scale >= floor - 0.01) {
+        followPendingRef.current = id;
+        return;
+      }
       const scale = cameraFramedRef.current ? Math.max(viewRef.current.scale, floor) : floor;
       cameraFramedRef.current = true;
       const drawerSpace = isTouch ? 0 : drawerW();
@@ -3331,6 +3507,38 @@ function App() {
     const on = stepIndex >= 0 && stepList[stepIndex] ? stepList[stepIndex].id : null;
     if (on !== id) stepTo(id, { details: false });
   };
+  // Seen on an open guide's stop, from its details, with the canvas showing:
+  // once the mark has landed, the guide moves on to its next unseen stop, as ›
+  // does (desktop opens its details; phones move the camera). Only a change
+  // made here counts: the same title, unseen a moment ago (Andre, 2026-11-17).
+  const guideSeenRef = useRef(null);
+  // The last move Mark seen made ({ from, to }), so the toast's Undo can take
+  // it back as well: undoing the mark while still on the stop it moved to
+  // steps back to the title (Andre, 2026-11-17). Going anywhere else first
+  // forgets it.
+  const guideAdvanceRef = useRef(null);
+  useEffect(() => {
+    const prev = guideSeenRef.current;
+    const now = drawerId ? collectionStates[drawerId] || null : null;
+    guideSeenRef.current = { id: drawerId, status: now };
+    if (!guide || !spatialShown || !drawerId || !prev || prev.id !== drawerId) return undefined;
+    if (prev.status === 'seen' || now !== 'seen') return undefined;
+    if (!guideStepTitles.some(t => t.id === drawerId)) return undefined;
+    const next = window.MCU_GUIDE.next(guide, guideOptional, statusOf);
+    if (!next || next.id === drawerId) return undefined;
+    const from = drawerId;
+    const timer = setTimeout(() => { guideAdvanceRef.current = { from, to: next.id }; stepTo(next.id); }, 700);
+    return () => clearTimeout(timer);
+  }, [drawerId, collectionStates]);
+  useEffect(() => {
+    const a = guideAdvanceRef.current;
+    if (!a) return;
+    const at = stepId || drawerId;
+    if (!guide || !spatialShown || (at && at !== a.to && at !== a.from)) { guideAdvanceRef.current = null; return; }
+    if (collectionStates[a.from] === 'seen') return;
+    guideAdvanceRef.current = null;
+    if (at === a.to) stepTo(a.from);
+  }, [collectionStates, stepId, drawerId, guide, spatialShown]);
   // The desktop guide's module, in the List or over the canvas.
   const guideModule = (layout) => guide && (
     <window.GuideModule guide={guide} layout={layout} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
@@ -3415,7 +3623,7 @@ function App() {
           focusId={pair ? null : hoverFocusId}
           pair={pair}
           onPickConnection={pickConnection}
-          shownIds={ringIds}
+          shownIds={shownIds}
           spokes={ringIds && !threadLine && focusId ? { focus: focusId, inner: new Set((ringOrder || []).slice(0, RING_CAPS[0])) } : null}
           route={guide ? { ids: guideStepTitles.map(t => t.id), target: guide.target } : null}
         />
@@ -3454,11 +3662,12 @@ function App() {
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
               isCollDimmed={isCollDimmed}
-              isRingHidden={!!ringIds && !ringIds.has(t.id)}
+              isRingHidden={!!shownIds && !shownIds.has(t.id)}
               isRingFocus={!!ringIds && selectedId === t.id}
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
               isUpNext={upNextCardId === t.id} isPeek={!isTouch && peekId === t.id}
+              isGuideAt={!!guide && (stepId || drawerId) === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
               matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
               searchQuery={search}
