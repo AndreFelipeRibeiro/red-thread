@@ -987,7 +987,7 @@ function GuideSegments({ guide, statusOf, done = false, currentId = null, onJump
         ? <button key={s.id} type="button" tabIndex={-1} aria-hidden="true" className={B.W_SEG} title={GI18N.titleName(s.title)} onClick={() => onJump(s.id)}>{bar}</button>
         : bar;
     });
-  return <span className={cn('gm-segs', B.W_SEGS)} aria-hidden={onJump ? undefined : true}>{segs}</span>;
+  return <span className={cn('gm-segs', B.W_SEGS)} aria-hidden="true">{segs}</span>;
 }
 
 // The open guide's card on Connections, the same on desktop (top right) and
@@ -1038,7 +1038,10 @@ function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId
         <button type="button" className={B.W_CLOSE} aria-label={gtr('guide.close')} title={gtr('guide.close')} onClick={onClose}>×</button>
       </div>
       <div className={B.W_FOOT}>
-        <span className="gm-meter g-dock-meter min-w-0 flex-1" role="img" aria-label={gtr('guide.partSeen', { seen: p.ess.seen, n: p.ess.released })}>
+        {/* One spoken line; the dashes are press targets, so the meter
+            can't be one image (nested controls). */}
+        <span className="gm-meter g-dock-meter min-w-0 flex-1">
+          <span className="story-sr">{gtr('guide.partSeen', { seen: p.ess.seen, n: p.ess.released })}</span>
           <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId} onJump={onJump}/>
         </span>
         <div className={B.W_STEP}>
@@ -1139,15 +1142,16 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
           </div>
         </div>
         <div className="gm-where flex min-w-0 flex-col justify-center gap-3 border-l border-(--gm-line) px-5 py-4 max-[1100px]:border-t max-[1100px]:border-l-0">
-          <div className={meterCls} role="img" aria-label={meterLabel}>
-            <span className="gm-mtop flex items-center gap-2.5">
+          <div className={meterCls}>
+            <span className="story-sr">{meterLabel}</span>
+            <span className="gm-mtop flex items-center gap-2.5" aria-hidden="true">
               <span className="gm-mlabel min-w-0 flex-1 truncate">{complete ? (done || gtr('guide.complete')).replace(/\.$/, '') : MCU_GUIDE.short(guide)}</span>
               {complete
                 ? <span className="gm-check inline-flex size-4 flex-[0_0_16px] items-center justify-center rounded-full bg-(--seen) text-(--seen-foreground) [&_svg]:size-2.5" aria-hidden="true"><window.CheckIcon/></span>
                 : <span className={cn('gm-count tabular-nums text-foreground', XS)}>{p.ess.seen}/{p.ess.released}</span>}
             </span>
             <GuideSegments guide={guide} statusOf={statusOf} done={complete} currentId={currentId} onJump={onJump}/>
-            {notes.length > 0 && <span className={cn('gm-notes font-medium text-muted-foreground', XS)}>{notes.join(' · ')}</span>}
+            {notes.length > 0 && <span className={cn('gm-notes font-medium text-muted-foreground', XS)} aria-hidden="true">{notes.join(' · ')}</span>}
           </div>
           {next ? (
             <div className="gm-nextrow flex min-w-0 items-center gap-[11px]">

@@ -139,8 +139,11 @@ export function CharCard({ touch, inList = false, color, photo, initials, name, 
         <button type="button" className={cn(B.W_CLOSE, '-ml-1.5')} aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={onClose}>×</button>
       </div>
       <div className={B.W_FOOT}>
-        <span className="cc-meter min-w-0 flex-1" role="img" aria-label={tr('charcard.seen', { seen: titles.filter(t => statusOf(t.id) === 'seen').length, n })}>
-          <span className={cn('cc-segs', B.W_SEGS)}>
+        {/* The meter speaks as one line ("3 of 10 seen"); its dashes are
+            press targets, so it can't be one image (nested controls). */}
+        <span className="cc-meter min-w-0 flex-1">
+          <span className="story-sr">{tr('charcard.seen', { seen: titles.filter(t => statusOf(t.id) === 'seen').length, n })}</span>
+          <span className={cn('cc-segs', B.W_SEGS)} aria-hidden="true">
             {titles.map((t, i) => (
               <button key={t.id} type="button" tabIndex={-1} aria-hidden="true" className={B.W_SEG} title={I18N.titleName(t)} onClick={() => onJump(t.id)}>
                 <i className={cn(B.W_SEG_BAR,
