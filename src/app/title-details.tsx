@@ -519,7 +519,7 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
           <div className={cn('ex-poster h-[120px] w-20 flex-none rounded-lg shadow-[0_0_0_2px_var(--brand)]', THUMB)} aria-hidden="true"><PosterArt title={title}/></div>
           <div className="min-w-0 flex-1">
             <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}
-              className="ex-title m-0 font-display text-display font-normal tracking-[-0.01em] text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{I18N().titleName(title)}</h2>
+              className="ex-title m-0 text-display leading-[1.12] font-semibold tracking-tight text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{I18N().titleName(title)}</h2>
             <div className="ex-meta mt-1 text-label text-muted-foreground tabular-nums">{metaLine(title)}</div>
             <div className="ex-count mt-2.5 text-body font-semibold text-(--brand) tabular-nums">{tr('thread.connected', { n: rows.length })}</div>
           </div>
@@ -594,7 +594,7 @@ export function TrailView({ char, from, surface, headingId, headingRef, inCanvas
           </span>
           <div className="min-w-0 flex-1">
             <h2 id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}
-              className="ex-title m-0 font-display text-display font-normal tracking-[-0.01em] text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{name}</h2>
+              className="ex-title m-0 text-display leading-[1.12] font-semibold tracking-tight text-balance text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm">{name}</h2>
             <div className="ex-meta mt-1 text-label text-muted-foreground tabular-nums">
               {tr('trail.meta', { actor: window.MCU_credit(fromTitle, char), n: list.length, years: span })}
             </div>

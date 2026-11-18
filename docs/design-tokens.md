@@ -57,7 +57,7 @@ opacity, 42% / 55%) lives here too, as a number.
 | Score marks (same in both modes) | `imdb`, `rt`, `rt-text` |
 | Connections canvas | `canvas-top`, `canvas-bottom`, `canvas-dot` |
 | Controls (shadcn at rest) | `field`, `button-outline`, `button-outline-border`, `destructive-tint`, `switch-track`, `switch-thumb`, `switch-thumb-off`, `invalid-border`, `invalid-ring` |
-| Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `highlight-border`, `control-surface`, `chip`, `chip-border`, `chip-imdb`, `chip-rt`, `chip-muted` |
+| Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `guide-current`, `highlight-border`, `control-surface`, `chip`, `chip-border`, `chip-imdb`, `chip-rt`, `chip-muted` |
 
 **Controls** (2026-11-17, Notion "Build the Red Thread component library in
 Figma"): shadcn writes some resting colors as a token in Light and another
@@ -100,12 +100,29 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
   size; phones use the smaller display and body sizes declared beside them).
 - The Type collection has two modes, **Desktop** and **Phone**: phones use
   14px body, 24px display and a 56px countdown. `font-sans` (Inter) and
-  `font-display` (Instrument Serif, the poster fallback's initials) are
-  string variables.
+  `font-display` (the poster fallback's initials only) are string
+  variables. Every headline in the live app is Inter.
+- **Typeface** collection (Notion "Headline fonts: try stylish headline and
+  body pairings"): `headline-family` and `headline-style` (text-display,
+  text-title, other 20px+ titles, and every title's name: List and phone
+  rows, phase headings, Spatial cards, Up next, guide and thread stops),
+  `headline-medium` (the same, for names drawn in Inter Medium: Medium in
+  Live, the display face's own weight in a pairing), `body-family` and `body-regular`,
+  `-medium`, `-semibold`, `-bold` (everything else; the weight names differ
+  between families). Modes: **Live · Inter** (the default), then five free
+  pairings: Instrument Serif + Inter, Fraunces + Instrument Sans, Playfair
+  Display + Source Sans 3, DM Serif Display + DM Sans, Bodoni Moda + Manrope.
+  The text styles and the components' text bind to these, so setting a
+  frame's Typeface mode restyles it; the Foundations page shows all six. In
+  the app, the dev-only Theme lab (`?lab`) offers the same faces on the same
+  places, each scaled by a measured size step (`DISPLAY_ADJUST` in
+  `src/app/theme-lab.tsx`; Instrument Serif 1.24×) because a display face
+  reads smaller than Inter at one size. Figma has no such step, so its
+  pairings look a little smaller than the lab's.
 - **Text styles**, one per type role, named like the utility: `text-display`,
   `text-title`, `text-heading`, `text-body`, `text-label`, `text-caption`,
   each with its line height from `@theme inline`, its size bound to the
-  `fs-*` variable and its family to `font-sans`. The code sets weight per use,
+  `fs-*` variable and its family and weight to the Typeface collection. The code sets weight per use,
   not per role; the styles take the weight each role mostly has (Semi Bold
   for display, title and heading; Regular for body, label and caption).
 - Art sizes stay fixed px and are text styles in an `art/` folder:

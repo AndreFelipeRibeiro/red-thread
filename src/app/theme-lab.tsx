@@ -91,20 +91,52 @@ export const PRESETS: Record<string, Preset> = {
 
 // Typefaces: Inter is bundled with the app; the rest come from Google Fonts,
 // loaded only while the lab uses them.
-export const SANS = ['Inter', 'DM Sans', 'IBM Plex Sans', 'System'];
-export const DISPLAY = ['None', 'Instrument Serif', 'Space Grotesk', 'Fraunces'];
+export const SANS = ['Inter', 'DM Sans', 'IBM Plex Sans', 'Instrument Sans', 'Source Sans 3', 'Manrope', 'System'];
+// The headline pairings (Notion "Headline fonts: try stylish headline and
+// body pairings") match the Typeface modes in the Figma library.
+export const DISPLAY = ['None', 'Instrument Serif', 'Fraunces', 'Playfair Display', 'DM Serif Display', 'Bodoni Moda', 'Space Grotesk'];
 const GOOGLE: Record<string, string> = {
   'DM Sans': 'DM+Sans:wght@400;500;600;700', 'IBM Plex Sans': 'IBM+Plex+Sans:wght@400;500;600;700',
   'Instrument Serif': 'Instrument+Serif', 'Space Grotesk': 'Space+Grotesk:wght@500;600;700', Fraunces: 'Fraunces:opsz,wght@9..144,500;9..144,600',
+  'Playfair Display': 'Playfair+Display:wght@600', 'DM Serif Display': 'DM+Serif+Display', 'Bodoni Moda': 'Bodoni+Moda:opsz,wght@6..96,500',
+  'Instrument Sans': 'Instrument+Sans:wght@400;500;600;700', 'Source Sans 3': 'Source+Sans+3:wght@400;500;600;700', Manrope: 'Manrope:wght@400;500;600;700',
 };
+// Each display face at the weight it is drawn in (Figma's Typeface modes too).
+const DISPLAY_WEIGHT: Record<string, number> = { Fraunces: 600, 'Playfair Display': 600, 'Bodoni Moda': 500, 'Space Grotesk': 600 };
 const STACK: Record<string, string> = {
   Inter: "'Inter Variable', sans-serif", System: 'system-ui, -apple-system, sans-serif',
   'DM Sans': "'DM Sans', sans-serif", 'IBM Plex Sans': "'IBM Plex Sans', sans-serif",
-  'Instrument Serif': "'Instrument Serif', Georgia, serif", 'Space Grotesk': "'Space Grotesk', sans-serif", Fraunces: "'Fraunces', Georgia, serif",
+  'Instrument Serif': "'Instrument Serif', Georgia, serif", 'Playfair Display': "'Playfair Display', Georgia, serif", 'DM Serif Display': "'DM Serif Display', Georgia, serif", 'Bodoni Moda': "'Bodoni Moda', Georgia, serif",
+  'Instrument Sans': "'Instrument Sans', sans-serif", 'Source Sans 3': "'Source Sans 3', sans-serif", Manrope: "'Manrope', sans-serif", 'Space Grotesk': "'Space Grotesk', sans-serif", Fraunces: "'Fraunces', Georgia, serif",
 };
-// Where display type goes: page titles, the details' title, Up next's title
-// (the Editorial spec: display type for titles only, Inter everywhere else).
-const DISPLAY_TARGETS = '.ml-title, #g-page-title, .drawer-title, .m-dtitle, .un-title, .g-hero-title';
+// Where display type goes: every headline (the display and title roles, as in
+// Figma's Typeface collection) and every title's name, wherever it is listed:
+// List rows and their phase headings, Spatial cards, Up next, guide stops.
+// Body text, controls and glyphs set in a title size (arrows, zoom) stay in
+// the body face (Andre, 2026-11-17: the display face reached too few places).
+const DISPLAY_TARGETS = [
+  ':is(.text-display, .text-title):not(button, .gp-arr)',
+  '.ml-title, #g-page-title, .drawer-title, .m-dtitle, .un-title, .g-hero-title, .g-hero h2, .g-title-h, .ex-title, .about-title, .settings-panel h2',
+  '.dl-open, .dl-group-head, .m-ltitle, .card-title, .g-title, .gm-ntitle',
+].join(', ');
+// Set at the same size, a display face reads smaller than semibold Inter:
+// Instrument Serif is about 70% as wide, Fraunces has a small x-height. Each
+// face gets a size step so it reads as large as Inter: the geometric mean of
+// its x-height and its width against Inter's (measured in the browser at
+// 100px, 2026-11-17), taken back up. font-size-adjust applies it as the
+// face's x-height times that step, so the line height (set on the computed
+// size) stays and nothing reflows.
+//   face               x-height  width   step  ->  adjust
+//   Inter 600           0.546    17.60    -
+//   Instrument Serif    0.510    12.29   1.24      0.632
+//   Fraunces 600        0.441    14.70   1.22      0.538
+//   DM Serif Display    0.481    16.25   1.11      0.534
+//   Bodoni Moda 500     0.460    17.01   1.11      0.511
+//   Space Grotesk 600   0.494    17.25   1.06      0.524
+//   Playfair Display    0.517    16.82   1.05      0.543
+const DISPLAY_ADJUST: Record<string, number> = {
+  'Instrument Serif': 0.632, Fraunces: 0.538, 'DM Serif Display': 0.534, 'Bodoni Moda': 0.511, 'Space Grotesk': 0.524, 'Playfair Display': 0.543,
+};
 
 export const DEFAULT_STATE: LabState = { preset: 'default', sans: 'Inter', display: 'None', radius: null, density: 1, custom: null };
 
@@ -142,7 +174,7 @@ export function labCSS(s: LabState): string {
   if (s.display && s.display !== 'None') root['--font-display'] = STACK[s.display];
   let css = block('html:root', root) + block('html.dark', withAccent({ ...p.dark }));
   if (s.display && s.display !== 'None') {
-    css += `${DISPLAY_TARGETS} { font-family: ${STACK[s.display]}; font-weight: 400; letter-spacing: -0.01em; }\n`;
+    css += `${DISPLAY_TARGETS} { font-family: ${STACK[s.display]}; font-weight: ${DISPLAY_WEIGHT[s.display] || 400}; letter-spacing: -0.01em; ${DISPLAY_ADJUST[s.display] ? `font-size-adjust: ex-height ${DISPLAY_ADJUST[s.display]}; ` : ''}}\n`;
   }
   return css;
 }
