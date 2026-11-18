@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 // closes on Escape or a click outside and returns focus to Account), its
 // contents Buttons on the panel. Hook classes kept for the app and the QA
 // checks: `acct-*`, `sync-*`, `m-acct`, `coll-ic`, `signed-in`, `open`.
-const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const DIM = 'text-(--dim)';
 const XS = 'text-caption';
 const SPIN = 'border-2 border-input border-t-muted-foreground animate-[tsa-spin_700ms_linear_infinite] motion-reduce:animate-none';
 
@@ -305,7 +305,7 @@ const STAT_L = 'mt-0.5 block text-label leading-[1.3] text-muted-foreground';
 const LINK = 'h-8 px-2.5 text-body font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(38px,2.375rem)] in-[.m-sheet]:px-3 in-[.m-sheet]:text-label';
 const COLL_IC = 'coll-ic inline-flex size-[13px] flex-[0_0_13px] [&_svg]:size-full';
 const ACTION = 'acct-action h-9 w-full text-label font-medium in-[.m-sheet]:h-auto in-[.m-sheet]:min-h-[max(46px,2.875rem)] in-[.m-sheet]:text-body';
-const ERROR = cn('acct-error rounded-lg border border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_8%,transparent)] px-[9px] py-2 leading-[1.4] text-destructive', XS);
+const ERROR = cn('acct-error rounded-lg border border-(--destructive-border) bg-(--destructive-tint) px-[9px] py-2 leading-[1.4] text-destructive', XS);
 
 // The Account menu holds only account things: who is signed in, the
 // collection's totals and Share, sync status, and the account actions (Notion
@@ -422,13 +422,13 @@ function SyncStatus() {
   }
   return (
     <div role="status" className={cn('sync-status inline-flex shrink-0 items-center gap-[7px] rounded-md border border-transparent px-[9px] py-1.5 leading-none max-[899px]:gap-[5px] max-[899px]:px-[7px] max-[899px]:py-[5px]', XS, state,
-      state === 'failed' ? 'border-[color-mix(in_oklab,var(--destructive)_30%,transparent)] bg-[color-mix(in_oklab,var(--destructive)_8%,transparent)] text-destructive' : DIM)}>
+      state === 'failed' ? 'border-(--destructive-border) bg-(--destructive-tint) text-destructive' : DIM)}>
       <span className={cn('sync-dot size-[11px] shrink-0 rounded-full', state === 'failed' ? 'bg-destructive' : SPIN)} aria-hidden="true"/>
       {/* On a phone "Syncing…" leaves its words to the spinner (clipped, so a
           screen reader still reads them); a failure keeps its words. */}
       <span className={cn('sync-text', state === 'loading' && 'max-[899px]:sr-only')}>{tr('sync.' + state)}</span>
       {state === 'failed' && (
-        <Button variant="outline" size="xs" className={cn('sync-retry h-auto border-[color-mix(in_oklab,var(--destructive)_45%,transparent)] bg-transparent px-2 py-[3px] whitespace-nowrap text-foreground hover:border-destructive', XS)} onClick={retrySync}>{tr('account.retrySync')}</Button>
+        <Button variant="outline" size="xs" className={cn('sync-retry h-auto border-(--destructive-border) bg-transparent px-2 py-[3px] whitespace-nowrap text-foreground hover:border-destructive', XS)} onClick={retrySync}>{tr('account.retrySync')}</Button>
       )}
     </div>
   );
@@ -461,7 +461,7 @@ function AccountButton({ onAbout }) {
         <PopoverTrigger aria-label={label} title={label}
           className={cn(buttonVariants({ variant: 'outline' }),
             'acct-pill relative h-[max(44px,2.75rem)] max-w-44 min-w-24 gap-2 px-3 font-medium max-[1100px]:min-w-0 max-[1100px]:px-2.5 group-data-[fit=2]/toprow:min-w-0 group-data-[fit=2]/toprow:px-2.5 group-data-[fit=3]/toprow:min-w-0 group-data-[fit=4]/toprow:min-w-0 group-data-[fit=3]/toprow:px-2.5 group-data-[fit=4]/toprow:px-2.5',
-            open && 'open bg-muted dark:bg-input/50', signedIn && 'signed-in')}>
+            open && 'open bg-(--field-hover)', signedIn && 'signed-in')}>
           {status === 'initializing'
             ? <span className={cn('acct-dot loading block size-[13px] shrink-0 rounded-full', SPIN)} aria-hidden="true"/>
             : signedIn

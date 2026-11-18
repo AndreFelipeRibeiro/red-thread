@@ -30,9 +30,15 @@ function decideWelcome() {
     const ls = window.localStorage;
     if (ls.getItem(WELCOME_KEY)) { returningVisit = true; return false; }
     const returning = RETURNING_KEYS.some(k => ls.getItem(k) !== null);
-    ls.setItem(WELCOME_KEY, returning ? 'returning' : 'shown');
+    // A shared link (a guide, a title or a character) lands on what it points
+    // to: no welcome over it, and none on the next visit either (it is
+    // recorded as decided; About keeps it reachable). Promotions still wait
+    // for a returning visit (Notion "Shared links: the welcome no longer
+    // covers the guide or title a first-time visitor came for").
+    const shared = ['guide', 'title', 'char'].some(k => url.searchParams.has(k));
+    ls.setItem(WELCOME_KEY, returning ? 'returning' : shared ? 'shared' : 'shown');
     returningVisit = returning;
-    return !returning;
+    return !returning && !shared;
   } catch (e) {
     // No storage: it couldn't be remembered, so don't show it on every visit.
     return false;
@@ -78,7 +84,7 @@ function useScrolledToEnd(ref: React.RefObject<HTMLElement | null>) {
 }
 
 // A step between foreground and muted text (V3's "dim"); AA on every surface.
-const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const DIM = 'text-(--dim)';
 
 /** The recipes the small dialogs share (About, the sign-in reminder, the
  *  bulk confirmation, the picker's leave prompt): body, heading row, title,
@@ -122,7 +128,7 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
             {langs.map((l) => (
               <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code} onClick={() => setLang(l.code)}
                 className={cn('min-h-[max(36px,2.25rem)] rounded-md px-3.5 text-body font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50',
-                  lang === l.code && 'on bg-background text-foreground shadow-sm dark:bg-input/30')}>{l.name}</button>
+                  lang === l.code && 'on bg-(--button-outline) text-foreground shadow-sm')}>{l.name}</button>
             ))}
           </div>
         </div>

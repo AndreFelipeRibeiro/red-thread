@@ -64,6 +64,14 @@
        stay at least their default size at Small). The V3 stylesheets size
        their controls the same way: max(Npx, N/16 rem). */
     --spacing: max(0.25rem, 4px);
+    /* The layout grid's breakpoints (Notion "Define a layout grid",
+       2026-11-17): tab 600, desk 900, wide 1280, xwide 1600. In rem so they
+       sort with Tailwind's own; media queries read rem at the browser's
+       16px, not at the Text size. */
+    --breakpoint-tab: 37.5rem;
+    --breakpoint-desk: 56.25rem;
+    --breakpoint-wide: 80rem;
+    --breakpoint-xwide: 100rem;
 }
 
 @theme inline {
@@ -125,19 +133,6 @@
     --text-numeral--line-height: 0.9;
     --text-numeral-word: calc(var(--fs-numeral) * 0.6);
     --text-numeral-word--line-height: 0.9;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -156,6 +151,17 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+    /* ELEVATION (Notion "Token cleanup before the Figma foundations"): the
+       app's own shadows, by role, as shadow-* utilities. Values are the
+       --elevation-* tokens in :root and .dark below; Tailwind's shadow-xs …
+       shadow-lg stay for the shadcn components. */
+    --shadow-mark: var(--elevation-mark);
+    --shadow-mark-lg: var(--elevation-mark-lg);
+    --shadow-card: var(--elevation-card);
+    --shadow-card-hover: var(--elevation-card-hover);
+    --shadow-float: var(--elevation-float);
+    --shadow-pop: var(--elevation-pop);
+    --shadow-lift: var(--elevation-lift);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -172,6 +178,54 @@
    V3's until a surface converts. On design.html, which loads nothing else,
    it makes no difference. */
 @layer base {
+  /* @primitives — the palette (Notion "Build the Figma foundations",
+     Andre 2026-11-16: two layers in code and in Figma alike). Every color in
+     the app is one of these; the semantic tokens in :root and .dark below
+     point at them, and components use only the semantic ones. A primitive is
+     named by its hue family and its OKLCH lightness × 100 (red-55 is L 0.55),
+     so a new step slots in without renaming; -aNN is that color at NN%
+     opacity. The share images read this block (src/share-card/tokens.ts) and
+     the Figma Primitives collection mirrors it (docs/design-tokens.md). */
+  :root {
+      --neutral-100: oklch(1 0 0);
+      --neutral-98: oklch(0.985 0 0);
+      --neutral-97: oklch(0.97 0 0);
+      --neutral-92: oklch(0.922 0 0);
+      --neutral-71: oklch(0.708 0 0);
+      --neutral-52: oklch(0.52 0 0);
+      --neutral-27: oklch(0.269 0 0);
+      --neutral-20: oklch(0.205 0 0);
+      --neutral-15: oklch(0.145 0 0);
+      --neutral-100-a10: oklch(1 0 0 / 10%);
+      --neutral-100-a15: oklch(1 0 0 / 15%);
+      --slate-97: oklch(0.968 0.003 255);
+      --slate-95: oklch(0.948 0.004 255);
+      --slate-93: #e6e8f0;
+      --slate-72: #9ea4b8;
+      --slate-63: #8389a1;
+      --slate-16: rgb(10 12 20);
+      --slate-16-a82: rgb(10 12 20 / 0.82);
+      --red-68: oklch(0.68 0.17 23);
+      --red-55: oklch(0.55 0.2 27);
+      --red-50: oklch(0.50 0.19 25);
+      --rose-67: #e5677a;
+      --rose-50: oklch(0.50 0.21 10);
+      --crimson-53: #c41e3a;
+      --tomato-68: #fa5c3c;
+      --tomato-55: #cc2a0a;
+      --yellow-84: #f5c518;
+      --gold-74: #d4a05a;
+      --gold-55: oklch(0.55 0.10 75);
+      --green-79: #8fcf86;
+      --green-66: #5fa856;
+      --green-54: oklch(0.54 0.14 147);
+      --green-50: oklch(0.50 0.13 147);
+      --green-45: oklch(0.45 0.13 147);
+      --blue-64: #4a8de8;
+      --blue-50: oklch(0.50 0.17 258);
+      --purple-60: #a05cd0;
+      --purple-49: oklch(0.49 0.20 305);
+  }
   :root {
       /* So the browser's own furniture — scrollbars, form controls, the canvas
          behind the page — follows the theme the `dark` class sets, instead of
@@ -181,33 +235,33 @@
          numbers, the Seen and Watchlist buttons on a card): the overlay stays
          dark in both themes because it sits on an image, so its text stays
          light. */
-      --on-image: #e6e8f0;
-      --on-image-dim: #9ea4b8;
-      --on-image-muted: #8389a1;
+      --on-image: var(--slate-93);
+      --on-image-dim: var(--slate-72);
+      --on-image-muted: var(--slate-63);
       /* The dark ground under a mark set on a poster (seen, a guide stop's
          number). */
-      --on-image-ground: rgb(10 12 20 / 0.82);
+      --on-image-ground: var(--slate-16-a82);
       /* MCU phase colours as tokens (AGENTS.md, "Design system (V4)").
          Darkened from V3 so they keep WCAG AA on a light background; the
          .dark block holds V3's own values, authored for the dark canvas. */
-      --phase-1: oklch(0.55 0.10 75);
-      --phase-2: oklch(0.50 0.17 258);
-      --phase-3: oklch(0.50 0.19 25);
-      --phase-4: oklch(0.49 0.20 305);
-      --phase-5: oklch(0.50 0.13 147);
-      --phase-6: oklch(0.50 0.21 10);
+      --phase-1: var(--gold-55);
+      --phase-2: var(--blue-50);
+      --phase-3: var(--red-50);
+      --phase-4: var(--purple-49);
+      --phase-5: var(--green-50);
+      --phase-6: var(--rose-50);
       /* Collection status, and the ink for text set on a phase or status fill.
          The light values reuse the darkened phase hues, which hold WCAG AA on
          white; --on-color turns light because those fills turn dark. */
-      --status-watch: oklch(0.55 0.10 75);
-      --on-color: oklch(0.985 0 0);
+      --status-watch: var(--gold-55);
+      --on-color: var(--neutral-98);
       /* The brand red for interface accents. The logo itself keeps the
          designer's red in both themes (--logo, styles.css .logo-mark): a
          logo is not text, so it needs no lighter dark-theme variant. */
-      --brand: oklch(0.55 0.2 27);
+      --brand: var(--red-55);
       /* Ink on a brand fill: light on the light theme's deeper red, dark on
          the dark theme's lighter one (AA). Buttons use --primary instead. */
-      --brand-foreground: oklch(0.985 0 0);
+      --brand-foreground: var(--neutral-98);
       /* The accent roles (Notion "Use red as the interface accent", Andre
          2026-11-16): red is the one accent. --primary fills buttons and marks
          what is selected or active; --brand draws lines and fills (progress,
@@ -230,61 +284,122 @@
          themes because the mark sits on artwork; --seen-foreground is the
          ink on it (white, 4.76:1); --seen-text is the green as text on a
          surface (AA on the background and cards in both themes). */
-      --seen: oklch(0.54 0.14 147);
-      --seen-foreground: oklch(1 0 0);
-      --seen-text: oklch(0.45 0.13 147);
-      --logo: #c41e3a;
+      --seen: var(--green-54);
+      --seen-foreground: var(--neutral-100);
+      --seen-text: var(--green-45);
+      /* The ground of every mark and chip set on a poster, at full strength;
+         --on-image-ground is the same ink at the strength most marks use. */
+      --on-image-base: var(--slate-16);
+      /* The score services' own marks, the same in both themes: IMDb's
+         yellow; Rotten Tomatoes' red as a tag fill and, lighter, as text on
+         the dark score chip. */
+      --imdb: var(--yellow-84);
+      --rt: var(--tomato-55);
+      --rt-text: var(--tomato-68);
+      /* ELEVATION, by role (the shadow-* utilities in @theme inline):
+           mark      a check or badge on a small poster (lists, guides, picker)
+           mark-lg   a mark on a canvas card
+           card      a card at rest            card-hover  the same, hovered
+           float     a panel floating over the canvas (the guide module)
+           pop       posters standing out of a band (the guide promo)
+           lift      a card lifted off the canvas (dragged, current, popped out)
+         Marks, pop and lift sit on artwork or the dark scrim, so they are the
+         same in both themes; card, card-hover and float are lighter here. */
+      --elevation-mark: 0 1px 4px rgb(0 0 0 / 0.45);
+      --elevation-mark-lg: 0 2px 8px rgb(0 0 0 / 0.45);
+      --elevation-card: 0 1px 2px rgb(20 24 40 / 0.06), 0 8px 20px -12px rgb(20 24 40 / 0.25);
+      --elevation-card-hover: 0 16px 32px -14px rgb(0 0 0 / 0.3);
+      --elevation-float: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -12px rgb(0 0 0 / 0.2);
+      --elevation-pop: 0 10px 22px rgb(0 0 0 / 0.45);
+      --elevation-lift: 0 24px 50px -8px rgb(0 0 0 / 0.6);
+      --logo: var(--crimson-53);
       /* The Connections canvas (Notion "Design light mode on purpose", 2026-11-16):
          in the light theme a neutral, slightly cool paper a step below the
          white of the cards and bars, so the cards and their dark poster art
          sit on a ground instead of floating on white, with no colored wash
          (the warm one read as a pink cast). The dot grid and the resting
          threads are quieter than in the dark theme, where they glow on black. */
-      --canvas-top: oklch(0.968 0.003 255);
-      --canvas-bottom: oklch(0.948 0.004 255);
+      --canvas-top: var(--slate-97);
+      --canvas-bottom: var(--slate-95);
       --canvas-dot: color-mix(in oklab, var(--foreground) 10%, transparent);
       --thread-rest: 0.42;
-      --background: oklch(1 0 0);
-      --foreground: oklch(0.145 0 0);
-      --card: oklch(1 0 0);
-      --card-foreground: oklch(0.145 0 0);
-      --popover: oklch(1 0 0);
-      --popover-foreground: oklch(0.145 0 0);
+      --background: var(--neutral-100);
+      --foreground: var(--neutral-15);
+      --card: var(--neutral-100);
+      --card-foreground: var(--neutral-15);
+      --popover: var(--neutral-100);
+      --popover-foreground: var(--neutral-15);
       /* The brand red with white ink: 5.37:1. */
-      --primary: oklch(0.55 0.2 27);
-      --primary-foreground: oklch(0.985 0 0);
-      --secondary: oklch(0.97 0 0);
-      --secondary-foreground: oklch(0.205 0 0);
-      --muted: oklch(0.97 0 0);
+      --primary: var(--red-55);
+      --primary-foreground: var(--neutral-98);
+      --secondary: var(--neutral-97);
+      --secondary-foreground: var(--neutral-20);
+      --muted: var(--neutral-97);
       /* Darkened from the library's 0.556, which measured 4.35:1 on --muted and
          --secondary — the surfaces it is most often used on. 0.54 gives 4.61:1
          there and 5.02:1 on white (qa/test-contrast.js). */
-      --muted-foreground: oklch(0.54 0 0);
-      --accent: oklch(0.97 0 0);
-      --accent-foreground: oklch(0.205 0 0);
-      /* Darkened from the library's 0.577. Vega draws the destructive button and
-         badge as `text-destructive` on `bg-destructive/10`, and on that tint the
-         default measured 3.97:1 — below AA for its 14px text. Same hue and
-         chroma, lightness down to 0.52: 4.65:1 on the tint, 5.61:1 on white
-         (qa/test-contrast.js). */
-      --destructive: oklch(0.52 0.245 27.325);
-      --border: oklch(0.922 0 0);
-      --input: oklch(0.922 0 0);
+      --muted-foreground: var(--neutral-52);
+      --accent: var(--neutral-97);
+      --accent-foreground: var(--neutral-20);
+      /* The brand red (Andre, 2026-11-17, palette proposal P4; was its own
+         red-52): on its 10% tint it measures 4.62:1, AA for the destructive
+         button's text, and 5.37:1 on white (qa/test-contrast.js). */
+      --destructive: var(--red-55);
+      --border: var(--neutral-92);
+      --input: var(--neutral-92);
+      /* CONTROLS (Notion "Build the Red Thread component library in Figma"):
+         the shadcn controls' resting colors that change between the themes by
+         more than a token swap (shadcn wrote them as `dark:bg-input/30` and the
+         like), named so Figma holds one variable with a value per mode. The
+         colors are the ones the classes gave; hover and focus stay classes. */
+      --field: transparent;
+      --button-outline: var(--background);
+      --button-outline-border: var(--border);
+      --destructive-tint: color-mix(in oklab, var(--destructive) 10%, transparent);
+      --switch-track: var(--input);
+      --switch-thumb: var(--background);
+      --switch-thumb-off: var(--background);
+      --invalid-border: var(--destructive);
+      --invalid-ring: color-mix(in oklab, var(--destructive) 20%, transparent);
+      /* MIXED ROLES (Notion "Name the mixed colors and streamline the
+         palette", 2026-11-17): colors the components used to mix in their
+         classes, named so Figma has a variable for each. These keep the exact
+         recipes they replace; mixes of other tokens resolve in each theme.
+         Merges of near-duplicates wait for Andre's picks. */
+      --dim: color-mix(in oklch, var(--foreground) 40%, var(--muted-foreground));
+      --brand-text: color-mix(in oklch, var(--brand) 78%, var(--foreground));
+      --status-watch-text: color-mix(in oklch, var(--status-watch) 70%, var(--foreground));
+      --status-watch-tint: color-mix(in oklab, var(--status-watch) 16%, transparent);
+      --status-watch-tint-strong: color-mix(in oklab, var(--status-watch) 28%, transparent);
+      --seen-hover: color-mix(in oklab, var(--seen) 88%, black);
+      --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
+      --highlight-border: color-mix(in oklab, var(--foreground) 22%, transparent);
+      --control-surface: var(--background);
+      --chip: var(--card);
+      --chip-border: var(--border);
+      --chip-imdb: var(--foreground);
+      --chip-rt: var(--foreground);
+      --chip-muted: var(--muted-foreground);
+      /* The merged roles (Andre, 2026-11-17: "all as recommended" on the
+         palette proposal): near-duplicate tints, veils and borders folded
+         into one strength each. */
+      --brand-tint: color-mix(in oklab, var(--brand) 10%, transparent);
+      --brand-tint-strong: color-mix(in oklab, var(--brand) 20%, transparent);
+      --seen-tint: color-mix(in oklab, var(--seen) 14%, transparent);
+      --seen-tint-strong: color-mix(in oklab, var(--seen) 22%, transparent);
+      --neutral-tint: color-mix(in oklab, var(--foreground) 8%, transparent);
+      --veil: color-mix(in oklab, var(--background) 90%, transparent);
+      --veil-light: color-mix(in oklab, var(--background) 50%, transparent);
+      --border-strong: color-mix(in oklch, var(--foreground) 20%, var(--background));
+      --seen-border: color-mix(in oklab, var(--seen) 55%, var(--border));
+      --seen-line: color-mix(in oklab, var(--seen) 30%, var(--background));
+      --brand-border: color-mix(in oklab, var(--brand) 45%, var(--border));
+      --status-watch-border: color-mix(in oklab, var(--status-watch) 45%, var(--border));
+      --destructive-border: color-mix(in oklab, var(--destructive) 35%, transparent);
+      --field-hover: var(--muted);
+      --segment-on: var(--background);
       --ring: var(--brand);
-      --chart-1: oklch(0.87 0 0);
-      --chart-2: oklch(0.556 0 0);
-      --chart-3: oklch(0.439 0 0);
-      --chart-4: oklch(0.371 0 0);
-      --chart-5: oklch(0.269 0 0);
       --radius: 0.625rem;
-      --sidebar: oklch(0.985 0 0);
-      --sidebar-foreground: oklch(0.145 0 0);
-      --sidebar-primary: oklch(0.205 0 0);
-      --sidebar-primary-foreground: oklch(0.985 0 0);
-      --sidebar-accent: oklch(0.97 0 0);
-      --sidebar-accent-foreground: oklch(0.205 0 0);
-      --sidebar-border: oklch(0.922 0 0);
-      --sidebar-ring: oklch(0.708 0 0);
   }
 
   .dark {
@@ -292,60 +407,69 @@
       /* V3's phase colours, authored for the dark canvas. Phases 3 and 6 are
          lighter than V3's (#d04040, #c8384a) so their text meets AA on every
          dark surface (Andre's decision, 2026-11-01). */
-      --phase-1: #d4a05a;
-      --phase-2: #4a8de8;
-      --phase-3: #e86a6a;
-      --phase-4: #a05cd0;
-      --phase-5: #5fa856;
-      --phase-6: #e5677a;
+      --phase-1: var(--gold-74);
+      --phase-2: var(--blue-64);
+      --phase-3: var(--red-68);
+      --phase-4: var(--purple-60);
+      --phase-5: var(--green-66);
+      --phase-6: var(--rose-67);
       /* V3's watchlist color, and its dark ink on color fills. */
       /* The same green fill as the light theme (it sits on artwork); stated
          here too because the share cards read this block alone. */
-      --seen: oklch(0.54 0.14 147);
-      --seen-text: #8fcf86;
-      --status-watch: #d4a05a;
-      --on-color: oklch(0.145 0 0);
-      --brand: oklch(0.68 0.17 23);
-      --brand-foreground: oklch(0.145 0 0);
-      --logo: #c41e3a;
+      --seen: var(--green-54);
+      --seen-text: var(--green-79);
+      --status-watch: var(--gold-74);
+      --on-color: var(--neutral-15);
+      --brand: var(--red-68);
+      --brand-foreground: var(--neutral-15);
+      --logo: var(--crimson-53);
+      --elevation-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --elevation-card-hover: 0 18px 36px -12px rgb(0 0 0 / 0.55);
+      --elevation-float: 0 12px 30px rgb(0 0 0 / 0.45);
       --canvas-top: var(--background);
       --canvas-bottom: var(--background);
       --canvas-dot: color-mix(in oklab, var(--foreground) 4%, transparent);
       --thread-rest: 0.55;
-      --background: oklch(0.145 0 0);
-      --foreground: oklch(0.985 0 0);
-      --card: oklch(0.205 0 0);
-      --card-foreground: oklch(0.985 0 0);
-      --popover: oklch(0.205 0 0);
-      --popover-foreground: oklch(0.985 0 0);
-      /* A deeper red than the dark theme's --brand, so white ink holds AA
-         (4.73:1); the lines and fills keep the lighter --brand (6.35:1 on
-         the background). */
-      --primary: oklch(0.58 0.2 27);
-      --primary-foreground: oklch(0.985 0 0);
-      --secondary: oklch(0.269 0 0);
-      --secondary-foreground: oklch(0.985 0 0);
-      --muted: oklch(0.269 0 0);
-      --muted-foreground: oklch(0.708 0 0);
-      --accent: oklch(0.269 0 0);
-      --accent-foreground: oklch(0.985 0 0);
-      --destructive: oklch(0.704 0.191 22.216);
-      --border: oklch(1 0 0 / 10%);
-      --input: oklch(1 0 0 / 15%);
+      --background: var(--neutral-15);
+      --foreground: var(--neutral-98);
+      --card: var(--neutral-20);
+      --card-foreground: var(--neutral-98);
+      --popover: var(--neutral-20);
+      --popover-foreground: var(--neutral-98);
+      /* The same red as Light's primary (Andre, 2026-11-17, palette proposal
+         P3; was red-58): white ink at 5.37:1; the lines and fills keep the
+         lighter --brand (6.35:1 on the background). */
+      --primary: var(--red-55);
+      --primary-foreground: var(--neutral-98);
+      --secondary: var(--neutral-27);
+      --secondary-foreground: var(--neutral-98);
+      --muted: var(--neutral-27);
+      --muted-foreground: var(--neutral-71);
+      --accent: var(--neutral-27);
+      --accent-foreground: var(--neutral-98);
+      --destructive: var(--red-68);
+      --border: var(--neutral-100-a10);
+      --input: var(--neutral-100-a15);
+      --field: color-mix(in oklab, var(--input) 30%, transparent);
+      --button-outline: color-mix(in oklab, var(--input) 30%, transparent);
+      --button-outline-border: var(--input);
+      --destructive-tint: color-mix(in oklab, var(--destructive) 20%, transparent);
+      --switch-track: color-mix(in oklab, var(--input) 80%, transparent);
+      --switch-thumb: var(--primary-foreground);
+      --switch-thumb-off: var(--foreground);
+      --invalid-border: color-mix(in oklab, var(--destructive) 50%, transparent);
+      --invalid-ring: color-mix(in oklab, var(--destructive) 40%, transparent);
+      --highlight-border: color-mix(in oklab, var(--foreground) 53%, transparent);
+      --control-surface: color-mix(in oklab, var(--input) 30%, var(--background));
+      --chip: var(--on-image-base);
+      --chip-border: color-mix(in oklab, #fff 14%, transparent);
+      --chip-imdb: var(--imdb);
+      --chip-rt: var(--rt-text);
+      --chip-muted: var(--on-image-muted);
+      --neutral-tint: color-mix(in oklab, var(--foreground) 10%, transparent);
+      --field-hover: color-mix(in oklab, var(--input) 50%, transparent);
+      --segment-on: color-mix(in oklab, var(--input) 60%, transparent);
       --ring: var(--brand);
-      --chart-1: oklch(0.87 0 0);
-      --chart-2: oklch(0.556 0 0);
-      --chart-3: oklch(0.439 0 0);
-      --chart-4: oklch(0.371 0 0);
-      --chart-5: oklch(0.269 0 0);
-      --sidebar: oklch(0.205 0 0);
-      --sidebar-foreground: oklch(0.985 0 0);
-      --sidebar-primary: oklch(0.488 0.243 264.376);
-      --sidebar-primary-foreground: oklch(0.985 0 0);
-      --sidebar-accent: oklch(0.269 0 0);
-      --sidebar-accent-foreground: oklch(0.985 0 0);
-      --sidebar-border: oklch(1 0 0 / 10%);
-      --sidebar-ring: oklch(0.556 0 0);
   }
 }
 
@@ -544,6 +668,25 @@
    reads it (the lists' right padding, the guide's card, the camera). */
 :root { --drawer-w: 380px; }
 @media (min-width: 1600px) { :root { --drawer-w: 440px; } }
+
+/* The layout grid (Notion "Define a layout grid", 2026-11-17;
+   docs/design-tokens.md "Grid"). Phone 4 columns, 16 gutter and margin;
+   from 600, 8 columns, 24; from 900, 12 columns; from 1600, a 32 margin.
+   Reading pages (Guides, a guide) stop at 1128, which lands on whole
+   columns: 72 each, a Guide card spans 3 (264), a Continue card 6 (552).
+   Lists stop at 1488 (columns of 102). The details drawer sits outside the
+   grid; the grid fills the room to its left. The Connections canvas is
+   free-form; cards floating over a view keep their own 16px inset. */
+:root {
+  --grid-columns: 4;
+  --grid-gutter: 16px;
+  --grid-margin: 16px;
+  --content-max: 1128px;
+  --list-max: 1488px;
+}
+@media (min-width: 600px) { :root { --grid-columns: 8; --grid-gutter: 24px; --grid-margin: 24px; } }
+@media (min-width: 900px) { :root { --grid-columns: 12; } }
+@media (min-width: 1600px) { :root { --grid-margin: 32px; } }
 /* The drawer's width is fixed, so it takes the Large step by the window,
    from the width that widens it (the values the list's Large step uses). */
 @media (min-width: 1600px) {
@@ -555,4 +698,11 @@
     --step-button: max(40px, 2.5rem);
     --step-icon: 17px;
   }
+}
+
+/* A row on the layout grid; place children with col-span-*. */
+@utility layout-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
 }

@@ -45,7 +45,7 @@ export const UN_INLINE = 'un-inline mt-0.5 mb-3.5';
 // Phones: the tapped card, popped out of the zoomed canvas at 1:1 so its
 // type stays legible.
 export const FP = {
-  root: 'm-focuspop absolute z-25 flex w-[188px] flex-col -translate-1/2 animate-[mpop_200ms_cubic-bezier(.2,.9,.25,1)] cursor-pointer overflow-hidden rounded-lg border border-ring bg-card p-0 text-left text-card-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--brand)_28%,transparent),0_18px_44px_rgba(0,0,0,.7)] motion-reduce:animate-none',
+  root: 'm-focuspop absolute z-25 flex w-[188px] flex-col -translate-1/2 animate-[mpop_200ms_cubic-bezier(.2,.9,.25,1)] cursor-pointer overflow-hidden rounded-lg border border-ring bg-card p-0 text-left text-card-foreground shadow-[0_0_0_3px_color-mix(in_oklab,var(--brand)_28%,transparent),var(--elevation-lift)] motion-reduce:animate-none',
   open: 'm-fp-open block w-full cursor-pointer p-0 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
   poster: 'm-fp-poster relative aspect-[2/3] bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover [&>:first-child_svg]:size-full',
 };

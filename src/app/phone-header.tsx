@@ -98,7 +98,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
           </h1>
         </a>
         <window.SyncStatus/>
-        <Button type="button" variant="outline" className={cn('m-search-btn', ICON_BTN, open && 'on bg-muted dark:bg-input/50')}
+        <Button type="button" variant="outline" className={cn('m-search-btn', ICON_BTN, open && 'on bg-(--field-hover)')}
           aria-label={tr('search.aria')} aria-expanded={open} onClick={() => { if (open) { setSearch(''); setSearching(false); } else openSearch(); }}>
           <svg className="size-[17px]" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
         </Button>
@@ -108,7 +108,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
       </div>
       {open ? (
         <div className="m-searchrow relative flex items-center gap-2" ref={setSearchRow}>
-          <div className="m-searchbar flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-muted-foreground shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+          <div className="m-searchbar flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-input bg-(--field) px-3 text-muted-foreground shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
             <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
             {/* Drawn at 13px while the field's own font stays at least 16px, or
                 iPhones zoom the page when it takes focus (13.8px at Large;
@@ -124,7 +124,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
         <div ref={toolRow} className="m-toolrow group/toolrow flex min-w-0 items-center gap-2 data-[fit=2]:gap-1 data-[fit=3]:gap-1 data-[fit=4]:gap-1 data-[fit=5]:gap-1 data-[fit=4]:[&_.sort-menu-trigger]:gap-1.5 data-[fit=5]:[&_.sort-menu-trigger]:gap-1.5 data-[fit=4]:[&_.sort-menu-trigger]:px-2.5 data-[fit=5]:[&_.sort-menu-trigger]:px-2.5 data-[fit=4]:[&_.sort-menu-trigger>svg:last-child]:hidden data-[fit=5]:[&_.sort-menu-trigger>svg:last-child]:hidden data-[fit=4]:[&_.sort-menu-label]:hidden data-[fit=5]:[&_.sort-menu-label]:hidden">
           <SortMenu sort={sort} sortDir={sortDir} onChange={(k, d) => { setSort(k); setSortDir(d); }} mobile/>
           <Off off={guideActive && section === 'explore'}>
-            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-label text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=5]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0 group-data-[fit=5]/toolrow:px-0', filterCount && 'act bg-muted dark:bg-input/50')}
+            <Button variant="outline" className={cn('m-fpill relative h-11 gap-2 px-3 text-label text-foreground group-data-[fit=3]/toolrow:w-11 group-data-[fit=3]/toolrow:px-0 group-data-[fit=4]/toolrow:w-11 group-data-[fit=5]/toolrow:w-11 group-data-[fit=4]/toolrow:px-0 group-data-[fit=5]/toolrow:px-0', filterCount && 'act bg-(--field-hover)')}
               onClick={onOpenFilters} aria-label={filterCount ? tr('filters.aria', { n: filterCount }) : tr('filters.title')} title={tr('filters.title')}>
               <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
               <span className="group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only group-data-[fit=5]/toolrow:sr-only">{tr('filters.title')}</span>

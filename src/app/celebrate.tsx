@@ -19,7 +19,7 @@ import { DIALOG } from './about';
 // the QA checks read them. The dialogs are ModalDialog / Sheet with the
 // shared recipes from about.tsx. Hook classes kept: `mcu-toast`, `mt-*`,
 // `milestone`, `touch`, `about`, `nudge`, `about-cta`, `nudge-later`…
-const TOAST_DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const TOAST_DIM = 'text-(--dim)';
 
 // Feedback when someone marks a title seen or adds it to the watchlist (and,
 // further down, the guest sign-in reminder):

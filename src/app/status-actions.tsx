@@ -19,17 +19,17 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 // On a poster the overlay sits on an image, so it stays a dark glass chip in
 // both themes (the `dark:` copies outrank the outline button's own).
 const ON_POSTER = /\b(card-tsa|m-card-tsa|m-fp-tsa|g-card-tsa)\b/;
-const GLASS = 'border-[#ffffff26] bg-[rgba(10,12,20,0.78)] text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-[rgba(10,12,20,0.92)] hover:text-(--on-image) dark:border-[#ffffff26] dark:bg-[rgba(10,12,20,0.78)] dark:hover:bg-[rgba(10,12,20,0.92)]';
+const GLASS = 'border-white/15 bg-(--on-image-base)/78 text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-(--on-image-base)/92 hover:text-(--on-image) dark:border-white/15 dark:bg-(--on-image-base)/78 dark:hover:bg-(--on-image-base)/92';
 const ON = {
   // Seen is quiet (Notion "Simplify the Spatial cards": with real progress a
   // solid green button on most titles was the loudest colour on screen): a
   // soft tint, a tinted border and the check in the seen colour.
-  seen: 'border-[color-mix(in_oklab,var(--seen)_55%,var(--border))] bg-[color-mix(in_oklab,var(--seen)_14%,transparent)] text-(--seen-text) hover:bg-[color-mix(in_oklab,var(--seen)_22%,transparent)] hover:text-(--seen-text) dark:border-[color-mix(in_oklab,var(--seen)_55%,var(--border))] dark:bg-[color-mix(in_oklab,var(--seen)_16%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--seen)_24%,transparent)]',
+  seen: 'border-(--seen-border) bg-(--seen-tint) text-(--seen-text) hover:bg-(--seen-tint-strong) hover:text-(--seen-text)',
   watch: 'border-(--status-watch) bg-(--status-watch) text-(--on-color) hover:bg-(--status-watch) hover:text-(--on-color) dark:border-(--status-watch) dark:bg-(--status-watch) dark:hover:bg-(--status-watch)',
 };
 // Seen on a poster: the filled seen-green disc with a white check, the
 // card's seen mark (Andre, 2026-11-16).
-const ON_GLASS_SEEN = 'border-(--seen) bg-(--seen) text-(--seen-foreground) hover:bg-[color-mix(in_oklab,var(--seen)_88%,black)] hover:text-(--seen-foreground) dark:border-(--seen) dark:bg-(--seen) dark:hover:bg-[color-mix(in_oklab,var(--seen)_88%,black)]';
+const ON_GLASS_SEEN = 'border-(--seen) bg-(--seen) text-(--seen-foreground) hover:bg-(--seen-hover) hover:text-(--seen-foreground) dark:border-(--seen) dark:bg-(--seen) dark:hover:bg-(--seen-hover)';
 // The button just switched on pops, and a ring in its colour spreads from it
 // (Notion V4 Tasks, "Micro-interaction: the Seen check pops in…"); lifted
 // above its neighbour so the ring is never hidden. Keyframes: src/index.css.
@@ -42,7 +42,7 @@ const POP_INLINE = 'z-2 animate-[tsa-pop-sm_380ms_cubic-bezier(.2,1.3,.4,1)] aft
 // The saving spinner, on the corner of the button being saved, out of the
 // row's layout, so the buttons never move while a mark saves. Published for
 // test-micro, which places one exactly as it renders here.
-export const TSA_SPIN = 'tsa-spin pointer-events-none absolute -top-[5px] -right-[5px] z-3 size-3 animate-[tsa-spin_700ms_linear_infinite] rounded-full border-2 border-[color-mix(in_oklch,var(--foreground)_20%,var(--background))] border-t-foreground bg-background';
+export const TSA_SPIN = 'tsa-spin pointer-events-none absolute -top-[5px] -right-[5px] z-3 size-3 animate-[tsa-spin_700ms_linear_infinite] rounded-full border-2 border-(--border-strong) border-t-foreground bg-background';
 
 // Toggles, not checkboxes — so <button aria-pressed> rather than <input>.
 //

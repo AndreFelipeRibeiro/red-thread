@@ -305,8 +305,8 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 - Read the whole ticket page, **including any screenshots or images**: fetch
   the page with its file URLs and look at each image before deciding what the
   ticket means. If the **Figma** field holds links, read those frames with the
-  Figma MCP as well (see "Figma" below). New requests from the user in chat
-  become tickets first.
+  Figma MCP as well, annotations included (see "Figma" below). New requests
+  from the user in chat become tickets first.
 - Claim: set Assigned to = your agent and Status = In progress, then re-read the
   record to confirm no one else holds it. Work on one ticket at a time; claim
   the next only when the current one is handed off.
@@ -339,6 +339,31 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 - Notion-only tasks still need the user's review but no commit. Completing a
   ticket on staging is not approval to merge to `main`.
 
+## Shipping a batch (every push, staging or production)
+
+Andre, 2026-11-17: these steps are part of every push, not extras to be asked
+for. When he says to commit or push a batch that is in Awaiting review
+("commit Batch 12", "push it"), that is his approval of those tickets. After
+the push lands, in the same turn and in this order:
+
+1. **Regression and push**: the full regression on the exact tree, then the
+   push; smoke-test the deployed site (`SITE_URL=… node qa/smoke.js`) once
+   Vercel reports the deploy.
+2. **CHANGELOG**: one entry per ticket with the real time, saying where it
+   went (staging, production).
+3. **Close the tickets** (see "Complete" in the ticket workflow): Status
+   Completed, ✅ icon, **Completed on** = the push time, the next
+   **Completion order** numbers, **Latest commit** and every commit in the
+   body. A parent closes when its last sub-item does.
+4. **Calendar**: one purple event per session of work in the batch, created
+   with the Google Calendar connector (rules below). Check the calendar
+   first so a batch never gets two events, and never misses one.
+5. **Recap** in chat (format below).
+
+A merge of an already-shipped batch to production repeats steps 1 and 2
+(CHANGELOG: "merged to main"), checks that 3 and 4 were done, and does them
+if they weren't. Before ending a turn that pushed anything, check all five.
+
 ## Recap after each approval
 
 When the user approves and closes a ticket or batch, reply with a recap they
@@ -365,11 +390,11 @@ Title line, then one bullet per ticket:
 Times quoted anywhere else are America/New_York and come from real events
 (when work started on the batch, when it was pushed or merged).
 
-The assistant can also create the event directly on the user's Google
-**Personal** calendar (the one Notion Calendar fronts). Creating an event is
-an outward-facing action: offer, and only create it when the user says yes
-(or asked for it). Every Red Thread event follows the same rules, whichever
-agent makes it (Andre, 2026-11-15):
+The assistant creates the event directly on the user's Google **Personal**
+calendar (the one Notion Calendar fronts) **every time a batch is pushed**,
+to staging or production, without asking: Andre gave that as a standing
+instruction on 2026-11-17 (see "Shipping a batch" below). Every Red Thread
+event follows the same rules, whichever agent makes it (Andre, 2026-11-15):
 
 - **Colour: purple**, Google Calendar `colorId` `"3"` (Grape). Every Red
   Thread work event is purple.
@@ -516,13 +541,52 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 `codex mcp add figma --url https://mcp.figma.com/mcp`.
 
 - Figma is the source of truth for the design: variables (colour, type,
-  spacing, radius, motion) and components. Code mirrors the variables as
+  spacing, radius, motion) and components. [docs/design-tokens.md](docs/design-tokens.md)
+  maps every token in `src/index.css` to its Figma collection, variable or
+  style (same name without the `--`, code syntax `var(--name)`); a new token
+  gets its row there in the same change. Code mirrors the variables as
   design tokens in one place, with the same names; components use tokens,
   never raw values copied from a frame.
+- **Figma leads** (Notion "Connect Figma to code and make Figma the source of
+  truth", 2026-11-17). The [Red Thread – Design System](https://www.figma.com/design/P92ZRC9X0R6WoCmoB8MG8P)
+  file holds the variables, icons and a component for everything the app
+  draws; [docs/figma-library.md](docs/figma-library.md) maps each component
+  to its code (Code Connect needs an Organization plan; AFR is on Pro, so the
+  map lives there and in each component's description).
+  - A change to the look starts in Figma: a variable, a style, a component,
+    or a frame built from the library's instances. The code follows.
+  - Before changing a component's code, read its Figma component with the
+    MCP (link from the map). After, the two agree: when a code change alters
+    how something looks (a fix, a new state, a new component), update or add
+    the Figma component in the same ticket with `tools/figma/` (README
+    there), and say so on the ticket.
+  - A new or changed token gets the same name in `src/index.css`, the Figma
+    variable (code syntax `var(--name)`) and its row in
+    [docs/design-tokens.md](docs/design-tokens.md), in the same change.
+  - All Red Thread Figma files live in the AFR team folder
+    https://www.figma.com/files/folder/683084303; create new ones there.
 - Work from links, not descriptions: a design ticket's **Figma** field links
   the frame(s). Read the frame with the MCP (design context, variables, a
   screenshot) before coding, and compare the result against the frame in a
   real browser at desktop and phone sizes, in English and Portuguese.
+- **Exact links, and behavior as annotations** (Notion "Tickets link exact
+  Figma frames, with behavior notes as Dev Mode annotations", 2026-11-17):
+  - The **Figma** field links the exact frame or component: a `node-id`
+    link (Figma's "Copy link to selection"), never just the file. Several
+    frames go in the page body as a list, one link each, with what each shows
+    (Light, Dark, phone, a state).
+  - What a frame can't show is a **Dev Mode annotation** on the frame or
+    layer it is about: what a click or tap does, hover and focus, empty,
+    loading and error states, keyboard, what changes on phones or in
+    Portuguese. The ticket body says only what is not in the annotations.
+  - Agents read the annotations with the frame: `get_design_context` returns
+    them with the design, so read it for every linked node (not only
+    `get_metadata` or a screenshot), and treat an annotation like a line of
+    the ticket. Where an annotation and the ticket disagree, ask on the
+    ticket.
+  - Writing a design ticket (from chat or from an audit), link the frame the
+    same way, or say "no frame yet" so the ticket isn't mistaken for a
+    code-only one.
 - When a frame and the rules here disagree (accessibility, keyboard, contrast,
   localisation), the rules win: flag the difference on the ticket instead of
   silently copying the frame.

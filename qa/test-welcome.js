@@ -62,6 +62,26 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.blocked = await page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog') }));
   out.blockedErrors = errors.filter(e => !/blocked/.test(e)); await ctx.close();
+  // 5. a shared link on a first visit lands on its content: no welcome, the
+  // visit recorded as decided, no promotion (Notion "Shared links: the
+  // welcome no longer covers the guide or title a first-time visitor came for")
+  out.sharedErrors = [];
+  const LANDS = { '?guide=before-doomsday': '.g-head, .g-title-h, .guide-banner, .g-module', '?title=iron-man': '.drawer h2, .m-sheet h2, .td-title', '?char=tony': '.char-banner, .char-pill' };
+  for (const [kind, opts] of [['d', { viewport: { width: 1440, height: 900 } }], ['m', { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }]]) {
+    for (const [q, sel] of Object.entries(LANDS)) {
+      ({ ctx, page, errors } = await ctxPage(browser, opts, ART));
+      await page.goto('http://127.0.0.1:' + QA_PORT + '/' + q); await require('./ready').appReady(page); await page.waitForTimeout(600);
+      const s = await st(page); const lands = await page.evaluate((sel) => !!document.querySelector(sel), sel);
+      const promo = await page.evaluate(() => !!document.querySelector('.gp'));
+      if (s.dialog || s.sheet) out.sharedErrors.push(kind + ' ' + q + ': the welcome shows');
+      if (s.flag !== 'shared') out.sharedErrors.push(kind + ' ' + q + ': welcome flag is ' + s.flag);
+      if (!lands) out.sharedErrors.push(kind + ' ' + q + ': ' + sel + ' not shown');
+      if (promo) out.sharedErrors.push(kind + ' ' + q + ': a promotion shows on a first visit');
+      await page.reload(); await require('./ready').appReady(page);
+      const r = await st(page); if (r.dialog || r.sheet) out.sharedErrors.push(kind + ' ' + q + ': the welcome shows after a reload');
+      out.sharedErrors.push(...errors.map(e => kind + ' ' + q + ': ' + e)); await ctx.close();
+    }
+  }
   console.log(JSON.stringify(out));
   await browser.close(); server.close();
 })().catch(e => { console.error('FAIL', e.message.split('\\n')[0]); console.log(JSON.stringify(globalThis.__o).slice(0, 3000)); process.exit(1); });

@@ -221,11 +221,11 @@ function SeenPicker({ touch, onClose }) {
                     : watch ? pktr('picker.ariaWatch', { title: tname }) : tname;
                   return (
                     <button key={t.id} type="button" data-pick={t.id} aria-pressed={on} aria-label={label} title={tname}
-                      className={cn('pk-p relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg bg-muted text-left shadow-[0_1px_3px_rgba(0,0,0,.18)] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+                      className={cn('pk-p relative aspect-[2/3] cursor-pointer overflow-hidden rounded-lg bg-muted text-left shadow-card outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
                         on && 'on', had && !on && 'un')} onClick={() => toggle(t.id, g.phase)}>
                       <span className="pk-art absolute inset-0 *:block *:size-full [&_img]:object-cover [&_svg]:size-full" aria-hidden="true"><PickPoster title={t}/></span>
                       {on && <span className="pk-dim absolute inset-0 bg-black/45" aria-hidden="true"/>}
-                      <span aria-hidden="true" className={cn('pk-tick absolute right-1.5 bottom-1.5 flex items-center justify-center rounded-full shadow-[0_1px_4px_rgba(0,0,0,.35)]',
+                      <span aria-hidden="true" className={cn('pk-tick absolute right-1.5 bottom-1.5 flex items-center justify-center rounded-full shadow-mark',
                         touch ? 'size-[26px]' : 'size-6',
                         on ? 'on bg-(--seen) text-(--seen-foreground) [&_svg]:size-3.5' : 'border-2 border-white/85 bg-black/20')}>{on && <window.CheckIcon/>}</span>
                       {watch && !on && <span className="pk-wl absolute top-1.5 left-1.5 flex size-5 items-center justify-center rounded-[5px] bg-black/75 text-(--status-watch) [&_svg]:size-[11px]" aria-hidden="true"><window.BookmarkIcon filled/></span>}

@@ -82,7 +82,7 @@ export function MenuSwitch({ options, value, onChange, label, tall = false, clas
             className={cn('flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 text-label whitespace-nowrap outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4 [&_svg]:flex-none',
               o.icon && on ? 'flex-[1_0_auto] px-3' : 'flex-1',
               tall ? 'h-[max(40px,2.5rem)]' : 'h-[max(32px,2rem)]',
-              on ? 'on bg-background font-semibold text-foreground shadow-sm dark:bg-input/60' : 'font-medium text-muted-foreground hover:text-foreground')}
+              on ? 'on bg-(--segment-on) font-semibold text-foreground shadow-sm' : 'font-medium text-muted-foreground hover:text-foreground')}
             onClick={() => { if (!on) onChange(o.value); }}>
             {o.icon && <span aria-hidden="true" className={cn('inline-flex', on && o.iconClass)}>{o.icon}</span>}
             <span className={iconOnly ? 'story-sr' : 'truncate'}>{o.label}</span>
@@ -95,8 +95,8 @@ export function MenuSwitch({ options, value, onChange, label, tall = false, clas
 
 // The score tags on the IMDb and Tomatometer rows, as on the scores.
 const SORT_TAG: Record<string, [string, string]> = {
-  imdb: ['IMDb', 'bg-[#f5c518] text-black'],
-  rt: ['RT', 'bg-[#cc2a0a] text-white'],
+  imdb: ['IMDb', 'bg-(--imdb) text-black'],
+  rt: ['RT', 'bg-(--rt) text-white'],
 };
 
 function SortList({ sort, sortDir, onPick, onFlip, phone }: {
@@ -347,7 +347,7 @@ export function StatusCounts({ value, onChange, phone = false, keepOn = false }:
         return (
           <button key={kind} type="button" data-coll={kind} aria-pressed={on} title={tr(aria, { n: n == null ? '…' : n })} aria-label={tr(aria, { n: n == null ? '…' : n })}
             className={cn(buttonVariants({ variant: 'outline' }), 'gap-1.5 px-2.5 text-label font-medium [&_svg:not([class*=\'size-\'])]:size-[13px]',
-              on ? 'on border-foreground/25 bg-muted text-foreground dark:bg-input/60' : 'text-muted-foreground hover:text-foreground',
+              on ? 'on border-foreground/25 bg-(--field-hover) text-foreground' : 'text-muted-foreground hover:text-foreground',
               // The phone row's tightest steps (320px, Large text): the count
               // pills alone; the icon stays in the name. The desktop header does
               // the same below 1100px, where the row runs out of room.
@@ -387,9 +387,9 @@ export function PickerButton({ phone = false }: { phone?: boolean }) {
 // Watchlist and Seen carry their status colour, as a tint (the quiet seen
 // mark's language), and the selected tab's pill is a step stronger.
 const PILL_TONE: Record<string, [string, string]> = {
-  all: ['bg-[color-mix(in_oklab,var(--muted-foreground)_14%,transparent)] text-[color-mix(in_oklab,var(--foreground)_72%,var(--background))]', 'bg-[color-mix(in_oklab,var(--foreground)_10%,transparent)] text-foreground'],
-  seen: ['bg-[color-mix(in_oklab,var(--seen)_14%,transparent)] text-(--seen-text)', 'bg-[color-mix(in_oklab,var(--seen)_24%,transparent)] text-(--seen-text)'],
-  watchlist: ['bg-[color-mix(in_oklab,var(--status-watch)_16%,transparent)] text-[color-mix(in_oklch,var(--status-watch)_70%,var(--foreground))]', 'bg-[color-mix(in_oklab,var(--status-watch)_28%,transparent)] text-[color-mix(in_oklch,var(--status-watch)_70%,var(--foreground))]'],
+  all: ['bg-(--neutral-tint) text-(--dim)', 'bg-(--neutral-tint) text-foreground'],
+  seen: ['bg-(--seen-tint) text-(--seen-text)', 'bg-(--seen-tint-strong) text-(--seen-text)'],
+  watchlist: ['bg-(--status-watch-tint) text-(--status-watch-text)', 'bg-(--status-watch-tint-strong) text-(--status-watch-text)'],
 };
 function CountBadge({ n, kind, appeared, on = false }: { n: number; kind: string; appeared: boolean; on?: boolean }) {
   const [tick, setTick] = React.useState({ n, dir: '' });

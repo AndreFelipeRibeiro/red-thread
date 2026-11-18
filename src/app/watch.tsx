@@ -97,7 +97,7 @@ function Provider({ p }) {
     <li className="wtw-provider inline-flex items-center gap-2 text-label text-foreground">
       {p.logo && !failed
         ? <img className="wtw-logo size-7 flex-[0_0_28px] rounded-md bg-muted object-cover" src={(W.logoBase || 'https://image.tmdb.org/t/p/w92') + p.logo} alt="" width="28" height="28" loading="lazy" onError={() => setFailed(true)}/>
-        : <span className="wtw-logo none inline-flex size-7 flex-[0_0_28px] items-center justify-center rounded-md border border-input bg-muted text-label font-bold text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]" aria-hidden="true">{p.name.slice(0, 1)}</span>}
+        : <span className="wtw-logo none inline-flex size-7 flex-[0_0_28px] items-center justify-center rounded-md border border-input bg-muted text-label font-bold text-(--dim)" aria-hidden="true">{p.name.slice(0, 1)}</span>}
       <span className="wtw-name">{p.name}</span>
     </li>
   );
@@ -121,7 +121,7 @@ function RegionPicker({ region, setRegion, onDone }) {
   return (
     <label className="wtw-picker">
       <span className="story-sr">{wtr('watch.regionLabel')}</span>
-      <select ref={ref} value={region} className="h-8 max-w-[190px] rounded-md border border-input bg-transparent px-2 text-body text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30" onChange={(e) => { setRegion(e.target.value); onDone(); }} onBlur={onDone}
+      <select ref={ref} value={region} className="h-8 max-w-[190px] rounded-md border border-input bg-(--field) px-2 text-body text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" onChange={(e) => { setRegion(e.target.value); onDone(); }} onBlur={onDone}
         onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); onDone(); } }}>
         {choices.map((c) => <option key={c} value={c}>{countryName(c)}</option>)}
       </select>
@@ -146,21 +146,21 @@ function WhereToWatch({ title }) {
 
   let body;
   if (!supported) {
-    body = <p className="wtw-note mt-2 text-label leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.unsupported', { country })}</p>;
+    body = <p className="wtw-note mt-2 text-label leading-[1.45] text-(--dim)">{wtr('watch.unsupported', { country })}</p>;
   } else if (!entry) {
-    body = <p className="wtw-note mt-2 text-label leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.notChecked')}</p>;
+    body = <p className="wtw-note mt-2 text-label leading-[1.45] text-(--dim)">{wtr('watch.notChecked')}</p>;
   } else {
     const stream = offers.stream || [], free = offers.free || [];
     const others = [];
     [...(offers.rent || []), ...(offers.buy || [])].forEach((p) => { if (!others.some((q) => q.id === p.id)) others.push(p); });
     if (!stream.length && !free.length && !others.length) {
-      body = <p className="wtw-note mt-2 text-label leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.none', { country, date: longDate(W.checkedAt) })}</p>;
+      body = <p className="wtw-note mt-2 text-label leading-[1.45] text-(--dim)">{wtr('watch.none', { country, date: longDate(W.checkedAt) })}</p>;
     } else {
       const shown = others.slice(0, 2).map((p) => p.name);
       const more = others.length - shown.length;
       body = (
         <>
-          {!stream.length && !free.length && <p className="wtw-note mt-2 text-label leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{wtr('watch.noSubscription', { country })}</p>}
+          {!stream.length && !free.length && <p className="wtw-note mt-2 text-label leading-[1.45] text-(--dim)">{wtr('watch.noSubscription', { country })}</p>}
           {stream.length > 0 && (
             <div className="wtw-group mt-2.5">
               <div className="wtw-kind text-label font-medium text-muted-foreground">{wtr('watch.stream')}</div>
@@ -174,7 +174,7 @@ function WhereToWatch({ title }) {
             </div>
           )}
           {others.length > 0 && (
-            <p className="wtw-also mt-2 text-label leading-[1.45] text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]">{more > 0
+            <p className="wtw-also mt-2 text-label leading-[1.45] text-(--dim)">{more > 0
               ? wtr('watch.alsoMore', { names: shown.join(', '), n: more })
               : wtr('watch.also', { names: shown.join(wtr('watch.and')) })}</p>
           )}

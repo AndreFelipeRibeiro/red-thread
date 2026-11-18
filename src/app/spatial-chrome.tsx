@@ -41,7 +41,7 @@ export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onComm
     touch && 'h-[max(40px,2.5rem)] min-w-[54px]');
   const start = String(Math.round(scale * 100));
   return (
-    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-border bg-background shadow-xs dark:border-input dark:bg-[color-mix(in_oklab,var(--input)_30%,var(--background))]',
+    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-(--button-outline-border) bg-(--control-surface) shadow-xs',
       touch
         ? 'touch top-3 right-3 z-22 rounded-lg transition-opacity duration-250 motion-reduce:transition-none'
         : 'bottom-4 left-4',

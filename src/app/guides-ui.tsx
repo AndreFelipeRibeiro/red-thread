@@ -20,14 +20,14 @@ import * as S from './shell';
 // app and the QA checks: `g-*`, `gm-*`, `gp-*`, `guide-banner`, `guide-pill`,
 // `cb-*`, and the state classes (`on`, `done`, `next`, `seen`, `compact`,
 // `optional`, `skipped`, `current`, `dest`, `cur`, `o`, `skip`).
-const DIM = 'text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]';
+const DIM = 'text-(--dim)';
 const XS = 'text-caption';
 // A poster thumbnail: the art fills the box.
 const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:size-full [&>:first-child_svg]:size-full [&>:first-child_img]:size-full [&>:first-child_img]:object-cover';
 const FOCUS = 'outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 // shadcn's Card, as the guide's head, stops, cards and "Part of" rows use it.
 const CARD = 'rounded-xl border bg-card text-card-foreground shadow-sm';
-const OUTLINE_BTN = 'inline-flex cursor-pointer items-center rounded-md border bg-background font-medium whitespace-nowrap text-foreground shadow-xs hover:bg-muted dark:border-input dark:bg-input/30 dark:hover:bg-input/50';
+const OUTLINE_BTN = 'inline-flex cursor-pointer items-center rounded-md border bg-(--button-outline) font-medium whitespace-nowrap text-foreground shadow-xs hover:bg-(--field-hover) border-(--button-outline-border)';
 
 // Guides (guides.js): short, curated paths through the catalogue. This file
 // holds the helpers every surface shares and the guide's own pieces of UI:
@@ -526,12 +526,12 @@ function PosterYear({ title, className = '' }) {
 // The cards' quiet seen mark in a poster's corner.
 function PosterSeen({ className = '' }) {
   return (
-    <span aria-hidden="true" className={cn('g-seen absolute right-1 bottom-1 z-2 inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_1px_4px_rgba(0,0,0,.45)] [&_svg]:size-2.5', className)}>
+    <span aria-hidden="true" className={cn('g-seen absolute right-1 bottom-1 z-2 inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-mark [&_svg]:size-2.5', className)}>
       <window.CheckIcon/>
     </span>
   );
 }
-const BRAND_TEXT = 'text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))]';
+const BRAND_TEXT = 'text-(--brand-text)';
 
 // The hero (H2 · Focus strip): the guide in focus, or, with nothing followed,
 // the guide the promotion rules pick, shown not started. Left, what it is;
@@ -825,9 +825,9 @@ function ContinueShelf({ heroId, onPick, phone }) {
         <ManageFollowed phone={phone} onPick={onPick}/>
         {list.length > 2 && <>{shelfArrow(row, -1, gtr('guide.shelf.prev'))}{shelfArrow(row, 1, gtr('guide.shelf.next'))}</>}
       </div>
-      <div ref={row} className="g-shelf-row flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden in-[.app.touch]:-mx-3.5 in-[.app.touch]:gap-3 in-[.app.touch]:scroll-px-3.5 in-[.app.touch]:px-3.5">
+      <div ref={row} className="g-shelf-row flex snap-x snap-mandatory gap-(--grid-gutter) overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden in-[.app.touch]:-mx-3.5 in-[.app.touch]:gap-3 in-[.app.touch]:scroll-px-3.5 in-[.app.touch]:px-3.5">
         {list.map(g => (
-          <div key={g.id} className="w-[calc((100%-1rem)/2)] flex-none snap-start max-[700px]:w-full in-[.app.touch]:w-[min(84vw,320px)]">
+          <div key={g.id} className="w-[calc((100%-var(--grid-gutter))/2)] flex-none snap-start max-[700px]:w-full in-[.app.touch]:w-[min(84vw,320px)]">
             <ContinueCard guide={g} onPick={onPick}/>
           </div>
         ))}
@@ -857,11 +857,11 @@ function GuideShelf({ shelf, onPick }) {
         // Phones: two a row, one under 360px (Andre, 2026-11-16: three across
         // squeezed the names and pushed Follow out of the card). The width
         // steps come after max-[900px], so they win on a narrow screen.
-        all ? 'grid grid-cols-4 gap-4 max-[900px]:grid-cols-3 max-[600px]:grid-cols-2 max-[359px]:grid-cols-1 in-[.app.touch]:gap-3'
-          : 'flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden in-[.app.touch]:-mx-3.5 in-[.app.touch]:gap-3 in-[.app.touch]:scroll-px-3.5 in-[.app.touch]:px-3.5')}>
+        all ? 'grid grid-cols-4 gap-(--grid-gutter) max-[900px]:grid-cols-3 max-[600px]:grid-cols-2 max-[359px]:grid-cols-1 in-[.app.touch]:gap-3'
+          : 'flex snap-x snap-mandatory gap-(--grid-gutter) overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden in-[.app.touch]:-mx-3.5 in-[.app.touch]:gap-3 in-[.app.touch]:scroll-px-3.5 in-[.app.touch]:px-3.5')}>
         {shelf.items.map(g => (
           <GuideCard key={g.id} guide={g} onPick={onPick}
-            className={all ? '' : 'w-[calc((100%-3rem)/4)] flex-none snap-start in-[.app.touch]:w-[min(64vw,240px)]'}/>
+            className={all ? '' : 'w-[calc((100%-3*var(--grid-gutter))/4)] flex-none snap-start in-[.app.touch]:w-[min(64vw,240px)]'}/>
         ))}
       </div>
     </section>
@@ -886,8 +886,8 @@ function GuidesPage({ onPick, inMain = false }) {
   const hero = MCU_GUIDE.focus(statusOf, today) || MCU_GUIDE.heroPick(statusOf, today);
   const shelves = guideShelves(hero ? hero.id : null);
   return (
-    <div ref={pageRef} onScroll={(e) => { guidesPageScroll = e.currentTarget.scrollTop; }} className="g-page @container min-h-0 flex-1 overflow-y-auto px-12 pt-8 pb-[72px] max-[1100px]:px-6 in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role={inMain ? 'region' : 'main'} aria-labelledby="g-page-title">
-      <div className="step-sizes mx-auto flex max-w-[1120px] flex-col gap-11 in-[.app.touch]:gap-7">
+    <div ref={pageRef} onScroll={(e) => { guidesPageScroll = e.currentTarget.scrollTop; }} className="g-page @container min-h-0 flex-1 overflow-y-auto px-(--grid-margin) pt-8 pb-[72px] in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role={inMain ? 'region' : 'main'} aria-labelledby="g-page-title">
+      <div className="step-sizes mx-auto flex max-w-(--content-max) flex-col gap-11 in-[.app.touch]:gap-7">
         <h1 id="g-page-title" className="story-sr">{gtr('guide.menuTitle')}</h1>
         {hero && <GuidesHero guide={hero} followed={MCU_GUIDE.isFollowed(hero.id)} onPick={onPick}/>}
         <ContinueShelf heroId={hero ? hero.id : null} onPick={onPick} phone={inMain}/>
@@ -1050,10 +1050,10 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
   // of the drawer). A completed guide turns green: its edge, its tint, its
   // meter and its eyebrow.
   const cls = cn('guide-banner g-module rounded-xl border bg-card text-card-foreground shadow-sm [--gm-line:var(--border)]',
-    complete && 'done border-[color-mix(in_oklab,var(--seen)_55%,var(--background))] bg-[color-mix(in_oklab,var(--seen)_8%,var(--card))] [--char-color:var(--seen)] [--gm-line:color-mix(in_oklab,var(--seen)_30%,var(--background))]',
+    complete && 'done border-(--seen-border) bg-(--seen-tint) [--char-color:var(--seen)] [--gm-line:var(--seen-line)]',
     spatial
-      ? 'spatial absolute top-3 right-[22px] left-[22px] z-40 flex cursor-default items-center gap-3 bg-[color-mix(in_oklab,var(--background)_96%,transparent)] py-2 pr-2 pl-2.5 shadow-[0_12px_30px_rgba(0,0,0,.45)] not-dark:shadow-[0_1px_2px_rgb(0_0_0/.06),0_10px_28px_-12px_rgb(0_0_0/.2)] in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+22px)]'
-      : 'list mx-auto mb-2.5 max-w-[1480px]');
+      ? 'spatial absolute top-3 right-(--grid-margin) left-(--grid-margin) z-40 flex cursor-default items-center gap-3 bg-(--veil) py-2 pr-2 pl-2.5 shadow-float in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+var(--grid-margin))]'
+      : 'list mx-auto mb-2.5 max-w-(--list-max)');
   // Seen only, labelled (Watchlist stays on the row); on a complete guide's
   // destination, Watchlist only.
   const tsaCls = (watch) => cn('gm-tsa m-0 flex-none flex-nowrap [&_.tsa-btn]:font-semibold [&_.tsa-btn:not(.on)]:text-foreground',
@@ -1074,7 +1074,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
     return (
       <section aria-label={region} onMouseDown={stop} onClick={stop} onWheel={stop}
         className={cn('guide-banner g-module spatial absolute top-3.5 right-4 z-40 w-[340px] max-w-[calc(100%-32px)] cursor-default', B.WIDGET,
-          'in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+16px)]', complete && 'done border-[color-mix(in_oklab,var(--seen)_55%,var(--border))]')}>
+          'in-[.app:not(.touch).drawer-open]:right-[calc(var(--drawer-w)+16px)]', complete && 'done border-(--seen-border)')}>
         <GuideWidget guide={guide} p={p} next={next ? next.title : null} currentId={currentId} pos={pos} stepCount={stepCount}
           stepIndex={stepIndex} current={currentId ? window.TITLES.find(t => t.id === currentId) || null : null}
           onOpenPage={onOpenPage} onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
@@ -1195,7 +1195,7 @@ function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onS
   return (
     <div ref={dockRef} className={cn(B.PILL, 'guide-pill g-dock', p.complete && 'done [--char-color:var(--seen)]')} role="group" aria-label={gtr('guide.regionAria', { name: MCU_GUIDE.name(guide) })}>
       {/* Outside the canvas, so the blur is allowed. */}
-      <div className={cn('g-dock-card', B.WIDGET, 'in-[.g-dock.done]:border-[color-mix(in_oklab,var(--seen)_55%,var(--border))]')}>
+      <div className={cn('g-dock-card', B.WIDGET, 'in-[.g-dock.done]:border-(--seen-border)')}>
         <GuideWidget guide={guide} p={p} next={showNext} currentId={current ? current.id : null} pos={pos} stepCount={stepCount}
           stepIndex={stepIndex} current={current}
           onOpenNext={onOpenNext} onPrev={onPrev} onNext={onNext} onClose={onClose}/>
@@ -1211,7 +1211,7 @@ function GuidePill({ guide, stepIndex, stepCount, current, next, onOpenNext, onS
 // a press from starting a card drag or selecting the card.
 // On the phone's tapped-card popup: beside Seen and Watchlist, or in their
 // place (Unskip) on a skipped stop.
-const FP_SKIP = 'absolute top-[7px] right-[83px] z-3 has-[.g-unskip]:right-[7px] [&_.g-skip]:size-[max(32px,2rem)] [&_.g-skip]:basis-8 [&_.g-skip]:bg-[color-mix(in_oklab,var(--background)_82%,transparent)] [&_.g-unskip]:min-h-[max(32px,2rem)] [&_.g-unskip]:bg-[color-mix(in_oklab,var(--background)_88%,transparent)]';
+const FP_SKIP = 'absolute top-[7px] right-[83px] z-3 has-[.g-unskip]:right-[7px] [&_.g-skip]:size-[max(32px,2rem)] [&_.g-skip]:basis-8 [&_.g-skip]:bg-(--veil) [&_.g-unskip]:min-h-[max(32px,2rem)] [&_.g-unskip]:bg-(--veil)';
 function GuideSkipControl({ guide, info, className = '', onDone }) {
   if (!guide || !info) return null;
   const swallow = (e) => e.stopPropagation();
@@ -1524,7 +1524,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
         className={cn('g-stop relative flex items-center gap-3', seen && 'seen', s.optional && 'optional', skipped && 'skipped',
           desk ? 'min-h-(--step-row-h) border-b border-border/70 px-3 py-2' : 'min-h-[78px] rounded-xl border bg-card py-2 pr-2.5 pl-2 text-card-foreground shadow-sm',
           s.optional && !desk && 'border-dashed', skipped && (desk ? 'min-h-[56px] border-dashed' : 'min-h-0 border-dashed py-1.5'),
-          isNext && cn('next up-next', desk ? 'bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]' : 'border-[color-mix(in_oklab,var(--brand)_45%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_6%,var(--card))]'),
+          isNext && cn('next up-next', desk ? 'bg-(--brand-tint)' : 'border-(--brand-border) bg-(--brand-tint)'),
           currentId === s.id && cn('current', desk ? 'shadow-[inset_3px_0_0_var(--ring)]' : 'shadow-[0_0_0_2px_var(--ring)]'))}>
         {isNext && <span className="g-next-bar absolute top-2.5 bottom-2.5 left-[-1px] w-[3px] rounded-full bg-(--brand)" aria-hidden="true"/>}
         <span role={desk ? 'cell' : undefined} className="g-numcell inline-flex w-6 flex-none flex-col items-center gap-1.5">
@@ -1541,10 +1541,10 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
               <span className={cn('g-title leading-[1.3] font-semibold text-foreground', desk ? 'text-(length:--step-title)' : 'text-body')}>{GI18N.titleName(t)}</span>
               {s.optional && <span className={otag}>{gtr('guide.optionalTag')}</span>}
               {skipped && <span className={cn(otag, 'g-skiptag-inline border-dashed')}>{gtr('guide.skippedTag')}</span>}
-              {isNext && desk && <span className="g-next-pill rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-label font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))]">{gtr('upnext.label')}</span>}
+              {isNext && desk && <span className="g-next-pill rounded-full border border-(--brand-border) bg-(--brand-tint) px-2 py-px text-label font-semibold whitespace-nowrap text-(--brand-text)">{gtr('upnext.label')}</span>}
             </span>
             {!skipped && <span className={cn('g-meta mt-0.5 text-muted-foreground tabular-nums', desk ? 'text-(length:--step-meta)' : 'text-label')}>
-              {isNext && phone && <><span className="g-next-pill font-semibold text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))]">{gtr('upnext.label')}</span> · </>}
+              {isNext && phone && <><span className="g-next-pill font-semibold text-(--brand-text)">{gtr('upnext.label')}</span> · </>}
               {meta}{desk && why ? ' · ' + why : ''}
             </span>}
             {/* The stop's note: two lines at most on a phone. */}
@@ -1586,9 +1586,9 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, curren
     );
   }
   return (
-    <div className="dlist g-desk relative @container min-h-0 flex-1 overflow-y-auto px-[22px] pt-6 pb-12 min-[1280px]:in-[.app.drawer-open]:pr-[calc(var(--drawer-w)+22px)]" role="main" aria-label={name}>
+    <div className="dlist g-desk relative @container min-h-0 flex-1 overflow-y-auto px-(--grid-margin) pt-6 pb-12 wide:in-[.app.drawer-open]:pr-[calc(var(--drawer-w)+var(--grid-margin))]" role="main" aria-label={name}>
       {/* The size steps (Notion "Size steps 2/3"), by this page's width. */}
-      <div className="step-sizes mx-auto w-full max-w-[1120px]">
+      <div className="step-sizes mx-auto w-full max-w-(--content-max)">
         <div className={cn('grid items-start gap-8', guide.target ? 'grid-cols-[minmax(0,1fr)_290px] max-[1100px]:grid-cols-1' : 'grid-cols-1')}>
           {header}
           {guide.target && <div className="pt-12 max-[1100px]:pt-0">{dest}</div>}
@@ -1704,7 +1704,7 @@ function GuidesButton({ currentId, onPick }) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger aria-label={currentId && MCU_GUIDE.get(currentId) ? gtr('guide.buttonOpen', { name: MCU_GUIDE.name(MCU_GUIDE.get(currentId)) }) : undefined}
           className={cn(buttonVariants({ variant: 'outline' }), 'filters-pill g-btn h-11 shrink-0 gap-2 px-3.5 text-label max-[1000px]:px-[11px] [&_svg]:flex-none',
-            (open || currentId) && 'active', currentId && 'on border-foreground/30 bg-muted text-foreground dark:bg-input/50')}>
+            (open || currentId) && 'active', currentId && 'on border-foreground/30 bg-(--field-hover) text-foreground')}>
           <GuideIcon/><span className="filters-label">{gtr('guide.button')}</span>
         </PopoverTrigger>
         <PopoverContent align="end" sideOffset={8} aria-label={gtr('guide.menuTitle')}
@@ -1755,15 +1755,15 @@ const promoCls = (touch) => ({
   band: cn('gp-band relative bg-linear-[170deg] from-(--gc-top) via-(--gc-mid) via-55% to-card', touch ? 'px-[18px] pt-[22px] pb-16' : 'px-7 pt-[26px] pb-[92px]'),
   strip: cn('gp-strip relative m-0 flex list-none items-start', touch ? '-mt-[50px] gap-1.5 px-[18px]' : '-mt-[74px] gap-3 px-7'),
   st: (mods = '') => cn('gp-st flex min-w-0 flex-[1_1_0] flex-col', touch ? 'gap-1.5' : 'gap-[7px]', mods),
-  p: (kind = '') => cn('gp-p relative block aspect-[2/3] overflow-hidden bg-muted', touch ? 'rounded-md shadow-[0_8px_18px_rgba(0,0,0,.45)]' : 'rounded-[7px] shadow-[0_10px_22px_rgba(0,0,0,.45)]',
-    kind === 'next' && (touch ? 'shadow-[0_0_0_2px_var(--brand),0_8px_18px_rgba(0,0,0,.45)]' : 'shadow-[0_0_0_2px_var(--brand),0_10px_22px_rgba(0,0,0,.45)]'),
+  p: (kind = '') => cn('gp-p relative block aspect-[2/3] overflow-hidden bg-muted', touch ? 'rounded-md shadow-pop' : 'rounded-[7px] shadow-pop',
+    kind === 'next' && 'shadow-[0_0_0_2px_var(--brand),var(--elevation-pop)]',
     kind === 'skipped' && 'outline-1 outline-offset-[-1px] outline-input outline-dashed',
     // Phones: the month and day alone; "in 32 days" didn't fit a cover's
     // width at Large, and the band above already counts the days.
-    kind === 'dest' && cn('flex flex-col items-center justify-center border-[1.5px] border-dashed border-[color-mix(in_srgb,var(--gc)_45%,#fff)] bg-[color-mix(in_srgb,var(--gc)_18%,var(--card))] text-center shadow-none [&_b]:leading-[1.05] [&_b]:font-extrabold [&_b]:text-foreground [&_b]:tabular-nums [&_small]:mt-1 [&_small]:px-[3px] [&_small]:font-bold [&_small]:text-caption', touch ? '[&_b]:text-heading [&_small]:hidden' : '[&_b]:text-title [&_small]:tracking-[.6px]', '[&_small]:text-[color-mix(in_oklch,var(--foreground)_40%,var(--muted-foreground))]'),
+    kind === 'dest' && cn('flex flex-col items-center justify-center border-[1.5px] border-dashed border-[color-mix(in_srgb,var(--gc)_45%,#fff)] bg-[color-mix(in_srgb,var(--gc)_18%,var(--card))] text-center shadow-none [&_b]:leading-[1.05] [&_b]:font-extrabold [&_b]:text-foreground [&_b]:tabular-nums [&_small]:mt-1 [&_small]:px-[3px] [&_small]:font-bold [&_small]:text-caption', touch ? '[&_b]:text-heading [&_small]:hidden' : '[&_b]:text-title [&_small]:tracking-[.6px]', '[&_small]:text-(--dim)'),
     kind === 'more' && cn('flex items-center justify-center border border-input bg-card text-heading font-bold shadow-none', DIM)),
   art: (mods = '') => cn('gp-art block size-full *:block *:size-full [&_img]:object-cover [&_svg]:size-full', mods),
-  n: (mods = '') => cn('gp-n absolute inline-flex items-center justify-center rounded-full border border-[color-mix(in_oklab,var(--foreground)_23%,transparent)] bg-[color-mix(in_oklab,var(--background)_82%,transparent)] font-bold tabular-nums text-foreground [&_svg]:size-[11px]', XS,
+  n: (mods = '') => cn('gp-n absolute inline-flex items-center justify-center rounded-full border border-(--border-strong) bg-(--veil) font-bold tabular-nums text-foreground [&_svg]:size-[11px]', XS,
     touch ? 'top-1 left-1 size-[18px]' : 'top-[5px] left-[5px] size-5', mods),
   // Phones show the covers alone (Andre, 2026-11-16: a few letters each was
   // all that fit); each stop's name stays for screen readers (story-sr).
@@ -1779,8 +1779,8 @@ const promoCls = (touch) => ({
 });
 // The dialog and sheet frames: the band runs to the top edge, under the × (and
 // the phone's handle), which float on it.
-const PROMO_DIALOG = 'promo-dialog w-[min(640px,calc(100vw-48px))] overflow-x-hidden overflow-y-auto p-0 [&>.about-x]:top-3 [&>.about-x]:right-3 [&>.about-x]:z-3 [&>.about-x]:size-[max(40px,2.5rem)] [&>.about-x]:rounded-[10px] [&>.about-x]:bg-[color-mix(in_oklab,var(--background)_45%,transparent)] [&>.about-x]:text-foreground [&>.about-x]:hover:bg-[color-mix(in_oklab,var(--background)_65%,transparent)]';
-const PROMO_SHEET = "promo-sheet overflow-hidden [&_.m-grab]:absolute [&_.m-grab]:top-0 [&_.m-grab]:left-1/2 [&_.m-grab]:z-2 [&_.m-grab]:m-0 [&_.m-grab]:-ml-[23px] [&_.m-grab]:after:bg-white/40 [&_.m-sheet-x]:top-2.5 [&_.m-sheet-x]:right-2 [&_.m-sheet-x]:size-[max(44px,2.75rem)] [&_.m-sheet-x]:rounded-[10px] [&_.m-sheet-x]:bg-[color-mix(in_oklab,var(--background)_45%,transparent)] [&_.m-sheet-x]:text-title [&_.m-sheet-x]:text-foreground [&_.m-sheet-body]:px-0 [&_.m-sheet-body]:pt-0 [&_.m-sheet-body]:pb-[env(safe-area-inset-bottom,0px)]";
+const PROMO_DIALOG = 'promo-dialog w-[min(640px,calc(100vw-48px))] overflow-x-hidden overflow-y-auto p-0 [&>.about-x]:top-3 [&>.about-x]:right-3 [&>.about-x]:z-3 [&>.about-x]:size-[max(40px,2.5rem)] [&>.about-x]:rounded-[10px] [&>.about-x]:bg-(--veil-light) [&>.about-x]:text-foreground [&>.about-x]:hover:bg-(--veil)';
+const PROMO_SHEET = "promo-sheet overflow-hidden [&_.m-grab]:absolute [&_.m-grab]:top-0 [&_.m-grab]:left-1/2 [&_.m-grab]:z-2 [&_.m-grab]:m-0 [&_.m-grab]:-ml-[23px] [&_.m-grab]:after:bg-white/40 [&_.m-sheet-x]:top-2.5 [&_.m-sheet-x]:right-2 [&_.m-sheet-x]:size-[max(44px,2.75rem)] [&_.m-sheet-x]:rounded-[10px] [&_.m-sheet-x]:bg-(--veil-light) [&_.m-sheet-x]:text-title [&_.m-sheet-x]:text-foreground [&_.m-sheet-body]:px-0 [&_.m-sheet-body]:pt-0 [&_.m-sheet-body]:pb-[env(safe-area-inset-bottom,0px)]";
 
 function GuidePromo({ promo, touch, onStart, onClose }) {
   if (promo.caughtUp) return <GuideCaughtUp promo={promo} touch={touch} onClose={onClose}/>;
