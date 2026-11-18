@@ -591,6 +591,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'picker.leaveText': 'Você ainda não salvou. Se sair agora, as escolhas são descartadas e nada muda na sua coleção.',
     'picker.leave': 'Sair sem salvar',
     'picker.keep': 'Continuar escolhendo',
+    'welcome.guideQ': 'Se preparando para {title}?',
     'picker.welcomeQ': 'Já viu alguns?',
     'picker.welcomeText': 'Marque todos de uma vez, para que seu progresso e o A seguir comecem no lugar certo. Leva cerca de um minuto.',
     'picker.welcomeCta': 'Marcar o que já vi',

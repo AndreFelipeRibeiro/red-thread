@@ -597,6 +597,7 @@ window.MCU_LOCALES.en = {
     'picker.leaveText': "You haven't saved them yet. Leaving now drops the picks, and nothing in your collection changes.",
     'picker.leave': 'Leave without saving',
     'picker.keep': 'Keep picking',
+    'welcome.guideQ': 'Getting ready for {title}?',
     'picker.welcomeQ': 'Seen some already?',
     'picker.welcomeText': 'Mark them in one go, so your progress and Up next start in the right place. It takes about a minute.',
     'picker.welcomeCta': "Mark what I've seen",

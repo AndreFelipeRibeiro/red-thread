@@ -2977,6 +2977,25 @@ function App() {
     setPromo(pick);
   }, [collectionStates, collectionSettled]);
   const startPromo = () => { const id = promo.guide.id; setPromo(null); openGuide(id); };
+  // The welcome's guide offer (Notion "Welcome: offer to start the Doomsday
+  // guide"): the promotion's pick while it is a guide to start (not a
+  // caught-up moment). Starting it from the welcome counts as its promotion
+  // (no promo card on top), follows it and opens it; Mark what you've seen
+  // still nudges later, as for any guide start.
+  const welcomeGuide = useMemo(() => {
+    if (!welcome || !window.MCU_GUIDE) return null;
+    const pick = window.MCU_GUIDE.promotion(statusOf, window.todayISO());
+    return pick && pick.guide && !pick.caughtUp ? pick : null;
+  }, [welcome]);
+  const startWelcomeGuide = () => {
+    if (!welcomeGuide) return;
+    const id = welcomeGuide.guide.id;
+    window.MCU_GUIDE.markPromoted(welcomeGuide.key);
+    window.MCU_GUIDE.follow(id);
+    setWelcome(false);
+    setAboutOpen(false);
+    openGuide(id);
+  };
   // ---- The address ------------------------------------------------------
   // The pinned character, when it is one portrayal (a performer pin covering
   // several characters has no single id to share). With a character pinned the
@@ -3796,7 +3815,7 @@ function App() {
         <window.ShareImageHost touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
-        {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} onClose={() => setWelcome(false)}/>}
+        {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} guide={welcomeGuide} onGuide={startWelcomeGuide} onClose={() => setWelcome(false)}/>}
         {pickerOpen && <window.SeenPicker touch onClose={() => setPickerOpen(false)}/>}
         {promo && <window.GuidePromo promo={promo} touch onStart={startPromo} onClose={() => setPromo(null)}/>}
         {drawerTitle && (
@@ -3924,6 +3943,7 @@ function App() {
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>
       {(aboutOpen || welcome) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onPick={openPicker}
+        guide={welcome && !aboutOpen ? welcomeGuide : null} onGuide={startWelcomeGuide}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
       {pickerOpen && <window.SeenPicker touch={false} onClose={() => setPickerOpen(false)}/>}
       {promo && <window.GuidePromo promo={promo} touch={false} onStart={startPromo} onClose={() => setPromo(null)}/>}
