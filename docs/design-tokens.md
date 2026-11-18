@@ -31,9 +31,11 @@ The `@primitives` block at the top of `src/index.css`: every color in the
 app, named by hue family and OKLCH lightness × 100 (`red-55` is L 0.55;
 `-aNN` is that color at NN% opacity): `neutral-*`, `slate-*`, `red-*`
 (three: `red-50`, `red-55`, `red-68`), `rose-*`, `crimson-53`, `tomato-*`,
-`yellow-84`, `gold-*`, `green-*`, `blue-*`, `purple-*`; 38 in all since the
-2026-11-17 merges (`red-70`, `red-58`, `red-52` and `coral-68` folded into
-their neighbors). In Figma they're hidden from the pickers
+`yellow-84`, `gold-*`, `green-*`, `blue-*`, `purple-*`; 37 in all (the
+2026-11-17 merges folded `red-70`, `red-58`, `red-52` and `coral-68` into
+their neighbors; on 2026-11-18 the light canvas moved from `slate-97` and
+`slate-95`, a faint blue, to `neutral-97` and the new `neutral-95`, and the
+slate pair was retired). In Figma they're hidden from the pickers
 (no scopes): designers pick the semantic colors below. Components never use a
 primitive directly, in code or in Figma.
 
@@ -55,9 +57,21 @@ opacity, 42% / 55%) lives here too, as a number.
 | Phases | `phase-1` … `phase-6` |
 | On artwork (same in both modes) | `on-image`, `on-image-dim`, `on-image-muted`, `on-image-ground`, `on-image-base` |
 | Score marks (same in both modes) | `imdb`, `rt`, `rt-text` |
-| Connections canvas | `canvas-top`, `canvas-bottom`, `canvas-dot` |
+| Connections canvas | `canvas-top`, `canvas-bottom` (Light: `neutral-97` to `neutral-95`), `canvas-dot` |
 | Controls (shadcn at rest) | `field`, `button-outline`, `button-outline-border`, `destructive-tint`, `switch-track`, `switch-thumb`, `switch-thumb-off`, `invalid-border`, `invalid-ring` |
 | Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `guide-current`, `highlight-border`, `control-surface`, `chip`, `chip-border`, `chip-imdb`, `chip-rt`, `chip-muted` |
+
+**Translucent colors** (2026-11-18, Notion "Library: translucent strokes
+and fills render solid outside the library"): a paint bound to a variable
+keeps only the variable's own alpha in other Figma files, so a color the
+code writes as a token at an opacity (a Tailwind modifier) is a Figma color
+token carrying that alpha, per mode: `popover-ring` (`ring-foreground/10`),
+`border-soft` (`border-border/70`; 7% in Dark, 70% of its 10%),
+`background-glass` (`bg-background/95`, and the phone app bar's 94%),
+`on-image-veil` (`on-image-base` at 78%), `seen-foreground-soft`
+(`seen-foreground` at 90%), `foreground-strong` (`foreground` at 85%) and
+`muted-soft` (`muted` at 50%). The code keeps the modifiers; these exist so
+the Screens file renders them as the app does.
 
 **Controls** (2026-11-17, Notion "Build the Red Thread component library in
 Figma"): shadcn writes some resting colors as a token in Light and another
