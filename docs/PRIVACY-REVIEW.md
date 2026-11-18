@@ -90,3 +90,25 @@ Affected fetched remote branches at review time:
    promise that external copies or historical deployments disappear.
 
 Keeping history intact and protecting future commits is also an available choice.
+
+## Visitor analytics — 2026-11-18
+
+Production (`redthread.tv`) loads Vercel Web Analytics (`src/analytics.ts`,
+Notion "Analytics: Vercel Web Analytics on production"). Previews, localhost
+and the QA server load nothing.
+
+- **What it records:** page views with their referrer, country, browser, OS
+  and device type, as Vercel's Web Analytics does. It sets no cookies and
+  stores nothing on the device, so the site shows no consent banner. Vercel
+  tells visitors apart by a hash of the request that resets every day.
+- **What a page view reports:** the path plus only `guide`, `view` and `ref`
+  from the address. Titles, characters, searches and the rest of the app's
+  state in the address are stripped before sending, and a view of the same
+  kept address is not sent twice.
+- **What it never sees:** the collection (seen and watchlist), account
+  details and sign-in state. No custom events are sent.
+- `qa/test-analytics.js` checks both the production-only loading and the
+  stripping.
+
+Vercel's own description of what it collects:
+[Web Analytics privacy](https://vercel.com/docs/analytics/privacy-policy).

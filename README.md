@@ -25,6 +25,10 @@ tracking, Google sign-in and cloud sync across devices.
 
 See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 [privacy review](docs/PRIVACY-REVIEW.md) for the repository audit and its limits.
+Production counts visits with Vercel Web Analytics: cookieless, with no
+consent banner, and only an open guide, the view and a post's `ref` kept from
+the address (`src/analytics.ts`; the privacy review lists what it records).
+It is switched on in the Vercel project's Analytics tab.
 
 ## Features
 
