@@ -51,7 +51,9 @@ surface uses them, so they have no Figma counterpart until one does.
 | List row (Seen) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
 | List header | `16:82` | `desktop-list.tsx` `DlSortHeader` |
 | Phase header | `16:87` | `desktop-list.tsx` `GroupHeader` |
-| Phone list row | `22:64` | `list-parts.tsx` (phone List row) |
+| Phone title row (Seen, Unseen, Up next) | `63:691` | `list-parts.tsx` (m-lrow) |
+| Phone phase header | `63:642` | `desktop-list.tsx` `GroupHeader` (phone) |
+| Phone Up next | `63:705` | `src/app/upnext.tsx` (phone card) |
 | Logo / mark, Logo / wordmark | `17:2`, `17:3` | `src/assets/logo-mark.svg`, `logo-wordmark.svg` (CSS masks in the app) |
 | App bar | `17:57` | `src/app/toolbar.tsx` `Toolbar`, `header-controls.tsx` (`StatusCounts`, `SortMenu`, `PickerButton`) |
 | Zoom control | `20:32` | `src/app/spatial-chrome.tsx` `ZoomControl` |
@@ -85,6 +87,10 @@ surface uses them, so they have no Figma counterpart until one does.
 | Thread view | `44:650` | `title-details.tsx` `ThreadView` |
 | Guide header | `45:701` | `guides-ui.tsx` (g-head) |
 | Guide stop (Up next, Default) | `45:670` | `guides-ui.tsx` (g-stop) |
+| Phone guide header | `64:666` | `guides-ui.tsx` (g-head, phones) |
+| Phone guide stop (Up next, Default) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
+| Phone guide promo | `64:728` | `guides-ui.tsx` `GuidesHero` (phones) |
+| Welcome dialog | `65:796` | `src/app/about.tsx` (Welcome / About) |
 
 Icons: the Icons page, one component per entry in `tools/figma/icons.js`.
 
@@ -127,7 +133,7 @@ Built from the app as it was on 2026-11-17; these still need a Figma
 counterpart (same tools, `tools/figma/README.md`):
 
 - the phone Grid card and canvas pop card, the cast sheet on phones;
-- the About dialog, a character's trail header (its rows are Thread stops),
+- a character's trail header (its rows are Thread stops),
   the share sheet, toasts and the celebration;
 - a seen Guide stop and a skipped one;
 - hover, focus and pressed states (rest states only today).

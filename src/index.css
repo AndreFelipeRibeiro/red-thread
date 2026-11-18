@@ -192,7 +192,7 @@
       --neutral-97: oklch(0.97 0 0);
       --neutral-92: oklch(0.922 0 0);
       --neutral-71: oklch(0.708 0 0);
-      --neutral-54: oklch(0.54 0 0);
+      --neutral-52: oklch(0.52 0 0);
       --neutral-27: oklch(0.269 0 0);
       --neutral-20: oklch(0.205 0 0);
       --neutral-15: oklch(0.145 0 0);
@@ -338,7 +338,7 @@
       /* Darkened from the library's 0.556, which measured 4.35:1 on --muted and
          --secondary — the surfaces it is most often used on. 0.54 gives 4.61:1
          there and 5.02:1 on white (qa/test-contrast.js). */
-      --muted-foreground: var(--neutral-54);
+      --muted-foreground: var(--neutral-52);
       --accent: var(--neutral-97);
       --accent-foreground: var(--neutral-20);
       /* The brand red (Andre, 2026-11-17, palette proposal P4; was its own

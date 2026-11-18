@@ -44,11 +44,27 @@ RT.font = async function font(C, fam, fw, it) {
   return f;
 };
 
+/** The alpha of a color variable's first mode (aliases followed). */
+RT.alpha = function alpha(C, v) {
+  let val = v.valuesByMode[Object.keys(v.valuesByMode)[0]];
+  for (let d = 0; val && val.type === 'VARIABLE_ALIAS' && d < 6; d++) {
+    const t = Object.values(C.vars).find((x) => x.id === val.id);
+    if (!t) break;
+    val = t.valuesByMode[Object.keys(t.valuesByMode)[0]];
+  }
+  return val && val.a != null ? val.a : 1;
+};
+
 RT.solid = function solid(C, p) {
   if (!p) return null;
   if (p.v && C.vars[p.v]) {
-    const base = { type: 'SOLID', color: { r: 0, g: 0, b: 0 }, opacity: p.o == null ? 1 : p.o };
-    // Binding returns a new paint without the opacity; put it back.
+    // A paint bound to a variable takes its opacity from the variable's alpha
+    // in every file that uses the library, so a translucent color must be a
+    // token with alpha and the paint's opacity must equal that alpha (a solid
+    // token plus opacity holds only in this file). With no `o`, use the alpha.
+    const a = RT.alpha(C, C.vars[p.v]);
+    const base = { type: 'SOLID', color: { r: 0, g: 0, b: 0 }, opacity: p.o == null ? a : p.o };
+    if (p.o != null && p.o < 0.999 && a >= 0.999) C.warnings.push(p.v + ' at ' + p.o + ': a solid token with opacity shows solid in other files');
     const bound = figma.variables.setBoundVariableForPaint(base, 'color', C.vars[p.v]);
     return { ...bound, opacity: base.opacity };
   }
@@ -57,8 +73,7 @@ RT.solid = function solid(C, p) {
   return { type: 'SOLID', color: { r: c[0] / 255, g: c[1] / 255, b: c[2] / 255 }, opacity: c[3] == null ? 1 : c[3] };
 };
 
-/** Sets a node's fills or strokes from paint specs. Figma drops a paint's
- *  opacity when the paint is bound to a variable, so it is set again after. */
+/** Sets a node's fills or strokes from paint specs (opacity: see RT.solid). */
 RT.paint = function paint(C, node, prop, list) {
   node[prop] = list.map((p) => RT.solid(C, p));
   if (list.some((p) => p && p.v && p.o != null)) node[prop] = node[prop].map((x, i) => (list[i] && list[i].v && list[i].o != null ? { ...x, opacity: list[i].o } : x));
@@ -294,32 +309,12 @@ RT.textProp = function textProp(cs, prop, layer) {
   return key;
 };
 
-/** Instances lose the opacity of variable-bound paints: copy it from each
- *  layer's main-component counterpart. */
-RT.fixOpacity = async function fixOpacity(root) {
-  let fixed = 0;
-  const insts = root.type === 'INSTANCE' ? [root] : root.findAll((n) => n.type === 'INSTANCE');
-  for (const inst of insts) {
-    for (const n of [inst, ...inst.findAll(() => true)]) {
-      const m = n.id.match(/;([^;]+)$/) || (n === inst && inst.mainComponent ? [null, inst.mainComponent.id] : null);
-      if (!m) continue;
-      const src = await figma.getNodeByIdAsync(m[1]);
-      if (!src) continue;
-      for (const prop of ['fills', 'strokes']) {
-        if (!(prop in n) || !(prop in src) || n[prop] === figma.mixed || src[prop] === figma.mixed) continue;
-        const a = n[prop], b = src[prop];
-        if (a.length !== b.length) continue;
-        if (a.some((p, i) => p.boundVariables && p.boundVariables.color && Math.abs((p.opacity == null ? 1 : p.opacity) - (b[i].opacity == null ? 1 : b[i].opacity)) > 0.001)) {
-          n[prop] = a.map((p, i) => ({ ...p, opacity: b[i].opacity == null ? 1 : b[i].opacity }));
-          fixed++;
-        }
-      }
-    }
-  }
-  return fixed;
-};
+/** Retired 2026-11-17: copying opacities onto instances made fill overrides
+ *  that stop library updates (the seen tints stayed solid in other files).
+ *  RT.solid now sets each paint's opacity from its token, so nothing needs
+ *  copying. Kept as a no-op so older build scripts still run. */
+RT.fixOpacity = async function fixOpacity() { return 0; };
 
-/** Re-lays a component set's variants in a grid after their sizes change. */
 RT.regrid = function regrid(cs, cols, gap = 24) {
   let x = gap, y = gap, rowH = 0;
   cs.children.forEach((c, i) => {
