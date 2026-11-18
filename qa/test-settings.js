@@ -142,7 +142,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     // Show the welcome again.
     await page.locator('.settings-btn').click(); await page.waitForTimeout(500);
     await page.locator('.settings-panel button', { hasText: 'Show the welcome again' }).click(); await page.waitForTimeout(500);
-    expect(await page.locator('.about-dialog .welcome-lang').count() === 1, 'show welcome: the welcome did not open');
+    expect(await page.locator('.about-dialog .welcome-pick').count() === 1, 'show welcome: the welcome did not open');
     await ctx.close();
   }
 
@@ -240,16 +240,13 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await ph.ctx.close();
   }
 
-  // ---- The Welcome's language choice --------------------------------------
+  // ---- The Welcome has no language choice (Andre, 2026-11-18: Settings
+  // switches it; Notion "Welcome: streamline the first moment") ------------
   {
     const { ctx, page } = await open(DESK);
     await page.goto(URL_BASE + '?welcome'); await ready(page);
-    const btns = await page.$$eval('.welcome-lang button', bs => bs.map(b => b.textContent));
-    out.welcomeLangs = btns;
-    expect(btns.length >= 2, 'welcome: no language choice');
-    await page.locator('.welcome-lang button', { hasText: 'Português' }).click(); await page.waitForTimeout(300);
-    expect(await page.evaluate(() => document.documentElement.lang) === 'pt-BR', 'welcome: choosing Português did not switch the language');
-    expect(/Idioma/.test(await page.locator('.welcome-lang-label').textContent()), 'welcome: the welcome did not redraw in Portuguese');
+    out.welcomeLang = await page.locator('.welcome-lang').count();
+    expect(await page.locator('.about-dialog .welcome-pick').count() === 1 && out.welcomeLang === 0, 'welcome: expected the welcome without a language choice');
     await ctx.close();
   }
 
