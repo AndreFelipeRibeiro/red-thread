@@ -13,6 +13,72 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 13 — Shared links land on their content
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs; one test-camera click timeout, clean on
+six reruns).
+
+- A first visit through a shared link (`?guide=`, `?title=`, `?char=`) lands
+  on the guide, title or character, with no welcome on top; the visit counts
+  as decided, so the welcome doesn't come back on reload. Promotions still
+  wait for a returning visit. Ships ahead of the Nov 18 launch post
+  (`?guide=before-doomsday`).
+- `qa/test-welcome.js` checks the three links on desktop and phone.
+
+## V5 Batch 13 — A layout grid
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs).
+
+- 4 columns on phones, 8 from 600, 12 from 900; gutters 16 then 24;
+  margins 16, 24, and 32 from 1600. Reading pages stop at 1128, lists at
+  1488. Tokens `--grid-*`, `--content-max`, `--list-max`, named breakpoints
+  (tab, desk, wide, xwide) and a `layout-grid` utility.
+- The app bar, character banner, Titles, Guides and a guide page use it:
+  the desktop margin is 24 (it was 16–22, 48 on Guides), Guides is 1128
+  wide (was 1120) with cards on whole columns (264 and 552), Titles 1488.
+- Figma: a Grid collection (Phone, Tablet, Desktop, Extra wide) and grid
+  styles; `docs/design-tokens.md` "Grid".
+- The desktop header re-measures its compact steps when a control in it
+  grows or a font loads (it ran 15px over at 1440 in Portuguese).
+
+## V5 Batch 13 — The palette named and streamlined
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs).
+
+- The 49 colors the components mixed by hand became 30 named roles (dim,
+  brand-text, the seen and Watchlist tints, control-surface, chips …), the
+  near-duplicate washes merged (brand tint 10%, seen tint 14%), and the reds
+  went from five to three; 38 primitives.
+- Grey secondary text is a touch darker (oklch 0.52) so it keeps 4.5:1 on
+  the brand tint of an Up next row.
+
+## V5 Batch 13 — The Figma library finished, and a Screens file
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression clean (72 runs).
+
+- New components: Filters panel, Settings panel, search suggestions,
+  character banner and pill, thread view and stops, guide header and stops,
+  the phone rows, Up next card, guide header, stops and promo, and the
+  Welcome dialog; the Foundations page is generated from the variables.
+- Translucent colors are tokens that carry their alpha, so they hold in
+  other files; the builder no longer copies opacities onto instances.
+- Red Thread – Screens: the key desktop and phone screens, Light and Dark,
+  built only from library instances (`docs/figma-library.md`).
+- The library is published as a team library from the AFR folder.
+
+## V5 Batch 13 — Tickets link exact Figma frames
+
+Recorded: 2026-11-17 21:21 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production).
+
+- AGENTS.md: a ticket's Figma field is a node link to the exact frame, with
+  behavior notes as Dev Mode annotations; and the "Shipping a batch"
+  checklist (regression and push, CHANGELOG, close tickets, calendar, recap).
+
 ## V5 workflow — Connect Figma to code: Figma leads
 
 Recorded: 2026-11-17 18:05 EST (-0500). Pushed to `version/5.0` (V5
