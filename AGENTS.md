@@ -292,9 +292,18 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   The old **V3 ticket** field was removed on 2026-11-14: tickets carried over
   from V3 link their original in the page body ("Carried over from V3").
 - **Version** and **Batch** say where a ticket belongs in the shipping history.
-  Set both when you claim a ticket: Version is V5 for V5 work, and Batch is the
-  batch it is being worked in. They are what the calendar recap's title line is
-  built from, so a ticket with no batch has no recap to belong to.
+  Set both when you claim a ticket, **including a ticket you create from chat
+  and start at once** (that is a claim too): Version is V5 for V5 work, and
+  Batch is the batch it is being worked in. They are what the calendar recap's
+  title line is built from, so a ticket with no batch has no recap to belong
+  to (Andre, 2026-11-17: five Batch 14 tickets went unbatched because the
+  option did not exist yet).
+  - **The current batch** is the one after the highest Batch on a Completed
+    ticket of this version. If its option is missing from the Batch property,
+    add it first (the schema change lists every existing option, so none is
+    lost; the colors cycle brown, orange, yellow, green, blue, purple, pink,
+    red, gray), then claim. A missing option is never a reason to leave Batch
+    empty.
   - Batches restart at **Batch 1** for each version, so a batch is named by
     Version and Batch together (V5 Batch 1 is not V4 Batch 1). Add the next
     Batch option only when a version needs one it does not have. Tickets
@@ -307,8 +316,9 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   ticket means. If the **Figma** field holds links, read those frames with the
   Figma MCP as well, annotations included (see "Figma" below). New requests
   from the user in chat become tickets first.
-- Claim: set Assigned to = your agent and Status = In progress, then re-read the
-  record to confirm no one else holds it. Work on one ticket at a time; claim
+- Claim: set Assigned to = your agent, Status = In progress, **Version and
+  Batch** in the same update, then re-read the record to confirm no one else
+  holds it and that all four are set. Work on one ticket at a time; claim
   the next only when the current one is handed off.
 - Ready: Status = Awaiting review. The page body keeps the request, the
   changes, the verification actually done and the remaining limits.
@@ -343,9 +353,12 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 
 Andre, 2026-11-17: these steps are part of every push, not extras to be asked
 for. When he says to commit or push a batch that is in Awaiting review
-("commit Batch 12", "push it"), that is his approval of those tickets. After
-the push lands, in the same turn and in this order:
+("commit Batch 12", "push it"), that is his approval of those tickets. Step 0
+comes before the push; the rest follow it in the same turn, in this order:
 
+0. **Every ticket in the batch has its Batch**: query the board for tickets
+   In progress, Awaiting review or Approved with an empty Batch and fix them
+   before anything else (the recap and the calendar event are built from it).
 1. **Regression and push**: the full regression on the exact tree, then the
    push; smoke-test the deployed site (`SITE_URL=… node qa/smoke.js`) once
    Vercel reports the deploy.
@@ -362,7 +375,8 @@ the push lands, in the same turn and in this order:
 
 A merge of an already-shipped batch to production repeats steps 1 and 2
 (CHANGELOG: "merged to main"), checks that 3 and 4 were done, and does them
-if they weren't. Before ending a turn that pushed anything, check all five.
+if they weren't. Before ending a turn that pushed anything, check all six
+(0 to 5).
 
 ## Recap after each approval
 
@@ -712,8 +726,9 @@ key to `locales/en.js` (the complete base), translate it in every other
 names. New catalog titles need an official local title and a short,
 spoiler-light synopsis per locale; write synopses rather than copying studio or
 TMDB text. Preserve permanent title ids and the spatial-filter invariants
-described in V3-SPEC.md §7.1 (collection status dims cards, it never removes
-them from the Spatial layout).
+described in V3-SPEC.md §7.1 (marking a title never reflows the Spatial
+canvas; since 2026-11-17 the Seen, Unseen and Watchlist filters pack their
+titles into a lens, taken when the filter changes: docs/decisions.md).
 
 ## Deferred work and constraints
 
