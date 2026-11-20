@@ -48,6 +48,7 @@ surface uses them, so they have no Figma counterpart until one does.
 | Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
+| Poster (Title: one variant per catalog title id, 64; on the Posters page, 168 × 252, live TMDB posters at w500 over the poster's own color, checked 2026-11-19) | `100:696` | `src/app/poster.tsx` `PosterArt`; paths in `src/data/media-data.ts` |
 | List row (Seen) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
 | List header | `16:82` | `desktop-list.tsx` `DlSortHeader` |
 | Phase header | `16:87` | `desktop-list.tsx` `GroupHeader` |
@@ -66,6 +67,7 @@ surface uses them, so they have no Figma counterpart until one does.
 | Follow the thread | `19:29` | `title-details.tsx` `FollowThreadButton` |
 | Up next | `20:51` | `src/app/upnext.tsx` |
 | Guide promo | `21:44` | `src/app/guides-ui.tsx` (Guides page hero) |
+| Countdown (State: In progress, Complete × Moment: Counting, Release day; Days on/off): the guide countdown in the guide header and the Guides hero | `104:701` | `src/app/countdown.tsx` `GuideTicker` |
 | Guide continue card | `21:67` | `guides-ui.tsx` (Continue shelf) |
 | Guide card | `21:88` | `guides-ui.tsx` (guide shelves) |
 | Picker poster (Seen) | `23:13` | `src/app/picker.tsx` |
@@ -90,7 +92,8 @@ surface uses them, so they have no Figma counterpart until one does.
 | Phone guide header | `64:666` | `guides-ui.tsx` (g-head, phones) |
 | Phone guide stop (Up next, Default) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
 | Phone guide promo | `64:728` | `guides-ui.tsx` `GuidesHero` (phones) |
-| Welcome dialog | `65:796` | `src/app/about.tsx` (Welcome / About) |
+| About dialog (Kind: Welcome, About × Device: Desktop, Phone; the guide offer's poster is a nested Poster) | `119:1765` | `src/app/about.tsx` `AboutContent` in `ModalDialog` (desktop) or `Sheet` (phones) |
+| Retired: Welcome dialog (2026-11-19, replaced by About dialog) | `65:796` | — |
 
 Icons: the Icons page, one component per entry in `tools/figma/icons.js`.
 
@@ -104,7 +107,7 @@ Grid: the **Grid** collection and the grid styles Grid/Columns, Grid/Reading 112
 
 ## Screens
 
-[**Red Thread – Screens**](https://www.figma.com/design/FBDC4AxFAi5gyABtpdJM8Z)
+[**Red Thread – App Screens**](https://www.figma.com/design/FBDC4AxFAi5gyABtpdJM8Z)
 (same Figma folder) holds the key screens, built only from instances of the
 published library, so they follow every library update. Each screen has a
 Light and a Dark frame (the Dark one sets the Color collection to Dark).
@@ -125,7 +128,14 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Details sheet over Titles (phone) | `17:4952` | `17:5267` |
 | Character pinned, Titles (phone): their titles, the card docked | `33:7655` | `33:7876` |
 
-Posters are the app's TMDB posters, on the file's Posters page. The
+Posters are the app's TMDB posters: the library's **Poster** component set
+(`100:696`, Posters page) has one per catalog title, so a screen or an
+exploration file swaps an instance's Title instead of pasting an image.
+Every poster slot in the library's components (Spatial card, rows, guide
+stops, promos and cards, details, thread, search, picker, Up next) holds a
+nested Poster instance, exposed, so a screen picks the title from the
+instance's properties; never paste an image over a slot (2026-11-19). Add a
+variant in the same change as a new title or a changed poster path. The
 screens override only content (text, posters), the view switch, phase
 colors and unseen states; every other paint comes from the library, so
 don't copy fills or opacities onto instances (a copied fill stops taking
@@ -135,6 +145,44 @@ canvas frames of Connections and Follow the thread carry the app's
 top-to-bottom gradient, its stops bound to `canvas-top` and `canvas-bottom`
 (2026-11-18). The Character card's photo badge keeps the component's
 placeholder ring: the file has no portrait images yet.
+
+## Upkeep
+
+The rules are in AGENTS.md ("Keeping the library whole"). How to apply them:
+
+- **Posters:** every poster slot (`art` or `poster` in a component) holds a
+  nested, exposed instance of the Poster set (`100:696`). In a screen, select
+  the card and pick the title under its Poster property. A new title, or a
+  changed poster path in `src/data/media-data.ts`, updates its variant (the
+  w500 image, its description's path, the poster color under the image), and
+  every file that uses it follows on the next library update.
+- **Promoting a design:** build it from the library's variables and styles,
+  give it a description naming its code file, and put its behavior in Dev
+  Mode annotations. Add its row here. If it is a state of an existing
+  component, make it a variant or a property: the guide countdown is a
+  nested, exposed Countdown with a **Countdown** switch in Guide promo,
+  Phone guide promo, Guide header and Phone guide header. After Andre
+  publishes, accept the update in App Screens and swap the hand-drawn parts
+  of each affected screen for instances.
+- **Checking a publish:** the Plugin API's `getPublishStatusAsync()` on a
+  component reads Current, Changed or Unpublished. Changed or Unpublished
+  after a publish means it did not go out. Other files are not updated
+  automatically: each one shows "Updates" and takes them with Update all,
+  with "Show updates for all pages" turned on. Close and reopen a file that
+  was open during the publish first: a tab opened before it can apply its
+  older copy of the library on Update all (2026-11-19, the Spatial cards in
+  App Screens lost their posters that way).
+- **Retired:** a gray section at the bottom of the page, "Retired · not for
+  new designs". Today it holds the Character banner and Character pill
+  (Lists & meters), both replaced by the Character card on 2026-11-18, and
+  the old Welcome dialog (Dialogs & sheets), replaced by About dialog on
+  2026-11-19. Shipped proposals go to an "Archive · shipped proposals"
+  section beside it.
+- **Archiving explorations:** in the Explorations file, save a named version
+  ("Countdown approved 2026-11-19"), rename the pages "Archive · <topic> ·
+  approved <date>" and move them below an Archive divider page, with a note
+  naming the chosen frames, the ticket and the library component. Node ids
+  don't change, so ticket links keep working.
 
 ## Not in the library yet
 
