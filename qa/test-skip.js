@@ -92,7 +92,7 @@ const STATE = () => {
     // substring test at the call sites, not an equality one.
     skipNote: (document.querySelector('.g-meter .g-skip-count, .gm-notes') || {}).textContent || (line && /skipped|pulad/.test(line) ? line : null),
     next: (document.querySelector('.g-stop.next, .g-card.next') || { getAttribute: () => null }).getAttribute('data-row-id'),
-    bulk: (document.querySelector('.g-meter .pgh-action, .gm-foot .pgh-action, .g-meter button') || {}).textContent || null,
+    bulk: (document.querySelector('.g-meter .pgh-action, .g-actions .pgh-action, .gm-foot .pgh-action, .g-meter button') || {}).textContent || null,
     stops: (document.querySelector('.guide-banner .cb-pos, .g-pill .cb-pos, .g-pill [aria-live]') || {}).textContent
       || (document.querySelector('.g-desk') ? document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest):not(.skipped)').length + ' stops' : null),
     // The control by its hook class (shadcn-styled buttons carry many classes).

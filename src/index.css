@@ -47,6 +47,7 @@
 @source "./app/shell.tsx";
 @source "./app/seg-pill.tsx";
 @source "./app/guides-ui.tsx";
+@source "./app/countdown.tsx";
 @source "./app/theme-lab.tsx";
 @source "./app/poster.tsx";
 
@@ -140,6 +141,12 @@
     --text-numeral--line-height: 0.9;
     --text-numeral-word: calc(var(--fs-numeral) * 0.6);
     --text-numeral-word--line-height: 0.9;
+    /* The guide countdown, "29d 04h 12m 37s" (src/app/countdown.tsx), and
+       the unit after each number. */
+    --text-ticker: var(--fs-ticker);
+    --text-ticker--line-height: 1.2;
+    --text-ticker-unit: calc(var(--fs-ticker) * 0.5);
+    --text-ticker-unit--line-height: 1.2;
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -550,6 +557,7 @@
     --fs-label: 0.8125rem;  /* 13px */
     --fs-caption: 0.75rem;  /* 12px */
     --fs-numeral: 4.25rem;  /* 68px: the promo countdown (an art size) */
+    --fs-ticker: 1.875rem;  /* 30px: the guide countdown (an art size) */
   }
   /* Text size, from Settings (src/app/settings.tsx), set on <html> before
      the first paint (vite.config.js). Kept per device. */
@@ -570,7 +578,7 @@
      only half as much as the text: --fs-chrome-scale takes 112.5% back to
      106.25%, and 125% back to 112.5%. */
   @media (max-width: 899px) {
-    :root { --fs-body: 0.875rem; --fs-display: 1.5rem; --fs-numeral: 3.5rem; --fs-chrome-scale: 1; }
+    :root { --fs-body: 0.875rem; --fs-display: 1.5rem; --fs-numeral: 3.5rem; --fs-ticker: 1.6875rem; --fs-chrome-scale: 1; }
     html:not([data-text-size]), html[data-text-size="default"] { font-size: 112.5%; --fs-chrome-scale: calc(17 / 18); }
     html[data-text-size="small"] { font-size: 100%; --fs-chrome-scale: 1; }
     html[data-text-size="large"] { font-size: 125%; --fs-chrome-scale: 0.9; }
@@ -590,6 +598,10 @@
 @keyframes tsa-halo { from { box-shadow: 0 0 0 0 color-mix(in oklab, var(--pop) 55%, transparent); } to { box-shadow: 0 0 0 6px transparent; } }
 @keyframes un-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 @keyframes un-out { to { opacity: 0; transform: translateX(-24px); } }
+/* The guide countdown's digits (src/app/countdown.tsx): the new one rolls up
+   in from below as the old one leaves the top. */
+@keyframes ticker-in { from { transform: translateY(100%); } }
+@keyframes ticker-out { to { transform: translateY(-100%); } }
 @keyframes un-slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
 @keyframes mfade { from { opacity: 0 } }
 @keyframes mrise { from { transform: translateY(100%) } }

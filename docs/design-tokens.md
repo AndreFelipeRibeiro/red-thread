@@ -110,10 +110,11 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
 ### Type (one mode) → number variables + text styles
 
 - Sizes: `fs-display`, `fs-display-sm` (28px, the welcome's heading), `fs-title`, `fs-heading`, `fs-body`, `fs-label`,
-  `fs-caption`, `fs-numeral` (rem in code, px in Figma at the default text
+  `fs-caption`, `fs-numeral`, `fs-ticker` (the guide countdown, 30px; rem in code, px in Figma at the default text
   size; phones use the smaller display and body sizes declared beside them).
 - The Type collection has two modes, **Desktop** and **Phone**: phones use
-  14px body, 24px display and a 56px countdown. `font-sans` (Inter) and
+  14px body, 24px display and a 56px countdown; the guide countdown
+  (`fs-ticker`) stays 30px on both (1.6875rem at the phone root). `font-sans` (Inter) and
   `font-display` (the poster fallback's initials only) are string
   variables. Every headline in the live app is Inter.
 - **Typeface** collection (Notion "Headline fonts: try stylish headline and
@@ -141,7 +142,10 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
   for display, title and heading; Regular for body, label and caption).
 - Art sizes stay fixed px and are text styles in an `art/` folder:
   `text-card-title` (`-lg`, `-pop`, `-ov`), `text-card-meta` (`-lg`, `-pop`),
-  `text-card-micro`, `text-tag`, `text-numeral`, `text-numeral-word`.
+  `text-card-micro`, `text-tag`, `text-numeral`, `text-numeral-word`,
+  `text-ticker` (the guide countdown's numbers and release-day line, size
+  bound to `fs-ticker`) and `text-ticker-unit` (the unit after each number,
+  0.5 × `fs-ticker`).
 
 ### Radius, spacing and sizes (one mode)
 

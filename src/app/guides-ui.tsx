@@ -11,6 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import * as B from './banners';
 import * as S from './shell';
+import { GuideTicker } from './countdown';
 
 // On the design system since Notion "shadcn pass 6" (this file is listed with
 // `@source` in src/index.css). Same content,
@@ -588,9 +589,11 @@ function GuidesHero({ guide, followed, onPick }) {
   const coming = MCU_GUIDE.comingUp(today).find(x => x.guide.id === guide.id) || null;
   const target = guide.target ? MCU_GUIDE.title(guide.target) : null;
   const date = MCU_GUIDE.targetDate(guide);
+  // No "29 days to go": the countdown below carries it (Andre, 2026-11-19).
   const kicker = coming
-    ? [gtr('guide.group.coming'), date, gtr('guide.hero.daysLeft', { n: coming.days })].filter(Boolean).join(' · ')
+    ? [gtr('guide.group.coming'), date].filter(Boolean).join(' · ')
     : followed ? gtr('guide.hero.following', { kind: guideType(guide) }) : guideType(guide);
+  const upcoming = MCU_GUIDE.upcomingTitle(guide);
   const name = MCU_GUIDE.name(guide);
   const mark = (t) => {
     const was = statusOf(t.id);
@@ -635,7 +638,12 @@ function GuidesHero({ guide, followed, onPick }) {
         </h2>
         <p className="g-hero-blurb m-0 max-w-[480px] text-body leading-[1.45] text-muted-foreground in-[.app.touch]:hidden">{MCU_GUIDE.blurb(guide)}</p>
         {prog('in-[.app.touch]:hidden')}
-        <Button variant="outline" className="g-hero-about h-[38px] px-3.5 text-label in-[.app.touch]:hidden" onClick={() => onPick(guide.id)}>{gtr('guide.about')}</Button>
+        {/* The countdown beside About this guide (Notion countdown ticket,
+            desktop A). */}
+        <div className="g-hero-act flex items-center gap-4 in-[.app.touch]:hidden">
+          <Button variant="outline" className="g-hero-about h-[38px] px-3.5 text-label" onClick={() => onPick(guide.id)}>{gtr('guide.about')}</Button>
+          <GuideTicker title={upcoming} complete={p.complete} divider/>
+        </div>
       </div>
       <ol className="g-strip relative m-0 flex list-none items-center gap-3 p-0 in-[.app.touch]:gap-1.5" aria-label={gtr('guide.promoStops')}>
         <span aria-hidden="true" className="g-thread absolute inset-x-8 top-1/2 h-0.5 bg-border"/>
@@ -684,6 +692,8 @@ function GuidesHero({ guide, followed, onPick }) {
         )}
       </ol>
       {prog('hidden in-[.app.touch]:flex')}
+      {/* Phones: the countdown under the progress (phone A). */}
+      <GuideTicker title={upcoming} complete={p.complete} className="hidden in-[.app.touch]:flex"/>
       <span className="story-sr" aria-live="polite">{said}</span>
     </section>
   );
@@ -1423,15 +1433,20 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
   useGuideSkips();
   useFollowedGuides();
   const [said, setSaid] = React.useState('');
-  const today = window.todayISO();
   const p = MCU_GUIDE.progress(guide, statusOf);
   const nOpt = MCU_GUIDE.stops(guide, true).filter(s => s.optional).length;
   const name = MCU_GUIDE.name(guide);
   const date = MCU_GUIDE.targetDate(guide);
-  const coming = MCU_GUIDE.comingUp(today).find(x => x.guide.id === guide.id) || null;
   const followed = MCU_GUIDE.isFollowed(guide.id);
-  const kicker = p.complete ? gtr('guide.complete')
-    : [MCU_GUIDE.kind(guide), date, coming && gtr('guide.hero.daysLeft', { n: coming.days })].filter(Boolean).join(' · ');
+  // No "29 days to go" in the eyebrow: the countdown carries it (Andre,
+  // 2026-11-19, Notion countdown ticket).
+  const kicker = p.complete ? gtr('guide.complete') : [MCU_GUIDE.kind(guide), date].filter(Boolean).join(' · ');
+  const upcoming = MCU_GUIDE.upcomingTitle(guide);
+  // Desktop: the countdown sits beside the buttons while the row fits it, and
+  // goes under them (no divider) when it doesn't: language, Text size, an
+  // Include optional switch (step 1).
+  const actsRef = React.useRef(null);
+  window.useFitSteps(actsRef, phone ? 0 : 1, [phone, GI18N.lang, followed, nOpt, includeOptional, p.complete, upcoming && upcoming.id]);
   const pct = p.ess.released ? Math.round(p.ess.seen / p.ess.released * 100) : 0;
   const ids = MCU_GUIDE.stops(guide, includeOptional).filter(s => !MCU_GUIDE.skippedNow(guide, s.id, statusOf)).map(s => s.id);
   const skipped = p.ess.skipped + (includeOptional ? p.opt.skipped : 0);
@@ -1463,9 +1478,12 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
         <span className="pgh-count" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>
           {gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}{nOpt ? ' · ' + gtr('guide.optN', { n: nOpt }) : ''}{skipped ? ' · ' + gtr('guide.skippedCount', { n: skipped }) : ''}{MCU_GUIDE.left(guide, statusOf) ? ' · ' + MCU_GUIDE.left(guide, statusOf) : ''}
         </span>
-        <window.BulkHeaderAction ids={ids} group={name}/>
+        {!phone && <window.BulkHeaderAction ids={ids} group={name}/>}
       </div>
-      <div className="g-actions flex flex-wrap items-center gap-2.5">
+      {/* Phones: the countdown right after the progress, under "Until … ·
+          Dec 18". */}
+      {phone && <GuideTicker title={upcoming} complete={p.complete} label/>}
+      <div ref={actsRef} className={cn('g-actions group/acts flex w-full items-center gap-2.5', phone ? 'flex-wrap' : 'flex-nowrap data-[fit=1]:flex-wrap')}>
         <Button variant="outline" className={cn('g-following h-10 gap-1.5 px-3.5 text-body [&_svg]:size-3.5 in-[.g-desk]:h-(--step-control-h)', followed && 'on')} aria-pressed={followed}
           aria-label={followed ? gtr('guide.unfollowAria', { name }) : gtr('guide.followAria', { name })} onClick={toggleFollow}>
           {followed ? <window.CheckIcon/> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>}
@@ -1491,6 +1509,11 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
             <span aria-hidden="true">{gtr('guide.includeOptional', { n: nOpt })}{includeOptional && p.opt.released ? ' · ' + gtr('guide.optSeen', { seen: p.opt.seen, n: p.opt.released }) : ''}</span>
           </label>
         )}
+        {/* Phones: "Mark N more seen" joins the actions, sized like them, so
+            it no longer wraps under the progress on its own line (Andre,
+            2026-11-19, Fix 1). Desktop keeps it in the meter row. */}
+        {phone && <window.BulkHeaderAction ids={ids} group={name} className="ml-0 h-10 px-3.5 text-body"/>}
+        {!phone && <GuideTicker title={upcoming} complete={p.complete} divider/>}
       </div>
       <span className="story-sr" aria-live="polite">{said}</span>
     </section>

@@ -192,13 +192,13 @@ export function ProgressHeader({ label, color, seen, released, upcoming, band, w
 /** "Mark all seen" / "Mark 4 more seen" in a meter's action slot. It counts
  *  with the rule the action uses (released, not yet seen), so the label never
  *  promises a different number than it marks; with nothing left it is gone. */
-export function BulkHeaderAction({ ids, group }: { ids: string[]; group: string }) {
+export function BulkHeaderAction({ ids, group, className = '' }: { ids: string[]; group: string; className?: string }) {
   const { states, requestBulk } = useCollection();
   const n = window.MCU_bulkTargets(ids, 'seen', states).length;
   if (!n) return null;
   const anySeen = ids.some(id => states[id] === 'seen');
   return (
-    <Button type="button" variant="outline" className={cn('pgh-action ml-auto h-[max(32px,2rem)] shrink-0 px-[11px] text-label font-medium tracking-normal normal-case')}
+    <Button type="button" variant="outline" className={cn('pgh-action ml-auto h-[max(32px,2rem)] shrink-0 px-[11px] text-label font-medium tracking-normal normal-case', className)}
       onClick={() => requestBulk(ids, 'seen')} aria-label={tr('bulk.header.aria', { n, group })}>
       {anySeen ? tr('bulk.header.rest', { n }) : tr('bulk.header.all')}
     </Button>

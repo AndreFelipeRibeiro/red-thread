@@ -616,6 +616,24 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   applies shadcn/ui's Vega defaults to each surface as they stand, so the look
   can be seen and reacted to before any art direction. The rules above apply to
   the customising pass that follows, once frames exist.
+- **Keeping the library whole** (Andre, 2026-11-19; the details are in
+  [docs/figma-library.md](docs/figma-library.md), "Upkeep"):
+  - Screens and other files use only library instances. Posters are the
+    library's Poster set: every poster slot holds a nested Poster instance,
+    and a screen picks the title. Never paste an image over a slot, since
+    a pasted image never takes library updates.
+  - **Promote what is approved.** Once a design is approved, before its code
+    ships, it goes into the library (a component, or a variant or property of
+    an existing one) and then into the App Screens frames that show it. The
+    ticket holds a "Figma: library + App Screens updated" item until both
+    are done. Andre publishes; after each publish, check that it went through
+    (each changed asset reads Current) and which files have updates waiting.
+  - **Retired components** move to their page's gray "Retired" section,
+    never among the live ones, with the date and their replacement in the
+    description. Delete them once no file uses them.
+  - **Explorations are archived once a direction ships**: save a named
+    version, then move the pages under an "Archive" divider, with one note
+    naming the chosen direction and linking the ticket and the component.
 - Do not write to the user's Figma files (create or change frames, variables
   or components) unless the ticket or the user asks for it.
 - Never put Figma access tokens or other credentials in the repository,
