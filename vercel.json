@@ -12,7 +12,17 @@
     },
     {
       "source": "/og-image.jpg",
-      "destination": "/og/default.png",
+      "destination": "/og/default.jpg",
+      "permanent": true
+    },
+    {
+      "source": "/og/default.png",
+      "destination": "/og/default.jpg",
+      "permanent": true
+    },
+    {
+      "source": "/og/:kind/:id.png",
+      "destination": "/og/:kind/:id.jpg",
       "permanent": true
     }
   ]

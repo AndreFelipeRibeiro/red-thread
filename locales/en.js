@@ -139,6 +139,7 @@ window.MCU_LOCALES.en = {
     'og.pageTitle': '{name} · {app}',
     'og.defaultTitle': '{app}: Marvel films and series, connected',
     'og.defaultSub': 'Every film and series is a card, and the lines between them are the characters they share.',
+    'og.defaultKicker': 'The MCU, connected',
     'og.defaultAlt': 'Marvel films and series drawn as cards, joined by the characters they share',
     'og.titleSub': { one: 'Connected to {n} other title through its characters', other: 'Connected to {n} other titles through its characters' },
     'og.titleAlt': '{title} and the titles its characters connect it to',

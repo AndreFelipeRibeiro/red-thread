@@ -791,8 +791,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
 | `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
 | `src/app/share-image.tsx` | The share card dialog (desktop) and sheet (phone): the progress or finished-guide image, Share image, Download image, Copy link |
-| `src/share-card/` | The share images' templates (`cards.ts`), colours read from `src/index.css` (`tokens.ts`), preview text per title, character and guide (`previews.ts`), the preview tags (`meta.ts`), and the in-browser renderer (`render-browser.ts`, loaded on demand) |
-| `scripts/og-previews.js` | Renders the link previews during `npm run build` (Satori and resvg; no browser) |
+| `src/share-card/` | The share card's templates (`cards.ts`) and the link previews' (`link-cards.ts`), colors read from `src/index.css` (`tokens.ts`), what each title, character and guide preview says and shows (`previews.ts`), the preview tags (`meta.ts`), and the in-browser renderer (`render-browser.ts`, loaded on demand) |
+| `scripts/og-previews.js` | Renders the link previews during `npm run build` as 1200×630 JPEGs in `dist/og/` (Satori, resvg and jpeg-js; no browser), with the real posters and portraits fetched from TMDB's image CDN; a missing image fails the build |
 | `middleware.ts` | Vercel Routing Middleware: `/?title=`, `/?char=`, `/?guide=` get their preview page; everything else passes through |
 | `src/app/share.tsx` | Sharing: the one `share()` helper (the system share sheet on phones, copy the link elsewhere, with a "Link copied" toast), the Share button, and the production address every link uses |
 | `src/app/settings.tsx` | Settings (panel on desktop, sheet on phones), the motion and celebration preferences, and their sync to the account; the first surface built from the shadcn components |
