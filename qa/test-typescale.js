@@ -88,7 +88,7 @@ const MEASURE = () => {
   await new Promise((r) => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const URL = `http://127.0.0.1:${QA_PORT}/`;
-  const classes = ['text-display', 'text-title', 'text-heading', 'text-body', 'text-label', 'text-caption', 'text-tag', 'text-numeral', 'text-numeral-word',
+  const classes = ['text-display', 'text-title', 'text-heading', 'text-body', 'text-label', 'text-caption', 'text-tag', 'text-numeral', 'text-numeral-word', 'text-ticker', 'text-ticker-unit',
     'text-card-title', 'text-card-title-lg', 'text-card-title-pop', 'text-card-title-ov', 'text-card-meta', 'text-card-meta-lg', 'text-card-meta-pop', 'text-card-micro'];
   const SEED = "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'iron-man':'seen','thor':'seen','avengers':'watchlist'}}));";
   const screens = [

@@ -7,7 +7,7 @@ import { createCn } from 'cn/config';
 export const TEXT_SIZES = [
   'display', 'display-sm', 'title', 'heading', 'body', 'label', 'caption',
   'card-title', 'card-title-lg', 'card-title-pop', 'card-title-ov', 'card-meta', 'card-meta-lg', 'card-meta-pop', 'card-micro',
-  'tag', 'numeral', 'numeral-word',
+  'tag', 'numeral', 'numeral-word', 'ticker', 'ticker-unit',
 ];
 
 export const cn = createCn({ extend: { classGroups: { 'font-size': [{ text: TEXT_SIZES }] } } });

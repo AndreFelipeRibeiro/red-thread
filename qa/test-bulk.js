@@ -134,7 +134,7 @@ const SPY = `(() => {
     const st = () => m.evaluate((k) => JSON.parse(localStorage.getItem(k) || '{"states":{}}').states, KEY);
     await m.evaluate(() => { window.__writes = 0; window.__events = []; });
     R.mark = await m.evaluate(async () => {
-      const btn = document.querySelector('.g-meter .pgh-action');
+      const btn = document.querySelector('.g-meter .pgh-action, .g-actions .pgh-action');
       if (!btn) return { error: 'no "Mark all seen" on the guide meter' };
       const label = btn.textContent.trim();
       const ids = window.MCU_GUIDE.stops(window.GUIDES.find(g => g.id === 'infinity-saga'), false).map(s => s.id);
@@ -157,7 +157,7 @@ const SPY = `(() => {
       // Finishing the guide may celebrate in place of "10 titles marked as
       // seen"; either way the toast has Undo.
       if (!/as seen|complete|finished|Infinity/i.test(R.mark.toast || '')) errors.push(`no bulk toast (${R.mark.toast})`);
-      R.after = await m.evaluate(() => { const b = document.querySelector('.g-meter .pgh-action'); return b ? b.textContent.trim() : null; });
+      R.after = await m.evaluate(() => { const b = document.querySelector('.g-meter .pgh-action, .g-actions .pgh-action'); return b ? b.textContent.trim() : null; });
       if (R.after) errors.push(`the guide meter still offers "${R.after}" with nothing left to mark`);
       R.undo = await m.evaluate(async () => {
         const b = document.querySelector('.mcu-toast .mt-undo');
