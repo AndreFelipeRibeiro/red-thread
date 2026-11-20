@@ -13,6 +13,35 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 18 — Guides: a live countdown to the release
+
+Recorded: 2026-11-19 19:28 EST (-0500). Pushed to `version/5.0` (V5 staging), not merged to `main`; full
+regression 82 of 82 runs clean on `a35e629`; `qa/smoke.js` clean on the staging preview.
+
+- Every dated guide counts down to its release at local midnight, "29d 04h 12m 37s" (`src/app/countdown.tsx`): in the guide header (desktop after See connections behind a divider, under the buttons when the row runs out of room; phones after the progress, under "Until {title} · {date}") and in the Guides hero (beside About this guide; phones under the progress). The seconds are brand red while the guide is in progress and green once it is complete; the last day drops the days; release day reads "In theaters today" ("Streaming today" for a series); the day after it is gone. Only a changed digit rolls, in place with Reduce motion; screen readers get one line that changes once a day. The eyebrow and the hero kicker drop "· 29 days to go". On phones "Mark N more seen" joins the actions row. New tokens `--fs-ticker`, `text-ticker`, `text-ticker-unit`; Portuguese units "min". Figma: Countdown `104:701`. `qa/test-countdown.js`. Commit [fb4d62e](https://github.com/AndreFelipeRibeiro/red-thread/commit/fb4d62e).
+- Limits: not checked on a real iPhone; "Streaming today" untested (no guide leads to a series yet).
+
+## V5 Batch 18 — Catalog audit: current posters and season posters
+
+Recorded: 2026-11-19 19:28 EST (-0500). Pushed to `version/5.0` (V5 staging), not merged to `main`; full
+regression 82 of 82 runs clean on `a35e629`; `qa/smoke.js` clean on the staging preview.
+
+- All 64 titles checked against TMDB (wiring, links, release dates, type, runtimes, episodes, TMDB ids, posters at both sizes); no data errors. Andre's choices: Endgame, Brand New Day and VisionQuest move to TMDB's current posters, and Loki, What If…? (seasons 2 and 3), Daredevil: Born Again and Your Friendly Neighborhood Spider-Man season 2 get their own season posters; poster colors rerun for those eight. Commit [1a8a679](https://github.com/AndreFelipeRibeiro/red-thread/commit/1a8a679).
+
+## V5 Batch 18 — Figma library upkeep
+
+Recorded: 2026-11-19 19:28 EST (-0500). Pushed to `version/5.0` (V5 staging), not merged to `main`; full
+regression 82 of 82 runs clean on `a35e629`; `qa/smoke.js` clean on the staging preview.
+
+- AGENTS.md "Keeping the library whole" and docs/figma-library.md "Upkeep": screens use only library instances (posters through the Poster set `100:696`, nested in every component), approved designs are promoted into the library and App Screens before their code ships, retired components sit in a Retired section, explorations are archived once a direction ships, and a file open during a publish is reopened before Update all. App Screens' 256 posters are linked to the Poster set. Docs only. Commit [a35e629](https://github.com/AndreFelipeRibeiro/red-thread/commit/a35e629).
+
+## V5 Batch 18 — Figma: the Welcome and About dialogs match the live app
+
+Recorded: 2026-11-19 19:28 EST (-0500). Pushed to `version/5.0` (V5 staging), not merged to `main`; full
+regression 82 of 82 runs clean on `a35e629`; `qa/smoke.js` clean on the staging preview.
+
+- The library's About dialog (`119:1765`, Kind × Device) is rebuilt from the live app with `tools/figma`; the old Welcome dialog is retired. Docs row only. Commit [a35e629](https://github.com/AndreFelipeRibeiro/red-thread/commit/a35e629).
+
 ## V5 Batch 17 — Character view: one view, their titles in a row
 
 Recorded: 2026-11-18 14:52 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
