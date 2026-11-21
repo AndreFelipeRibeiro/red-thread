@@ -218,13 +218,15 @@ function DlSortHeader({ col, label, end = false, sort, sortDir, setSort, setSort
   );
 }
 
-// A group's heading: its dot, its name, and its progress as a short
-// segmented bar, one segment per released title, red when seen, with "4/6"
-// (Andre, 2026-11-15: the full-width bar was too heavy; 2026-11-16: round
-// marks read unlike every other meter, and like the dot before the name). A plain heading, not a fold: the list opens at Up next, and the
-// Unseen tab hides what you've seen. Progress counts released titles in the
-// catalogue's filters, not the tab (app.tsx `groupProgress`), so Seen does not
-// always read 100%. Hooks: `dl-group`, `dl-group-head`, `dl-group-count`
+// A group's heading: a dot in the phase color, the name in the foreground,
+// and the count ("4/6") after it, quieter: regular weight, muted and a step
+// smaller, so it doesn't compete with the name (Andre, 2026-11-21, Notion
+// "Titles headings"; the library's Phase header and Phone phase header draw
+// it). Era headings have no phase color, so no dot. A plain heading, not a
+// fold: the list opens at Up next, and the Unseen tab hides what you've seen.
+// Progress counts released titles in the catalogue's filters, not the tab
+// (app.tsx `groupProgress`), so Seen does not always read 100%; it is hidden
+// during a search and while a character is pinned. Hooks: `dl-group`, `dl-group-head`, `dl-group-count`
 // (the sentence), `dl-group-num` ("4/6"). `phone`: the same heading over the phone List's rows
 // (Notion "Titles 4/5"), outside a table and at the phone's sizes.
 function GroupHeader({ g, prog, phone = false }) {
@@ -233,13 +235,12 @@ function GroupHeader({ g, prog, phone = false }) {
   const done = has && prog.seen >= prog.released;
   return (
     <div role={phone ? undefined : 'row'} className={cn('dl-group', phone && 'm-ghead [.m-group:first-child>&]:-mt-1')}>
-      <span role={phone ? undefined : 'cell'} className={cn('dl-group-head flex items-center gap-2.5 font-semibold text-foreground',
+      <span role={phone ? undefined : 'cell'} className={cn('dl-group-head flex items-baseline gap-2 font-semibold text-foreground',
         phone ? 'pt-5 pb-2.5 text-heading' : 'pt-(--step-group-pt) pb-2.5 text-(length:--step-group)')}>
-        {/* "Phase 1 4/6": the name in its phase color, the count in the
-            foreground, as the canvas's phase pills (Andre, 2026-11-16: no
-            dashes, no dot; the colored name says the phase). */}
-        <span className="dl-group-label whitespace-nowrap" style={g.color ? { color: g.color } : undefined}>{g.label}</span>
-        {has && <span className="dl-group-num tabular-nums text-foreground" aria-hidden="true">{prog.seen}/{prog.released}</span>}
+        {/* "● Phase 1 4/6" (Andre, 2026-11-21): see the comment above. */}
+        {g.color && <span className="dl-group-dot size-2 flex-none self-center rounded-full" style={{ background: g.color }} aria-hidden="true"/>}
+        <span className="dl-group-label -ml-0.5 whitespace-nowrap">{g.label}</span>
+        {has && <span className={cn('dl-group-num font-normal tabular-nums text-muted-foreground', phone ? 'text-label' : 'text-(length:--step-meta)')} aria-hidden="true">{prog.seen}/{prog.released}</span>}
         {has && <span className="dl-group-count story-sr">{done ? tr('list.groupAll', { n: prog.released }) : tr('progress.seen', { seen: prog.seen, n: prog.released })}</span>}
       </span>
     </div>

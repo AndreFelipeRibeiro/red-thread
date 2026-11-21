@@ -1,0 +1,19 @@
+{
+  "about": "The App Screens frames the Figma ⇄ code check (part 2/2) looks at (Red Thread – App Screens, FBDC4AxFAi5gyABtpdJM8Z). Every frame must be built from library instances: `loose` allows the layers drawn by hand on purpose (the canvas's thread lines, a scrim). `url` opens the same view in the app for the side-by-side screenshots (screens-capture.mjs); a frame without one is compared by hand. Keep it in step with docs/figma-library.md, \"Screens\".",
+  "pages": ["Desktop", "Phone"],
+  "frames": [
+    {"name": "Titles (desktop)", "light": "16:4664", "dark": "16:5009", "device": "desktop", "url": "?view=list"},
+    {"name": "Connections with a title open (desktop)", "light": "16:6270", "dark": "16:6661", "device": "desktop", "url": "?view=spatial&title=iron-man", "loose": {"VECTOR": 15}},
+    {"name": "Guides (desktop)", "light": "17:2384", "dark": "17:2624", "device": "desktop", "url": "?view=guides", "loose": {"TEXT": 2}},
+    {"name": "Guide page, Thor (desktop)", "light": "17:2641", "dark": "17:2876", "device": "desktop", "url": "?view=guides&guide=thor"},
+    {"name": "Follow the thread (desktop)", "light": "17:2888", "dark": "17:3142", "device": "desktop", "url": "?view=spatial&title=iron-man&explore=thread", "loose": {"VECTOR": 4}},
+    {"name": "Settings over Titles (desktop)", "light": "16:5024", "dark": "16:5152", "device": "desktop"},
+    {"name": "Search open (desktop)", "light": "19:3906", "dark": "19:4033", "device": "desktop"},
+    {"name": "Filters open (desktop)", "light": "19:4050", "dark": "19:4138", "device": "desktop"},
+    {"name": "What have you seen? (desktop)", "light": "19:4155", "dark": "19:4252", "device": "desktop", "loose": {"RECTANGLE": 1}},
+    {"name": "Character pinned, Titles (desktop)", "light": "19:4270", "dark": "19:4565", "device": "desktop"},
+    {"name": "Titles (phone)", "light": "17:4759", "dark": "17:4964", "device": "phone", "url": "?view=list"},
+    {"name": "Details sheet over Titles (phone)", "light": "17:4952", "dark": "17:5267", "device": "phone", "url": "?view=list&title=iron-man", "loose": {"RECTANGLE": 1}},
+    {"name": "Character pinned, Titles (phone)", "light": "33:7655", "dark": "33:7876", "device": "phone"}
+  ]
+}

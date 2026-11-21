@@ -135,6 +135,7 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
   reads smaller than Inter at one size. Figma has no such step, so its
   pairings look a little smaller than the lab's.
 - **Text styles**, one per type role, named like the utility: `text-display`,
+  `text-display-sm` (added 2026-11-21 with its `fs-display-sm` variable),
   `text-title`, `text-heading`, `text-body`, `text-label`, `text-caption`,
   each with its line height from `@theme inline`, its size bound to the
   `fs-*` variable and its family and weight to the Typeface collection. The code sets weight per use,
@@ -225,6 +226,16 @@ foundations page as documentation until the code names them.
    Dark modes alias. Nothing exists on only one side.
 2. **The file**: a new **Red Thread – Design System** design file in the AFR
    team.
+
+## Checking Figma against the code
+
+"Check tokens against Figma" (report only) and "sync tokens from Figma"
+compare every variable, effect style and text style in the Design System
+with `src/index.css` and with this file, mode by mode, and list each
+difference with the edit that fixes it: the `figma-tokens` skill
+(`.claude/skills/figma-tokens/SKILL.md`), with `tools/figma/tokens-dump.js`
+and `tools/figma/tokens-check.mjs`. A new variable or token isn't done
+until it comes back clean, including its row here.
 
 ## The component library
 

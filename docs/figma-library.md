@@ -49,7 +49,7 @@ surface uses them, so they have no Figma counterpart until one does.
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
 | Poster (Title: one variant per catalog title id, 64; on the Posters page, 168 × 252, live TMDB posters at w500 over the poster's own color, checked 2026-11-19) | `100:696` | `src/app/poster.tsx` `PosterArt`; paths in `src/data/media-data.ts` |
-| List row (Seen) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
+| List row (Seen × Up next; Up next is the row with the brand tint and the Up next pill) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
 | List header | `16:82` | `desktop-list.tsx` `DlSortHeader` |
 | Phase header | `16:87` | `desktop-list.tsx` `GroupHeader` |
 | Phone title row (Seen, Unseen, Up next) | `63:691` | `list-parts.tsx` (m-lrow) |
@@ -66,10 +66,10 @@ surface uses them, so they have no Figma counterpart until one does.
 | Cast row | `19:14` | `title-details.tsx` `CastConnections` |
 | Follow the thread | `19:29` | `title-details.tsx` `FollowThreadButton` |
 | Up next | `20:51` | `src/app/upnext.tsx` |
-| Guide promo | `21:44` | `src/app/guides-ui.tsx` (Guides page hero) |
+| Guide promo (State: Following, Not started) | `147:698` | `src/app/guides-ui.tsx` (Guides page hero) |
 | Countdown (State: In progress, Complete × Moment: Counting, Release day; Days on/off): the guide countdown in the guide header and the Guides hero | `104:701` | `src/app/countdown.tsx` `GuideTicker` |
 | Guide continue card | `21:67` | `guides-ui.tsx` (Continue shelf) |
-| Guide card | `21:88` | `guides-ui.tsx` (guide shelves) |
+| Guide card (State: Following, Not followed) | `147:696` | `guides-ui.tsx` (guide shelves) |
 | Picker poster (Seen) | `23:13` | `src/app/picker.tsx` |
 | Picker dialog | `23:43` | `picker.tsx` |
 | Phone app bar | `34:662` | `src/app/phone-header.tsx` `MobileTopBar` |
@@ -146,9 +146,17 @@ top-to-bottom gradient, its stops bound to `canvas-top` and `canvas-bottom`
 (2026-11-18). The Character card's photo badge keeps the component's
 placeholder ring: the file has no portrait images yet.
 
+## Checking it against the app
+
+"Check components against the app" compares the components listed in
+`tools/figma/components.json` with the elements that draw them, and the
+Screens frames with the app (`tools/figma/screens.json`): the
+`figma-components` skill. Add a row there when a component gets a place the
+check can reach.
+
 ## Upkeep
 
-The rules are in AGENTS.md ("Keeping the library whole"). How to apply them:
+The rules are the `promote-design` skill (`.claude/skills/promote-design/SKILL.md`). How to apply them:
 
 - **Posters:** every poster slot (`art` or `poster` in a component) holds a
   nested, exposed instance of the Poster set (`100:696`). In a screen, select
