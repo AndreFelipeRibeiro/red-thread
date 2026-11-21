@@ -39,7 +39,7 @@ doesn't ship as a commit** (Design, Marketing, Notion-only Ops), without
 asking: Andre gave that as a standing instruction on 2026-11-17 (the `ship-batch`
 skill), extended to every track on 2026-11-21. When each
 track's event is made, what a session is, and how to avoid overlaps are in
-[docs/WORKFLOW.md](docs/WORKFLOW.md), "Logging by track". Every Red Thread
+[docs/WORKFLOW.md](../../../docs/WORKFLOW.md), "Logging by track". Every Red Thread
 event follows the same rules, whichever agent makes it (Andre, 2026-11-15):
 
 - **Colour: purple**, Google Calendar `colorId` `"3"` (Grape). Every Red
@@ -47,7 +47,7 @@ event follows the same rules, whichever agent makes it (Andre, 2026-11-15):
 - **Title:** the title line above, without the bold: `Red Thread V5 – Batch
   <n> (<a few keywords>)`, or a named session such as `Red Thread V5 – First
   release (…)`. Sessions with no batch (Design, Marketing, Notion-only Ops)
-  take their track's title from [docs/WORKFLOW.md](docs/WORKFLOW.md),
+  take their track's title from [docs/WORKFLOW.md](../../../docs/WORKFLOW.md),
   "Logging by track".
 - **Description in HTML**, one list item per ticket with its bold label, the
   same bullets as the chat recap:

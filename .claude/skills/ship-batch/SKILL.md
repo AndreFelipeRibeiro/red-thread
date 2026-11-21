@@ -26,7 +26,7 @@ order:
      component (or variant) is in the Design System and the App Screens
      frames that show it use it (the `promote-design` skill);
    - Andre has published, and each changed asset reads **Current**
-     (`getPublishStatusAsync()`, [docs/figma-library.md](docs/figma-library.md),
+     (`getPublishStatusAsync()`, [docs/figma-library.md](../../../docs/figma-library.md),
      "Upkeep"). Changed or Unpublished means it didn't go out: ask him to
      publish, and wait;
    - **tokens:** "check tokens against Figma" comes back with no

@@ -11,10 +11,11 @@ Moved verbatim from AGENTS.md ("Backlog workflow"), 2026-11-21. AGENTS.md keeps 
   Batch** (Batch only on a track that takes one; set Track too if it is
   empty) in the same update, then re-read the record to confirm no one else
   holds it and that they are all set. Work on one ticket at a time; claim
-  the next only when the current one is handed off.
+  the next only when the current one is handed off. A record ticket (one
+  that tracks other tickets as they go, such as a pilot) doesn't count.
 - **Trail:** a ticket that goes through Explore or Design keeps a `## Trail`
   section near the top of its page, with one line per stage, and its work
-  is named by the ticket's short name ([docs/WORKFLOW.md](docs/WORKFLOW.md),
+  is named by the ticket's short name ([docs/WORKFLOW.md](../../../docs/WORKFLOW.md),
   "The paper trail"). Add your stage's line, with its links, when you
   finish that stage. The **Figma** field holds only the selected frame.
 - Ready: Status = Awaiting review. The page body keeps the request, the
@@ -38,7 +39,7 @@ Moved verbatim from AGENTS.md ("Backlog workflow"), 2026-11-21. AGENTS.md keeps 
   still need the user's review. They close on his approval: Completed, ✅,
   Completed on = the approval time, the next Completion order, no Batch and
   no commit, and the session's calendar event in the same turn
-  ([docs/WORKFLOW.md](docs/WORKFLOW.md), "Logging by track"). Completing a
+  ([docs/WORKFLOW.md](../../../docs/WORKFLOW.md), "Logging by track"). Completing a
   ticket on staging is not approval to merge to `main`.
 
 ## Choosing the Batch

@@ -70,20 +70,23 @@ says so, and a stage not reached yet stays "—".
 - Idea: <who, date, where it came from>
 - Explore: <Claude Design link> · explore v1 (date) · explore v2 (date) · direction <letter> picked (date): <link to its artboard>
 - Design: <Figma page link> · frames A · v1, B · v1… · ✓ Selected: <frame link>
-- Design approved: <frame link> · version "<short name> · approved YYYY-MM-DD"
+- Design approved: <frame link> · version "<short name> · approved YYYY-MM-DD" (or, approved in chat: Andre, in chat, YYYY-MM-DD ("<his words>"))
 - Library: <component links> · App Screens <frame links> · published (date)
 - Build: <commits> · Batch <n>
 - Reconcile: Figma ⇄ code check (date) · explorations archived (date)
 ```
 
 **Names.** Every name starts with the ticket's **short name**: its title up
-to the colon ("Phone Explore", "Titles headings").
+to the colon ("Phone Explore", "Titles headings"). When that would be
+unclear (a title starting "Library:" reads as the library itself), the
+ticket's Idea line names a longer one ("Library states").
 
 | What | Where | Name |
 | --- | --- | --- |
 | Claude Design prototype | claude.ai | `<short name> · explore v1`, then `v2`… for each round |
 | Explorations page | Figma Explorations (HI-FI), one page per ticket | `<short name>` |
 | Exploration frames | On that page | `A · v1`, `B · v1`…; a new round of the same option is `A · v2` |
+| State frames | A ticket that draws several states, each with no alternatives | `<component> · <state> · v1` (`Guide card · not followed · v1`) |
 | The chosen frame | On that page | Its name gets ` · ✓ Selected` added (`B · v2 · ✓ Selected`) |
 | Approved version | Figma's version history of the Explorations file | `<short name> · approved YYYY-MM-DD` |
 | Archived page | Below the Archive divider, once it ships | `Archive · <short name> · approved YYYY-MM-DD` |
@@ -97,6 +100,18 @@ current version; there is no known link to an older one, which is why
 each round is named `explore vN`, and a round that has to survive later
 edits is kept as its own artboard (`E · v1`, `E · v2`) rather than
 overwritten.
+
+**Drafts of a library change.** A ticket that adds a state, variant or
+property to existing library components drafts it on a page
+`Drafts · <short name>` in the Design System, not in Explorations:
+`tools/figma/build.js` binds to the Design System's own variables and
+styles. Before asking for approval, add the drafts to
+`tools/figma/components.json` and run the components check on them (the
+`figma-components` skill), so a weight or a token that differs from the
+app is caught at Design, not after. At the Library stage each draft becomes
+a variant (a new node) and the draft page is removed, so the Trail's Design
+line keeps the drafts' names and says they were promoted, and the Library
+line links the variants.
 
 **The ticket's Figma field** holds only the selected frame (a `node-id`
 link). Claude Design links, other options and earlier rounds go in the
@@ -183,7 +198,7 @@ Andre is the only one who approves, and each approval covers one thing:
 
 | Approval | Means | How it's given |
 | --- | --- | --- |
-| **Design approved** | The design is signed off. Build may start once it is in the library | The status, set by Andre, or in chat |
+| **Design approved** | The design is signed off. Build may start once it is in the library | The status, set by Andre, or in chat. A chat approval is recorded in the Trail's Design approved line (who, date, his words); the status stays Andre's to set or not |
 | **Ship approved** | That revision of that ticket may be committed and pushed to staging | The status, set by Andre, or in chat |
 | **Merge** | That batch may go to `main` (production) | In chat, each time |
 | **Tag** | A version tag may be created and pushed | In chat, each time |

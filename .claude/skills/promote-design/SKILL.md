@@ -8,7 +8,7 @@ description: 'Keep the Red Thread Figma library whole: promote an approved desig
 Moved verbatim from AGENTS.md ("Figma", "Keeping the library whole"), 2026-11-21. How each step is done in Figma (posters, publish status, the Retired section, the Archive divider): [docs/figma-library.md](../../../docs/figma-library.md), "Upkeep". Writing to the Figma files needs the ticket or the user to ask for it (docs/STANDARDS.md, "Figma"); Andre publishes.
 
 - **Keeping the library whole** (Andre, 2026-11-19; the details are in
-  [docs/figma-library.md](docs/figma-library.md), "Upkeep"):
+  [docs/figma-library.md](../../../docs/figma-library.md), "Upkeep"):
   - Screens and other files use only library instances. Posters are the
     library's Poster set: every poster slot holds a nested Poster instance,
     and a screen picks the title. Never paste an image over a slot, since

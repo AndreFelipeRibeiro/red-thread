@@ -33,6 +33,9 @@ every JSON to a scratch folder outside the repository.
    `node tools/figma/components-check.mjs <scratch>/figma.json <scratch>/code.json`
    Exit 0: every component agrees. Otherwise it lists, per component, each
    property that differs with Figma's value and the code's.
+4. **After a fix**, re-read only the fixed components: give the dump just
+   their entries as `ENTRIES`, replace those entries in the saved
+   `figma.json`, and compare again.
 
 How to read it:
 

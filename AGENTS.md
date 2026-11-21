@@ -228,7 +228,9 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   - Read the parent's page before starting a child: epics hold the goal, the
     audit or source behind it, and what is out of scope.
   - A "Before you start" line in a ticket names tickets that must be Completed
-    first. If they are not, skip to the next leaf ticket and say so.
+    first. A ticket Andre has already approved (Ship approved, or in chat)
+    counts as done here, even before the push completes it. If they are not
+    done, skip to the next leaf ticket and say so.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Design approved,
   Ship approved, Blocked, Deferred, Completed), **Track** (Development, Design,
   Marketing, Ops), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,

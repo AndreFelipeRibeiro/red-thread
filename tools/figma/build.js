@@ -1,7 +1,8 @@
 // Builds Figma components from the specs tools/figma/capture-dom.js reads off
 // the running app, bound to the Red Thread – Design System file's variables
 // and styles. Runs inside Figma through the Figma MCP's use_figma (Plugin
-// API): tools/figma/call.mjs pastes this file and the specs into one script.
+// API): paste this file (or the parts needed) and the specs into one call's
+// code (README, "Reading a component", step 4).
 // Development only; nothing in the app imports it.
 //
 // What it does with a spec node:
