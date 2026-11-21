@@ -30,7 +30,7 @@ came to be.
 2. `git fetch origin`; if `version/5.0` moved, fast-forward only
    (`git pull --ff-only`) on a clean tree.
 3. Open the Notion master backlog's **All tasks** board (see "Backlog
-   workflow"). Ship anything already in **Approved**
+   workflow"). Ship anything already in **Ship approved**
    first (the user cleared it; commit, push, then complete it), then take the
    right ticket and claim it (see Backlog workflow) before writing code.
 
@@ -195,7 +195,7 @@ came to be.
   dashboard, whose settings apply to every branch including production.
 - Keep iterations local and uncommitted until the user approves committing and
   pushing **that** revision, either in chat or by setting the ticket's Status to
-  **Approved** in Notion. Prior approval does not carry over to a new revision.
+  **Ship approved** in Notion. Prior approval does not carry over to a new revision.
   Do not push layout experiments for review.
 - **Never merge to `main` without the user's explicit approval for that merge.**
   Merge with `git merge --no-ff version/5.0` from an up-to-date `main`, push
@@ -252,8 +252,9 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 
 - **Priority = the order of the Backlog column in the "All tasks" board view**,
   top first. Take the top unclaimed ticket unless the user names others. Do not
-  use the **Queue** table's order (Notion keeps a separate manual order per
-  view). The user drags cards to set the order; agents cannot reorder cards
+  use another view's order (Notion keeps a separate manual order per view);
+  the **By track** board shows the same open tickets by Track, for looking
+  only. The user drags cards to set the order; agents cannot reorder cards
   and must not add priority numbers. A card titled `———` is the user's divider:
   tickets above it are the next ones to do.
 - **Hierarchy: Epic > Task > Sub-task.** **Level** says which one a ticket is,
@@ -286,9 +287,10 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
     audit or source behind it, and what is out of scope.
   - A "Before you start" line in a ticket names tickets that must be Completed
     first. If they are not, skip to the next leaf ticket and say so.
-- Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
-  Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
-  Improvement, Feature, Design, Workflow, Maintenance), **Version** (V5, V6),
+- Fields: **Status** (Backlog, In progress, Awaiting review, Design approved,
+  Ship approved, Blocked, Deferred, Completed), **Track** (Development, Design,
+  Marketing, Ops), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
+  Improvement, Feature, Maintenance, Visual, Process), **Version** (V5, V6),
   **Level** (Epic, Task, Sub-task), **Parent item** / **Sub-items**,
   **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **Latest commit**,
   **Completed on** (date-time), **Completion order** (number; it continues
@@ -297,10 +299,21 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   still exist, so set them through the API or the property menu as usual.
   The old **V3 ticket** field was removed on 2026-11-14: tickets carried over
   from V3 link their original in the page body ("Carried over from V3").
+- **Track** says which stages a ticket goes through, what "done" means for
+  it and whether it takes a Batch ([docs/WORKFLOW.md](docs/WORKFLOW.md),
+  "Tracks"). Every ticket gets one when it is created. **Development** changes
+  the app. **Design** is design delivered in Figma and not built on that
+  ticket. **Marketing** is promo videos, social images and launch material.
+  **Ops** is how we work (the workflow, AGENTS.md, tooling, Notion). A
+  Development ticket that needs design keeps it on the same ticket, through
+  Design approved and on to Build.
 - **Version** and **Batch** say where a ticket belongs in the shipping history.
-  Set both when you claim a ticket, **including a ticket you create from chat
-  and start at once** (that is a claim too): Version is V5 for V5 work, and
-  Batch is the batch it is being worked in. They are what the calendar recap's
+  **Only a ticket that ships as a commit takes a Batch** (Andre, 2026-11-21):
+  every Development ticket, and an Ops ticket that changes the repo. Design,
+  Marketing and Notion-only Ops tickets take a Version but never a Batch.
+  Set both when you claim a ticket that takes a Batch, **including a ticket
+  you create from chat and start at once** (that is a claim too): Version
+  is V5 for V5 work, and Batch is the batch it is being worked in. They are what the calendar recap's
   title line is built from, so a ticket with no batch has no recap to belong
   to (Andre, 2026-11-17: five Batch 14 tickets went unbatched because the
   option did not exist yet).
@@ -312,8 +325,8 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
     empty.
   - **A batch is a release chunk, not a set of tickets** (Andre, 2026-11-18):
     it is everything that ships in one push. Until the current batch is
-    pushed, every ticket claimed, created, reworked or held back for more
-    work joins it, however late it was added. Never open a new batch for new
+    pushed, every ticket that ships as a commit and is claimed, created,
+    reworked or held back for more work joins it, however late it was added. Never open a new batch for new
     tickets or to set work aside: the next batch starts only after the
     current one ships. If the user wants part of a batch to ship first, ask
     which tickets, and ship those as the current batch.
@@ -330,14 +343,21 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   Figma MCP as well, annotations included (see "Figma" below). New requests
   from the user in chat become tickets first.
 - Claim: set Assigned to = your agent, Status = In progress, **Version and
-  Batch** in the same update, then re-read the record to confirm no one else
-  holds it and that all four are set. Work on one ticket at a time; claim
+  Batch** (Batch only on a track that takes one; set Track too if it is
+  empty) in the same update, then re-read the record to confirm no one else
+  holds it and that they are all set. Work on one ticket at a time; claim
   the next only when the current one is handed off.
 - Ready: Status = Awaiting review. The page body keeps the request, the
   changes, the verification actually done and the remaining limits.
 - Pushed for review: record the commit in **Latest commit** and the page body;
   the ticket stays Awaiting review until the user approves it.
-- **Approved** is the user's own flag, set by them and nobody else. It means
+- **Design approved** is the user's own flag too: the design on that ticket
+  is signed off, and the ticket records the exact frame (the **Figma**
+  field) and the approved Figma version. It means the design may go into
+  the library and App Screens and then to Build. It is **not** approval to
+  commit or push: the built revision still goes to Awaiting review and
+  needs Ship approved. Never set it yourself.
+- **Ship approved** is the user's own flag, set by them and nobody else. It means
   they have approved *that ticket's current revision* and you may commit and
   push it to `version/5.0` without asking again. Never set it yourself, and
   never read it as approval for anything beyond that ticket.
@@ -347,7 +367,7 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
     approved, move it back to Awaiting review and ask again.
   - Approval given in chat counts the same; the flag exists so an approval
     outlives the conversation and is visible to the other agent.
-  - At the start of a session, a ticket sitting in Approved is work the user
+  - At the start of a session, a ticket sitting in Ship approved is work the user
     has already cleared — commit and push it, then complete it.
 - Complete (only after the user approves and the change is committed and
   pushed): Status = Completed, Latest commit = the final implementation commit,
@@ -369,9 +389,10 @@ for. When he says to commit or push a batch that is in Awaiting review
 ("commit Batch 12", "push it"), that is his approval of those tickets. Step 0
 comes before the push; the rest follow it in the same turn, in this order:
 
-0. **Every ticket in the batch has its Batch**: query the board for tickets
-   In progress, Awaiting review or Approved with an empty Batch and fix them
-   before anything else (the recap and the calendar event are built from it).
+0. **Every ticket in the batch has its Batch**: query the board for
+   Development tickets, and Ops tickets with commits, that are In progress,
+   Awaiting review or Ship approved with an empty Batch, and fix them before
+   anything else (the recap and the calendar event are built from it).
 1. **Regression and push**: the full regression on the exact tree, then the
    push; smoke-test the deployed site (`SITE_URL=… node qa/smoke.js`) once
    Vercel reports the deploy.
@@ -427,7 +448,9 @@ event follows the same rules, whichever agent makes it (Andre, 2026-11-15):
   Thread work event is purple.
 - **Title:** the title line above, without the bold: `Red Thread V5 – Batch
   <n> (<a few keywords>)`, or a named session such as `Red Thread V5 – First
-  release (…)`.
+  release (…)`. Sessions with no batch (Design, Marketing, Notion-only Ops)
+  take their track's title from [docs/WORKFLOW.md](docs/WORKFLOW.md),
+  "Logging by track".
 - **Description in HTML**, one list item per ticket with its bold label, the
   same bullets as the chat recap:
   `<ul><li><b>Fixed:</b> …</li><li><b>Improved:</b> …</li></ul>`. Plain text

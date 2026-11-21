@@ -43,10 +43,10 @@ Reconcile catches whatever slipped through.
 | Idea | A ticket: the request, why, done when; Track; placement (parent epic or standalone) | Notion master backlog | Someone claims it (top of the Backlog column first) | Backlog |
 | Explore | Options to compare, named A, B, C… | Claude Design (a claude.ai artifact), or straight in Figma Explorations | Andre picks a direction, written on the ticket | In progress |
 | Design | Hi-fi frames built from library instances, each exploration a named Figma version, the selected one marked; behavior as Dev Mode annotations | Figma Explorations file | Andre reviews it | In progress, then Awaiting review |
-| Design approved | Andre's sign-off; the ticket's **Figma** field holds the exact frame (`node-id` link) and the body names the approved version | Notion ticket | Andre sets it | **Design approved** (new) |
+| Design approved | Andre's sign-off; the ticket's **Figma** field holds the exact frame (`node-id` link) and the body names the approved version | Notion ticket | Andre sets it | **Design approved** |
 | Library | The design as a component, variant or property in the Design System, then in the App Screens frames that show it; Andre publishes; each changed asset reads Current | Figma Design System, App Screens | Publish checked; the ticket's "Figma: library + App Screens updated" item is ticked | Design approved |
-| Build | Code that follows the library and tokens (when the design changed a variable, the Figma ⇄ code check brings it into the code first); the ticket's QA check; Awaiting review with what was verified | `red-thread-wip`, uncommitted | Andre approves that revision | Awaiting review, then **Approved** |
-| Ship | A commit, the batch pushed to V5 staging after the Figma gate (the token check comes back empty), regression and smoke test, Andre's review on staging, the merge to `main` with his approval | GitHub, Vercel | Pushed (staging) or merged (production) | Approved |
+| Build | Code that follows the library and tokens (when the design changed a variable, the Figma ⇄ code check brings it into the code first); the ticket's QA check; Awaiting review with what was verified | `red-thread-wip`, uncommitted | Andre approves that revision | Awaiting review, then **Ship approved** |
+| Ship | A commit, the batch pushed to V5 staging after the Figma gate (the token check comes back empty), regression and smoke test, Andre's review on staging, the merge to `main` with his approval | GitHub, Vercel | Pushed (staging) or merged (production) | Ship approved |
 | Reconcile | The Figma ⇄ code check's report (tokens, components and App Screens), each difference fixed or ticketed; explorations archived (a named version, pages under the Archive divider, a note naming the choice) | Figma, Notion | Nothing drifts that isn't ticketed | — |
 | Log | The CHANGELOG entry, the ticket closed (Completed, ✅, Completed on, Completion order, commits), the calendar event, the recap in chat | Repo, Notion, Google Calendar | Done | Completed |
 
@@ -62,21 +62,21 @@ through, what "done" means, and how its session is logged.
 
 | Track | What it covers | Stages | Done when | Batch |
 | --- | --- | --- | --- | --- |
-| **Product** | Anything that changes the app: features, fixes, the look in code | All nine, skipping Explore and Design when nothing is designed | Shipped (pushed, then merged), and logged | Yes, always |
-| **Design** | Design work whose deliverable is in Figma: explorations for a direction, the library and App Screens, brand | Idea, Explore, Design, Design approved, Library, Reconcile (archive), Log | Approved, promoted to the library where it applies, archived, and logged | No |
+| **Development** | Anything that changes the app: features, fixes, the look in code | All nine, skipping Explore and Design when nothing is designed | Shipped (pushed, then merged), and logged | Yes, always |
+| **Design** | Design work whose deliverable is in Figma: explorations for a direction, the library and App Screens, brand | Idea, Explore, Design, Design approved, Library, Reconcile (archive), Log | Andre approves the design; it is promoted to the library where it applies, archived, and logged | No |
 | **Marketing** | Promo videos, social images, launch material | Idea, Explore, Design, Design approved, Log | Andre approves the final asset and it is delivered where it goes | No |
 | **Ops** | How we work: the playbook, AGENTS.md, skills, QA tooling, Notion and Figma housekeeping | Idea, Build, Ship (only when it changes the repo), Log | Repo changes: shipped. Notion-only: Andre approves it | Only when it changes the repo |
 
-A Product ticket that needs design keeps that design on the same ticket. It
+A Development ticket that needs design keeps that design on the same ticket. It
 goes through Design approved and then on to Build (decision, 2026-11-20). A
 Design ticket is for design that isn't built on that ticket. When its
-outcome needs code, the build is written as Product tickets under it, as
+outcome needs code, the build is written as Development tickets under it, as
 the Phone Explore direction was.
 
 ### Batches
 
 **A batch is a release: a ticket takes a Batch only if it ships as a
-commit** (Andre, 2026-11-21). That means every Product ticket, and Ops
+commit** (Andre, 2026-11-21). That means every Development ticket, and Ops
 tickets that change the repo. Design and Marketing tickets never take a
 Batch, and neither do Notion-only Ops tickets. They have their own
 definitions of done, so design work is never held to a release's timing.
@@ -95,7 +95,7 @@ changes:
 
 | Track | Event title |
 | --- | --- |
-| Product, and Ops in the repo | `Red Thread V5 – Batch <n> (<keywords>)` |
+| Development, and Ops in the repo | `Red Thread V5 – Batch <n> (<keywords>)` |
 | Design | `Red Thread V5 – Design (<keywords>)` |
 | Marketing | `Red Thread V5 – Marketing (<keywords>)` |
 | Ops, Notion-only | `Red Thread V5 – Ops (<keywords>)` |
@@ -110,7 +110,7 @@ Andre is the only one who approves, and each approval covers one thing:
 | Approval | Means | How it's given |
 | --- | --- | --- |
 | **Design approved** | The design is signed off. Build may start once it is in the library | The status, set by Andre, or in chat |
-| **Approved** | That revision of that ticket may be committed and pushed to staging | The status, set by Andre, or in chat |
+| **Ship approved** | That revision of that ticket may be committed and pushed to staging | The status, set by Andre, or in chat |
 | **Merge** | That batch may go to `main` (production) | In chat, each time |
 | **Tag** | A version tag may be created and pushed | In chat, each time |
 | **Library publish** | Andre publishes the Design System himself | In Figma |
@@ -125,7 +125,7 @@ No approval carries over to a new revision, a later batch or another ticket.
 | Set priority (Backlog order) | **Only Andre** | — | — | — |
 | Explore (lo-fi) | Reviews, picks | Claude Design prototypes | Can publish prototypes as artifacts | — |
 | Design (hi-fi in Figma) | Art direction, reviews | Builds from the library | Builds from the library (`tools/figma/`) | Through the Figma MCP |
-| Design approved, Approved, merge, tag | **Only Andre** | — | — | — |
+| Design approved, Ship approved, merge, tag | **Only Andre** | — | — | — |
 | Promote to library and App Screens | Publishes | Can build it | Builds it, checks the publish | Can build it |
 | Build, QA, commit, push | — | — | Yes | Yes |
 | Ship a batch (regression, push, smoke, CHANGELOG) | Approves | — | Yes | Yes |
@@ -181,8 +181,6 @@ All Figma files live in the AFR team folder
 These are the epic's other tickets. Each one fills in a part this file only
 names:
 
-- **Notion:** the Design approved status and the Track field, with the
-  views and AGENTS.md updated.
 - **Paper trail:** one Trail section on every ticket, and names for Claude
   Design prototypes, Figma explorations, versions and the selected option.
 - **Figma gates in every ship:** library and App Screens updated, and tokens
