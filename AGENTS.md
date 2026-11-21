@@ -347,6 +347,11 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   empty) in the same update, then re-read the record to confirm no one else
   holds it and that they are all set. Work on one ticket at a time; claim
   the next only when the current one is handed off.
+- **Trail:** a ticket that goes through Explore or Design keeps a `## Trail`
+  section near the top of its page, with one line per stage, and its work
+  is named by the ticket's short name ([docs/WORKFLOW.md](docs/WORKFLOW.md),
+  "The paper trail"). Add your stage's line, with its links, when you
+  finish that stage. The **Figma** field holds only the selected frame.
 - Ready: Status = Awaiting review. The page body keeps the request, the
   changes, the verification actually done and the remaining limits.
 - Pushed for review: record the commit in **Latest commit** and the page body;

@@ -41,7 +41,7 @@ Reconcile catches whatever slipped through.
 | Stage | Produces | Lives in | Moves on when | Ticket status |
 | --- | --- | --- | --- | --- |
 | Idea | A ticket: the request, why, done when; Track; placement (parent epic or standalone) | Notion master backlog | Someone claims it (top of the Backlog column first) | Backlog |
-| Explore | Options to compare, named A, B, C… | Claude Design (a claude.ai artifact), or straight in Figma Explorations | Andre picks a direction, written on the ticket | In progress |
+| Explore | Options to compare, named A, B, C…, each round versioned (see "The paper trail") | Claude Design (a claude.ai artifact), or straight in Figma Explorations | Andre picks a direction, written in the ticket's Trail | In progress |
 | Design | Hi-fi frames built from library instances, each exploration a named Figma version, the selected one marked; behavior as Dev Mode annotations | Figma Explorations file | Andre reviews it | In progress, then Awaiting review |
 | Design approved | Andre's sign-off; the ticket's **Figma** field holds the exact frame (`node-id` link) and the body names the approved version | Notion ticket | Andre sets it | **Design approved** |
 | Library | The design as a component, variant or property in the Design System, then in the App Screens frames that show it; Andre publishes; each changed asset reads Current | Figma Design System, App Screens | Publish checked; the ticket's "Figma: library + App Screens updated" item is ticked | Design approved |
@@ -53,6 +53,54 @@ Reconcile catches whatever slipped through.
 Explore and Design are skipped when there's nothing to design: a bug fix
 that doesn't change the look, a data change, a workflow change. Library and
 Build are never skipped for work that changes how the app looks.
+
+### The paper trail
+
+Each tool keeps its own files, so a ticket that goes through Explore or
+Design carries a map of where its work lives. Without one, finding the idea,
+the prototypes, the explorations and the approved version means searching.
+
+**A Trail section on the ticket.** It is a `## Trail` heading near the top of
+the page body, with one line per stage. Whoever finishes a stage adds its
+line in the same session, with links and dates. A stage that was skipped
+says so, and a stage not reached yet stays "—".
+
+```
+## Trail
+- Idea: <who, date, where it came from>
+- Explore: <Claude Design link> · explore v1 (date) · explore v2 (date) · direction <letter> picked (date): <link to its artboard>
+- Design: <Figma page link> · frames A · v1, B · v1… · ✓ Selected: <frame link>
+- Design approved: <frame link> · version "<short name> · approved YYYY-MM-DD"
+- Library: <component links> · App Screens <frame links> · published (date)
+- Build: <commits> · Batch <n>
+- Reconcile: Figma ⇄ code check (date) · explorations archived (date)
+```
+
+**Names.** Every name starts with the ticket's **short name**: its title up
+to the colon ("Phone Explore", "Titles headings").
+
+| What | Where | Name |
+| --- | --- | --- |
+| Claude Design prototype | claude.ai | `<short name> · explore v1`, then `v2`… for each round |
+| Explorations page | Figma Explorations (HI-FI), one page per ticket | `<short name>` |
+| Exploration frames | On that page | `A · v1`, `B · v1`…; a new round of the same option is `A · v2` |
+| The chosen frame | On that page | Its name gets ` · ✓ Selected` added (`B · v2 · ✓ Selected`) |
+| Approved version | Figma's version history of the Explorations file | `<short name> · approved YYYY-MM-DD` |
+| Archived page | Below the Archive divider, once it ships | `Archive · <short name> · approved YYYY-MM-DD` |
+
+**Link to the picked option, not just the canvas.** A Claude Design canvas
+opens on one artboard when its link ends in `#artboard-<file name without
+.dc.html>`, for example
+`https://claude.ai/artifact/LYLoGn8jQpWy2VGDjG8LMd#artboard-DetailsFirst`
+(`#play-<name>` plays its flow instead). The link opens the canvas's
+current version; there is no known link to an older one, which is why
+each round is named `explore vN`, and a round that has to survive later
+edits is kept as its own artboard (`E · v1`, `E · v2`) rather than
+overwritten.
+
+**The ticket's Figma field** holds only the selected frame (a `node-id`
+link). Claude Design links, other options and earlier rounds go in the
+Trail, never in that field.
 
 ## Tracks
 
@@ -181,8 +229,6 @@ All Figma files live in the AFR team folder
 These are the epic's other tickets. Each one fills in a part this file only
 names:
 
-- **Paper trail:** one Trail section on every ticket, and names for Claude
-  Design prototypes, Figma explorations, versions and the selected option.
 - **Figma gates in every ship:** library and App Screens updated, and tokens
   in sync, before a batch is pushed.
 - **Figma ⇄ code check:** one request, in two parts. Tokens (1/2) report
