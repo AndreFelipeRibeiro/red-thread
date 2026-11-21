@@ -243,6 +243,8 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   still exist, so set them through the API or the property menu as usual.
   The old **V3 ticket** field was removed on 2026-11-14: tickets carried over
   from V3 link their original in the page body ("Carried over from V3").
+- **Assigned to marks a claim**: a ticket you file but don't start leaves it
+  empty, so the board shows what is really being worked (Andre, 2026-11-21).
 - **Track** says which stages a ticket goes through, what "done" means for
   it and whether it takes a Batch ([docs/WORKFLOW.md](docs/WORKFLOW.md),
   "Tracks"). Every ticket gets one when it is created. **Development** changes
