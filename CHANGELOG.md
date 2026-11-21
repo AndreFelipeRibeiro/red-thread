@@ -13,6 +13,86 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 20 — Pilot fixes: the playbook gaps the first run through the loop found
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- The Pilot took Titles headings (Development) and Library states (Design) through the loop. Its fixes: a ticket Andre has approved counts as done for another's "Before you start" (AGENTS.md); a record ticket doesn't count toward one ticket at a time (close-ticket); docs/WORKFLOW.md, "The paper trail", gets a longer short name when a title is unclear, names for state frames, "Drafts of a library change" (a Drafts page in the Design System, the components check before approval, variants at promotion) and chat approvals recorded in the Trail; the figma-components skill re-reads only fixed components; `tools/figma/build.js`'s header no longer names a missing `call.mjs`; the skills' links to `docs/` now resolve (`../../../docs/`). Library states: `docs/figma-library.md` lists the Guide card and Guide promo sets (State) and the List row's Up next property, and `tools/figma/components.json` covers the three new states (21 entries). Docs and tools only. Commit [e0e3233](https://github.com/AndreFelipeRibeiro/red-thread/commit/e0e3233).
+- Limits: the Pilot ticket stays open until the batch reaches production; finding 8 (the Up next row's untokened brand mixes) is its own Backlog ticket.
+
+## V5 Batch 20 — Titles headings: a phase-color dot, the name in the foreground, a quieter count
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- Titles' phase headings, on the desktop List and the phone, show a small dot in the phase color, the phase name in the foreground, and the "4/6" count after it in regular weight, muted and a step smaller. Era headings get no dot. It matches the library's Phase header and Phone phase header, which production had drifted from on 2026-11-16 (Batch 10). `src/app/desktop-list.tsx` `GroupHeader`. Checked on the dev server at desktop and phone sizes, English and Portuguese; the 13 checks for the file clean (test-progress, test-dlist, test-contrast, test-typescale among them). Commit [f07299c](https://github.com/AndreFelipeRibeiro/red-thread/commit/f07299c).
+- Limits: the count missing from Andre's local screenshot wasn't reproduced (it hides only during a search or with a character pinned, as in production); dark mode checked only by test-contrast; not checked on a real iPhone.
+
+## V5 Batch 20 — Slim AGENTS.md: a short core, a standards doc and four procedure skills
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- AGENTS.md goes from 893 lines to a 385-line core every session reads; the stack, design, accessibility, Figma, design system, translated text and released versions move verbatim to `docs/STANDARDS.md`, and the repeated procedures to skills in `.claude/skills/`: ship-batch, close-ticket, log-session and promote-design. Docs only. Commit [1b11d60](https://github.com/AndreFelipeRibeiro/red-thread/commit/1b11d60).
+
+## V5 Batch 20 — One rulebook everywhere (repo half): the rules memory held, in AGENTS.md
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- The three standing rules Claude Code's memory held only in part are now in AGENTS.md: the full regression only before a push (and how to run it on a frozen copy), new Figma files straight into the AFR folder, and the logo on dark footage (the pin stays red). Memory keeps preferences only. Docs only. Commit [02ad53e](https://github.com/AndreFelipeRibeiro/red-thread/commit/02ad53e).
+- Limits: the core-rules doc in the claude.ai Project (the chat side) is still to do; the ticket stays open for it.
+
+## V5 Batch 20 — Logging for every track: a calendar event and a close for every session
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- docs/WORKFLOW.md, "Logging by track": one purple calendar event per session on every track (at the push for Development and repo Ops, at Andre's approval for Design, Marketing and Notion-only Ops), real times, no overlaps (an overlapping session joins the existing event), tickets with no commit closing on approval, and recap labels by Type. Docs only. Commit [acc2fe1](https://github.com/AndreFelipeRibeiro/red-thread/commit/acc2fe1).
+
+## V5 Batch 20 — Figma ⇄ code check 2/2: components and App Screens
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- "Check components against the app": each entry of `tools/figma/components.json` read from the running app and from the Design System into the same fingerprint and compared (`components-capture.mjs`, `components-dump.js`, `components-fingerprint.mjs`, `components-check.mjs`); App Screens' frames checked for current library instances only (`screens-dump.js`, `screens-check.mjs`) and screenshotted beside the app (`screens-capture.mjs`). The figma-components skill is the procedure. Development tools only; nothing in the app loads them. Commit [88bf8a4](https://github.com/AndreFelipeRibeiro/red-thread/commit/88bf8a4).
+
+## V5 Batch 20 — Figma ⇄ code check 1/2: tokens
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- "Check tokens against Figma" and "sync tokens from Figma": `tools/figma/tokens-dump.js` reads the Design System's variables, effect styles and text styles in one call, and `tools/figma/tokens-check.mjs` compares them with `src/index.css` and `docs/design-tokens.md` (modes mapped, aliases followed, `color-mix()` and `calc()` worked out as the browser does; colors within 1/255 of Chrome on all 146 opaque tokens). The figma-tokens skill is the procedure; `.gitignore` now shares `.claude/skills/`. Commit [5757346](https://github.com/AndreFelipeRibeiro/red-thread/commit/5757346).
+
+## V5 Batch 20 — Shipping a batch: a Figma gate before every push
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- A new step before every push: for each ticket that changes how something looks, the library and App Screens are updated, Andre has published and each changed asset reads Current, and the tokens match Figma; a ticket that fails doesn't ship. Closing a ticket whose design shipped also archives its explorations. Docs only. Commit [931b2c5](https://github.com/AndreFelipeRibeiro/red-thread/commit/931b2c5).
+
+## V5 Batch 20 — Paper trail: a Trail section on every designed ticket, and names for its work
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- A `## Trail` section on every ticket that goes through Explore or Design, one line per stage; names that start with the ticket's short name across Claude Design, Figma Explorations and named versions; links straight to the picked artboard; the ticket's Figma field holds only the selected frame. Docs only. Commit [337bc4f](https://github.com/AndreFelipeRibeiro/red-thread/commit/337bc4f).
+
+## V5 Batch 20 — Backlog fields: Design approved, Track, and a naming pass
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- AGENTS.md and the playbook follow the Notion master backlog's new fields: a Design approved status beside Ship approved (renamed from Approved), a Track field (Development, Design, Marketing, Ops) with only tickets that ship as a commit taking a Batch, Type renamed to stop repeating Track, and a By track board in place of the Queue view. Docs only. Commit [f0cf9b7](https://github.com/AndreFelipeRibeiro/red-thread/commit/f0cf9b7).
+
+## V5 Batch 20 — Workflow playbook: docs/WORKFLOW.md, the loop from idea to production
+
+Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging); full regression 82 of 82
+runs clean on `e0e3233`; `qa/smoke.js` clean on the staging preview. Not on `main` yet.
+
+- `docs/WORKFLOW.md`: the nine stages from Idea to Log in Andre's wording, what each produces and where it lives, the tracks, batches (only what ships as a commit), approvals, who does what on each surface, and where work lives. AGENTS.md links to it as the source of truth for the process. Docs only. Commit [3b583e2](https://github.com/AndreFelipeRibeiro/red-thread/commit/3b583e2).
+
 ## V5 Batch 19 — Link previews: redesigned to match the app, with real posters
 
 Recorded: 2026-11-20 07:43 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
