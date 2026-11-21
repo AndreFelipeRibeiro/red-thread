@@ -387,7 +387,11 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   Set the page icon to ✅ in the same update (the Epics view uses it to show
   what is done at a glance); a parent Task or Epic gets ✅ when it closes too.
   If a Completed ticket is reopened, remove the icon.
-- Notion-only tasks still need the user's review but no commit. Completing a
+- Tickets that don't ship as a commit (Design, Marketing, Notion-only Ops)
+  still need the user's review. They close on his approval: Completed, ✅,
+  Completed on = the approval time, the next Completion order, no Batch and
+  no commit, and the session's calendar event in the same turn
+  ([docs/WORKFLOW.md](docs/WORKFLOW.md), "Logging by track"). Completing a
   ticket on staging is not approval to merge to `main`.
 
 ## Shipping a batch (every push, staging or production)
@@ -459,7 +463,8 @@ Title line, then one bullet per ticket:
 - The title carries the version, the batch number and a short keyword phrase
   saying what the batch was about.
 - **One bullet per ticket**, opening with a bold label — Fixed, Improved,
-  Added — and then what changed, in the user's terms rather than the
+  Added, and for other tracks Updated, Designed, Set up (by the ticket's
+  Type; docs/WORKFLOW.md) — and then what changed, in the user's terms rather than the
   implementation's. Use only the labels that apply.
 - No date, duration or commit-count line in the body: the calendar event
   itself holds the time.
@@ -469,8 +474,12 @@ Times quoted anywhere else are America/New_York and come from real events
 
 The assistant creates the event directly on the user's Google **Personal**
 calendar (the one Notion Calendar fronts) **every time a batch is pushed**,
-to staging or production, without asking: Andre gave that as a standing
-instruction on 2026-11-17 (see "Shipping a batch" below). Every Red Thread
+to staging or production, and **every time Andre approves a ticket that
+doesn't ship as a commit** (Design, Marketing, Notion-only Ops), without
+asking: Andre gave that as a standing instruction on 2026-11-17 (see
+"Shipping a batch" below), extended to every track on 2026-11-21. When each
+track's event is made, what a session is, and how to avoid overlaps are in
+[docs/WORKFLOW.md](docs/WORKFLOW.md), "Logging by track". Every Red Thread
 event follows the same rules, whichever agent makes it (Andre, 2026-11-15):
 
 - **Colour: purple**, Google Calendar `colorId` `"3"` (Grape). Every Red

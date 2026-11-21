@@ -137,19 +137,45 @@ track, takes a **Version** once it is scheduled.
 
 ### Logging by track
 
-Every session of work gets one purple calendar event, with the same format
-rules as a batch (AGENTS.md, "Recap after each approval"). Only the title
-changes:
+Every session of work gets **one purple calendar event**, whatever its
+track (Andre, 2026-11-21: design, marketing and Notion-only sessions were
+logged after the fact and overlapped). The format is the batch event's
+(AGENTS.md, "Recap after each approval"); what changes is the title and the
+moment it's made.
 
-| Track | Event title |
-| --- | --- |
-| Development, and Ops in the repo | `Red Thread V5 – Batch <n> (<keywords>)` |
-| Design | `Red Thread V5 – Design (<keywords>)` |
-| Marketing | `Red Thread V5 – Marketing (<keywords>)` |
-| Ops, Notion-only | `Red Thread V5 – Ops (<keywords>)` |
+| Track | Event title | Made when | Ticket closes |
+| --- | --- | --- | --- |
+| Development, and Ops in the repo | `Red Thread V5 – Batch <n> (<keywords>)` | the batch is pushed (AGENTS.md, "Shipping a batch") | at the push, with its commit |
+| Design | `Red Thread V5 – Design (<keywords>)` | Andre approves the session's ticket | at his approval: no commit |
+| Marketing | `Red Thread V5 – Marketing (<keywords>)` | Andre approves the session's ticket | at his approval: no commit |
+| Ops, Notion-only | `Red Thread V5 – Ops (<keywords>)` | Andre approves the session's ticket | at his approval: no commit |
 
-When each kind of session is logged, and by whom, is set by the Notion
-ticket "Logging for every track".
+- **A session** is one sitting of work, from its first message or action to
+  its approval, push or last handoff. A sitting that works on several
+  tracks gets one event per track, each with its own tickets; a batch
+  built overnight and the next morning's review fixes are two sessions.
+- **The time is real**: the session's first message or action to its
+  approval, push or last handoff, in America/New_York, never estimated.
+  A design session's ticket may be approved hours later: the event ends
+  at the last handoff, not at the approval.
+- **No overlaps, no repeats.** Before creating an event, list that day's
+  Red Thread events (and Andre's own review blocks). If the session's time
+  overlaps another Red Thread event (two agents in parallel, or a session
+  already logged), add this session's bullets to that event and widen its
+  time instead of making a second one; if the event already lists the
+  ticket, add nothing.
+- **Who logs it:** whoever closes the session's ticket, in the same turn:
+  Claude Code or Codex with the Google Calendar connector, or Claude in
+  chat for a chat-only session. A session Andre does on his own is his to
+  log, or he asks an agent to.
+- **Closing a ticket with no commit** (Design, Marketing, Notion-only Ops):
+  on Andre's approval, Status Completed, the ✅ icon, **Completed on** = the
+  approval time, the next **Completion order**, no Batch and no Latest
+  commit. The body lists what was delivered (the Trail's links: Figma
+  frames, the published asset, the Notion pages changed).
+- **Recap labels** follow the ticket's Type: Feature → **Added**,
+  Improvement → **Improved**, Bug → **Fixed**, Maintenance → **Updated**,
+  Visual → **Designed**, Process → **Set up**.
 
 ## Approvals
 
@@ -229,7 +255,6 @@ All Figma files live in the AFR team folder
 These are the epic's other tickets. Each one fills in a part this file only
 names:
 
-- **Logging for every track:** when and how each session is logged.
 - **One rulebook everywhere:** memory's standing rules into AGENTS.md, and
   the core rules in the claude.ai Project.
 - **Slim AGENTS.md:** a short core, with skills for the repeated procedures.
