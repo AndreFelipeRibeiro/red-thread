@@ -353,7 +353,10 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   "The paper trail"). Add your stage's line, with its links, when you
   finish that stage. The **Figma** field holds only the selected frame.
 - Ready: Status = Awaiting review. The page body keeps the request, the
-  changes, the verification actually done and the remaining limits.
+  changes, the verification actually done and the remaining limits. A
+  ticket that changes how something looks has its "Figma: library + App
+  Screens updated" item ticked first (the Figma gate in "Shipping a batch"
+  checks it again before the push).
 - Pushed for review: record the commit in **Latest commit** and the page body;
   the ticket stays Awaiting review until the user approves it.
 - **Design approved** is the user's own flag too: the design on that ticket
@@ -391,31 +394,53 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
 
 Andre, 2026-11-17: these steps are part of every push, not extras to be asked
 for. When he says to commit or push a batch that is in Awaiting review
-("commit Batch 12", "push it"), that is his approval of those tickets. Step 0
-comes before the push; the rest follow it in the same turn, in this order:
+("commit Batch 12", "push it"), that is his approval of those tickets. Steps
+0 and 1 come before the push; the rest follow it in the same turn, in this
+order:
 
 0. **Every ticket in the batch has its Batch**: query the board for
    Development tickets, and Ops tickets with commits, that are In progress,
    Awaiting review or Ship approved with an empty Batch, and fix them before
    anything else (the recap and the calendar event are built from it).
-1. **Regression and push**: the full regression on the exact tree, then the
+1. **Figma gate** (Andre, 2026-11-20: the library rules are always
+   followed, not left to memory). For every ticket in the batch that
+   changes how something looks:
+   - its "Figma: library + App Screens updated" item is ticked: the
+     component (or variant) is in the Design System and the App Screens
+     frames that show it use it ("Keeping the library whole" below);
+   - Andre has published, and each changed asset reads **Current**
+     (`getPublishStatusAsync()`, [docs/figma-library.md](docs/figma-library.md),
+     "Upkeep"). Changed or Unpublished means it didn't go out: ask him to
+     publish, and wait;
+   - **tokens:** "check tokens against Figma" comes back empty
+     (Notion "Figma ⇄ code check 1/2: tokens"; until that ships, compare
+     the changed tokens by hand: `src/index.css`, the Figma variable, its
+     row in [docs/design-tokens.md](docs/design-tokens.md)).
+
+   A ticket that fails the gate doesn't ship: fix it, or ask Andre whether
+   to hold it back to the next push. Say on the ticket that the gate
+   passed, or why the ticket changes nothing in Figma.
+2. **Regression and push**: the full regression on the exact tree, then the
    push; smoke-test the deployed site (`SITE_URL=… node qa/smoke.js`) once
    Vercel reports the deploy.
-2. **CHANGELOG**: one entry per ticket with the real time, saying where it
+3. **CHANGELOG**: one entry per ticket with the real time, saying where it
    went (staging, production).
-3. **Close the tickets** (see "Complete" in the ticket workflow): Status
+4. **Close the tickets** (see "Complete" in the ticket workflow): Status
    Completed, ✅ icon, **Completed on** = the push time, the next
    **Completion order** numbers, **Latest commit** and every commit in the
-   body. A parent closes when its last sub-item does.
-4. **Calendar**: one purple event per session of work in the batch, created
+   body. A parent closes when its last sub-item does. A ticket whose design
+   shipped also has its explorations archived (Reconcile: "Explorations are
+   archived once a direction ships", below) and its Trail's Reconcile line
+   filled in.
+5. **Calendar**: one purple event per session of work in the batch, created
    with the Google Calendar connector (rules below). Check the calendar
    first so a batch never gets two events, and never misses one.
-5. **Recap** in chat (format below).
+6. **Recap** in chat (format below).
 
-A merge of an already-shipped batch to production repeats steps 1 and 2
-(CHANGELOG: "merged to main"), checks that 3 and 4 were done, and does them
-if they weren't. Before ending a turn that pushed anything, check all six
-(0 to 5).
+A merge of an already-shipped batch to production repeats steps 2 and 3
+(CHANGELOG: "merged to main"), checks that 4 and 5 were done, and does them
+if they weren't. Before ending a turn that pushed anything, check all seven
+(0 to 6).
 
 ## Recap after each approval
 

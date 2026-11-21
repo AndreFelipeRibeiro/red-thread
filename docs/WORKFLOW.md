@@ -46,7 +46,7 @@ Reconcile catches whatever slipped through.
 | Design approved | Andre's sign-off; the ticket's **Figma** field holds the exact frame (`node-id` link) and the body names the approved version | Notion ticket | Andre sets it | **Design approved** |
 | Library | The design as a component, variant or property in the Design System, then in the App Screens frames that show it; Andre publishes; each changed asset reads Current | Figma Design System, App Screens | Publish checked; the ticket's "Figma: library + App Screens updated" item is ticked | Design approved |
 | Build | Code that follows the library and tokens (when the design changed a variable, the Figma ⇄ code check brings it into the code first); the ticket's QA check; Awaiting review with what was verified | `red-thread-wip`, uncommitted | Andre approves that revision | Awaiting review, then **Ship approved** |
-| Ship | A commit, the batch pushed to V5 staging after the Figma gate (the token check comes back empty), regression and smoke test, Andre's review on staging, the merge to `main` with his approval | GitHub, Vercel | Pushed (staging) or merged (production) | Ship approved |
+| Ship | A commit, the batch pushed to V5 staging after the Figma gate (library and App Screens updated and published, each changed asset Current, tokens in sync), regression and smoke test, Andre's review on staging, the merge to `main` with his approval | GitHub, Vercel | Pushed (staging) or merged (production) | Ship approved |
 | Reconcile | The Figma ⇄ code check's report (tokens, components and App Screens), each difference fixed or ticketed; explorations archived (a named version, pages under the Archive divider, a note naming the choice) | Figma, Notion | Nothing drifts that isn't ticketed | — |
 | Log | The CHANGELOG entry, the ticket closed (Completed, ✅, Completed on, Completion order, commits), the calendar event, the recap in chat | Repo, Notion, Google Calendar | Done | Completed |
 
@@ -229,8 +229,6 @@ All Figma files live in the AFR team folder
 These are the epic's other tickets. Each one fills in a part this file only
 names:
 
-- **Figma gates in every ship:** library and App Screens updated, and tokens
-  in sync, before a batch is pushed.
 - **Figma ⇄ code check:** one request, in two parts. Tokens (1/2) report
   their differences and sync them into the code on a yes. Components and
   App Screens (2/2) only report. It runs at Build when a variable changed,
