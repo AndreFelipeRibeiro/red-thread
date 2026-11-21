@@ -33,7 +33,7 @@ exactly where a piece of work stands.
 
 It is two-way. Figma leads a change to the look (stages 3 to 6). When code
 changes how something looks without a design first (a fix, a new state),
-the Figma component is updated in the same ticket (AGENTS.md, "Figma").
+the Figma component is updated in the same ticket ([STANDARDS.md](STANDARDS.md), "Figma").
 Reconcile catches whatever slipped through.
 
 ### What each stage produces
@@ -140,12 +140,12 @@ track, takes a **Version** once it is scheduled.
 Every session of work gets **one purple calendar event**, whatever its
 track (Andre, 2026-11-21: design, marketing and Notion-only sessions were
 logged after the fact and overlapped). The format is the batch event's
-(AGENTS.md, "Recap after each approval"); what changes is the title and the
+(the `log-session` skill); what changes is the title and the
 moment it's made.
 
 | Track | Event title | Made when | Ticket closes |
 | --- | --- | --- | --- |
-| Development, and Ops in the repo | `Red Thread V5 – Batch <n> (<keywords>)` | the batch is pushed (AGENTS.md, "Shipping a batch") | at the push, with its commit |
+| Development, and Ops in the repo | `Red Thread V5 – Batch <n> (<keywords>)` | the batch is pushed (the `ship-batch` skill) | at the push, with its commit |
 | Design | `Red Thread V5 – Design (<keywords>)` | Andre approves the session's ticket | at his approval: no commit |
 | Marketing | `Red Thread V5 – Marketing (<keywords>)` | Andre approves the session's ticket | at his approval: no commit |
 | Ops, Notion-only | `Red Thread V5 – Ops (<keywords>)` | Andre approves the session's ticket | at his approval: no commit |
@@ -243,7 +243,7 @@ hand-off point, and the Notion claim says who holds which ticket
 | Promo videos | Figma [Red Thread – Promo Videos](https://www.figma.com/design/OwiXe60JUJ6SK2GngrU89l); the `promo-video/` folder beside the repo | Storyboards and frames; captures, scripts and renders |
 | Before V4 | Figma [Red Thread – Before (V4)](https://www.figma.com/design/iDkkTvrXqP08Kxrs3XMfVf) | The pre-V5 screens with audit notes; history |
 | Code | GitHub `AndreFelipeRibeiro/red-thread`: `red-thread-wip` (`version/5.0`, staging), `red-thread-live` (`main`, production) | The app, its docs, the QA checks |
-| Rules and context | [AGENTS.md](../AGENTS.md), this file, [HANDOFF.md](HANDOFF.md), [decisions.md](decisions.md), [glossary.md](glossary.md) | How to do each step; why things are as they are |
+| Rules and context | [AGENTS.md](../AGENTS.md) (the core), [STANDARDS.md](STANDARDS.md), the skills in `.claude/skills/`, this file, [HANDOFF.md](HANDOFF.md), [decisions.md](decisions.md), [glossary.md](glossary.md) | How to do each step; why things are as they are |
 | Release history | [CHANGELOG.md](../CHANGELOG.md) | Every committed change, with real times |
 | Time log | Google Calendar, Personal (fronted by Notion Calendar) | One purple event per session |
 
@@ -258,6 +258,5 @@ names:
 - **One rulebook everywhere, chat side:** the core rules in the claude.ai
   Project, written by Claude in chat (the rules once kept in memory are
   now in AGENTS.md).
-- **Slim AGENTS.md:** a short core, with skills for the repeated procedures.
 - **Pilot:** one real feature through the whole loop, with nothing done from
   memory.

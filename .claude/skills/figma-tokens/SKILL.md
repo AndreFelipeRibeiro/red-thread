@@ -1,11 +1,11 @@
 ---
 name: figma-tokens
-description: Compare the Red Thread – Design System's Figma variables, effect styles and text styles with the tokens in src/index.css and docs/design-tokens.md, and bring Figma's changes into the code. Use when asked to "check tokens against Figma" (report only) or "sync tokens from Figma" (report, then update the code on a yes), at the Figma gate before a batch is pushed, and at the start of a build whose approved design changed a variable.
+description: 'Compare the Red Thread – Design System''s Figma variables, effect styles and text styles with the tokens in src/index.css and docs/design-tokens.md, and bring Figma''s changes into the code. Use when asked to "check tokens against Figma" (report only) or "sync tokens from Figma" (report, then update the code on a yes), at the Figma gate before a batch is pushed, and at the start of a build whose approved design changed a variable.'
 ---
 
 # Figma ⇄ code check, part 1: tokens
 
-Figma leads (AGENTS.md, "Figma"). This brings a variable changed in Figma
+Figma leads (docs/STANDARDS.md, "Figma"). This brings a variable changed in Figma
 into the code without hand-copying values, and tells you when the two have
 drifted. Two commands:
 

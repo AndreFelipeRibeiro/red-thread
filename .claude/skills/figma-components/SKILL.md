@@ -1,6 +1,6 @@
 ---
 name: figma-components
-description: Compare the Red Thread – Design System's components and the App Screens frames with the running app, and report what differs (report only). Use when asked to "check components against the app", "check App Screens", or for the whole "check Figma against the code" (with the figma-tokens skill), at Reconcile when a ticket closes, and before a batch whose tickets changed how something looks.
+description: 'Compare the Red Thread – Design System''s components and the App Screens frames with the running app, and report what differs (report only). Use when asked to "check components against the app", "check App Screens", or for the whole "check Figma against the code" (with the figma-tokens skill), at Reconcile when a ticket closes, and before a batch whose tickets changed how something looks.'
 ---
 
 # Figma ⇄ code check, part 2: components and App Screens

@@ -418,7 +418,7 @@ hand.
   bring it back to code. The build setup it needs now exists. The component
   base was chosen on 2026-10-31 — shadcn/ui on Base UI, Vega style, light and
   dark from day one — and a standalone preview page (`design.html`) already
-  shows it. AGENTS.md "Design system (V4)" has the rules; where a Figma frame
+  shows it. docs/STANDARDS.md "Design system (V4)" has the rules; where a Figma frame
   and the accessibility, keyboard, contrast or localisation rules disagree,
   the rules win and the difference goes on the ticket.
 - **Real devices.** Most verification was headless Chromium. An iPhone (Safari)

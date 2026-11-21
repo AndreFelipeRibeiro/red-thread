@@ -254,7 +254,7 @@
       /* The dark ground under a mark set on a poster (seen, a guide stop's
          number). */
       --on-image-ground: var(--slate-16-a82);
-      /* MCU phase colours as tokens (AGENTS.md, "Design system (V4)").
+      /* MCU phase colours as tokens (docs/STANDARDS.md, "Design system (V4)").
          Darkened from V3 so they keep WCAG AA on a light background; the
          .dark block holds V3's own values, authored for the dark canvas. */
       --phase-1: var(--gold-55);

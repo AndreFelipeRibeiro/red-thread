@@ -156,7 +156,7 @@ check can reach.
 
 ## Upkeep
 
-The rules are in AGENTS.md ("Keeping the library whole"). How to apply them:
+The rules are the `promote-design` skill (`.claude/skills/promote-design/SKILL.md`). How to apply them:
 
 - **Posters:** every poster slot (`art` or `poster` in a component) holds a
   nested, exposed instance of the Poster set (`100:696`). In a screen, select

@@ -810,7 +810,9 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `docs/WORKFLOW.md` | The workflow playbook: the nine stages from idea to production, the tracks, approvals, who does what and where each piece of work lives |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
 | `CHANGELOG.md` | Dated commit summaries, release context and verification links |
-| `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |
+| `AGENTS.md` | The core rulebook for every agent: session start, approvals, the backlog, commits, language, safety; links to the rest |
+| `docs/STANDARDS.md` | The reference half of the rulebook: stack and layout, design, accessibility and interaction standards, Figma, the design system |
+| `.claude/skills/` | The step-by-step procedures (close a ticket, ship a batch, log a session, promote a design, the Figma ⇄ code check), run as skills by Claude Code and read by Codex |
 | `CLAUDE.md` | Points Claude to `AGENTS.md` so both agents follow one rule set |
 | `i18n.js` | Language runtime: detection, `tr()` lookup with English fallback, plurals, title/character names, formatting |
 | `locales/en.js` / `locales/pt-BR.js` | One catalog per language: UI strings, official titles, search aliases, character names, story labels |
