@@ -807,6 +807,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `qa/` | Development-only headless checks (Playwright, axe-core); not deployed. See qa/README.md |
 | `docs/HANDOFF.md` | Current handoff: state, architecture, quirks, open threads |
 | `docs/decisions.md` | Running decision log (date, decision, reason) |
+| `docs/WORKFLOW.md` | The workflow playbook: the nine stages from idea to production, the tracks, approvals, who does what and where each piece of work lives |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
 | `CHANGELOG.md` | Dated commit summaries, release context and verification links |
 | `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |

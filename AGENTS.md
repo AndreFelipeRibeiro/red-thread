@@ -10,6 +10,11 @@ original V3 plan, kept as history: each opens with a note saying so, and lines
 that no longer hold carry dated *Superseded* notes. The README describes the
 app as it is now.
 
+**How work moves from idea to production** (the nine stages, the tracks, the
+approvals, who does what and where each piece lives) is in
+[docs/WORKFLOW.md](docs/WORKFLOW.md). It is the source of truth for the
+process; this file holds the rules for carrying out each step.
+
 This checkout is **V5** (branch `version/5.0`, folder `red-thread-wip`).
 Read [docs/V5-KICKOFF.md](docs/V5-KICKOFF.md) before V5 work: it sets out
 what V5 is, the environment and the order of work.
