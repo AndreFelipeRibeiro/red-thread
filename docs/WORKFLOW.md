@@ -255,8 +255,9 @@ All Figma files live in the AFR team folder
 These are the epic's other tickets. Each one fills in a part this file only
 names:
 
-- **One rulebook everywhere:** memory's standing rules into AGENTS.md, and
-  the core rules in the claude.ai Project.
+- **One rulebook everywhere, chat side:** the core rules in the claude.ai
+  Project, written by Claude in chat (the rules once kept in memory are
+  now in AGENTS.md).
 - **Slim AGENTS.md:** a short core, with skills for the repeated procedures.
 - **Pilot:** one real feature through the whole loop, with nothing done from
   memory.

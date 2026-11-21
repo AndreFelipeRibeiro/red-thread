@@ -144,7 +144,22 @@ came to be.
     Portuguese and English in the dark theme, about 9 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
     output, not just the exit code. A good run is **70 check runs clean**
-    with no known failures.
+    with no known failures. Only then: never just because a ticket or an
+    epic is finished (Andre, 2026-11-15), so each ticket's handoff says the
+    full run waits for the push.
+    - **Keep working while it runs** on a frozen copy, because the runner
+      reads each `qa/*.js` when that check starts, and an edit mid-run gives
+      false failures. Record the tree first (`GIT_INDEX_FILE=<a copy of the
+      index> git add -A && git write-tree`) so the handoff names what was
+      tested. Then rsync the worktree to a scratch folder with anchored
+      excludes (`/node_modules`, `/qa/node_modules`, `/dist`, `/.git`; an
+      unanchored `dist` also drops `qa/vendor/**/dist`, which the checks
+      need), symlink both `node_modules` back in, and run
+      `QA_PORT_BASE=9300 bash qa/regress.sh` there. A `git archive` copy
+      lacks `qa/node_modules` and the untracked `qa/vendor`: symlink those
+      too, or every check exits with "Cannot find module 'playwright'".
+      To stop a run, also kill its `node run.js --all`, which outlives
+      `regress.sh`; confirm with `pgrep -fl "run.js --all"`.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
     against the deployed site, once Vercel reports the deploy.
@@ -575,7 +590,10 @@ rules carry over unchanged.
   appears, including the share cards and link previews;
   `src/assets/logo-wordmark.svg` is the lettering, painted with
   `--foreground` (`.logo-word`) beside the mark in the toolbar and the phone
-  app bar, where the name stays as text for screen readers.
+  app bar, where the name stays as text for screen readers. **On black or
+  dark footage** (promo videos, end cards, social images) the pin stays
+  the logo red and only the wordmark turns white: never an all-white logo
+  (Andre, 2026-11-19).
   `node tools/make-icons.js` redraws `favicon.png` and `apple-touch-icon.png`
   from the mark.
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
@@ -669,7 +687,10 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
     at Reconcile, when a ticket that changed the look closes, and before a
     batch with such tickets.
   - All Red Thread Figma files live in the AFR team folder
-    https://www.figma.com/files/folder/683084303; create new ones there.
+    https://www.figma.com/files/folder/683084303; create new ones there
+    (the MCP's `create_new_file` with project `683084303` and plan
+    `team::1006581453897187942`, the AFR team's Pro plan), not in drafts. The MCP can't move a file: ask
+    Andre to move strays.
 - Work from links, not descriptions: a design ticket's **Figma** field links
   the frame(s). Read the frame with the MCP (design context, variables, a
   screenshot) before coding, and compare the result against the frame in a
