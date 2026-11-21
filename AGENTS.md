@@ -412,10 +412,9 @@ order:
      (`getPublishStatusAsync()`, [docs/figma-library.md](docs/figma-library.md),
      "Upkeep"). Changed or Unpublished means it didn't go out: ask him to
      publish, and wait;
-   - **tokens:** "check tokens against Figma" comes back empty
-     (Notion "Figma ⇄ code check 1/2: tokens"; until that ships, compare
-     the changed tokens by hand: `src/index.css`, the Figma variable, its
-     row in [docs/design-tokens.md](docs/design-tokens.md)).
+   - **tokens:** "check tokens against Figma" comes back with no
+     differences, or only the known, documented ones (the `figma-tokens`
+     skill, below in "Figma").
 
    A ticket that fails the gate doesn't ship: fix it, or ask Andre whether
    to hold it back to the next push. Say on the ticket that the gate
@@ -644,6 +643,15 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   - A new or changed token gets the same name in `src/index.css`, the Figma
     variable (code syntax `var(--name)`) and its row in
     [docs/design-tokens.md](docs/design-tokens.md), in the same change.
+  - **"Check tokens against Figma"** (report only) and **"sync tokens from
+    Figma"** (report, then bring Figma's changes into the code on a yes)
+    are one procedure: [.claude/skills/figma-tokens/SKILL.md](.claude/skills/figma-tokens/SKILL.md).
+    Claude Code loads it as a skill; Codex and any other agent follow the
+    same file. It dumps the Design System's variables and styles with
+    `tools/figma/tokens-dump.js` and compares them with
+    `node tools/figma/tokens-check.mjs <dump>`. Run it at the start of a
+    build whose approved design changed a variable, and at the Figma gate
+    before every push.
   - All Red Thread Figma files live in the AFR team folder
     https://www.figma.com/files/folder/683084303; create new ones there.
 - Work from links, not descriptions: a design ticket's **Figma** field links

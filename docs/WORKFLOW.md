@@ -229,10 +229,10 @@ All Figma files live in the AFR team folder
 These are the epic's other tickets. Each one fills in a part this file only
 names:
 
-- **Figma ⇄ code check:** one request, in two parts. Tokens (1/2) report
-  their differences and sync them into the code on a yes. Components and
-  App Screens (2/2) only report. It runs at Build when a variable changed,
-  at the Ship gate and at Reconcile.
+- **Figma ⇄ code check 2/2:** components and App Screens, report only.
+  Part 1/2, tokens, is the `figma-tokens` skill ("check tokens against
+  Figma", "sync tokens from Figma"; AGENTS.md, "Figma"). It runs at Build
+  when a variable changed, at the Ship gate and at Reconcile.
 - **Logging for every track:** when and how each session is logged.
 - **One rulebook everywhere:** memory's standing rules into AGENTS.md, and
   the core rules in the claude.ai Project.

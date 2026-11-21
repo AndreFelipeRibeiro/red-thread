@@ -1,8 +1,10 @@
 # macOS
 .DS_Store
 
-# Claude Code / local tooling
-.claude/
+# Claude Code / local tooling. Project skills are shared (Notion "Figma ⇄
+# code check 1/2: tokens"); everything else under .claude/ stays local.
+.claude/*
+!.claude/skills/
 
 # Local credentials, auth state and private diagnostics
 .env

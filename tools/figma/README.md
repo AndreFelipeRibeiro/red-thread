@@ -10,6 +10,8 @@ them.
 | --- | --- |
 | `capture-dom.js` | Reads a rendered element of the running app into a spec: layout (flex → auto layout, one-row grids → fixed columns), and every color, border, shadow, radius, gap, padding and text matched to its token, read in **both themes**. What has no token comes back in `warnings`. |
 | `build.js` | Turns specs into Figma components through the Figma MCP's `use_figma` (Plugin API), bound to the file's variables, text styles, effect styles and icon components. |
+| `tokens-dump.js` | Pasted as one `use_figma` call's code: reads every variable per mode, the effect styles and the text styles as compact JSON. Read only. |
+| `tokens-check.mjs` | `node tools/figma/tokens-check.mjs <dump>`: compares that JSON with `src/index.css` and `docs/design-tokens.md` and prints each difference with its fix (the `figma-tokens` skill). |
 | `icons.js` | Every icon the app draws (24 × 24, stroked). The file's Icons page has a component per entry; captures swap a known svg for an instance. |
 | `specimens.html` | Every shadcn primitive the app uses, in each variant, size and state (`src/design/Specimens.tsx`), at `/tools/figma/specimens.html` on the dev server. |
 
