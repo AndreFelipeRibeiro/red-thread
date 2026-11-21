@@ -93,13 +93,14 @@ if they weren't. Before ending a turn that pushed anything, check all seven
 ## CHANGELOG entries
 
 - Every committed change gets a CHANGELOG.md entry at the top:
-  `## V5 fix|improvement|feature|design|maintenance — <short title>` (older
-  entries keep their `V3` or `V4` prefix), then
-  `Recorded: YYYY-MM-DD HH:MM EDT (-0400).` and its staging/production status,
+  `## V5 Batch <n> — <short title>`, one per ticket (older entries keep
+  their `V3` or `V4` headings), then
+  `Recorded: YYYY-MM-DD HH:MM EST (-0500).` and its staging/production status,
   then bullets for the change, the verification actually performed, and the
-  limits. Times are real: take them from git
-  (`TZ=America/New_York git log -1 --date=iso-local --format=%cd`), never
-  estimated or written ahead. The zone and offset come from git as well:
+  limits. Times are real, never estimated or written ahead: **Recorded** is
+  when the entry is written (`TZ=America/New_York date`), since its own
+  commit doesn't exist yet; the commit times it cites come from git
+  (`TZ=America/New_York git log -1 --date=iso-local --format=%cd`). The zone and offset come from the clock as well:
   from the first Sunday of November to the second Sunday of March the entry
   reads `EST (-0500)`, and on the changeover night the hour from 1:00 to 2:00
   happens twice, so only the offset says which one it was. When a batch reaches `main`, update those

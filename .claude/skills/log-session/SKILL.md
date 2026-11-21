@@ -15,17 +15,20 @@ exists to avoid.
 
 Title line, then one bullet per ticket:
 
-> **Red Thread V5 – Backlog batch <n> (<a few keywords>)**
+> **Red Thread V5 – Batch <n> (<a few keywords>)**
 >
-> - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
-> - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
+> - **Accent search:** search matches with or without accents ("Capitao" finds "Capitão").
+> - **Workflow playbook:** one written loop from idea to production: nine stages, four tracks, who approves what.
 
 - The title carries the version, the batch number and a short keyword phrase
   saying what the batch was about.
-- **One bullet per ticket**, opening with a bold label — Fixed, Improved,
-  Added, and for other tracks Updated, Designed, Set up (by the ticket's
-  Type; docs/WORKFLOW.md) — and then what changed, in the user's terms rather than the
-  implementation's. Use only the labels that apply.
+- **One bullet per ticket**, opening with one or two bold words that name
+  what it is about (its subject, usually the ticket's short name), then a
+  colon and what changed, in the user's terms rather than the
+  implementation's (Andre, 2026-11-21: the subject, not the kind of change,
+  is what he scans for). One line each, about 20 words.
+- **Order:** what changed in the app first, then design, then process and
+  tooling.
 - No date, duration or commit-count line in the body: the calendar event
   itself holds the time.
 
@@ -49,14 +52,20 @@ event follows the same rules, whichever agent makes it (Andre, 2026-11-15):
   release (…)`. Sessions with no batch (Design, Marketing, Notion-only Ops)
   take their track's title from [docs/WORKFLOW.md](../../../docs/WORKFLOW.md),
   "Logging by track".
-- **Description in HTML**, one list item per ticket with its bold label, the
-  same bullets as the chat recap:
-  `<ul><li><b>Fixed:</b> …</li><li><b>Improved:</b> …</li></ul>`. Plain text
-  ("* Fixed: …") shows unformatted. Nothing else in the body.
+- **Description in HTML**, the same bullets as the chat recap, each bold
+  subject linking to its Notion ticket:
+  `<ul><li><a href="<ticket URL>"><b>Accent search</b></a>: …</li></ul>`.
+  Plain text ("* Accent search: …") shows unformatted. Nothing else in the
+  body.
 - **Time:** the real start and end of the work, in America/New_York, taken
   from real events (the first message or commit of the session, the push,
-  merge or last handoff), never estimated. Don't overlap the user's own
-  review blocks: start after them.
+  merge or last handoff), never estimated, even when it overlaps Andre's
+  own events (Andre, 2026-11-21). When Andre made a placeholder for the
+  same work (a Red Thread event of his own, such as "Red Thread:
+  Workflow"), edit it into the log instead of making a second event: the
+  title, purple, the real start and end, the bullets, and any notes of
+  his kept below them. Never delete his events, and leave the rest of his
+  calendar as it is.
 - **Which tool:** the Notion calendar tool sends the description as plain
   text and cannot set a colour, so set both with the Google Calendar
   connector (create the event there, or create it anywhere and then update its
