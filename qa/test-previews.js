@@ -1,6 +1,6 @@
 // Link previews (Notion V4 Tasks, "Share 3/3").
-//   - The build wrote dist/og/default.png and, for every title, character and
-//     guide, a 1200×630 PNG and a page whose og: tags name it, point at
+//   - The build wrote dist/og/default.jpg and, for every title, character and
+//     guide, a 1200×630 JPEG and a page whose og: tags name it, point at
 //     https://redthread.tv and differ from index.html in nothing else.
 //   - index.html's own preview is the app-wide card on redthread.tv.
 //   - Every page's twitter: tags equal its og: tags, its canonical address is
@@ -39,7 +39,19 @@ const server = http.createServer((req, res) => {
 const URL_BASE = 'http://127.0.0.1:' + QA_PORT + '/';
 const NOWELCOME = "try { if (!localStorage.getItem('mcu.welcome.v1')) localStorage.setItem('mcu.welcome.v1', 'test'); localStorage.setItem('mcu.signInNudge.v1', '2'); } catch (e) {}";
 
-const pngSize = (file) => { const b = fs.readFileSync(file); return b.slice(1, 4).toString() === 'PNG' ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null; };
+// A JPEG's size, from its first frame header (SOF0–SOF3); null if it isn't one.
+// JPEG since V5 (Notion "Link preview images"): the posters made PNGs too big.
+const jpgSize = (file) => {
+  const b = fs.readFileSync(file);
+  if (b[0] !== 0xff || b[1] !== 0xd8) return null;
+  for (let i = 2; i + 9 < b.length;) {
+    if (b[i] !== 0xff) return null;
+    const marker = b[i + 1];
+    if (marker >= 0xc0 && marker <= 0xc3) return [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5)];
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return null;
+};
 const meta = (html, prop) => { const m = html.match(new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`)); return m ? m[1] : null; };
 const canonical = (html) => { const m = html.match(/<link rel="canonical" href="([^"]*)"/); return m ? m[1] : null; };
 const stripMeta = (html) => html
@@ -67,11 +79,12 @@ const tagErrors = (html, label, url) => {
 
   // ---- The build's files --------------------------------------------------
   const index = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
-  expect(meta(index, 'og:image') === PUBLIC + '/og/default.png', 'index.html: og:image is ' + meta(index, 'og:image'));
+  expect(meta(index, 'og:image') === PUBLIC + '/og/default.jpg', 'index.html: og:image is ' + meta(index, 'og:image'));
   expect(meta(index, 'og:url') === PUBLIC + '/', 'index.html: og:url is ' + meta(index, 'og:url'));
-  const def = path.join(SITE, 'og', 'default.png');
-  expect(fs.existsSync(def) && String(pngSize(def)) === '1200,630', 'og/default.png missing or not 1200×630');
-  expect(fs.existsSync(def) && fs.statSync(def).size < MAX_BYTES, 'og/default.png is 300 KB or more');
+  const def = path.join(SITE, 'og', 'default.jpg');
+  expect(fs.existsSync(def) && String(jpgSize(def)) === '1200,630', 'og/default.jpg missing or not a 1200×630 JPEG');
+  expect(fs.existsSync(def) && fs.statSync(def).size < MAX_BYTES, 'og/default.jpg is 300 KB or more');
+  expect(meta(index, 'og:image:type') === 'image/jpeg', 'index.html: og:image:type is ' + meta(index, 'og:image:type'));
   errors.push(...tagErrors(index, 'index.html', PUBLIC + '/'));
   expect(meta(index, 'og:site_name') === 'Red Thread' && meta(index, 'og:title') === 'Red Thread', 'index.html: og:site_name / og:title are not Red Thread');
   expect(!fs.existsSync(path.join(SITE, 'og-image.jpg')), 'the build still ships the old og-image.jpg');
@@ -94,17 +107,18 @@ const tagErrors = (html, label, url) => {
   let checked = 0;
   for (const kind of Object.keys(sets)) {
     for (const [id, name] of sets[kind]) {
-      const png = path.join(SITE, 'og', kind, id + '.png');
+      const png = path.join(SITE, 'og', kind, id + '.jpg');
       const page = path.join(SITE, 'og', kind, id + '.html');
       if (!fs.existsSync(png) || !fs.existsSync(page)) { errors.push(`${kind} ${id}: no preview image or page`); continue; }
-      if (String(pngSize(png)) !== '1200,630') errors.push(`${kind} ${id}: image is ${pngSize(png)}, not 1200×630`);
+      if (String(jpgSize(png)) !== '1200,630') errors.push(`${kind} ${id}: image is ${jpgSize(png)}, not a 1200×630 JPEG`);
       const bytes = fs.statSync(png).size;
       biggest = Math.max(biggest, bytes);
       if (bytes >= MAX_BYTES) errors.push(`${kind} ${id}: image is ${Math.round(bytes / 1024)} KB, over 300 KB`);
       const html = fs.readFileSync(page, 'utf8');
       const q = `${PUBLIC}/?${kind}=${id}`;
       if (meta(html, 'og:url') !== q) errors.push(`${kind} ${id}: og:url ${meta(html, 'og:url')}`);
-      if (meta(html, 'og:image') !== `${PUBLIC}/og/${kind}/${id}.png`) errors.push(`${kind} ${id}: og:image ${meta(html, 'og:image')}`);
+      if (meta(html, 'og:image') !== `${PUBLIC}/og/${kind}/${id}.jpg`) errors.push(`${kind} ${id}: og:image ${meta(html, 'og:image')}`);
+      if (meta(html, 'og:image:type') !== 'image/jpeg') errors.push(`${kind} ${id}: og:image:type ${meta(html, 'og:image:type')}`);
       if (!(meta(html, 'og:title') || '').includes(name.replace(/&/g, '&amp;'))) errors.push(`${kind} ${id}: og:title "${meta(html, 'og:title')}" does not name ${name}`);
       if (!meta(html, 'og:description') || !meta(html, 'og:image:alt')) errors.push(`${kind} ${id}: empty description or alt`);
       errors.push(...tagErrors(html, `${kind} ${id}`, q));
@@ -128,7 +142,12 @@ const tagErrors = (html, label, url) => {
     expect(hostRe && !hostRe.test(host), `vercel.json: ${host} would be redirected`);
   }
   const oldImage = rules.find(r => r.source === '/og-image.jpg');
-  expect(oldImage && oldImage.destination === '/og/default.png' && !oldImage.has, 'vercel.json: /og-image.jpg does not go to the new card');
+  expect(oldImage && oldImage.destination === '/og/default.jpg' && !oldImage.has, 'vercel.json: /og-image.jpg does not go to the new card');
+  // The PNG previews before V5's redesign: their addresses go to the JPEGs.
+  const oldDefault = rules.find(r => r.source === '/og/default.png');
+  expect(oldDefault && oldDefault.destination === '/og/default.jpg' && oldDefault.permanent === true, 'vercel.json: /og/default.png does not go to default.jpg');
+  const oldPng = rules.find(r => r.source === '/og/:kind/:id.png');
+  expect(oldPng && oldPng.destination === '/og/:kind/:id.jpg' && oldPng.permanent === true, 'vercel.json: /og/<kind>/<id>.png does not go to its .jpg');
 
   // ---- The middleware, against the built files ------------------------------
   const { code: mw } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'middleware.ts'), 'utf8'), 'middleware.ts', { lang: 'ts' });
@@ -147,7 +166,7 @@ const tagErrors = (html, label, url) => {
   const run = async (q) => { const r = await middleware(new Request(PUBLIC + '/' + q)); return r ? { status: r.status, type: r.headers.get('content-type'), html: await r.text() } : null; };
   for (const [q, kind, id] of [['?title=iron-man', 'title', 'iron-man'], ['?char=peggy', 'char', 'peggy'], ['?guide=before-doomsday', 'guide', 'before-doomsday'], ['?title=iron-man&char=tony', 'title', 'iron-man'], ['?sort=phase&title=endgame', 'title', 'endgame']]) {
     const r = await run(q);
-    expect(r && r.status === 200 && /text\/html/.test(r.type) && meta(r.html, 'og:image') === `${PUBLIC}/og/${kind}/${id}.png`, `middleware ${q}: did not serve the ${kind} ${id} preview`);
+    expect(r && r.status === 200 && /text\/html/.test(r.type) && meta(r.html, 'og:image') === `${PUBLIC}/og/${kind}/${id}.jpg`, `middleware ${q}: did not serve the ${kind} ${id} preview`);
   }
   for (const q of ['', '?sort=phase', '?title=not-a-title', '?title=../index', '?char=%3Cscript%3E', '?guide=']) {
     expect(await run(q) === null, `middleware ${q || '/'}: should pass through, but answered`);
@@ -158,7 +177,7 @@ const tagErrors = (html, label, url) => {
   }
   {
     const r = await middleware(new Request('https://mcu-connections-git-version-40-afr-bfcd.vercel.app/?title=iron-man'));
-    expect(r && r.status === 200 && meta(await r.text(), 'og:image') === `${PUBLIC}/og/title/iron-man.png`, 'middleware: a preview address is redirected or gets no preview');
+    expect(r && r.status === 200 && meta(await r.text(), 'og:image') === `${PUBLIC}/og/title/iron-man.jpg`, 'middleware: a preview address is redirected or gets no preview');
   }
   out.middlewareFetches = fetched.length;
   fs.unlinkSync(tmp);

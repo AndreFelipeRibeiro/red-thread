@@ -13,6 +13,15 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 19 — Link previews: redesigned to match the app, with real posters
+
+Recorded: 2026-11-20 07:43 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression 82 of 82 runs clean on `dbca421` (the commits after
+it change the CHANGELOG only); `qa/smoke.js` clean on the staging preview and on production.
+
+- The link preview images for the home page, every title, character and guide (193) are redrawn from the Figma templates (Launch carousel file, "OG · Link previews"): light, on the app's canvas, with the real logo and the real posters (`src/share-card/link-cards.ts`). Titles and the home page show Spatial cards joined by their shared characters' threads; guides climb the red thread to a larger last poster, an event guide's with its date ("Dec 18"); characters show the actor's portrait and their titles strung on their own thread. The build fetches the posters and portraits from TMDB's image CDN, and a missing image fails the build. The images are now JPEG (`/og/<kind>/<id>.jpg`, via `jpeg-js` 0.4.4, a new pinned dev dependency), the largest 150 KB, under WhatsApp's 300 KB; the old `.png` addresses redirect. `qa/test-previews.js` updated. Commit [dbca421](https://github.com/AndreFelipeRibeiro/red-thread/commit/dbca421).
+- Limits: LinkedIn's Post Inspector and paste checks in X, Threads and iMessage are still to do on production.
+
 ## V5 Batch 18 — Guides: a live countdown to the release
 
 Recorded: 2026-11-19 19:28 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to

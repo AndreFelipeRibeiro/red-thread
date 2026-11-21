@@ -37,7 +37,7 @@ export function applyPreviewTags(html: string, t: PreviewTags): string {
   out = setMeta(out, 'name', 'description', t.description);
   out = setMeta(out, 'property', 'og:url', t.url);
   out = setMeta(out, 'property', 'og:image', t.image);
-  out = setMeta(out, 'property', 'og:image:type', 'image/png');
+  out = setMeta(out, 'property', 'og:image:type', 'image/jpeg');
   out = setMeta(out, 'property', 'og:image:alt', t.alt);
   out = setMeta(out, 'name', 'twitter:title', t.title);
   out = setMeta(out, 'name', 'twitter:description', t.description);

@@ -1,8 +1,9 @@
 // Colours for the share images (Notion V4 Tasks, "Share 2/3" and "Share 3/3"),
 // read from the design-system token file, src/index.css, so the cards never
-// keep copies of their own. The images always use the dark theme's values:
-// they leave the app and have no light or dark mode, and the dark tile reads
-// in any chat app, as the icons do (tools/make-icons.js).
+// keep copies of their own. The share card uses the dark theme's values: it
+// leaves the app and has no light or dark mode, and the dark tile reads in any
+// chat app, as the icons do (tools/make-icons.js). The link previews use the
+// light theme's, on the app's canvas (V5, Notion "Link preview images").
 //
 // The build (vite.config.js, link previews) passes the file's text from disk;
 // the app imports it with `?raw` (the share card). The tokens are oklch(),
@@ -21,12 +22,11 @@ function readBlock(css: string, from: number): Tokens {
   return out;
 }
 
-/** The custom properties of the `.dark` block, with var() references inside
- *  them resolved: to the palette (the `@primitives` block, Notion "Build the
- *  Figma foundations") or to another token of the block. */
-export function readDarkTokens(css: string): Tokens {
-  const start = css.indexOf('.dark {');
-  if (start === -1) throw new Error('share-card: no .dark block in src/index.css');
+/** One theme block's custom properties, with var() references inside them
+ *  resolved: to the palette (the `@primitives` block, Notion "Build the Figma
+ *  foundations") or to another token of the block. */
+function readTheme(css: string, start: number, which: string): Tokens {
+  if (start === -1) throw new Error(`share-card: no ${which} block in src/index.css`);
   const prim = css.indexOf('@primitives');
   const palette = prim === -1 ? {} : readBlock(css, css.indexOf(':root', prim));
   const out = readBlock(css, start);
@@ -36,6 +36,19 @@ export function readDarkTokens(css: string): Tokens {
   return out;
 }
 
+/** The `.dark` block's tokens (the share card, which is always dark). */
+export function readDarkTokens(css: string): Tokens {
+  return readTheme(css, css.indexOf('.dark {'), '.dark');
+}
+
+/** The light theme's tokens: the `:root` block after the palette's own
+ *  (the link previews, which are light, like the app's default). */
+export function readLightTokens(css: string): Tokens {
+  const prim = css.indexOf('@primitives');
+  const paletteRoot = prim === -1 ? -1 : css.indexOf(':root', prim);
+  return readTheme(css, paletteRoot === -1 ? -1 : css.indexOf(':root {', css.indexOf('}', paletteRoot)), 'light :root');
+}
+
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const hex2 = (x: number) => Math.round(clamp01(x) * 255).toString(16).padStart(2, '0');
 
@@ -43,7 +56,13 @@ const hex2 = (x: number) => Math.round(clamp01(x) * 255).toString(16).padStart(2
 export function toHex(value: string): string {
   const v = value.trim();
   if (/^#[0-9a-f]{3,8}$/i.test(v)) return v;
-  const m = /^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+)(%?))?\s*\)$/i.exec(v);
+  const rgb = /^rgb\(\s*(\d+)\s+(\d+)\s+(\d+)(?:\s*\/\s*([\d.]+))?\s*\)$/i.exec(v);
+  if (rgb) {
+    const [r, g, b] = [1, 2, 3].map((i) => +rgb[i]);
+    if (rgb[4] !== undefined && +rgb[4] < 1) return `rgba(${r}, ${g}, ${b}, ${+rgb[4]})`;
+    return '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
+  }
+  const m =/^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+)(%?))?\s*\)$/i.exec(v);
   if (!m) throw new Error('share-card: cannot read colour ' + value);
   const L = parseFloat(m[1]) / (m[2] ? 100 : 1);
   const C = parseFloat(m[3]);
@@ -77,6 +96,51 @@ export interface CardColors {
   logo: string;
   seen: string;
   phases: string[];
+}
+
+/** The link previews' colors (light), as hex or rgba(). */
+export interface PreviewColors {
+  canvasTop: string;
+  canvasBottom: string;
+  /** The canvas's dot grid: the text color at 10%, as --canvas-dot mixes it. */
+  dot: string;
+  card: string;
+  border: string;
+  foreground: string;
+  muted: string;
+  brand: string;
+  brandForeground: string;
+  logo: string;
+  /** Text on the dark marks that sit on posters, and the mark's ground. */
+  onImage: string;
+  onImageBase: string;
+  phases: string[];
+}
+
+/** '#rrggbb' at an opacity, as rgba(). */
+export function withAlpha(hex: string, alpha: number): string {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) throw new Error('share-card: cannot fade colour ' + hex);
+  return `rgba(${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}, ${alpha})`;
+}
+
+export function previewColors(tokens: Tokens): PreviewColors {
+  const t = (name: string) => toHex(tokens[name]);
+  return {
+    canvasTop: t('canvas-top'),
+    canvasBottom: t('canvas-bottom'),
+    dot: withAlpha(t('foreground'), 0.1),
+    card: t('card'),
+    border: t('border'),
+    foreground: t('foreground'),
+    muted: t('muted-foreground'),
+    brand: t('brand'),
+    brandForeground: t('brand-foreground'),
+    logo: t('logo'),
+    onImage: t('on-image'),
+    onImageBase: t('on-image-base'),
+    phases: [1, 2, 3, 4, 5, 6].map((n) => t('phase-' + n)),
+  };
 }
 
 export function cardColors(tokens: Tokens): CardColors {

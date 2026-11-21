@@ -87,8 +87,9 @@ came to be.
   `share.tsx` (the one share helper and Share button: system share sheet on
   phones, copy the link elsewhere, links always to production),
   `share-image.tsx` (the share card dialog: progress and finished guides as an
-  image), `src/share-card/` (the image templates, shared by the share card and
-  the build's link previews; colours come from `src/index.css`),
+  image), `src/share-card/` (the image templates: the share card in
+  `cards.ts`, the build's link previews in `link-cards.ts`; colors come from
+  `src/index.css`),
   `scripts/og-previews.js` (renders every link preview at build time; not in
   `tools/`, which Vercel's build doesn't get), `middleware.ts` (at the root:
   serves a shared link its own preview page),
