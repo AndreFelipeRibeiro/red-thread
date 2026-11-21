@@ -12,6 +12,9 @@ them.
 | `build.js` | Turns specs into Figma components through the Figma MCP's `use_figma` (Plugin API), bound to the file's variables, text styles, effect styles and icon components. |
 | `tokens-dump.js` | Pasted as one `use_figma` call's code: reads every variable per mode, the effect styles and the text styles as compact JSON. Read only. |
 | `tokens-check.mjs` | `node tools/figma/tokens-check.mjs <dump>`: compares that JSON with `src/index.css` and `docs/design-tokens.md` and prints each difference with its fix (the `figma-tokens` skill). |
+| `components.json`, `screens.json` | What the components and App Screens check covers: each library component with the app element that draws it; each App Screens frame with its app view. |
+| `components-capture.mjs`, `components-dump.js`, `components-check.mjs`, `components-fingerprint.mjs` | The components check: the app side (Playwright + `capture-dom.js`), the Figma side (`use_figma`), the comparison, and the fingerprint both sides make (the `figma-components` skill). |
+| `screens-dump.js`, `screens-check.mjs`, `screens-capture.mjs` | The App Screens check: how each frame is built (library instances only), and app screenshots to set beside the frames. |
 | `icons.js` | Every icon the app draws (24 × 24, stroked). The file's Icons page has a component per entry; captures swap a known svg for an instance. |
 | `specimens.html` | Every shadcn primitive the app uses, in each variant, size and state (`src/design/Specimens.tsx`), at `/tools/figma/specimens.html` on the dev server. |
 

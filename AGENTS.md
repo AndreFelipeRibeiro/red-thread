@@ -652,6 +652,13 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
     `node tools/figma/tokens-check.mjs <dump>`. Run it at the start of a
     build whose approved design changed a variable, and at the Figma gate
     before every push.
+  - **"Check components against the app"** (report only) compares the
+    library's components and the App Screens frames with the running app:
+    [.claude/skills/figma-components/SKILL.md](.claude/skills/figma-components/SKILL.md)
+    (`tools/figma/components.json` and `screens.json` say what it covers).
+    **"Check Figma against the code"** runs both skills, tokens first. Run it
+    at Reconcile, when a ticket that changed the look closes, and before a
+    batch with such tickets.
   - All Red Thread Figma files live in the AFR team folder
     https://www.figma.com/files/folder/683084303; create new ones there.
 - Work from links, not descriptions: a design ticket's **Figma** field links

@@ -146,6 +146,14 @@ top-to-bottom gradient, its stops bound to `canvas-top` and `canvas-bottom`
 (2026-11-18). The Character card's photo badge keeps the component's
 placeholder ring: the file has no portrait images yet.
 
+## Checking it against the app
+
+"Check components against the app" compares the components listed in
+`tools/figma/components.json` with the elements that draw them, and the
+Screens frames with the app (`tools/figma/screens.json`): the
+`figma-components` skill. Add a row there when a component gets a place the
+check can reach.
+
 ## Upkeep
 
 The rules are in AGENTS.md ("Keeping the library whole"). How to apply them:
