@@ -3,7 +3,8 @@
 // 2026-11-23: "Continue: Shang-Chi and the Legend of the Ten Rings" ran past
 // both edges of the button on a phone). At 320 and 390px phones and on
 // desktop, in English and Portuguese:
-// - the promo as offered (Before Doomsday, Shang-Chi next) fits;
+// - the promo as offered (Before Doomsday, Shang-Chi next: its first three
+//   stops seen) fits;
 // - then the real button is given the Continue label of every title in the
 //   catalog, at full length (the promo shortens "Name: Subtitle" titles, so
 //   the full name is the worst case), plus one unbreakable 60-letter word:
@@ -45,7 +46,7 @@ async function open(browser, opts, lang) {
     + "if (!sessionStorage.getItem('qa-seeded')) { sessionStorage.setItem('qa-seeded', '1');"
     + "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.signInNudge.v1','2');"
     + "localStorage.setItem('mcu.lang.v1'," + JSON.stringify(lang) + ");"
-    + "localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: { endgame: 'seen' } }));}");
+    + "localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: { 'infinity-war': 'seen', endgame: 'seen', 'loki-s1': 'seen' } }));}");
   const page = await ctx.newPage();
   const errors = [];
   page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errors.push(m.text()); });
