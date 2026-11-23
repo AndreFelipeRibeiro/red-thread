@@ -41,6 +41,10 @@ const URL = `http://127.0.0.1:${QA_PORT}/`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const G = '?guide=before-doomsday';
+// The stops between Endgame and Loki: Season 2 since 2026-11-22 (Notion "Guides:
+// bring back the dropped optional stops"), seen wherever Endgame is, so Loki
+// stays the next stop.
+const PRE = ['shang-chi', 'wakanda-forever', 'quantumania'];
 // Counts confetti canvases added from now on.
 const COUNT_BURSTS = "window.__bursts = 0; new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.classList && n.classList.contains('mcu-confetti')) window.__bursts++; }))).observe(document.body, { childList: true });";
 
@@ -114,10 +118,10 @@ const STATE = () => {
 
   // ---- Desktop List: skip by keyboard, the path, reload, unskip ---------------
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame'] });
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame', ...PRE] });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page);
     let s = await page.evaluate(STATE);
-    expect(s.next === 'loki-s2' && s.count === '1/5', `before: next ${s.next}, count ${s.count}`);
+    expect(s.next === 'loki-s2' && s.count === '4/8', `before: next ${s.next}, count ${s.count}`);
     expect(!(await page.locator('.g-stop[data-row-id="endgame"] .g-skip').count()), 'a seen stop offers Skip');
     const skip = page.locator('.g-stop[data-row-id="loki-s2"] .g-skip');
     expect((await skip.getAttribute('aria-label')) === 'Skip Loki: Season 2 in this guide', 'Skip has no clear name');
@@ -127,18 +131,18 @@ const STATE = () => {
     expect(s.skipped.join() === 'loki-s2', `not minimized: ${s.skipped}`);
     expect(/g-unskip\s*@loki-s2/.test(s.focus || ''), `focus did not move to Unskip: ${s.focus}`);
     expect(s.live.includes('Skipped Loki: Season 2'), `no announcement: ${JSON.stringify(s.live)}`);
-    expect(s.count === '1/4' && /1 skipped/.test(s.skipNote || ''), `meter: ${s.count} / ${s.skipNote}`);
+    expect(s.count === '4/7' && /1 skipped/.test(s.skipNote || ''), `meter: ${s.count} / ${s.skipNote}`);
     expect(s.next === 'cap-brave', `next stop is ${s.next}, expected cap-brave`);
     expect(/Mark 3 more seen/.test(s.bulk || ''), `bulk action reads "${s.bulk}"`);
-    expect(/4 stops/.test(s.stops || ''), `stepper count "${s.stops}"`);
+    expect(/7 stops/.test(s.stops || ''), `stepper count "${s.stops}"`);
     const rowH = await page.evaluate(() => [...document.querySelectorAll('.g-stop[data-row-id]')].map(r => [r.getAttribute('data-row-id'), Math.round(r.getBoundingClientRect().height)]));
     const h = Object.fromEntries(rowH);
     expect(h['loki-s2'] < h['thunderbolts'] - 10, `the skipped row isn't shorter: ${JSON.stringify(h)}`);
-    // The stepper passes over it: from Endgame, → goes to Brave New World.
-    await page.locator('.g-stop[data-row-id="endgame"] .g-open').click(); await page.waitForTimeout(500);
+    // The stepper passes over it: from Quantumania, → goes to Brave New World.
+    await page.locator('.g-stop[data-row-id="quantumania"] .g-open').click(); await page.waitForTimeout(500);
     await page.locator('body').press('ArrowRight'); await page.waitForTimeout(500);
     const drawer = await page.evaluate(() => (document.querySelector('.drawer.open #drawer-title') || {}).textContent);
-    expect(/Brave New World/.test(drawer || ''), `→ from Endgame opened "${drawer}"`);
+    expect(/Brave New World/.test(drawer || ''), `→ from Quantumania opened "${drawer}"`);
     // Remembered across a reload, and only in this guide.
     await page.reload(); await appReady(page);
     s = await page.evaluate(STATE);
@@ -151,7 +155,7 @@ const STATE = () => {
     await page.locator('.g-stop[data-row-id="loki-s2"] .g-unskip').focus(); await page.keyboard.press('Enter'); await page.waitForTimeout(400);
     s = await page.evaluate(STATE);
     out.afterUnskip = s;
-    expect(!s.skipped.length && s.next === 'loki-s2' && s.count === '1/5' && !s.skipNote, `unskip: ${JSON.stringify(s)}`);
+    expect(!s.skipped.length && s.next === 'loki-s2' && s.count === '4/8' && !s.skipNote, `unskip: ${JSON.stringify(s)}`);
     expect(/g-skip\s*@loki-s2/.test(s.focus || ''), `focus did not return to Skip: ${s.focus}`);
     expect(s.live.includes('Loki: Season 2 is back in the guide'), `no unskip announcement: ${JSON.stringify(s.live)}`);
     errors.push(...e);
@@ -160,17 +164,17 @@ const STATE = () => {
 
   // ---- Seen wins; skipping the last unseen essential completes the guide ----
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame'], skips: { 'before-doomsday': ['loki-s2'] } });
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame', ...PRE], skips: { 'before-doomsday': ['loki-s2'] } });
     await page.goto(URL + '?view=list&guide=before-doomsday&title=loki-s2'); await appReady(page);
     await page.locator('.drawer .tsa-btn.seen').click(); await page.waitForTimeout(600);
     const s = await page.evaluate(STATE);
-    expect(!s.skipped.length && s.count === '2/5', `seen did not win: ${JSON.stringify(s)}`);
+    expect(!s.skipped.length && s.count === '5/8', `seen did not win: ${JSON.stringify(s)}`);
     expect(!(s.stored || '').includes('loki-s2'), `the skip was not dropped: ${s.stored}`);
     errors.push(...e);
     await ctx.close();
   }
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { seen: ['endgame', 'cap-brave', 'thunderbolts', 'fantastic-four'] });
+    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { seen: ['endgame', ...PRE, 'cap-brave', 'thunderbolts', 'fantastic-four'] });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page);
     await page.evaluate(COUNT_BURSTS);
     let s = await page.evaluate(STATE);
@@ -185,7 +189,7 @@ const STATE = () => {
   }
   {
     // A stop skipped, then the last other stop marked seen: complete, with confetti.
-    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame', 'cap-brave', 'thunderbolts'], skips: { 'before-doomsday': ['loki-s2'] } });
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame', ...PRE, 'cap-brave', 'thunderbolts'], skips: { 'before-doomsday': ['loki-s2'] } });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page);
     await page.evaluate(COUNT_BURSTS);
     await page.locator('.g-desk .g-stop[data-row-id="fantastic-four"] .tsa-btn.seen').click(); await page.waitForTimeout(600);
@@ -198,7 +202,7 @@ const STATE = () => {
 
   // ---- Spatial: the badge and Up next ---------------------------------------
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame'], skips: { 'before-doomsday': ['loki-s2'] } });
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame', ...PRE], skips: { 'before-doomsday': ['loki-s2'] } });
     await page.goto(URL + G); await appReady(page);
     const r = await page.evaluate(() => {
       const b = document.querySelector('.card[data-id="loki-s2"] .card-gnum');
@@ -207,7 +211,7 @@ const STATE = () => {
       up: (document.querySelector('.un-mrow .un-open, .gm-next .gm-ntitle') || {}).textContent || null };
     });
     out.spatial = r;
-    expect(r.badge === '–' && /skip/.test(r.cls || '') && r.label === 'Stop 2, skipped', `Spatial badge: ${JSON.stringify(r)}`);
+    expect(r.badge === '–' && /skip/.test(r.cls || '') && r.label === 'Stop 5, skipped', `Spatial badge: ${JSON.stringify(r)}`);
     expect(/Brave New World/.test(r.up || ''), `Up next in the guide is "${r.up}"`);
     errors.push(...e);
     await ctx.close();
@@ -215,7 +219,7 @@ const STATE = () => {
 
   // ---- Spatial: Skip in the details, on a zoomed-in card, in the phone popup ---
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame'] });
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, { seen: ['endgame', ...PRE] });
     await page.goto(URL + '?guide=before-doomsday&title=cap-brave'); await appReady(page); await page.waitForTimeout(800);
     const b = page.locator('.drawer.open .g-dskip-btn');
     expect((await b.getAttribute('aria-label')) === 'Skip Captain America: Brave New World in this guide', `details Skip name: ${await b.getAttribute('aria-label')}`);
@@ -242,7 +246,7 @@ const STATE = () => {
     await ctx.close();
   }
   {
-    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { seen: ['endgame'] });
+    const { ctx, page, errors: e } = await ctxPage(browser, PHONE, { seen: ['endgame', ...PRE] });
     await page.goto(URL + '?view=spatial&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(600);
     // A tap on a phone guide stop opens its details sheet (no pop card since
     // Notion "Explore E 5/5"), where Skip sits as on desktop.

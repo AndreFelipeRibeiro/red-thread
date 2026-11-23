@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
 const URL = `http://127.0.0.1:${QA_PORT}/?view=guides`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
-const GUIDE = ['endgame', 'loki-s2', 'cap-brave', 'thunderbolts', 'fantastic-four'];
+const GUIDE = ['endgame', 'shang-chi', 'wakanda-forever', 'quantumania', 'loki-s2', 'cap-brave', 'thunderbolts', 'fantastic-four'];
 const SAGA = ['iron-man', 'cap-first-avenger', 'avengers'];
 
 async function open(browser, opts, { seen, time }) {
