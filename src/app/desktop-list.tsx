@@ -329,10 +329,13 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                   const edition = t.editions && t.editions[0] ? tr('edition.tag', { name: t.editions[0].name[I.lang] || t.editions[0].name.en, service: t.editions[0].service }) : null;
                   const meta = [tr('phase.label', { n: t.phase }), story, edition].filter(Boolean).join(' · ');
                   const isNext = t.id === upNextId;
+                  // Up next's tint, hover and pill are the brand tokens, as on
+                  // the phone's title row (Notion "Up next row: put its tint
+                  // and pill on tokens", 2026-11-21).
                   return (
                     <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
                       className={cn(GRID, 'dl-row relative -mx-3 cursor-pointer scroll-mt-[168px] scroll-mb-3 border-b border-border/70 px-3 transition-[background-color,opacity] duration-150 hover:bg-muted/50', ROW_SIZE,
-                        seen && 'seen', isNext && 'up-next bg-[color-mix(in_oklab,var(--brand)_7%,transparent)] hover:bg-[color-mix(in_oklab,var(--brand)_11%,transparent)]',
+                        seen && 'seen', isNext && 'up-next bg-(--brand-tint) hover:bg-(--brand-tint-strong)',
                         openId === t.id && 'on bg-muted shadow-[inset_3px_0_0_var(--brand)] hover:bg-muted', dim && 'dim opacity-35')}>
                       <span className="c-rank text-right text-label tabular-nums text-muted-foreground" role="cell">
                         {/* Up next's red edge, inside the first cell so every
@@ -359,7 +362,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                               <window.Highlight text={I.titleName(t)} query={search}/>
                             </button>
                             {isNext && (
-                              <span className="dl-next-pill flex-none animate-[un-in_260ms_ease_both] rounded-full border border-[color-mix(in_oklab,var(--brand)_40%,var(--border))] bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-px text-label font-semibold whitespace-nowrap text-[color-mix(in_oklch,var(--brand)_78%,var(--foreground))] motion-reduce:animate-none">
+                              <span className="dl-next-pill flex-none animate-[un-in_260ms_ease_both] rounded-full border border-(--brand-border) bg-(--brand-tint) px-2 py-px text-label font-semibold whitespace-nowrap text-(--brand-text) motion-reduce:animate-none">
                                 {tr('upnext.label')}
                               </span>
                             )}
