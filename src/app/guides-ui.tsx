@@ -775,7 +775,11 @@ function GuideCard({ guide, onPick, className = '' }) {
           count on its own line, then the label or Follow. */}
       <div className="g-card-status mt-auto flex h-7 items-center gap-2.5 text-label text-muted-foreground tabular-nums @max-[180px]/gcard:h-auto @max-[180px]/gcard:min-h-7 @max-[180px]/gcard:flex-wrap @max-[180px]/gcard:gap-y-2">
         {p.complete ? (
-          <span className="inline-flex items-center gap-1.5 [&_svg]:size-3"><window.CheckIcon/>{gtr('guide.card.allSeen', { n: p.ess.released })}</span>
+          <span className="inline-flex items-center gap-1.5">
+            {/* The seen mark (as on the posters, without their shadow). */}
+            <span aria-hidden="true" className="g-card-seen inline-flex size-4 flex-none items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) [&_svg]:size-2.5"><window.CheckIcon/></span>
+            {gtr('guide.card.allSeen', { n: p.ess.released })}
+          </span>
         ) : followed ? <>
           <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-(--progress-track) @max-[180px]/gcard:basis-full" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
           <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released }) + ' · ' + gtr('guide.following')}>
@@ -1509,7 +1513,7 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
         <GuideSwitcher guide={guide} phone={phone} onPick={onPick} onAll={onBack}/>
       </h2>
       {p.complete
-        ? <p className="g-ready m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground [&_b]:text-(--seen-text)"><b>{gloc(guide.done) || gtr('guide.complete')}</b> {gtr('guide.allEssentialSeen')}</p>
+        ? <p className="g-ready m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground [&_b]:text-(--seen-text)">{gloc(guide.done) && <><b>{gloc(guide.done)}</b> </>}{gtr('guide.allEssentialSeen')}</p>
         : <p className="g-blurb m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground">{MCU_GUIDE.blurb(guide)}</p>}
       <div className="g-meter flex w-full max-w-[560px] flex-wrap items-center gap-x-3 gap-y-2 text-label font-semibold text-muted-foreground tabular-nums">
         <span className="h-1 w-[200px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:min-w-0 in-[.app.touch]:flex-1" aria-hidden="true">
