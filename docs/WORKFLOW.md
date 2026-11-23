@@ -173,12 +173,14 @@ moment it's made.
   approval, push or last handoff, in America/New_York, never estimated.
   A design session's ticket may be approved hours later: the event ends
   at the last handoff, not at the approval.
-- **No overlaps, no repeats.** Before creating an event, list that day's
-  Red Thread events (and Andre's own review blocks). If the session's time
-  overlaps another Red Thread event (two agents in parallel, or a session
-  already logged), add this session's bullets to that event and widen its
-  time instead of making a second one; if the event already lists the
-  ticket, add nothing.
+- **Accurate, never doubled.** The time is never moved to avoid Andre's
+  own events (Andre, 2026-11-21). Before creating an event, list that day's
+  events. If another agent's event already covers this session (two agents
+  in parallel, or a session already logged), add this session's bullets to
+  it and widen its time; if it already lists the ticket, add nothing. If
+  Andre made a placeholder for the same work, edit it into the log (title,
+  purple, real times, bullets, his notes kept) rather than adding a second
+  event or deleting his.
 - **Who logs it:** whoever closes the session's ticket, in the same turn:
   Claude Code or Codex with the Google Calendar connector, or Claude in
   chat for a chat-only session. A session Andre does on his own is his to
@@ -188,9 +190,10 @@ moment it's made.
   approval time, the next **Completion order**, no Batch and no Latest
   commit. The body lists what was delivered (the Trail's links: Figma
   frames, the published asset, the Notion pages changed).
-- **Recap labels** follow the ticket's Type: Feature → **Added**,
-  Improvement → **Improved**, Bug → **Fixed**, Maintenance → **Updated**,
-  Visual → **Designed**, Process → **Set up**.
+- **Bullets** (Andre, 2026-11-21): each opens with one or two bold words
+  naming its subject (**Workflow playbook:** …), linked to its ticket in
+  the event; app changes first, then design, then process; one line each.
+  The chat recap uses the same bullets.
 
 ## Approvals
 

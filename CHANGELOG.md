@@ -13,6 +13,83 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 21 — Guides: the dropped optional stops that carry the story come back
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- Andre asked why Black Panther: Wakanda Forever wasn't in the Doomsday guide: it was an optional stop until Batch 9 removed all 43 optional stops (2026-11-16). He asked for it back, and for a pass on every guide. 17 return as essential stops, in release order, with reasons in both languages: Before Doomsday gains Shang-Chi, Wakanda Forever and Quantumania (eight stops, "Eight films and series"); The Avengers, Civil War; Captain America, Age of Ultron; Thor and Loki, The Dark World; Hulk, The Incredible Hulk; Ant-Man, Civil War; Captain Marvel, WandaVision; Guardians, Endgame; Thunderbolts*, The Winter Soldier, Ant-Man and the Wasp and Hawkeye; The next generation, Quantumania and Agatha All Along; Before Secret Wars, No Way Home. Cameos, alternate realities and anthologies stay out; the ticket lists each. `src/data/guides.ts`. test-promo, test-skip, test-countdown, test-herodone and test-guidemode follow the eight-stop guide. Looked at the Guides hero with eight stops on desktop and phone. Commit [6d460bb](https://github.com/AndreFelipeRibeiro/red-thread/commit/6d460bb).
+- Limits: The Infinity Saga stays at ten (Andre's choice): its link preview fits ten, so Age of Ultron and Doctor Strange wait for a longer layout (Design ticket). App Screens still draws the Doomsday guide with five stops and Thor with six.
+
+## V5 Batch 21 — Guide complete v2 in code: the card's seen mark, Guide complete said once
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- A completed guide card shows the seen mark (16px, seen fill, a 10px check) before "All N seen"; a completed guide's header without a done line reads only "You've seen every essential stop.", one with a done line keeps it. `src/app/guides-ui.tsx`; new `qa/test-guidedone.js` (card light and dark; header desktop and phone, English and Portuguese). The components check on the Complete entries: Guide card, Guide header and Phone guide header agree with Figma. Commit [ae58b57](https://github.com/AndreFelipeRibeiro/red-thread/commit/ae58b57).
+- Limits: not checked on a real iPhone.
+
+## V5 Batch 21 — Library states: the Complete variants in the docs and the Figma checks
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- `docs/figma-library.md` and `tools/figma/` list the Complete variants of Guide card, Guide header and Phone guide header, the Seen guide stops, and App Screens' completed Thor guide page (published 2026-11-21, every set Current). Docs and tools only. Commit [2a422b2](https://github.com/AndreFelipeRibeiro/red-thread/commit/2a422b2).
+- Limits: the Design ticket stays at Awaiting review for Andre's flags.
+
+## V5 Batch 21 — Guides page hero: green when the guide is complete, in the release's lead-up
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- A completed guide leading to a release in the next 60 days stays the hero until release day: "Guide complete · Dec 18", its done line, a green bar, no Mark seen; on desktop the release takes the big slot with a Watchlist button, on phones every stop is a small seen poster. `src/app/guides-ui.tsx`; new `qa/test-herodone.js`. Commit [5116543](https://github.com/AndreFelipeRibeiro/red-thread/commit/5116543).
+- Limits: not checked on a real iPhone.
+
+## V5 Batch 21 — Up next row: its tint and pill on the brand tokens
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- The desktop List's Up next row uses `--brand-tint` and `--brand-tint-strong`, and its pill `--brand-border`, `--brand-tint` and `--brand-text`, instead of untokened brand mixes. `src/app/desktop-list.tsx`. Commit [c95cb50](https://github.com/AndreFelipeRibeiro/red-thread/commit/c95cb50).
+
+## V5 Batch 21 — QA before a push: a run history, a frozen copy, and when the regression can be skipped
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- `qa/run.js` logs every run and failing check to `qa/history.log`; `qa/regress-frozen.sh` runs the full regression on a frozen copy; the ship-batch skill and AGENTS.md say when a push with no app code, or a merge of a tree staging passed, runs the smoke test only. Commit [e7c8385](https://github.com/AndreFelipeRibeiro/red-thread/commit/e7c8385).
+- Limits: test-camera fails about one run in three under load, on `main` too ("no ring card could be clicked"): a Maintenance ticket.
+
+## V5 Batch 21 — One rulebook everywhere: the last rules from chat, in the repo
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- The last two standing rules kept only in chat move into AGENTS.md and `docs/STANDARDS.md`. Docs only. Commit [c93192c](https://github.com/AndreFelipeRibeiro/red-thread/commit/c93192c).
+
+## V5 Batch 21 — Calendar log: bold subjects linked to tickets, real times, CHANGELOG notes
+
+Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
+`main` (production); full regression on `6abb2db`'s tree: 83 of 84 runs clean, the one failure
+test-guidemode expecting the Doomsday guide's old five stops (updated in `6d460bb`, re-run clean;
+nothing else changed); `qa/smoke.js` clean on the staging preview and on production.
+
+- The calendar log's events get bold subjects linked to their tickets and real times over Andre's placeholders, and the ship-batch skill says what the CHANGELOG notes. Docs and skills only. Commit [a1fd53c](https://github.com/AndreFelipeRibeiro/red-thread/commit/a1fd53c).
+
 ## V5 Batch 21 — Hotfix: the Doomsday guide offered once a day until the film opens
 
 Recorded: 2026-11-22 23:09 EST (-0500). Pushed to `main` (production) as a hotfix and merged
@@ -20,7 +97,7 @@ into `version/5.0`; full regression 82 of 82 runs clean on the hotfix tree; `qa/
 on production.
 
 - Andre saw redthread.tv offer The Infinity Saga essentials on his phone, and asked for the Doomsday guide to be pushed until the film is out; he chose once a day. Each guide had been offered once per device, so after a visitor closed Doomsday's offer the next visit fell to the next pick (the animated series' guide, also inside its 60 days, or the Infinity Saga). Now the guide for the soonest release in the next 60 days is offered once a day (`mcu.promoted.v1` keeps `<id>@<date>`, replacing the same guide's earlier day) until release day, and while it is unfinished no other guide is offered; the caught-up moment and the order after the lead-up are unchanged. `src/app/guides-ui.tsx` `promotion()`; `qa/test-promo.js` covers the same day, the next day and the order after the lead-up; README's rule updated. Commit [8d4b57f](https://github.com/AndreFelipeRibeiro/red-thread/commit/8d4b57f) (2026-11-22 23:01:12 EST).
-- Verified on production in a phone-sized headless browser: a returning visitor whose device had already been offered Doomsday under the old rule gets it again, and nothing more the same day. Limits: not checked on a real iPhone or in Instagram's browser; a visitor who finishes Doomsday's guide gets its caught-up moment and then the next release's guide daily (the animated series', Jan 13).
+- Verified on production in a phone-sized headless browser: a returning visitor whose device had already been offered Doomsday under the old rule gets it again, and nothing more the same day. Limits: not checked on a real iPhone or in Instagram's browser; a visitor who finishes Doomsday's guide is offered the next release's guide daily (the animated series', Jan 13), with Doomsday's caught-up moment on a later visit that day (the same order as before the hotfix).
 
 ## V5 Batch 20 — Pilot fixes: the playbook gaps the first run through the loop found
 

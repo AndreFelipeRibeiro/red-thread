@@ -66,10 +66,10 @@ surface uses them, so they have no Figma counterpart until one does.
 | Cast row | `19:14` | `title-details.tsx` `CastConnections` |
 | Follow the thread | `19:29` | `title-details.tsx` `FollowThreadButton` |
 | Up next | `20:51` | `src/app/upnext.tsx` |
-| Guide promo (State: Following, Not started) | `147:698` | `src/app/guides-ui.tsx` (Guides page hero) |
+| Guide promo (State: Following, Not started, Complete: the lead-up hero once the guide is complete, the release in the big slot) | `147:698` | `src/app/guides-ui.tsx` (Guides page hero) |
 | Countdown (State: In progress, Complete × Moment: Counting, Release day; Days on/off): the guide countdown in the guide header and the Guides hero | `104:701` | `src/app/countdown.tsx` `GuideTicker` |
 | Guide continue card | `21:67` | `guides-ui.tsx` (Continue shelf) |
-| Guide card (State: Following, Not followed) | `147:696` | `guides-ui.tsx` (guide shelves) |
+| Guide card (State: Following, Not followed, Complete) | `147:696` | `guides-ui.tsx` (guide shelves) |
 | Picker poster (Seen) | `23:13` | `src/app/picker.tsx` |
 | Picker dialog | `23:43` | `picker.tsx` |
 | Phone app bar | `34:662` | `src/app/phone-header.tsx` `MobileTopBar` |
@@ -87,11 +87,11 @@ surface uses them, so they have no Figma counterpart until one does.
 | Retired / Character banner, Retired / Character pill | `42:655`, `43:656` | Replaced by the Character card (2026-11-18); kept until the Screens file no longer uses them |
 | Thread stop | `44:632` | `title-details.tsx` `ThreadView` row (also the rows of `TrailView`) |
 | Thread view | `44:650` | `title-details.tsx` `ThreadView` |
-| Guide header | `45:701` | `guides-ui.tsx` (g-head) |
-| Guide stop (Up next, Default) | `45:670` | `guides-ui.tsx` (g-stop) |
-| Phone guide header | `64:666` | `guides-ui.tsx` (g-head, phones) |
-| Phone guide stop (Up next, Default) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
-| Phone guide promo | `64:728` | `guides-ui.tsx` `GuidesHero` (phones) |
+| Guide header (State: In progress, Complete) | `172:774` | `guides-ui.tsx` (g-head) |
+| Guide stop (Up next, Default, Seen) | `45:670` | `guides-ui.tsx` (g-stop) |
+| Phone guide header (State: In progress, Complete) | `172:1009` | `guides-ui.tsx` (g-head, phones) |
+| Phone guide stop (Up next, Default, Seen) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
+| Phone guide promo (State: Not started, Complete: every stop a small seen poster) | `167:815` | `guides-ui.tsx` `GuidesHero` (phones) |
 | About dialog (Kind: Welcome, About × Device: Desktop, Phone; the guide offer's poster is a nested Poster) | `119:1765` | `src/app/about.tsx` `AboutContent` in `ModalDialog` (desktop) or `Sheet` (phones) |
 | Retired: Welcome dialog (2026-11-19, replaced by About dialog) | `65:796` | — |
 
@@ -118,6 +118,7 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Connections with a title open (desktop) | `16:6270` | `16:6661` |
 | Guides (desktop) | `17:2384` | `17:2624` |
 | Guide page, Thor (desktop) | `17:2641` | `17:2876` |
+| Guide page, Thor, complete (desktop; every stop seen) | `77:7009` | `77:7439` |
 | Follow the thread (desktop) | `17:2888` | `17:3142` |
 | Settings over Titles (desktop) | `16:5024` | `16:5152` |
 | Search open (desktop) | `19:3906` | `19:4033` |
@@ -200,7 +201,7 @@ counterpart (same tools, `tools/figma/README.md`):
 - the phone Grid card and canvas pop card, the cast sheet on phones;
 - a character's trail header (its rows are Thread stops),
   the share sheet, toasts and the celebration;
-- a seen Guide stop and a skipped one;
+- a skipped Guide stop (the seen one is State=Seen since 2026-11-21);
 - hover, focus and pressed states (rest states only today).
 
 ## Known gaps

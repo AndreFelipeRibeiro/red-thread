@@ -36,7 +36,8 @@ order:
    A ticket that fails the gate doesn't ship: fix it, or ask Andre whether
    to hold it back to the next push. Say on the ticket that the gate
    passed, or why the ticket changes nothing in Figma.
-2. **Regression and push**: the full regression on the exact tree, then the
+2. **Regression and push**: the full regression on the exact tree (unless
+   the push changes no app code: "When it can be skipped" below), then the
    push; smoke-test the deployed site (`SITE_URL=… node qa/smoke.js`) once
    Vercel reports the deploy.
 3. **CHANGELOG**: one entry per ticket with the real time, saying where it
@@ -55,7 +56,10 @@ order:
 
 A merge of an already-shipped batch to production repeats steps 2 and 3
 (CHANGELOG: "merged to main"), checks that 4 and 5 were done, and does them
-if they weren't. Before ending a turn that pushed anything, check all seven
+if they weren't. Its step 2 is the smoke test on production only, with no
+new regression, when the tree being merged is the tree the staging run
+passed plus commits that change only CHANGELOG.md (Andre, 2026-11-21);
+anything else in between runs the regression again. Before ending a turn that pushed anything, check all seven
 (0 to 6).
 
 ## The full regression
@@ -68,6 +72,17 @@ if they weren't. Before ending a turn that pushed anything, check all seven
     with no known failures. Only then: never just because a ticket or an
     epic is finished (Andre, 2026-11-15), so each ticket's handoff says the
     full run waits for the push.
+  - **When it can be skipped** (Andre, 2026-11-21): a push whose commits
+    since the last push change no app code runs the smoke test only. No app
+    code means every changed path is documentation (`*.md`, `docs/`), the
+    skills and local tooling (`.claude/`), or the Figma tools
+    (`tools/figma/`); a change under `qa/` itself, `src/`, the data, the
+    build or deploy files is app code for this rule. Check it with
+    `git diff --stat origin/version/5.0..HEAD`, and say in the handoff and
+    the CHANGELOG that the regression was skipped and why.
+  - **Every run is logged** in `qa/history.log` (local; one line per run and
+    one per failing check, written by `qa/run.js`), so over time it shows
+    which checks catch problems.
     - **Keep working while it runs** on a frozen copy, because the runner
       reads each `qa/*.js` when that check starts, and an edit mid-run gives
       false failures. Record the tree first (`GIT_INDEX_FILE=<a copy of the
@@ -93,13 +108,14 @@ if they weren't. Before ending a turn that pushed anything, check all seven
 ## CHANGELOG entries
 
 - Every committed change gets a CHANGELOG.md entry at the top:
-  `## V5 fix|improvement|feature|design|maintenance — <short title>` (older
-  entries keep their `V3` or `V4` prefix), then
-  `Recorded: YYYY-MM-DD HH:MM EDT (-0400).` and its staging/production status,
+  `## V5 Batch <n> — <short title>`, one per ticket (older entries keep
+  their `V3` or `V4` headings), then
+  `Recorded: YYYY-MM-DD HH:MM EST (-0500).` and its staging/production status,
   then bullets for the change, the verification actually performed, and the
-  limits. Times are real: take them from git
-  (`TZ=America/New_York git log -1 --date=iso-local --format=%cd`), never
-  estimated or written ahead. The zone and offset come from git as well:
+  limits. Times are real, never estimated or written ahead: **Recorded** is
+  when the entry is written (`TZ=America/New_York date`), since its own
+  commit doesn't exist yet; the commit times it cites come from git
+  (`TZ=America/New_York git log -1 --date=iso-local --format=%cd`). The zone and offset come from the clock as well:
   from the first Sunday of November to the second Sunday of March the entry
   reads `EST (-0500)`, and on the changeover night the hour from 1:00 to 2:00
   happens twice, so only the offset says which one it was. When a batch reaches `main`, update those

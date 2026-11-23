@@ -383,6 +383,15 @@ Object.assign(MCU_GUIDE, {
     const soon = today ? MCU_GUIDE.comingUp(today).find(x => x.days <= PROMO_LEAD_DAYS && open.indexOf(x.guide) !== -1) : null;
     return soon ? soon.guide : open[0] || null;
   },
+  // The Guides page's hero in a release's lead-up (Notion "Guides page hero:
+  // turn green when the guide is complete", Andre, 2026-11-21): a guide leading
+  // to a release in the next 60 days stays the hero once it is complete, until
+  // the day before the release (comingUp counts days from 1), so the milestone
+  // and its countdown stay in front. Followed or not; the soonest first.
+  leadUpComplete(statusOf, today) {
+    const x = today ? MCU_GUIDE.comingUp(today).find(x => x.days <= PROMO_LEAD_DAYS && MCU_GUIDE.progress(x.guide, statusOf).complete) : null;
+    return x ? x.guide : null;
+  },
   // The Guides page's hero when nothing followed is in focus: the guide the
   // promotion rules would pick (one leading to a release in the next 60
   // days, else the evergreen one, else the unfinished guide closest to done),
@@ -584,7 +593,7 @@ const BRAND_TEXT = 'text-(--brand-text)';
 // one before the next stop, when there is one, then the ones after); three
 // below 390px and two below 360px (Andre, 2026-11-16: only Loki and Doomsday read as sparse).
 function GuidesHero({ guide, followed, onPick }) {
-  const { statusOf, states, toggleSeen } = window.useCollection();
+  const { statusOf, states, toggleSeen, toggleWatchlist } = window.useCollection();
   useGuideSkips();
   const [said, setSaid] = React.useState('');
   const today = window.todayISO();
@@ -598,7 +607,14 @@ function GuidesHero({ guide, followed, onPick }) {
   const target = guide.target ? MCU_GUIDE.title(guide.target) : null;
   const date = MCU_GUIDE.targetDate(guide);
   // No "29 days to go": the countdown below carries it (Andre, 2026-11-19).
-  const kicker = coming
+  // Complete (only in a release's lead-up, MCU_GUIDE.leadUpComplete): green,
+  // as the guide page's header is, and on desktop the release takes the big
+  // slot (Figma Guide promo State=Complete; phones keep one row of small
+  // posters, Phone guide promo State=Complete).
+  const done = p.complete;
+  const kicker = done
+    ? [gtr('guide.complete'), date].filter(Boolean).join(' · ')
+    : coming
     ? [gtr('guide.group.coming'), date].filter(Boolean).join(' · ')
     : followed ? gtr('guide.hero.following', { kind: guideType(guide) }) : guideType(guide);
   const upcoming = MCU_GUIDE.upcomingTitle(guide);
@@ -629,8 +645,8 @@ function GuidesHero({ guide, followed, onPick }) {
   // Progress: under the blurb on desktop, under the strip on phones.
   const prog = (cls) => (
     <div className={cn('g-hero-prog flex items-center gap-3 text-label font-semibold text-muted-foreground tabular-nums', cls)}>
-      {followed ? <>
-        <span className="g-hero-bar h-1 w-[100px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:flex-1" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
+      {followed || done ? <>
+        <span className="g-hero-bar h-1 w-[100px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:flex-1" aria-hidden="true"><span className={cn('block h-full rounded-full', done ? 'bg-(--seen)' : 'bg-(--progress)')} style={{ width: pct + '%' }}/></span>
         <span aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released })}>{gtr('guide.hero.stopsOf', { seen: p.ess.seen, n: p.ess.released })}{MCU_GUIDE.left(guide, statusOf) ? ' · ' + MCU_GUIDE.left(guide, statusOf) : ''}</span>
       </> : <span>{p.ess.seen ? gtr('guide.seenOf', { seen: p.ess.seen, n: p.ess.released }) : gtr('guide.hero.notStarted', { size: MCU_GUIDE.size(guide) })}</span>}
     </div>
@@ -638,13 +654,15 @@ function GuidesHero({ guide, followed, onPick }) {
   return (
     <section className="g-hero relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-8 overflow-hidden rounded-[14px] border bg-card p-11 text-card-foreground max-[1100px]:p-7 in-[.app.touch]:grid-cols-1 in-[.app.touch]:gap-4 in-[.app.touch]:p-4"
       aria-labelledby="g-hero-title"
-      style={{ backgroundImage: 'linear-gradient(90deg, color-mix(in oklab, var(--brand) 22%, transparent) 0%, transparent 75%)' }}>
+      style={{ backgroundImage: `linear-gradient(90deg, color-mix(in oklab, var(${done ? '--seen' : '--brand'}) 22%, transparent) 0%, transparent 75%)` }}>
       <div className="g-hero-intro flex min-w-0 flex-col items-start gap-4 in-[.app.touch]:gap-2.5">
-        <p className={cn('g-hero-kicker m-0 text-label font-semibold tracking-[.04em] uppercase', BRAND_TEXT)}>{kicker}</p>
+        <p className={cn('g-hero-kicker m-0 text-label font-semibold tracking-[.04em] uppercase', done ? 'done text-(--seen-text)' : BRAND_TEXT)}>{kicker}</p>
         <h2 id="g-hero-title" className="m-0 max-w-[520px] text-display leading-[1.08] font-semibold tracking-tight text-foreground">
           <button type="button" className={cn('g-row g-hero-title cursor-pointer rounded-sm text-left', FOCUS)} onClick={() => onPick(guide.id)}>{name}</button>
         </h2>
-        <p className="g-hero-blurb m-0 max-w-[480px] text-body leading-[1.45] text-muted-foreground in-[.app.touch]:hidden">{MCU_GUIDE.blurb(guide)}</p>
+        <p className="g-hero-blurb m-0 max-w-[480px] text-body leading-[1.45] text-muted-foreground in-[.app.touch]:hidden">
+          {done ? <>{gloc(guide.done) && <b className="text-(--seen-text)">{gloc(guide.done)} </b>}{gtr('guide.allEssentialSeen')}</> : MCU_GUIDE.blurb(guide)}
+        </p>
         {prog('in-[.app.touch]:hidden')}
         {/* The countdown beside About this guide (Notion countdown ticket,
             desktop A). */}
@@ -690,8 +708,30 @@ function GuidesHero({ guide, followed, onPick }) {
             </li>
           );
         })}
+        {target && done && (
+          <li className="g-hstop dest g-hero-dest relative z-1 flex w-[124px] flex-none flex-col overflow-hidden rounded-lg border-2 border-(--brand) bg-card shadow-sm in-[.app.touch]:hidden"
+            aria-label={gtr('guide.destLabel', { title: GI18N.titleName(target) }) + (date ? ' · ' + date : '')}>
+            <span className={cn(POSTER, 'h-[186px] w-full')}>
+              <window.PosterArt title={target}/>
+              <PosterYear title={target}/>
+              {date && <span aria-hidden="true" className="absolute top-1.5 right-1.5 z-2 rounded-full bg-primary px-[7px] py-0.5 text-tag font-semibold whitespace-nowrap text-primary-foreground">{date}</span>}
+            </span>
+            {(() => {
+              const listed = statusOf(target.id) === 'watchlist';
+              const watch = () => { const was = statusOf(target.id); toggleWatchlist(target.id); window.MCU_emitStatusChange({ title: target, from: was, to: was === 'watchlist' ? 'none' : 'watchlist', states }); };
+              return (
+                <button type="button" className={cn('g-cta g-hero-watch flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 bg-primary px-1 text-label font-semibold whitespace-nowrap text-primary-foreground hover:bg-primary/90 focus-visible:ring-inset [&_svg]:size-[15px] [&_svg]:flex-none', FOCUS)}
+                  aria-pressed={listed} onClick={watch}
+                  aria-label={gtr(listed ? 'status.removeWatchAria' : 'status.addWatchAria', { title: GI18N.titleName(target) })}>
+                  <window.BookmarkIcon filled={listed}/>
+                  {gtr(listed ? 'status.onWatch' : 'status.watchlist')}
+                </button>
+              );
+            })()}
+          </li>
+        )}
         {target && (
-          <li className="g-hstop dest relative z-1 flex-none" aria-label={gtr('guide.destLabel', { title: GI18N.titleName(target) }) + (date ? ' · ' + date : '')}>
+          <li className={cn('g-hstop dest relative z-1 flex-none', done && 'hidden in-[.app.touch]:block')} aria-label={gtr('guide.destLabel', { title: GI18N.titleName(target) }) + (date ? ' · ' + date : '')}>
             <span className={cn(POSTER, 'h-24 w-16 rounded-md border-[1.5px] border-dashed border-muted-foreground in-[.app.touch]:h-12 in-[.app.touch]:w-8 [&>:first-child]:opacity-60')}>
               <window.PosterArt title={target}/>
               {date && <span aria-hidden="true" className="absolute inset-x-1 bottom-1.5 z-2 rounded-full bg-black/60 px-1 py-0.5 text-center text-tag leading-[1.3] font-semibold whitespace-nowrap text-white/90 in-[.app.touch]:inset-x-0 in-[.app.touch]:bottom-0.5 in-[.app.touch]:text-card-micro">{date}</span>}
@@ -743,7 +783,11 @@ function GuideCard({ guide, onPick, className = '' }) {
           count on its own line, then the label or Follow. */}
       <div className="g-card-status mt-auto flex h-7 items-center gap-2.5 text-label text-muted-foreground tabular-nums @max-[180px]/gcard:h-auto @max-[180px]/gcard:min-h-7 @max-[180px]/gcard:flex-wrap @max-[180px]/gcard:gap-y-2">
         {p.complete ? (
-          <span className="inline-flex items-center gap-1.5 [&_svg]:size-3"><window.CheckIcon/>{gtr('guide.card.allSeen', { n: p.ess.released })}</span>
+          <span className="inline-flex items-center gap-1.5">
+            {/* The seen mark (as on the posters, without their shadow). */}
+            <span aria-hidden="true" className="g-card-seen inline-flex size-4 flex-none items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) [&_svg]:size-2.5"><window.CheckIcon/></span>
+            {gtr('guide.card.allSeen', { n: p.ess.released })}
+          </span>
         ) : followed ? <>
           <span className="g-card-bar h-1 flex-1 overflow-hidden rounded-full bg-(--progress-track) @max-[180px]/gcard:basis-full" aria-hidden="true"><span className="block h-full rounded-full bg-(--progress)" style={{ width: pct + '%' }}/></span>
           <span className="whitespace-nowrap" aria-label={gtr('guide.progressAria', { seen: p.ess.seen, n: p.ess.released }) + ' · ' + gtr('guide.following')}>
@@ -933,7 +977,7 @@ function GuidesPage({ onPick, inMain = false }) {
   useGuideSkips();
   useFollowedGuides();
   const today = window.todayISO();
-  const hero = MCU_GUIDE.focus(statusOf, today) || MCU_GUIDE.heroPick(statusOf, today);
+  const hero = MCU_GUIDE.leadUpComplete(statusOf, today) || MCU_GUIDE.focus(statusOf, today) || MCU_GUIDE.heroPick(statusOf, today);
   const shelves = guideShelves(hero ? hero.id : null);
   return (
     <div ref={pageRef} onScroll={(e) => { guidesPageScroll = e.currentTarget.scrollTop; }} className="g-page @container min-h-0 flex-1 overflow-y-auto px-(--grid-margin) pt-8 pb-[72px] in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role={inMain ? 'region' : 'main'} aria-labelledby="g-page-title">
@@ -1477,7 +1521,7 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
         <GuideSwitcher guide={guide} phone={phone} onPick={onPick} onAll={onBack}/>
       </h2>
       {p.complete
-        ? <p className="g-ready m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground [&_b]:text-(--seen-text)"><b>{gloc(guide.done) || gtr('guide.complete')}</b> {gtr('guide.allEssentialSeen')}</p>
+        ? <p className="g-ready m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground [&_b]:text-(--seen-text)">{gloc(guide.done) && <><b>{gloc(guide.done)}</b> </>}{gtr('guide.allEssentialSeen')}</p>
         : <p className="g-blurb m-0 max-w-[560px] text-body leading-[1.45] text-muted-foreground">{MCU_GUIDE.blurb(guide)}</p>}
       <div className="g-meter flex w-full max-w-[560px] flex-wrap items-center gap-x-3 gap-y-2 text-label font-semibold text-muted-foreground tabular-nums">
         <span className="h-1 w-[200px] overflow-hidden rounded-full bg-(--progress-track) in-[.app.touch]:min-w-0 in-[.app.touch]:flex-1" aria-hidden="true">

@@ -18,9 +18,14 @@
     {"name": "Guide promo · State=Following", "figma": "21:44", "device": "desktop", "url": "?view=guides", "selector": ".g-hero", "size": "", "storage": {"mcu.guidesFollowed.v1": "[{\"id\": \"before-doomsday\", \"at\": 1}, {\"id\": \"infinity-saga\", \"at\": 1}]"}},
     {"name": "Guide card · State=Not followed", "figma": "147:695", "device": "desktop", "url": "?view=guides", "selector": ".g-gcard", "size": ""},
     {"name": "Guide promo · State=Not started", "figma": "147:697", "device": "desktop", "url": "?view=guides", "selector": ".g-hero", "size": ""},
+    {"name": "Guide card · State=Complete", "figma": "171:748", "device": "desktop", "url": "?view=guides", "selector": ".g-gcard", "size": "", "seen": ["thor-ragnarok", "black-panther", "infinity-war", "endgame"]},
+    {"name": "Guide header · State=Complete", "figma": "172:773", "device": "desktop", "url": "?view=guides&guide=thor", "selector": ".g-head", "size": "", "seen": ["thor-ragnarok", "infinity-war", "endgame", "thor-love"]},
+    {"name": "Guide promo · State=Complete", "figma": "167:767", "device": "desktop", "url": "?view=guides", "selector": ".g-hero", "size": "", "seen": ["endgame", "loki-s2", "cap-brave", "thunderbolts", "fantastic-four"]},
     {"name": "Phone nav bar", "figma": "22:42", "device": "phone", "url": "?view=list", "selector": ".m-tabs", "size": "h"},
     {"name": "Phone title row · State=Seen", "figma": "63:659", "device": "phone", "url": "?view=list", "selector": ".m-lrow[data-row-id=\"thor\"]", "size": "h"},
     {"name": "Phone title row · State=Unseen", "figma": "63:673", "device": "phone", "url": "?view=list", "selector": ".m-lrow[data-row-id=\"thor-ragnarok\"]", "size": "h"},
-    {"name": "Phone phase header", "figma": "63:642", "device": "phone", "url": "?view=list", "selector": ".m-ghead", "size": "h"}
+    {"name": "Phone phase header", "figma": "63:642", "device": "phone", "url": "?view=list", "selector": ".m-ghead", "size": "h"},
+    {"name": "Phone guide promo · State=Complete", "figma": "167:814", "device": "phone", "url": "?view=guides", "selector": ".g-hero", "size": "", "seen": ["endgame", "loki-s2", "cap-brave", "thunderbolts", "fantastic-four"]},
+    {"name": "Phone guide header · State=Complete", "figma": "172:1008", "device": "phone", "url": "?view=guides&guide=thor", "selector": ".g-head", "size": "", "seen": ["thor-ragnarok", "infinity-war", "endgame", "thor-love"]}
   ]
 }

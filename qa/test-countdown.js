@@ -45,14 +45,14 @@ const PORT = +process.env.PORT || 8231;
 const URL = `http://127.0.0.1:${PORT}/`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
-const DOOM = ['endgame', 'loki-s2', 'cap-brave', 'thunderbolts', 'fantastic-four'];
+const DOOM = ['endgame', 'shang-chi', 'wakanda-forever', 'quantumania', 'loki-s2', 'cap-brave', 'thunderbolts', 'fantastic-four'];
 const GUIDE = URL + '?view=guides&guide=before-doomsday';
 
 const errors = [];
 const out = {};
 const expect = (ok, msg) => { if (!ok) errors.push(msg); };
 
-function storage({ lang = 'en', seen = DOOM.slice(0, 4), extra = {} } = {}) {
+function storage({ lang = 'en', seen = DOOM.slice(0, -1), extra = {} } = {}) {
   const states = {};
   seen.forEach(id => { states[id] = 'seen'; });
   return {

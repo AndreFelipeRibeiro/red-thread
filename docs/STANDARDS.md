@@ -93,6 +93,9 @@ and type below as it lands (Figma first, then code); the accessibility,
 keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
 rules carry over unchanged.
 
+- **Phones get layouts of their own, not a shrunken desktop** (Andre; moved
+  from chat memory into the repo on 2026-11-21): a phone screen is designed
+  for the phone, rather than the desktop layout scaled down to fit.
 - V3's colour tokens (`--v3-*`) are gone with V3's stylesheets (Notion
   "shadcn pass 6", 2026-11-14). Write styles with the design system's tokens,
   never a raw colour. `PHASE_COLORS` in `app.tsx` (and `MPHASE_COLORS`) hold

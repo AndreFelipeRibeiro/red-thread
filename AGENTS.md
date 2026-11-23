@@ -103,8 +103,9 @@ these are the rules that bite most often:
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.  - **Before a push**: the full regression (`bash qa/regress.sh`), never
     just because a ticket or an epic is finished, and the smoke test after
-    the deploy: the `ship-batch` skill. Each ticket's handoff says the full
-    run waits for the push.
+    the deploy: the `ship-batch` skill, which also says when a push with no
+    app code, or a merge of a tree staging already passed, runs the smoke
+    test only. Each ticket's handoff says the full run waits for the push.
   Update checks in the same commit when you rename or restructure UI they
   rely on.
 - The QA checks are headless Chromium. Still look at the change in a real
@@ -243,6 +244,8 @@ Tasks** (under **Red Thread - V3**) are history; do not add tickets there.
   still exist, so set them through the API or the property menu as usual.
   The old **V3 ticket** field was removed on 2026-11-14: tickets carried over
   from V3 link their original in the page body ("Carried over from V3").
+- **Assigned to marks a claim**: a ticket you file but don't start leaves it
+  empty, so the board shows what is really being worked (Andre, 2026-11-21).
 - **Track** says which stages a ticket goes through, what "done" means for
   it and whether it takes a Batch ([docs/WORKFLOW.md](docs/WORKFLOW.md),
   "Tracks"). Every ticket gets one when it is created. **Development** changes
