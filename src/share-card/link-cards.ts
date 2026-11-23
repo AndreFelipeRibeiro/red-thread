@@ -1,7 +1,8 @@
 // The link previews, 1200×630 (Notion "Link preview images: redesign the Open
 // Graph cards to match the current app and brand"; Figma: Launch carousel
 // file, section "OG · Link previews · 1200 × 630": Default 86:16925, Guide
-// 86:16954, Guide · long 109:166, Title 86:16985, Character 107:156).
+// 86:16954, Guide · long 109:166, Guide · longer 139:184, Title 86:16985,
+// Character 107:156).
 //
 // Light, on the app's canvas (its gradient and dot grid), with the real logo,
 // the real posters and the character threads. Every preview shares one copy
@@ -276,11 +277,22 @@ function hubArt(art: Extract<LinkArt, { layout: 'hub' }>, c: PreviewColors): Nod
 // poster is larger (140 × 210, or 120 × 180) and ends the climb at the top
 // right; an event guide's release gets the date chip. Each stop is pinned at
 // its bottom center.
+//
+// More than nine climbing stops (OG · Guide · longer, 11 to 14 stops): the
+// same climb as the long layout, from its first stop's corner to its last, cut
+// into more steps. Steps, posters and nodes shrink by 8 ÷ (stops − 1), and the
+// last small poster keeps the long layout's right edge (Notion "Guide link
+// preview: a layout for more than ten stops", 2026-11-23).
+const LONG_STEPS = 9;
 function guideArt(art: Extract<LinkArt, { layout: 'guide' }>, c: PreviewColors): Node[] {
-  const g = art.long
-    ? { w: 76, h: 114, dx: 46, dy: 36, lastX: 980, lastY: 164, node: 18, ring: 4.5, big: { x: 1020, y: 44, w: 120, h: 180, node: 24, ring: 6 } }
-    : { w: 92, h: 138, dx: 78, dy: 56, lastX: 924, lastY: 206, node: 20, ring: 5, big: { x: 1000, y: 44, w: 140, h: 210, node: 26, ring: 6 } };
   const n = art.stops.length;
+  const long = { w: 76, h: 114, dx: 46, dy: 36, lastX: 980, lastY: 164, node: 18, ring: 4.5, big: { x: 1020, y: 44, w: 120, h: 180, node: 24, ring: 6 } };
+  const k = n > LONG_STEPS ? (LONG_STEPS - 1) / (n - 1) : 1;
+  const g = n > LONG_STEPS
+    ? { ...long, w: Math.round(long.w * k), h: Math.round(long.h * k), dx: long.dx * k, dy: long.dy * k,
+      lastX: long.lastX + long.w - Math.round(long.w * k), node: Math.round(long.node * k), ring: Math.round(long.ring * k * 2) / 2 }
+    : art.long ? long
+      : { w: 92, h: 138, dx: 78, dy: 56, lastX: 924, lastY: 206, node: 20, ring: 5, big: { x: 1000, y: 44, w: 140, h: 210, node: 26, ring: 6 } };
   const at = (i: number): [number, number] => [g.lastX - (n - 1 - i) * g.dx, g.lastY + (n - 1 - i) * g.dy];
   const nodes = art.stops.map((_, i) => { const [x, y] = at(i); return [x + g.w / 2, y + g.h] as [number, number]; });
   const bigNode: [number, number] = [g.big.x + g.big.w / 2, g.big.y + g.big.h];

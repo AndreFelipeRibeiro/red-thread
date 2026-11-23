@@ -341,7 +341,7 @@ const labelsOverlap = (page) => page.evaluate(() => {
   // guides have one stop left (The Avengers, Hulk since Guides 4/4): the
   // promoted one has the fewest left of any unfinished guide.
   {
-    const INFINITY_ESS = ['iron-man', 'cap-first-avenger', 'avengers', 'cap-winter-soldier', 'gotg', 'civil-war', 'thor-ragnarok', 'black-panther', 'infinity-war', 'endgame'];
+    const INFINITY_ESS = ['iron-man', 'cap-first-avenger', 'avengers', 'cap-winter-soldier', 'gotg', 'aou', 'civil-war', 'doctor-strange', 'thor-ragnarok', 'black-panther', 'infinity-war', 'endgame'];
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2027-02-01');
     await seed(page, storage({ seen: INFINITY_ESS }));
     await page.goto(URL); await settle(page);

@@ -125,7 +125,7 @@ const CANVAS = () => {
     expect(!(await page.locator('.filters-pop').count()), 'a dimmed Filters opened');
     let c = await page.evaluate(CANVAS);
     out.deskCanvas = c;
-    expect(c.stops === 10 && c.dimmed === 0 && c.films >= 9, `Explore with a guide: ${JSON.stringify(c)}`);
+    expect(c.stops === 12 && c.dimmed === 0 && c.films >= 9, `Explore with a guide: ${JSON.stringify(c)}`);
     expect(!c.summary, 'the count summary shows during a guide');
     await page.locator('.sort-menu-trigger').click(); await page.waitForTimeout(250);
     await page.locator('.sort-menu-pop [data-sort="chrono"][data-dir="asc"]').click(); await page.waitForTimeout(400);
@@ -192,7 +192,7 @@ const CANVAS = () => {
     expect(s.sort === 'on' && s.filters === 'off' && b.tab === 'explore' && hint === HINT, `phone Explore: ${JSON.stringify(out.phoneSpatial)}`);
     const c = await page.evaluate(CANVAS);
     out.phoneCanvas = c;
-    expect(c.stops === 10 && c.dimmed === 0 && !c.summary, `phone Spatial with Series set: ${JSON.stringify(c)}`);
+    expect(c.stops === 12 && c.dimmed === 0 && !c.summary, `phone Spatial with Series set: ${JSON.stringify(c)}`);
     // The dock: the next stop (no ✓: it is marked in its details); no separate meter or Up next card.
     const d = await page.evaluate(() => {
       const next = (window.MCU_GUIDE.next(window.MCU_GUIDE.get('infinity-saga'), false, () => 'none') || {}).id;
@@ -211,7 +211,7 @@ const CANVAS = () => {
         landW: Math.round(170 * Math.min(1, vp.width / (170 * 1.15 * 2.5))), at: [...document.querySelectorAll('.card.up-next, .card.guide-at')].map(c => c.dataset.id) };
     });
     out.phoneDock = d;
-    expect(d.sub === 'Iron Man' && !d.seen && d.segs === 10 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
+    expect(d.sub === 'Iron Man' && !d.seen && d.segs === 12 && !d.chip && !d.meter, `phone dock: ${JSON.stringify(d)}`);
     expect(d.inView && d.centred && Math.abs(d.cardW - d.landW) <= 2, `phone guide should open on its next stop, centred at a readable size: ${JSON.stringify(d)}`);
     // The zoom control rests hidden and shows while zooming (a double-tap here).
     const z0 = await page.evaluate(() => document.querySelector('.zoom-ctl').classList.contains('rest'));

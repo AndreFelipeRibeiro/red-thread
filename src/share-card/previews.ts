@@ -66,9 +66,10 @@ function chipDate(release: string): string {
   if (!m[2]) return m[1];
   return m[3] ? `${MONTHS[+m[2] - 1]} ${+m[3]}` : `${MONTHS[+m[2] - 1]} ${m[1]}`;
 }
-/** The most stops a guide preview draws (the design's long-guide layout).
- *  More needs a new layout: ask Andre before the build squeezes further. */
-const MAX_STOPS = 10;
+/** The most stops a guide preview draws (the design's longer layout, Notion
+ *  "Guide link preview: a layout for more than ten stops", 2026-11-23). More
+ *  needs a new layout: ask Andre before the build squeezes further. */
+const MAX_STOPS = 14;
 
 export function previewEntries(cat: Catalog, loc: LocaleTables, colors: PreviewColors, site: string, images: Images): PreviewEntry[] {
   const tr = makeTr(loc);

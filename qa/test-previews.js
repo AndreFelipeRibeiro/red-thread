@@ -129,6 +129,49 @@ const tagErrors = (html, label, url) => {
   out.pagesChecked = checked;
   out.biggestImageKB = Math.round(biggest / 1024);
 
+  // ---- The guide layouts, 3 to 14 stops -------------------------------------
+  // (Notion "Guide link preview: a layout for more than ten stops", 2026-11-23.)
+  // link-cards.ts lays a guide out as short (up to 5), long (6 to 10) or longer
+  // (11 to 14, the long climb in smaller steps). Every poster stays right of the
+  // copy column (it ends at 592), inside the 1200×630 image, and climbs: each
+  // stop up and to the right of the one before. A guide with more than ten stops
+  // exists, so the build drew the longer layout for real above.
+  {
+    const { code } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'src/share-card/link-cards.ts'), 'utf8'), 'link-cards.ts', { lang: 'ts' });
+    const tmpLC = path.join(require('os').tmpdir(), 'rt-link-cards-' + process.pid + '.mjs');
+    fs.writeFileSync(tmpLC, code);
+    const LC = await import(pathToFileURL(tmpLC).href);
+    fs.unlinkSync(tmpLC);
+    const colors = new Proxy({}, { get: (t, k) => (k === 'phases' ? ['#111111', '#222222', '#333333', '#444444', '#555555', '#666666'] : '#000000') });
+    const art = { src: 'data:image/png;base64,', color: '#808080' };
+    const layouts = {};
+    for (let n = 3; n <= 14; n++) {
+      for (const event of [false, true]) {
+        const stops = n - 1; // the last stop (or the release) is the big poster
+        const tree = LC.linkCard({ site: 'redthread.tv', copy: { kicker: 'k', heading: 'h', headingKind: 'line' },
+          art: { layout: 'guide', stops: Array(stops).fill(art), last: art, chip: event ? 'Dec 18' : undefined, long: n > 5 } }, colors, { mark: '', word: '' });
+        const boxes = [];
+        (function walk(node) {
+          if (!node || typeof node !== 'object') return;
+          const s = node.props && node.props.style;
+          if (s && s.position === 'absolute' && s.boxShadow && s.width) boxes.push({ x: s.left, y: s.top, w: s.width, h: s.height });
+          [].concat((node.props && node.props.children) || []).forEach(walk);
+        })(tree);
+        const label = `${n} stops${event ? ', event' : ''}`;
+        if (boxes.length !== n) { errors.push(`guide layout, ${label}: ${boxes.length} posters`); continue; }
+        boxes.forEach((b, i) => {
+          if (b.x < 600 || b.y < 0 || b.x + b.w > 1200 || b.y + b.h > 630) errors.push(`guide layout, ${label}: poster ${i + 1} at ${Math.round(b.x)},${Math.round(b.y)} ${Math.round(b.w)}×${Math.round(b.h)} leaves its area`);
+          if (i > 0 && i < n - 1 && !(b.x > boxes[i - 1].x && b.y < boxes[i - 1].y)) errors.push(`guide layout, ${label}: poster ${i + 1} doesn't climb from ${i}`);
+        });
+        if (!event) layouts[n] = `${Math.round(boxes[0].w)}×${Math.round(boxes[0].h)} from ${Math.round(boxes[0].x)}`;
+      }
+    }
+    out.guideLayouts = layouts;
+    const most = Math.max(...win.GUIDES.map(g => g.stops.filter(s => s.weight === 'essential').length));
+    out.mostGuideStops = most;
+    expect(most > 10, `no guide has more than ten stops (most: ${most}), so the build never drew the longer layout`);
+  }
+
   // ---- The old addresses (vercel.json) --------------------------------------
   // Vercel matches a `has` host value as a whole-string pattern; so does this.
   const vercel = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
