@@ -51,7 +51,7 @@ const URL = `http://127.0.0.1:${PORT}/`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const P320 = { viewport: { width: 320, height: 700 }, hasTouch: true, isMobile: true };
-const DOOM_ESS = ['endgame', 'shang-chi', 'wakanda-forever', 'quantumania', 'loki-s2', 'cap-brave', 'thunderbolts', 'fantastic-four'];
+const DOOM_ESS = ['infinity-war', 'endgame', 'loki-s1', 'shang-chi', 'no-way-home', 'multiverse-madness', 'wakanda-forever', 'loki-s2', 'deadpool-3', 'cap-brave', 'thunderbolts', 'fantastic-four'];
 
 // Storage as a returning visitor (or a first one), set before the app loads.
 // `extra` is raw localStorage to add: { key: value }.
@@ -153,8 +153,8 @@ const labelsOverlap = (page) => page.evaluate(() => {
     await page.goto(URL); await settle(page);
     let p = await promoState(page);
     expect(p && p.dest && /December 18, in 47 days/.test(p.dest), `doomsday tile reads "${p && p.dest}"`);
-    // Eight stops since 2026-11-22: four covers and a "+4" tile, then the date.
-    expect(p && p.covers === 4 && p.more === '+4', `doomsday: ${p && p.covers} covers and "${p && p.more}", expected 4 and +4`);
+    // Twelve stops since 2026-11-23: four covers and a "+8" tile, then the date.
+    expect(p && p.covers === 4 && p.more === '+8', `doomsday: ${p && p.covers} covers and "${p && p.more}", expected 4 and +8`);
     // Escape closes it (one layer). The same day nothing else is offered.
     await page.keyboard.press('Escape'); await page.waitForTimeout(400);
     expect(!(await promoState(page)), 'Escape did not close the promotion');
@@ -258,12 +258,12 @@ const labelsOverlap = (page) => page.evaluate(() => {
   // ---- Started guide: checks, the next stop, the meter, Continue ------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, PHONE, '2026-11-01');
-    await seed(page, storage({ seen: ['endgame', 'shang-chi'] }));
+    await seed(page, storage({ seen: ['infinity-war', 'endgame'] }));
     await page.goto(URL); await settle(page);
     const p = await promoState(page);
     out.startedPromo = p;
     expect(p && p.done === 2 && p.cur === 1 && p.meter, `started: ${JSON.stringify(p)}`);
-    expect(p && p.go === 'Continue: Wakanda Forever', `started button reads "${p && p.go}"`);
+    expect(p && p.go === 'Continue: Loki', `started button reads "${p && p.go}"`);
     // Phone Back closes it.
     await page.goBack(); await page.waitForTimeout(600);
     expect(!(await promoState(page)), 'phone Back did not close the promotion');

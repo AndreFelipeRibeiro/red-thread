@@ -45,7 +45,7 @@ const PORT = +process.env.PORT || 8231;
 const URL = `http://127.0.0.1:${PORT}/`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
-const DOOM = ['endgame', 'shang-chi', 'wakanda-forever', 'quantumania', 'loki-s2', 'cap-brave', 'thunderbolts', 'fantastic-four'];
+const DOOM = ['infinity-war', 'endgame', 'loki-s1', 'shang-chi', 'no-way-home', 'multiverse-madness', 'wakanda-forever', 'loki-s2', 'deadpool-3', 'cap-brave', 'thunderbolts', 'fantastic-four'];
 const GUIDE = URL + '?view=guides&guide=before-doomsday';
 
 const errors = [];

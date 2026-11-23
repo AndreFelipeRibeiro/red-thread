@@ -125,9 +125,9 @@ const PART = () => {
     expect(p.expanded === 'false', 'Space did not close it');
     await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(400);
     await page.locator('.g-page .g-row').first().click(); await page.waitForTimeout(700);
-    // The second stop: the first (Endgame) has its details open already, and a
-    // click on an open title closes it.
-    await page.locator('.g-desk .g-stop[data-row-id]:not(.dest) .g-open').nth(1).click(); await page.waitForTimeout(700);
+    // A stop whose details aren't open (a click on an open title closes it):
+    // Loki, the third stop.
+    await page.locator('.g-desk .g-stop[data-row-id="loki-s1"] .g-open').click(); await page.waitForTimeout(700);
     p = await page.evaluate(PART);
     out.deskGuideAgain = p;
     expect(p.present && p.expanded === 'true', `the in-guide state changed when the other was toggled: ${JSON.stringify(p)}`);

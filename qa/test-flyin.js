@@ -113,17 +113,17 @@ const near = (a, b) => Math.abs(a - b) <= 0.02;
     await ctx.close();
   }
   // Desktop: a guide opened onto Connections flies over its route to its
-  // next stop (Endgame, nothing seen).
+  // next stop (Infinity War, nothing seen; Endgame until 2026-11-23).
   {
     const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(1200);
     const z = await track(page, () => page.locator('.g-head .g-connections').click());
-    const at = await place(page, 'endgame');
+    const at = await place(page, 'infinity-war');
     out.deskGuide = { min: Math.min(...z), end: at };
     // Its route nearly fits beside the panel (about 73% at 1440px): a short
     // first leg.
     expect(Math.min(...z) < deskLand(1440) * 0.85, `desktop guide: the camera should first show the whole route (lowest zoom ${Math.min(...z)})`);
-    expect(near(at.scale, Math.max(deskLand(1440), 0.5)) && at.inView && Math.abs(at.dx) <= 40, `desktop guide: should land on Endgame at the landing zoom, left of the panel: ${JSON.stringify(at)}`);
+    expect(near(at.scale, Math.max(deskLand(1440), 0.5)) && at.inView && Math.abs(at.dx) <= 40, `desktop guide: should land on Infinity War at the landing zoom, left of the panel: ${JSON.stringify(at)}`);
     errors.push(...e.map(x => 'desktop guide: ' + x));
     await ctx.close();
   }

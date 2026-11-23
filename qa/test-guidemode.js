@@ -260,7 +260,7 @@ const CANVAS = () => {
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { lang: 'en' });
     await page.goto(URL + '?guide=before-doomsday'); await appReady(page);
-    await page.waitForFunction(() => /title=endgame/.test(location.search), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => /title=infinity-war/.test(location.search), null, { timeout: 8000 }).catch(() => {});
     await page.waitForTimeout(900);
     const line = await page.evaluate(() => {
       const shown = [...document.querySelectorAll('.card')].filter(c => !c.classList.contains('ring-hidden'));
@@ -268,22 +268,22 @@ const CANVAS = () => {
       return { ids: ids.map(c => c.id), rows: new Set(ids.map(c => c.y)).size, url: location.search };
     });
     out.guideLine = line;
-    expect(line.ids.length === 9 && line.ids[0] === 'endgame' && line.ids[1] === 'shang-chi' && line.ids[8] === 'doomsday', `guide line: expected the 8 stops in order, then Doomsday: ${JSON.stringify(line)}`);
+    expect(line.ids.length === 13 && line.ids[0] === 'infinity-war' && line.ids[1] === 'endgame' && line.ids[12] === 'doomsday', `guide line: expected the 12 stops in order, then Doomsday: ${JSON.stringify(line)}`);
     expect(line.rows === 1, `guide line: the stops are not in one row: ${JSON.stringify(line)}`);
-    expect(/title=endgame/.test(line.url), `guide landing: the first stop's details did not open: ${line.url}`);
+    expect(/title=infinity-war/.test(line.url), `guide landing: the first stop's details did not open: ${line.url}`);
     await page.locator('.drawer.open button', { hasText: 'Mark seen' }).first().click();
-    await page.waitForFunction(() => /title=shang-chi/.test(location.search), null, { timeout: 4000 }).catch(() => {});
+    await page.waitForFunction(() => /title=endgame/.test(location.search), null, { timeout: 4000 }).catch(() => {});
     await page.waitForTimeout(400);
     const moved = await page.evaluate(() => ({ url: location.search, at: [...document.querySelectorAll('.card.guide-at')].map(c => c.dataset.id), next: [...document.querySelectorAll('.card.up-next')].map(c => c.dataset.id) }));
     out.guideSeenNext = moved;
-    expect(/title=shang-chi/.test(moved.url), `Mark seen did not move on to the next stop: ${moved.url}`);
-    expect(!moved.at.length || moved.at.join() === 'shang-chi', `the current-stop outline is on the wrong card: ${JSON.stringify(moved)}`);
+    expect(/title=endgame/.test(moved.url), `Mark seen did not move on to the next stop: ${moved.url}`);
+    expect(!moved.at.length || moved.at.join() === 'endgame', `the current-stop outline is on the wrong card: ${JSON.stringify(moved)}`);
     await page.locator('.mt-undo').first().click();
-    await page.waitForFunction(() => /title=endgame/.test(location.search), null, { timeout: 4000 }).catch(() => {});
+    await page.waitForFunction(() => /title=infinity-war/.test(location.search), null, { timeout: 4000 }).catch(() => {});
     await page.waitForTimeout(400);
-    const back = await page.evaluate(() => ({ url: location.search, endgame: (JSON.parse(localStorage.getItem('mcu.collection.v1')).states || {}).endgame || 'unseen' }));
+    const back = await page.evaluate(() => ({ url: location.search, first: (JSON.parse(localStorage.getItem('mcu.collection.v1')).states || {})['infinity-war'] || 'unseen' }));
     out.guideUndo = back;
-    expect(/title=endgame/.test(back.url) && back.endgame !== 'seen', `Undo after Mark seen did not step back to the title: ${JSON.stringify(back)}`);
+    expect(/title=infinity-war/.test(back.url) && back.first !== 'seen', `Undo after Mark seen did not step back to the title: ${JSON.stringify(back)}`);
     errors.push(...e);
     await ctx.close();
   }

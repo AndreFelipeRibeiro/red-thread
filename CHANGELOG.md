@@ -13,6 +13,19 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 23 — Before Doomsday: the twelve stops the major watch guides agree on
+
+Recorded: 2026-11-23 15:31 EST (-0500). Pushed to `version/5.0` (V5 staging) at 15:29 and merged to
+`main` (production); full regression on `cabe998`'s tree (`6c54999`): the first run 81 of 85
+check runs clean while the machine was overloaded (load average about 21: test-promo,
+test-threads, test-settings and test-micro, which then passed one at a time), the second run
+all 85 check runs clean; `qa/smoke.js` clean on the staging preview and on production.
+
+- Andre asked why the Doomsday guide had Endgame but not Infinity War, then asked for Loki's first season, Deadpool & Wolverine (Fox's X-Men, whom Doomsday brings back), and, after comparing Rotten Tomatoes' and IMDb's guides and Google's overview, No Way Home and Multiverse of Madness in place of Quantumania. Twelve stops in release order: Infinity War, Endgame, Loki, Shang-Chi, No Way Home, Multiverse of Madness, Wakanda Forever, Loki Season 2, Deadpool & Wolverine, Brave New World, Thunderbolts*, The Fantastic Four: First Steps; about 33 h 30 min; "Twelve films and series" / "Doze filmes e séries"; reasons in English and Portuguese. `src/data/guides.ts`.
+- The checks that list or count the guide's stops follow it: test-promo, test-skip, test-countdown, test-herodone, test-guidemode, test-partof, test-flyin, test-guidecanvas and test-ctafit. The guide's link preview now draws twelve stops in the longer layout from Batch 22. Commit [cabe998](https://github.com/AndreFelipeRibeiro/red-thread/commit/cabe998).
+- Figma: the Design System's guide promos and Welcome dialog (published), App Screens' Guides hero and Before Doomsday page, the OG long frame (now Thor, since Doomsday moved to the longer layout) and the "06 · Live" social post.
+- Limits: test-ringfocus, outside the regression, crashes on a phone tap here as on Batch 22's code. The Promo Videos file's eight-stop rounds are out of date (the Library session's ticket).
+
 ## V5 Batch 22 — Guide link previews fit up to 14 stops; The Infinity Saga takes 12
 
 Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to

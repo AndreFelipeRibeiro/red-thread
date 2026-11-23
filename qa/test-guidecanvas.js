@@ -62,7 +62,7 @@ async function ctxPage(browser, opts) {
   }));
 
   // Desktop: the guide's page → Connections, the guide's card top right and
-  // its next stop (Endgame, nothing seen) open in the details.
+  // its next stop (Infinity War, nothing seen) open in the details.
   {
     const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } });
     await page.goto(URL + '?view=list&guide=before-doomsday'); await appReady(page); await page.waitForTimeout(1200);
@@ -72,7 +72,7 @@ async function ctxPage(browser, opts) {
     await btn.click(); await page.waitForTimeout(2500);
     const a = out.desktop = await read(page);
     expect(/guide=before-doomsday/.test(a.url) && !/view=list/.test(a.url) && a.card && a.spatial && !a.page, `desktop: See connections should open Connections with the guide: ${JSON.stringify(a)}`);
-    expect(a.details === 'Avengers: Endgame', `desktop: the next stop's details should be open: ${JSON.stringify(a)}`);
+    expect(a.details === 'Avengers: Infinity War', `desktop: the next stop's details should be open: ${JSON.stringify(a)}`);
     errors.push(...e.map(x => 'desktop: ' + x));
     await ctx.close();
   }
