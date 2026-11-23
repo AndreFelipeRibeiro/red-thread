@@ -13,6 +13,15 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 21 — Hotfix: the Doomsday guide offered once a day until the film opens
+
+Recorded: 2026-11-22 23:09 EST (-0500). Pushed to `main` (production) as a hotfix and merged
+into `version/5.0`; full regression 82 of 82 runs clean on the hotfix tree; `qa/smoke.js` clean
+on production.
+
+- Andre saw redthread.tv offer The Infinity Saga essentials on his phone, and asked for the Doomsday guide to be pushed until the film is out; he chose once a day. Each guide had been offered once per device, so after a visitor closed Doomsday's offer the next visit fell to the next pick (the animated series' guide, also inside its 60 days, or the Infinity Saga). Now the guide for the soonest release in the next 60 days is offered once a day (`mcu.promoted.v1` keeps `<id>@<date>`, replacing the same guide's earlier day) until release day, and while it is unfinished no other guide is offered; the caught-up moment and the order after the lead-up are unchanged. `src/app/guides-ui.tsx` `promotion()`; `qa/test-promo.js` covers the same day, the next day and the order after the lead-up; README's rule updated. Commit [8d4b57f](https://github.com/AndreFelipeRibeiro/red-thread/commit/8d4b57f) (2026-11-22 23:01:12 EST).
+- Verified on production in a phone-sized headless browser: a returning visitor whose device had already been offered Doomsday under the old rule gets it again, and nothing more the same day. Limits: not checked on a real iPhone or in Instagram's browser; a visitor who finishes Doomsday's guide gets its caught-up moment and then the next release's guide daily (the animated series', Jan 13).
+
 ## V5 Batch 20 — Pilot fixes: the playbook gaps the first run through the loop found
 
 Recorded: 2026-11-21 15:07 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
