@@ -333,10 +333,11 @@ It is switched on in the Vercel project's Analytics tab.
   opens on the next stop,
   and `?guide=` shares it. The guide you are following reopens when you come
   back to the home page (until you close or finish it). Returning visitors
-  are offered one guide they haven't finished, once per guide on each device:
-  one leading to a release in the next 60 days (Avengers: Doomsday now), with
-  a countdown, else The Infinity Saga essentials, else the unfinished guide
-  closest to done. Finishing the guide for a release in the next 60 days
+  are offered one guide they haven't finished: the one leading to the soonest
+  release in the next 60 days (Avengers: Doomsday now), with a countdown,
+  once a day until release day and no other guide meanwhile; else The
+  Infinity Saga essentials, else the unfinished guide closest to done, each
+  once per device. Finishing the guide for a release in the next 60 days
   earns a "caught up" moment for it (confetti, the countdown, Share) before
   any other guide is offered; someone who has finished every guide gets it
   too, for the next release. Once per release. The choice waits for a

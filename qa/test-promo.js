@@ -2,7 +2,8 @@
 // soon"), with the date fixed by Playwright's clock:
 // - a returning visitor is offered one guide: the one leading to a release in
 //   the next 60 days (Doomsday on 2026-11-01, the animated series on
-//   2026-12-20), else the evergreen guide (2027-02-01); once per guide per
+//   2026-12-20), once a day until release day and no other guide meanwhile,
+//   else the evergreen guide (2027-02-01); other guides once per guide per
 //   device; never on a first visit, after a link or for a completed guide;
 // - Option C: countdown, numbered covers, the dated tile, Start or Continue;
 //   Not now, ×, Escape and phone Back close it; labels never overlap at 320,
@@ -143,30 +144,42 @@ const labelsOverlap = (page) => page.evaluate(() => {
     await ctx.close();
   }
 
-  // ---- Once per guide; Start opens and remembers it; resume; close forgets --
+  // ---- Once a day in the lead-up, once per guide after it; Start opens and
+  // remembers it; resume; close forgets ---------------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2026-11-01');
+    const day = (d) => page.clock.setFixedTime(new Date(d + 'T12:00:00'));
     await seed(page, storage());
     await page.goto(URL); await settle(page);
     let p = await promoState(page);
     expect(p && p.dest && /December 18, in 47 days/.test(p.dest), `doomsday tile reads "${p && p.dest}"`);
     expect(p && p.covers === 5, `doomsday: ${p && p.covers} covers, expected 5`);
-    // Escape closes it (one layer), and it is not shown again for that guide.
+    // Escape closes it (one layer). The same day nothing else is offered.
     await page.keyboard.press('Escape'); await page.waitForTimeout(400);
     expect(!(await promoState(page)), 'Escape did not close the promotion');
     await page.reload(); await settle(page);
     p = await promoState(page);
-    out.secondVisit = p;
-    expect(p && p.guide === 'The Infinity Saga essentials', `second visit promoted ${p && p.guide}, expected the evergreen guide`);
+    out.sameDay = p && p.guide;
+    expect(!p, `same day in the lead-up: promoted ${p && p.guide}, expected nothing`);
+    // The next day, Doomsday's guide again (the day's key replaces the old one).
+    await day('2026-11-02');
+    await page.reload(); await settle(page);
+    p = await promoState(page);
+    out.nextDay = p && p.guide;
+    expect(p && p.guide === 'Catch up before Avengers: Doomsday', `next day in the lead-up: promoted ${p && p.guide}, expected Doomsday's guide`);
+    const keys = await page.evaluate(() => localStorage.getItem('mcu.promoted.v1'));
+    expect(keys === '["before-doomsday@2026-11-02"]', `promoted memory after two days: ${keys}`);
     await page.locator('.gp-later').click(); await page.waitForTimeout(400);
-    // Later visits offer the other unfinished guides, closest to finished
-    // first, each once, then nothing.
-    const offered = ['Catch up before Avengers: Doomsday', 'The Infinity Saga essentials'];
+    // After the lead-up: the evergreen guide, then the other unfinished
+    // guides, closest to finished first, each once, then nothing.
+    await day('2027-02-01');
+    const offered = [];
     const total = await page.evaluate(() => window.GUIDES.length);
-    for (let visit = 3; visit <= total + 1; visit++) {
+    for (let visit = 1; visit <= total + 1; visit++) {
       await page.reload(); await settle(page);
       p = await promoState(page);
       if (!p) break;
+      if (visit === 1) expect(p.guide === 'The Infinity Saga essentials', `after the lead-up: promoted ${p.guide}, expected the evergreen guide`);
       expect(offered.indexOf(p.guide) === -1, `visit ${visit}: offered ${p.guide} again`);
       offered.push(p.guide);
       await page.locator('.gp-later').click(); await page.waitForTimeout(400);
@@ -175,6 +188,7 @@ const labelsOverlap = (page) => page.evaluate(() => {
     expect(offered.length === total, `offered ${offered.length} of ${total} guides before stopping: ${offered.join(' | ')}`);
     await page.reload(); await settle(page);
     expect(!(await promoState(page)), 'promoted again although every guide was offered');
+    await day('2026-11-01');
     // Start from a fresh device: opens the guide, remembers it, reopens it.
     await seed(page, storage());
     await page.goto(URL); await settle(page);

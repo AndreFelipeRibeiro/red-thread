@@ -236,7 +236,9 @@ window.useGuideSkips = useGuideSkips;
 // ---- Remembering and promoting guides (V3 Tasks, "Promote guide: Coming
 // soon"). Both are per device, like the display preferences.
 // mcu.guide.v1: the guide being followed, reopened on the home page.
-// mcu.promoted.v1: guides already promoted; each is promoted once.
+// mcu.promoted.v1: guides already promoted; each is promoted once, except
+// the guide for a release in the next 60 days, offered once a day
+// ("<id>@<YYYY-MM-DD>").
 const GUIDE_MEMORY_KEY = 'mcu.guide.v1';
 const PROMOTED_KEY = 'mcu.promoted.v1';
 const PROMO_LEAD_DAYS = 60;
@@ -251,7 +253,9 @@ Object.assign(MCU_GUIDE, {
     try { if (!id || localStorage.getItem(GUIDE_MEMORY_KEY) === id) localStorage.removeItem(GUIDE_MEMORY_KEY); } catch (e) { /* nothing stored */ }
   },
   markPromoted(id) {
-    const list = readIdList(PROMOTED_KEY);
+    // A daily key replaces the same guide's key from an earlier day.
+    const day = id.indexOf('@') > 0 ? id.slice(0, id.indexOf('@') + 1) : null;
+    const list = readIdList(PROMOTED_KEY).filter(k => !day || k === id || k.indexOf(day) !== 0);
     if (list.indexOf(id) === -1) { try { localStorage.setItem(PROMOTED_KEY, JSON.stringify(list.concat(id))); } catch (e) { /* this visit only */ } }
   },
   // The upcoming title a guide leads to: an event guide's target, or the title
@@ -291,7 +295,10 @@ Object.assign(MCU_GUIDE, {
   // What to promote today (Notion V4 Tasks, "Don't promote a guide that the
   // user has already finished"), never a guide already promoted on this device
   // or with nothing left to watch:
-  //   1. one leading to a release in the next 60 days, the sooner first;
+  //   1. the guide leading to the soonest release in the next 60 days, once a
+  //      day until release day (Andre, 2026-11-22: keep pushing the Doomsday
+  //      guide until the film is out); while it is unfinished no other guide
+  //      is offered, so once it was offered today there is nothing more;
   //   2. else, when the guide for a release in the next 60 days is finished,
   //      the caught-up moment for that release: the guide shown complete,
   //      its countdown, and Share (`ready`). Finishing that one guide earns
@@ -308,11 +315,12 @@ Object.assign(MCU_GUIDE, {
     const shown = readIdList(PROMOTED_KEY);
     const ok = (g) => shown.indexOf(g.id) === -1 && !MCU_GUIDE.finished(g, statusOf);
     const ahead = MCU_GUIDE.comingUp(today);
-    const coming = ahead.filter(x => x.days <= PROMO_LEAD_DAYS && ok(x.guide));
-    if (coming.length) return { ...coming[0], key: coming[0].guide.id };
+    const lead = ahead.find(x => x.days <= PROMO_LEAD_DAYS && !MCU_GUIDE.finished(x.guide, statusOf));
+    if (lead && shown.indexOf(lead.guide.id + '@' + today) === -1) return { ...lead, key: lead.guide.id + '@' + today };
     const readyFor = ahead.find(x => x.days <= PROMO_LEAD_DAYS && MCU_GUIDE.finished(x.guide, statusOf)
       && shown.indexOf('caught-up:' + x.title.id) === -1);
     if (readyFor) return { ...readyFor, caughtUp: true, ready: true, key: 'caught-up:' + readyFor.title.id };
+    if (lead) return null;
     const ever = MCU_GUIDE.all().find(g => g.evergreen && ok(g));
     if (ever) return { guide: ever, title: null, days: null, key: ever.id };
     const rest = MCU_GUIDE.all().filter(ok)
