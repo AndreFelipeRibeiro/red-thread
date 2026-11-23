@@ -402,6 +402,19 @@ one.
     a run of `"failed"` is worth looking at.
   - The glide steps guessed at 60ms and 80ms. They now wait for the transition
     to appear and to clear, which is what the "1 in 4" was.
+  - "A -> B: no ring card could be clicked" failed about one run in three
+    under load, on `main` as well (fixed 2026-11-23, Notion "test-camera: no
+    ring card could be clicked fails about one run in three under load"). A is
+    the card nearest the centre after the scripted pan, which lands a few
+    hundred pixels differently under load; a title with a small ring (Eyes of
+    Wakanda, Marvel Zombies, Wonder Man) can have every connected card outside
+    the clickable area, so there was no B to press. The step now closes that A
+    and tries the next card out from the centre, up to four, and
+    `ringClickAttempts` names each one passed over (`no B in reach of …`).
+    Twelve runs, four at a time, were clean; four of them needed the next A.
+    Iron Man 3 in Wonder Man's ring sometimes keeps moving under the pointer
+    three times running (`B moved off the pointer`); the check moves on, but if
+    that grows it's worth a look at the app.
 
 - `test-skip` **used to fail, and it was the check, not the app** (fixed
   2026-10-31). Batch 10 replaced the desktop guide's meter row with one taller

@@ -99,7 +99,8 @@ async function centerCard(page, exclude) {
     // not clickable (.ring-hidden): never pick one.
     const cards = [...document.querySelectorAll('.card:not(.ring-hidden)')].map(c => ({ c, r: c.getBoundingClientRect() }))
       .filter(({ r }) => r.left > 20 && r.right < W - 400 && r.top > 140 && r.bottom < H - 20);
-    const pick = cards.filter(({ c }) => !exclude || !c.textContent.includes(exclude))
+    const ex = [].concat(exclude || []);
+    const pick = cards.filter(({ c }) => !ex.some(e => c.textContent.includes(e)))
       .sort((a, b) => Math.hypot(a.r.x - W / 2, a.r.y - H / 2) - Math.hypot(b.r.x - W / 2, b.r.y - H / 2))[0];
     if (!pick) return null;
     return { x: pick.r.left + pick.r.width / 2, y: pick.r.top + pick.r.height * 0.8, title: pick.c.querySelector('.card-title, h3, .title') ? pick.c.querySelector('.card-title, h3, .title').textContent : pick.c.textContent.slice(0, 40) };
@@ -234,12 +235,30 @@ const pickView = (page, n) => phoneView(page, ['list', 'list', 'spatial'][n]);
   out.glideAfter = await TR(page);
   await page.screenshot({ path: path.join(S, 'shots', 'cam-desktop-restored.png') });
 
-  // A -> B through the ring, then close: B centred at the original zoom
-  const a2 = await centerCard(page);
-  await clickCard(page, a2);
-  await page.waitForTimeout(900);
+  // A -> B through the ring, then close: B centred at the original zoom.
+  // A is the card nearest the centre, which depends on where the pan above
+  // landed (it varies by a few hundred pixels under load). A title with a
+  // small ring (Eyes of Wakanda, Marvel Zombies) can have every connected card
+  // outside the clickable area (clear of the header and the drawer), and then
+  // there's no B to press: that's the layout, not the app (Notion "test-camera:
+  // no ring card could be clicked fails about one run in three under load",
+  // 2026-11-23). So close that A and try the next card out from the centre,
+  // up to four, and report each one passed over.
   const ringClicks = [];
-  const b = await clickRingCard(page, a2.title.slice(0, 12), ringClicks);
+  const passed = [];
+  let b = null;
+  for (let k = 0; k < 4 && !b; k++) {
+    const a2 = await centerCard(page, passed);
+    if (!a2) break;
+    await clickCard(page, a2);
+    await page.waitForTimeout(900);
+    b = await clickRingCard(page, a2.title.slice(0, 12), ringClicks);
+    if (b) break;
+    ringClicks.push('no B in reach of ' + a2.title);
+    passed.push(a2.title.slice(0, 12));
+    if (await page.locator('.drawer-close').count()) { await page.locator('.drawer-close').click(); await page.waitForTimeout(900); }
+    await settleCards(page);
+  }
   out.ringClickAttempts = ringClicks;
   if (!b) throw new Error('A -> B: no ring card could be clicked (attempts ' + JSON.stringify(ringClicks) + ')');
   await page.waitForTimeout(900);

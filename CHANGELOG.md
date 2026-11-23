@@ -13,6 +13,43 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 22 — Guide link previews fit up to 14 stops; The Infinity Saga takes 12
+
+Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to
+`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 84 of 85
+check runs clean, test-settings failing once ("Spatial card click with Settings open"; then 11 of
+11 clean alone and four at a time; Backlog ticket), the second run all 85 check runs clean;
+`qa/smoke.js` clean on the staging preview and on production.
+
+- A guide's link preview had room for ten stops, so The Infinity Saga couldn't take Age of Ultron and Doctor Strange. From 11 stops, the long layout's climb is now cut into more, smaller steps (posters, steps and nodes scale by 8 ÷ (stops − 1); the last small poster keeps the long layout's right edge), and `MAX_STOPS` is 14. Designed in Figma (Social Media and OG link preview, "OG · Guide · longer (11 to 14 stops)" `139:184`) and approved by Andre in chat. `src/share-card/link-cards.ts`, `src/share-card/previews.ts`; `docs/decisions.md`.
+- The Infinity Saga adds Age of Ultron (after Guardians of the Galaxy) and Doctor Strange (after Civil War) as essential stops, with reasons in English and Portuguese: 12 stops, about 27 h 30 min, "The twelve films" / "Os doze filmes". `src/data/guides.ts`.
+- test-previews lays a guide out at 3 to 14 stops, with and without a release, and checks every poster stays clear of the copy column, inside the image and climbing, and that a guide with more than ten stops exists; test-guidemode and test-promo expect the saga's 12 stops. Compared the build's 12-stop render with the Figma frame. Commit [e293da0](https://github.com/AndreFelipeRibeiro/red-thread/commit/e293da0).
+- Figma: the short and long preview frames now show a real guide of their layout (Guardians of the Galaxy; Before Doomsday with eight stops and its date chip), the "06 · Live" social post says eight films and series with re-captured phone screens, and The Infinity Saga's Guide card says 12 stops in the Design System (published) and App Screens.
+- Limits: past 14 stops the build still fails; a longer guide needs a new design. Not checked in a real WhatsApp or iMessage card.
+
+## V5 Batch 22 — test-camera: try the next card when A's ring is out of reach
+
+Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to
+`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 84 of 85
+check runs clean, test-settings failing once ("Spatial card click with Settings open"; then 11 of
+11 clean alone and four at a time; Backlog ticket), the second run all 85 check runs clean;
+`qa/smoke.js` clean on the staging preview and on production.
+
+- "A -> B: no ring card could be clicked" failed about one run in three under load, on production's code too. Card A is the one nearest the centre after the scripted pan, which lands a few hundred pixels differently under load; a title with a small ring (Eyes of Wakanda, Marvel Zombies) could leave every connected card outside the clickable area. The step now closes that A and tries the next card out from the centre, up to four, and names each one passed over in `ringClickAttempts`. `qa/test-camera.js`; `qa/README.md`, Known noise. Commit [eae7a55](https://github.com/AndreFelipeRibeiro/red-thread/commit/eae7a55).
+- 12 of 12 runs clean, four at a time; four needed the next A. Iron Man 3 in Wonder Man's ring sometimes keeps moving under the pointer three times running; the README says to look at the app if that grows.
+
+## V5 Batch 22 — Guide promo: a long title never overflows the Continue button
+
+Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to
+`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 84 of 85
+check runs clean, test-settings failing once ("Spatial card click with Settings open"; then 11 of
+11 clean alone and four at a time; Backlog ticket), the second run all 85 check runs clean;
+`qa/smoke.js` clean on the staging preview and on production.
+
+- On a phone, the promo's "Continue: Shang-Chi and the Legend of the Ten Rings" ran past both edges of the button (Andre's screenshot from production). The label now wraps, balanced, up to three lines, then an ellipsis; the button grows with it. `src/app/guides-ui.tsx`; `MCU_GUIDE.coverName` exposes the promo's short-name rule.
+- qa/test-ctafit.js (new) puts the Continue label of every catalog title, at full length and as the promo shortens it, plus a 60-letter word, into the real button at 320px, 390px and desktop, in English and Portuguese: nothing shows outside the button, and every real label fits in three lines. It fails against the old button classes. Looked at 390px English and 320px Portuguese. Commit [97479fc](https://github.com/AndreFelipeRibeiro/red-thread/commit/97479fc).
+- Limits: not checked on a real iPhone or in Instagram's in-app browser.
+
 ## V5 Batch 21 — Guides: the dropped optional stops that carry the story come back
 
 Recorded: 2026-11-22 23:59 EST (-0500). Pushed to `version/5.0` (V5 staging) and merged to
