@@ -48,6 +48,9 @@ const MCU_GUIDE = {
   name: (g) => gloc(g.name),
   short: (g) => gloc(g.short) || gloc(g.name),
   blurb: (g) => gloc(g.blurb),
+  // A title as the promo names it ("Name: Subtitle" → "Subtitle", "… Season 2"
+  // → "… S2" when short); qa/test-ctafit.js fits every one in the Continue button.
+  coverName: (t, short) => promoCoverName(t, short),
   why: (s) => gloc(s.why),
   title: (id) => (window.TITLES || []).find(t => t.id === id) || null,
   // The stops with their titles and numbers. Essential stops are numbered
@@ -1903,7 +1906,13 @@ const promoCls = (touch) => ({
   foot: cn('gp-foot flex', touch ? 'mt-2.5 flex-col items-stretch gap-2' : 'mt-5 items-center gap-2.5 border-t pt-4'),
   meta: cn('gp-meta text-label', DIM, touch ? 'mb-2 flex-none' : 'flex-1'),
   later: cn('nudge-later gp-later h-auto px-4', touch ? 'min-h-[max(44px,2.75rem)] border-0 shadow-none dark:border-0' : 'min-h-[max(42px,2.625rem)]'),
-  go: cn('picker-go gp-go h-auto px-[18px]', touch ? 'min-h-[max(48px,3rem)] text-heading' : 'min-h-[max(42px,2.625rem)]'),
+  // The label carries the next stop's name, so it wraps (balanced) instead of
+  // running past the button's edges: up to three lines, which fit every title
+  // on a 320px phone today, then an ellipsis. A long title can never overflow
+  // it (Notion "Guide promo: a long title must never overflow the Continue
+  // button", 2026-11-23; qa/test-ctafit.js).
+  go: cn('picker-go gp-go h-auto max-w-full min-w-0 shrink px-[18px] py-2 leading-tight whitespace-normal', touch ? 'min-h-[max(48px,3rem)] text-heading' : 'min-h-[max(42px,2.625rem)]'),
+  goLabel: 'gp-go-label line-clamp-3 min-w-0 text-center text-balance [overflow-wrap:anywhere]',
 });
 // The dialog and sheet frames: the band runs to the top edge, under the × (and
 // the phone's handle), which float on it.
@@ -2072,7 +2081,7 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
           <span className={P.meta}>{MCU_GUIDE.size(g)}</span>
           {!touch && later}
           <Button type="button" className={P.go} onClick={onStart}>
-            {next ? gtr('guide.continue', { title: promoCoverName(next.title, true) }) : gtr('guide.promoStart')}
+            <span className={P.goLabel}>{next ? gtr('guide.continue', { title: promoCoverName(next.title, true) }) : gtr('guide.promoStart')}</span>
           </Button>
           {touch && later}
         </div>
