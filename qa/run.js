@@ -125,7 +125,7 @@ function report(r) {
     lines.push(bad ? `  !! exited ${r.code}` + (r.out.match(/!!.*/) ? ' ' + r.out.match(/!!.*/)[0] : '') : '  no violations');
     lines.push(`  (${r.secs}s)`);
     if (bad && process.env.QA_VERBOSE) lines.push(r.out.split('\n').slice(-40).map(l => '  | ' + l).join('\n'));
-    return { text: lines.join('\n'), bad };
+    return { text: lines.join('\n'), bad, first: bad ? lines.find(l => l.includes('!!')).trim() : '' };
   }
   const flat = r.out.replace(/\s+/g, ' ');
   const found = [];
@@ -145,7 +145,24 @@ function report(r) {
   found.filter(f => !f.clean && !onlyNoise(f)).forEach(f => { lines.push('  !! ' + text(f)); bad = true; });
   lines.push(`  (${r.secs}s)`);
   if (bad && process.env.QA_VERBOSE) lines.push(r.out.split('\n').slice(-40).map(l => '  | ' + l).join('\n'));
-  return { text: lines.join('\n'), bad };
+  return { text: lines.join('\n'), bad, first: bad ? lines.find(l => l.includes('!!')).trim() : '' };
+}
+
+// The run's record (Notion "QA before a push", 2026-11-21): one line per run
+// and one per failing check, appended to qa/history.log (local, gitignored as
+// *.log), so over time it shows which checks catch problems and which never
+// do. Tab-separated: time, then "run" (kind, runs, failed, seconds, JOBS) or
+// "fail" (the check, its env, its first failing line). QA_HISTORY points it
+// elsewhere: qa/regress-frozen.sh sends a copy's runs to the worktree's log.
+function recordHistory(list, failed, secs) {
+  const file = process.env.QA_HISTORY || path.join(QA, 'history.log');
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const at = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const kind = process.argv.includes('--all') ? 'regress' : 'quick';
+  const rows = [[at, 'run', kind, list.length, failed.length, secs, 'JOBS=' + JOBS].join('\t')];
+  failed.forEach(({ c, first }) => rows.push([at, 'fail', c.check, Object.entries(c.env).map(([k, v]) => k + '=' + v).join(' ') || '-', first.replace(/\s+/g, ' ').slice(0, 300)].join('\t')));
+  try { fs.appendFileSync(file, rows.join('\n') + '\n'); } catch (e) { console.log('=== (could not write ' + file + ': ' + e.message + ')'); }
 }
 
 (async () => {
@@ -184,12 +201,14 @@ function report(r) {
   await Promise.all(Array.from({ length: Math.min(JOBS, parallel.length) }, (_, i) => worker(i)));
   for (const c of serial) results.set(c, await runOne(c, PORT_BASE + 50));
   let fail = false;
+  const failed = [];
   for (const c of list) {
-    const { text, bad } = report(results.get(c));
+    const { text, bad, first } = report(results.get(c));
     console.log(text);
-    if (bad) fail = true;
+    if (bad) { fail = true; failed.push({ c, first }); }
   }
   const total = Math.round((Date.now() - t0) / 1000);
+  recordHistory(list, failed, total);
   console.log(`=== total ${Math.floor(total / 60)}m ${total % 60}s (JOBS=${JOBS}); slowest:`);
   [...results.values()].sort((a, b) => b.secs - a.secs).slice(0, 10)
     .forEach(r => console.log(`  ${r.secs}s ${r.c.check}${Object.keys(r.c.env).length ? ' ' + JSON.stringify(r.c.env) : ''}`));

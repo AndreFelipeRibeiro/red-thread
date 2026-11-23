@@ -103,8 +103,9 @@ these are the rules that bite most often:
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.  - **Before a push**: the full regression (`bash qa/regress.sh`), never
     just because a ticket or an epic is finished, and the smoke test after
-    the deploy: the `ship-batch` skill. Each ticket's handoff says the full
-    run waits for the push.
+    the deploy: the `ship-batch` skill, which also says when a push with no
+    app code, or a merge of a tree staging already passed, runs the smoke
+    test only. Each ticket's handoff says the full run waits for the push.
   Update checks in the same commit when you rename or restructure UI they
   rely on.
 - The QA checks are headless Chromium. Still look at the change in a real
