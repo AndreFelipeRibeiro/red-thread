@@ -16,7 +16,7 @@ separate product releases. The merge checkpoint is included explicitly.
 ## V5 Batch 22 — Guide link previews fit up to 14 stops; The Infinity Saga takes 12
 
 Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to
-`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 78 of 79
+`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 84 of 85
 check runs clean, test-settings failing once ("Spatial card click with Settings open"; then 11 of
 11 clean alone and four at a time; Backlog ticket), the second run all 85 check runs clean;
 `qa/smoke.js` clean on the staging preview and on production.
@@ -30,7 +30,7 @@ check runs clean, test-settings failing once ("Spatial card click with Settings 
 ## V5 Batch 22 — test-camera: try the next card when A's ring is out of reach
 
 Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to
-`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 78 of 79
+`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 84 of 85
 check runs clean, test-settings failing once ("Spatial card click with Settings open"; then 11 of
 11 clean alone and four at a time; Backlog ticket), the second run all 85 check runs clean;
 `qa/smoke.js` clean on the staging preview and on production.
@@ -41,7 +41,7 @@ check runs clean, test-settings failing once ("Spatial card click with Settings 
 ## V5 Batch 22 — Guide promo: a long title never overflows the Continue button
 
 Recorded: 2026-11-23 13:22 EST (-0500). Pushed to `version/5.0` (V5 staging) at 13:20 and merged to
-`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 78 of 79
+`main` (production); full regression on `e293da0`'s tree (`bfebe1d`): the first run 84 of 85
 check runs clean, test-settings failing once ("Spatial card click with Settings open"; then 11 of
 11 clean alone and four at a time; Backlog ticket), the second run all 85 check runs clean;
 `qa/smoke.js` clean on the staging preview and on production.
