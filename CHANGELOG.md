@@ -13,6 +13,42 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 25 — Findability 4: index pages, the home page's links and richer page text
+
+Recorded: 2026-11-24 00:35 EST (-0500). Pushed to `version/5.0` (V5 staging) at 00:32 and merged to
+`main` (production); full regression on commit
+[20d7e99](https://github.com/AndreFelipeRibeiro/red-thread/commit/20d7e99)'s tree plus the other
+agent's uncommitted Figma docs and tools (`7d84f6a`, no app code): all 85 check runs clean;
+`qa/smoke.js` clean on the staging preview and on production.
+
+- `/guides` is the Guides tab and `/titles` the Titles list, both ways (`src/share-card/addresses.ts`; on phones the list is the default view, so the address there stays `/`); `/characters` opens the home view. `middleware.ts` serves each index's page, which lists every guide, title or character with a link, and redirects `/?view=guides` and `/?view=list` there (308). The home page's HTML links the three indexes and every guide, so every page is reachable from the home page in plain HTML (Search Console had shown the Doomsday guide with no referring page).
+- A title's page text lists the titles it connects to and who connects them; a character's names them in its appearances heading and lists who they share the most titles with. The tab title names the Guides and Titles sections ("Marvel watch guides · Red Thread"), in English and Portuguese. The sitemap lists 196 addresses; `llms.txt` links the indexes.
+- Real links inside the rendered app are split to Findability 15 (on phones the names sit inside buttons).
+- Verified on staging: the three indexes 200 with their own title and canonical, `/?view=guides` 308 to `/guides`, the app boots there on the Guides tab with no console errors. Locally: desktop English and phone Portuguese tabs and addresses, a title from the list and back. Not checked on a real iPhone.
+
+## V5 Batch 25 — Findability 5: structured data (JSON-LD) on every page
+
+Recorded: 2026-11-24 00:35 EST (-0500). Pushed to `version/5.0` (V5 staging) at 00:32 and merged to
+`main` (production), in commit [20d7e99](https://github.com/AndreFelipeRibeiro/red-thread/commit/20d7e99).
+
+- Every page's `<head>` carries one JSON-LD block (`src/share-card/structured-data.ts`): WebSite, Organization and WebApplication on the home page; an ordered list of films and series for a guide or a character; a Movie or TVSeries with its synopsis, runtime and cast for a title; a list for each index page; breadcrumbs on every page but home. No FAQPage (no Q&A to mark up, and Google shows FAQ results only for government and health sites) and no `sameAs` until Red Thread has social profiles.
+- test-previews checks every page's block. Google's Rich Results Test not yet run.
+
+## V5 Batch 25 — Findability 13: a favicon Google can show
+
+Recorded: 2026-11-24 00:35 EST (-0500). Pushed to `version/5.0` (V5 staging) at 00:32 and merged to
+`main` (production), in commit [20d7e99](https://github.com/AndreFelipeRibeiro/red-thread/commit/20d7e99).
+
+- Google showed the old favicon: it accepts only multiples of 48px, the site had a 64px PNG, and `/favicon.ico` was a 404. `tools/make-icons.js` now also draws `favicon-96.png` and `favicon.ico` (48 and 32px) from the same mark, and `index.html` links both. The tab looks the same. Google updates it on its own schedule after recrawling the home page.
+
+## V5 Batch 25 — Findability 14: IndexNow
+
+Recorded: 2026-11-24 00:35 EST (-0500). Pushed to `version/5.0` (V5 staging) at 00:32 and merged to
+`main` (production), in commit [20d7e99](https://github.com/AndreFelipeRibeiro/red-thread/commit/20d7e99).
+
+- `indexnow-key.txt` ships at the root, and `tools/indexnow.js` submits every address in the live sitemap to IndexNow (Bing and others) once production serves the key; the ship-batch skill runs it after each merge to `main`. Run for this batch after the production smoke test.
+- Also in the commit: the link previews write to the build's own output folder rather than always `dist`.
+
 ## V5 Batch 24 — Findability 3: an address with readable text for every guide, title and character
 
 Recorded: 2026-11-23 22:10 EST (-0500). Pushed to `version/5.0` (V5 staging) at 22:07 and merged to
