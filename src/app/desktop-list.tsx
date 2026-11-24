@@ -247,7 +247,7 @@ function GroupHeader({ g, prog, phone = false }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, groupProgress, upNext, floatingCard }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, charMarks, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, groupProgress, upNext, floatingCard }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf } = window.useCollection();
@@ -318,7 +318,6 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                 {g.items.map(t => {
                   n += 1;
                   const seen = statusOf(t.id) === 'seen';
-                  const matched = searchCharMatches ? (searchCharMatches[t.id] || []) : [];
                   // A pinned performer covers several characters: a row is
                   // only dimmed when it holds none of them.
                   const dim = activeChars ? !activeChars.some(c => t.cast.includes(c)) : (activeChar && !t.cast.includes(activeChar));
@@ -369,8 +368,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                           </span>
                           <span className="dl-meta mt-0.5 max-w-full truncate text-(length:--step-meta) text-muted-foreground">{meta}</span>
                           <window.ReleaseBadge title={t} className="dl-release mt-[5px] flex w-max"/>
-                          {/* Which character matched the search. */}
-                          <window.MatchBadge matchedChars={matched} query={search} title={t}/>
+                          {/* Who the row is here for: the search's match or
+                              the picked character (CharMark, list-parts.tsx). */}
+                          <window.CharMark mark={charMarks ? charMarks[t.id] : null} title={t} size={20} className="dl-mark mt-1 text-label text-muted-foreground"/>
                         </span>
                       </span>
                       <span className={cn('c-release text-foreground/85', FIG)} role="cell">{t.year}</span>

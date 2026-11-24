@@ -237,7 +237,7 @@ declare global {
     PhaseBadge: ListParts['PhaseBadge'];
     Sheet: Mobile['Sheet'];
     EmptyState: ListParts['EmptyState'];
-    MatchBadge: ListParts['MatchBadge'];
+    CharMark: ListParts['CharMark'];
     ProgressHeader: ListParts['ProgressHeader'];
     Highlight: Mobile['Highlight'];
     StoryYear: TitleDetails['StoryYear'];

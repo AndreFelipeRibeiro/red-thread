@@ -229,6 +229,8 @@ window.MCU_LOCALES.en = {
     'suggest.characters': 'Characters',
     'suggest.titles': 'Titles',
     'suggest.as': 'as {names}',
+    // A row's or card's character marker, as its tooltip: "Tom Holland as Peter Parker".
+    'charmark.as': '{actor} as {name}',
     // A recast part, with no single title in view to pick a performer from:
     // the name that carries most of the run, then how many others there are.
     'credit.more': '{name} +{n}',

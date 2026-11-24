@@ -21,7 +21,7 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   out.slideOut = s2;
   // search Sam: badge under titles, highlight in drawer
   await page.fill('.search-wrap input', 'Sam'); await page.waitForTimeout(500);
-  out.badges = await page.evaluate(() => [...document.querySelectorAll('.dl-row')].filter(r => /Winter Soldier|Falcon/.test(r.textContent)).map(r => r.querySelector('.dl-open').textContent + ' -> ' + r.querySelector('.card-match').textContent));
+  out.badges = await page.evaluate(() => [...document.querySelectorAll('.dl-row')].filter(r => /Winter Soldier|Falcon/.test(r.textContent)).map(r => r.querySelector('.dl-open').textContent + ' -> ' + r.querySelector('.char-mark').textContent));
   await page.locator('.dl-row:not(.dl-head)').nth(1).click(); await page.waitForTimeout(700);
   out.drawerMarks = await page.evaluate(() => [...document.querySelectorAll('.drawer .cast-row mark.hl')].map(m => m.textContent + ':' + getComputedStyle(m).textDecorationLine));
   await page.screenshot({ path: path.join(S, 'shots', 'panel-1100-sam.png') });
