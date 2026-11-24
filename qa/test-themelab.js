@@ -124,7 +124,7 @@ const pick = (page, sel, value) => page.evaluate(([s, v]) => {
     expect(!(await page.locator('.theme-lab').count()), 'phone: a short tap on the wordmark opened the lab');
     await page.goto(URL + '?view=list&sort=title'); await settle(page);
     await press(1200);
-    const p = await page.evaluate(() => { const l = document.querySelector('.theme-lab'), n = document.querySelector('.m-tabs'); return { open: !!l, url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))), labBottom: l && Math.round(l.getBoundingClientRect().bottom), barTop: n && Math.round(n.getBoundingClientRect().top) }; });
+    const p = await page.evaluate(() => { const l = document.querySelector('.theme-lab'), n = document.querySelector('.m-tabs'); return { open: !!l, url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))), labBottom: l && Math.round(l.getBoundingClientRect().bottom), barTop: n && Math.round(n.getBoundingClientRect().top) }; });
     out.phone = p;
     expect(p.open && /sort=title/.test(p.url), `phone: the long press did not open the lab, or went home: ${JSON.stringify(p)}`);
     expect(!p.open || p.labBottom <= p.barTop, `phone: the lab sits on the bottom bar: ${JSON.stringify(p)}`);

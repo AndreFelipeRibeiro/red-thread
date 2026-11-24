@@ -64,14 +64,14 @@ const settle = (page) => require('./ready').appReady(page, 1000);
 
 // The state the logo is meant to reset, read from the page.
 const STATE = () => {
-  const q = new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))));
+  const q = new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))));
   // The status filter: a pressed header pill (Seen, Watchlist), else All.
   const pill = document.querySelector('.status-counts [aria-pressed="true"]');
   const coll = pill ? { textContent: pill.dataset.coll } : { textContent: 'All' };
   const search = document.querySelector('.search-wrap input, .m-search-input input');
   const canvas = document.querySelector('.canvas');
   return {
-    url: location.pathname + (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))),
+    url: location.pathname + (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))),
     search: search ? search.value : null,
     coll: coll ? coll.textContent.trim() : null,
     chips: document.querySelectorAll('.ctx-chip').length,
@@ -97,7 +97,9 @@ const STATE = () => {
   const errors = [];
   const expect = (ok, msg) => { if (!ok) errors.push(msg); };
   const firstState = (s, where, view) => {
-    expect(s.url === '/' + (view ? '?view=' + view : ''), `${where}: address ${s.url}`);
+    // The Titles list and the Guides tab have index addresses (Findability 4);
+    // url is the path plus the address read back as one query.
+    expect(s.url === ({ list: '/titles?view=list', guides: '/guides?view=guides' }[view] || '/' + (view ? '?view=' + view : '')), `${where}: address ${s.url}`);
     expect(!s.search && s.chips === 0 && !s.pinned && !s.guide && !s.drawer && !s.sheet, `${where}: not reset: ${JSON.stringify(s)}`);
     expect(!s.sort && !s.order, `${where}: sort ${s.sort} ${s.order}, expected Release, earliest first`);
     expect(s.upnext, `${where}: Up next did not come back`);

@@ -8,6 +8,11 @@
 // panels say about the same thing (the stops and their reasons, the cast, the
 // appearances), never more, so it is the page's content, not hidden extras.
 //
+// Findability 4 adds what the app's panels say about connections (a title's
+// thread, a character's most frequent co-stars), the index pages (/guides,
+// /titles, /characters) and the home page's text, so every page links to the
+// others in plain HTML and a crawler can reach all of them from the home page.
+//
 // English, like the link previews: the address is the same in every language.
 // Plain data in, an HTML string out.
 import type { Guide, Title } from '../types/catalog';
@@ -52,6 +57,38 @@ export function pageTexts(cat: Catalog, loc: LocaleTables): PageTexts {
     ? `<h2>${esc(tr('page.inGuides'))}</h2><ul>${gs.map((g) => `<li><a href="${thingPath('guide', g.id)}">${esc(g.name.en)}</a></li>`).join('')}</ul>`
     : '');
 
+  /** threadOf (title-details.tsx) without the window: the other titles
+   *  sharing a character, by identity, with this title's own ids for them. */
+  const connected = (title: Title) => {
+    const mine = new Map<string, string>();
+    title.cast.forEach((ch) => { if (!mine.has(prime(ch))) mine.set(prime(ch), ch); });
+    return byRelease.filter((o) => o.id !== title.id).map((o) => {
+      const via: string[] = [];
+      o.cast.forEach((ch) => { const own = mine.get(prime(ch)); if (own && !via.includes(own)) via.push(own); });
+      return { t: o, via };
+    }).filter((r) => r.via.length);
+  };
+  /** The characters who share the most titles with this one (five at most,
+   *  two titles or more), most first, then by name. */
+  const coStarList = (id: string, titles: Title[]) => {
+    const count = new Map<string, number>();
+    titles.forEach((t) => {
+      const seen = new Set<string>();
+      t.cast.forEach((ch) => {
+        const p = prime(ch);
+        if (p === prime(id) || seen.has(p) || !hasPage(p)) return;
+        seen.add(p);
+        count.set(p, (count.get(p) || 0) + 1);
+      });
+    });
+    const top = [...count].filter(([, n]) => n >= 2)
+      .sort((a, b) => b[1] - a[1] || charName(a[0]).localeCompare(charName(b[0]))).slice(0, 5);
+    return top.length
+      ? `<h2>${esc(tr('page.sharesMost'))}</h2><ul>${top.map(([p, n]) =>
+        `<li><a href="${thingPath('char', p)}">${esc(charName(p))}</a>, ${esc(tr('page.sharedTitles', { n }))}</li>`).join('')}</ul>`
+      : '';
+  };
+
   const out: PageTexts = new Map();
 
   for (const g of cat.guides) {
@@ -84,10 +121,17 @@ export function pageTexts(cat: Catalog, loc: LocaleTables): PageTexts {
         return `<li><a href="${thingPath('char', id)}">${esc(charName(id))}</a> (${esc(actor)})</li>`;
       }).join('')}</ul>`
       : '';
+    // Follow the thread (title-details.tsx threadOf): every title sharing a
+    // character with this one, in release order, with who connects them.
+    const thread = connected(t);
+    const threadList = thread.length
+      ? `<h2>${esc(tr('thread.listLabel', { title: titleName(t) }))}</h2><ol>${thread.map(({ t: o, via }) =>
+        `<li>${titleLink(o)}, ${esc(tr('thread.via', { names: via.map(charName).join(', ') }))}</li>`).join('')}</ol>`
+      : '';
     out.set('title/' + t.id, wrap(
       `<h1>${esc(titleName(t))} (${t.year})</h1><p>${esc(facts.join(' · '))}</p>`
       + (synopsis ? `<p>${esc(synopsis)}</p>` : '')
-      + castList + guideList(guidesWith((g) => g.stops.some((s) => s.id === t.id))),
+      + castList + threadList + guideList(guidesWith((g) => g.stops.some((s) => s.id === t.id))),
     ));
   }
 
@@ -100,9 +144,40 @@ export function pageTexts(cat: Catalog, loc: LocaleTables): PageTexts {
     out.set('char/' + id, wrap(
       `<h1>${esc(name)}</h1><p>${esc(tr('og.charEyebrow', { actor: c.actor }))}</p>`
       + `<p>${esc(tr('og.charDesc', { name, n: titles.length, first }))}</p>`
-      + `<h2>${esc(tr('page.appearances'))}</h2><ol>${titles.map((t) => `<li>${titleLink(t)}, ${esc(kindWord(t))}</li>`).join('')}</ol>`
+      + `<h2>${esc(tr('page.appearances', { name }))}</h2><ol>${titles.map((t) => `<li>${titleLink(t)}, ${esc(kindWord(t))}</li>`).join('')}</ol>`
+      + coStarList(id, titles)
       + guideList(guidesWith((g) => g.character === id)),
     ));
   }
+
+  // The index pages (Findability 4): every guide, title and character with a
+  // link, so each page is one step from the home page in plain HTML.
+  const nav = `<nav><ul>${INDEXES.map((i) => `<li><a href="/${i.segment}">${esc(tr(i.name))}</a></li>`).join('')}</ul></nav>`;
+  out.set('index/guides', wrap(
+    `<h1>${esc(tr('page.guidesName'))}</h1><p>${esc(tr('page.guidesDesc'))}</p><ul>${cat.guides.map((g) =>
+      `<li><a href="${thingPath('guide', g.id)}">${esc(g.name.en)}</a>: ${esc(g.blurb.en)} (${esc(tr('guide.stops', { n: g.stops.length }))})</li>`).join('')}</ul>${nav}`,
+  ));
+  out.set('index/titles', wrap(
+    `<h1>${esc(tr('page.titlesName'))}</h1><p>${esc(tr('page.titlesDesc'))}</p><ol>${byRelease.map((t) =>
+      `<li>${titleLink(t)}, ${esc(tr('phase.label', { n: t.phase }))} ${esc(kindWord(t).toLowerCase())}</li>`).join('')}</ol>${nav}`,
+  ));
+  const chars = Object.keys(cat.characters).filter(hasPage).sort((a, b) => charName(a).localeCompare(charName(b)));
+  out.set('index/characters', wrap(
+    `<h1>${esc(tr('page.charactersName'))}</h1><p>${esc(tr('page.charactersDesc'))}</p><ul>${chars.map((id) =>
+      `<li><a href="${thingPath('char', id)}">${esc(charName(id))}</a> (${esc(cat.characters[id].actor)}), ${esc(tr('page.inTitles', { n: appearances(id).length }))}</li>`).join('')}</ul>${nav}`,
+  ));
+  // The home page: what Red Thread is, the three indexes and every guide.
+  out.set('home', wrap(
+    `<h1>${esc(app)}</h1><p>${esc(tr('og.defaultTitle', { app }))}</p>${nav}`
+    + `<h2>${esc(tr('page.guidesName'))}</h2><ul>${cat.guides.map((g) =>
+      `<li><a href="${thingPath('guide', g.id)}">${esc(g.name.en)}</a></li>`).join('')}</ul>`,
+  ));
   return out;
 }
+
+/** The index addresses (src/share-card/addresses.ts) and their names. */
+export const INDEXES = [
+  { segment: 'guides', name: 'page.guidesName', description: 'page.guidesDesc' },
+  { segment: 'titles', name: 'page.titlesName', description: 'page.titlesDesc' },
+  { segment: 'characters', name: 'page.charactersName', description: 'page.charactersDesc' },
+] as const;

@@ -109,7 +109,7 @@ const promoState = (page) => page.evaluate(() => {
 });
 const guideOpen = (page) => page.evaluate(() => {
   const b = document.querySelector('.guide-banner b, .g-pill .gp-name, .g-pill b');
-  return { banner: !!document.querySelector('.guide-banner, .g-pill, .g-scroll'), url: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'), kept: localStorage.getItem('mcu.guide.v1'), name: b ? b.textContent : null };
+  return { banner: !!document.querySelector('.guide-banner, .g-pill, .g-scroll'), url: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'), kept: localStorage.getItem('mcu.guide.v1'), name: b ? b.textContent : null };
 });
 const labelsOverlap = (page) => page.evaluate(() => {
   const labels = [...document.querySelectorAll('.gp .gp-t')];

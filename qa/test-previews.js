@@ -32,6 +32,19 @@
 //   - The app boots from a page at its address exactly as from index.html,
 //     opens what the page names and keeps the address.
 //   - The tab title follows what is open (Notion "Findability 2").
+//   - Findability 5: every page carries one JSON-LD block of its kind (home:
+//     WebSite, Organization, WebApplication; a guide and a character an
+//     ordered ItemList of their titles; a title a Movie or TVSeries with its
+//     cast; an index an ItemList), every page but home a BreadcrumbList.
+//   - Findability 14: indexnow-key.txt ships at the root for tools/indexnow.js.
+//   - Findability 13: favicon.ico (48px) and favicon-96.png ship at the root
+//     and index.html links both, sizes Google's search results can show.
+//   - Findability 4: the index pages /guides, /titles and /characters list
+//     every guide, title and character with a link (the middleware serves
+//     them; /?view=guides and /?view=list redirect there); the home page's
+//     HTML links to all three and to every guide; a title's page lists the
+//     titles it connects to, a character's page who they share the most
+//     titles with; the app boots at /guides on the Guides tab and keeps it.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8304;
 const { chromium } = require('playwright');
@@ -75,7 +88,16 @@ const stripMeta = (html) => html
   .replace(/<meta (?:property="og:[a-z:]+"|name="(?:description|twitter:[a-z:]+)") content="[^"]*"\/>/g, '')
   .replace(/<link rel="canonical" href="[^"]*"\/>/g, '')
   .replace(/<title>[^<]*<\/title>/, '')
-  .replace(/<article id="mcu-page-text"[\s\S]*?<\/article>/, '');
+  .replace(/<article id="mcu-page-text"[\s\S]*?<\/article>/, '')
+  .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '');
+// A page's structured data (Findability 5): its one JSON-LD block, parsed;
+// null when it has none, or more than one, or it isn't JSON.
+const jsonLd = (html) => {
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  if (blocks.length !== 1) return null;
+  try { const d = JSON.parse(blocks[0][1]); return d['@context'] === 'https://schema.org' && Array.isArray(d['@graph']) ? d['@graph'] : null; } catch (e) { return null; }
+};
+const ldTypes = (g) => (g || []).map(x => x['@type']).join(',');
 const SEGMENT = { title: 'titles', guide: 'guides', char: 'characters' };
 const pageText = (html) => { const m = html.match(/<article id="mcu-page-text"[^>]*>([\s\S]*?)<\/article>/); return m ? m[1] : null; };
 const MAX_BYTES = 300 * 1024;
@@ -110,6 +132,30 @@ const tagErrors = (html, label, url) => {
   expect(meta(index, 'og:site_name') === 'Red Thread' && meta(index, 'og:title') === 'Red Thread', 'index.html: og:site_name / og:title are not Red Thread');
   expect(!fs.existsSync(path.join(SITE, 'og-image.jpg')), 'the build still ships the old og-image.jpg');
   let biggest = fs.existsSync(def) ? fs.statSync(def).size : 0;
+  // Favicons search results can show (Findability 13): Google wants a
+  // multiple of 48px and asks for /favicon.ico whatever the page links.
+  {
+    const png = (f) => { const b = fs.readFileSync(f); return b.slice(1, 4).toString() === 'PNG' ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null; };
+    const icoFile = path.join(SITE, 'favicon.ico');
+    const ico = fs.existsSync(icoFile) ? fs.readFileSync(icoFile) : null;
+    const icoSizes = ico && ico.readUInt16LE(2) === 1 ? Array.from({ length: ico.readUInt16LE(4) }, (_, i) => ico[6 + 16 * i] || 256) : [];
+    expect(icoSizes.includes(48), 'favicon.ico: missing or has no 48px image: ' + icoSizes);
+    const p96 = path.join(SITE, 'favicon-96.png');
+    expect(fs.existsSync(p96) && String(png(p96)) === '96,96', 'favicon-96.png: missing or not 96×96');
+    const links = (index.match(/<link rel="icon"[^>]*>/g) || []).join('\n');
+    expect(/sizes="48x48"/.test(links) && /\.ico"/.test(links), 'index.html: no 48px .ico icon link');
+    expect(/sizes="96x96"/.test(links), 'index.html: no 96px icon link');
+    out.favicon = { ico: icoSizes, links: (links.match(/sizes="[^"]+"/g) || []).join(' ') };
+  }
+  // IndexNow's key ships at the root, the same key tools/indexnow.js sends
+  // (Findability 14).
+  {
+    const shipped = path.join(SITE, 'indexnow-key.txt');
+    const key = fs.readFileSync(path.join(ROOT, 'indexnow-key.txt'), 'utf8').trim();
+    expect(/^[a-f0-9]{32}$/.test(key), 'indexnow-key.txt: not a 32-character key');
+    expect(fs.existsSync(shipped) && fs.readFileSync(shipped, 'utf8').trim() === key, 'the build does not ship indexnow-key.txt at the root');
+    expect(/KEY_FILE = 'indexnow-key.txt'/.test(fs.readFileSync(path.join(ROOT, 'tools', 'indexnow.js'), 'utf8')), 'tools/indexnow.js does not send indexnow-key.txt');
+  }
 
   // The catalog, read the way the app's own files publish it.
   const vm = require('vm');
@@ -155,11 +201,68 @@ const tagErrors = (html, label, url) => {
         const why = g.stops[0].why.en.replace(/&/g, '&amp;');
         if (!text.includes(why.slice(0, 30))) errors.push(`guide ${id}: the page text leaves out the stops' reasons`);
       }
+      if (kind === 'title') {
+        // Follow the thread: every title sharing a character, by identity.
+        const t = win.TITLES.find(x => x.id === id);
+        const prime = (c) => (win.CHARACTERS[c] && win.CHARACTERS[c].prime) || c;
+        const mine = new Set(t.cast.map(prime));
+        const want = win.TITLES.filter(o => o.id !== id && o.cast.some(c => mine.has(prime(c)))).length;
+        const got = ((((text || '').split('<h2>Titles connected to ')[1] || '').split('<h2>')[0]).match(/<li>/g) || []).length;
+        if (got !== want) errors.push(`title ${id}: the page text lists ${got} connected titles, not ${want}`);
+      }
+      {
+        const g = jsonLd(html);
+        const t = kind === 'title' && win.TITLES.find(x => x.id === id);
+        const want = kind === 'title' ? (t.type === 'film' ? 'Movie' : 'TVSeries') + ',BreadcrumbList' : 'ItemList,BreadcrumbList';
+        if (ldTypes(g) !== want) errors.push(`${kind} ${id}: structured data is [${ldTypes(g)}], not [${want}]`);
+        else if (g[0].url !== q) errors.push(`${kind} ${id}: structured data url ${g[0].url}`);
+        else if (kind === 'guide') {
+          const ids = g[0].itemListElement.map(li => li.item.url.split('/').pop()).join();
+          if (ids !== win.GUIDES.find(x => x.id === id).stops.map(st => st.id).join()) errors.push(`guide ${id}: structured data lists ${ids}, not its stops`);
+        } else if (kind === 'title' && !g[0].actor.length && t.cast.length) errors.push(`title ${id}: structured data has no cast`);
+      }
       if (stripMeta(html) !== base) errors.push(`${kind} ${id}: the page differs from index.html beyond its preview tags, title and text`);
       checked++;
     }
   }
   out.pagesChecked = checked;
+  // A character's page names them in its appearances heading and lists who
+  // they share the most titles with (Loki: Thor first).
+  {
+    const loki = pageText(fs.readFileSync(path.join(SITE, 'og', 'char', 'loki.html'), 'utf8')) || '';
+    expect(loki.includes('<h2>Loki in the MCU: every appearance, in release order</h2>'), 'char loki: no "Loki in the MCU" heading');
+    const co = (loki.split('<h2>Shares the most titles with</h2>')[1] || '').match(/<li><a href="\/characters\/([a-z0-9-]+)">/);
+    expect(co && co[1] === 'thor', 'char loki: Thor is not first among who Loki shares the most titles with: ' + (co && co[1]));
+  }
+
+  // ---- The index pages and the home page's text (Findability 4) -------------
+  const INDEX_PAGES = { guides: ['guide', 'Marvel watch guides'], titles: ['title', 'Every Marvel film and series'], characters: ['char', 'Marvel characters'] };
+  for (const [seg, [kind, name]] of Object.entries(INDEX_PAGES)) {
+    const f = path.join(SITE, 'og', 'index', seg + '.html');
+    if (!fs.existsSync(f)) { errors.push(`index ${seg}: no page`); continue; }
+    const html = fs.readFileSync(f, 'utf8');
+    const text = pageText(html) || '';
+    errors.push(...tagErrors(html, `index ${seg}`, `${PUBLIC}/${seg}`));
+    expect((html.match(/<title>([^<]*)<\/title>/) || [])[1] === `${name} · Red Thread` && meta(html, 'og:title') === `${name} · Red Thread`, `index ${seg}: <title> or og:title is not "${name} · Red Thread"`);
+    expect(meta(html, 'og:image') === PUBLIC + '/og/default.jpg', `index ${seg}: og:image is not the app-wide card`);
+    expect(text.includes(`<h1>${name}</h1>`), `index ${seg}: h1 is not ${name}`);
+    const linked = new Set([...text.matchAll(new RegExp(`<a href="/${seg}/([a-z0-9-]+)">`, 'g'))].map(m => m[1]));
+    const pages = sets[kind].map(([id]) => id).filter(id => fs.existsSync(path.join(SITE, 'og', kind, id + '.html')));
+    expect(pages.length && pages.every(id => linked.has(id)) && linked.size === pages.length, `index ${seg}: links ${linked.size} of ${pages.length} pages`);
+    expect(stripMeta(html) === base, `index ${seg}: the page differs from index.html beyond its preview tags, title and text`);
+    const ld = jsonLd(html);
+    expect(ldTypes(ld) === 'ItemList,BreadcrumbList' && ld[0].numberOfItems === pages.length, `index ${seg}: structured data [${ldTypes(ld)}] with ${ld && ld[0].numberOfItems} items`);
+    for (const other of Object.keys(INDEX_PAGES)) expect(text.includes(`<a href="/${other}">`), `index ${seg}: no link to /${other}`);
+  }
+  {
+    const home = pageText(index) || '';
+    for (const seg of Object.keys(INDEX_PAGES)) expect(home.includes(`<a href="/${seg}">`), `index.html: the home page's text has no link to /${seg}`);
+    const ld = jsonLd(index);
+    expect(ldTypes(ld) === 'WebSite,Organization,WebApplication', `index.html: structured data is [${ldTypes(ld)}]`);
+    out.homeStructuredData = ldTypes(ld);
+    const guideLinks = new Set([...home.matchAll(/<a href="\/guides\/([a-z0-9-]+)">/g)].map(m => m[1]));
+    expect(win.GUIDES.every(g => guideLinks.has(g.id)), `index.html: the home page's text links ${guideLinks.size} of ${win.GUIDES.length} guides`);
+  }
   out.biggestImageKB = Math.round(biggest / 1024);
 
   // ---- The guide layouts, 3 to 14 stops -------------------------------------
@@ -236,7 +339,7 @@ const tagErrors = (html, label, url) => {
     expect(robots.includes(`Sitemap: ${PUBLIC}/sitemap.xml`), 'robots.txt has no Sitemap line');
     const sm = fs.existsSync(path.join(SITE, 'sitemap.xml')) ? fs.readFileSync(path.join(SITE, 'sitemap.xml'), 'utf8') : '';
     const locs = [...sm.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)].map(m => ({ loc: m[1], lastmod: m[2] || null }));
-    const want = [PUBLIC + '/', ...Object.keys(sets).flatMap(kind => sets[kind]
+    const want = [PUBLIC + '/', PUBLIC + '/guides', PUBLIC + '/titles', PUBLIC + '/characters', ...Object.keys(sets).flatMap(kind => sets[kind]
       .filter(([id]) => fs.existsSync(path.join(SITE, 'og', kind, id + '.html')))
       .map(([id]) => `${PUBLIC}/${SEGMENT[kind]}/${id}`))];
     expect(sm.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'), 'sitemap.xml: not a sitemap');
@@ -291,14 +394,20 @@ const tagErrors = (html, label, url) => {
   };
   const middleware = (await import(pathToFileURL(tmp).href)).default;
   const config = (await import(pathToFileURL(tmp).href)).config;
-  expect(config && JSON.stringify(config.matcher) === JSON.stringify(['/', '/titles/:id', '/guides/:id', '/characters/:id']),
-    'middleware: matcher is not the home page and the three page addresses: ' + JSON.stringify(config && config.matcher));
+  expect(config && JSON.stringify(config.matcher) === JSON.stringify(['/', '/titles', '/guides', '/characters', '/titles/:id', '/guides/:id', '/characters/:id']),
+    'middleware: matcher is not the home page, the three indexes and the three page addresses: ' + JSON.stringify(config && config.matcher));
   const run = async (p) => { const r = await middleware(new Request(PUBLIC + p)); return r ? { status: r.status, type: r.headers.get('content-type'), location: r.headers.get('location'), html: r.status === 308 ? '' : await r.text() } : null; };
   // A page's address gets its page.
   for (const [p, kind, id] of [['/titles/iron-man', 'title', 'iron-man'], ['/characters/peggy', 'char', 'peggy'], ['/guides/before-doomsday', 'guide', 'before-doomsday'], ['/guides/before-doomsday?view=list', 'guide', 'before-doomsday'], ['/titles/endgame/', 'title', 'endgame']]) {
     const r = await run(p);
     expect(r && r.status === 200 && /text\/html/.test(r.type) && meta(r.html, 'og:image') === `${PUBLIC}/og/${kind}/${id}.jpg` && pageText(r.html),
       `middleware ${p}: did not serve the ${kind} ${id} page`);
+  }
+  // The index addresses get their pages (Findability 4).
+  for (const seg of ['guides', 'titles', 'characters', 'guides/']) {
+    const r = await run('/' + seg);
+    const name = seg.replace('/', '');
+    expect(r && r.status === 200 && canonical(r.html) === `${PUBLIC}/${name}` && pageText(r.html), `middleware /${seg}: did not serve the ${name} index`);
   }
   // Production pages are indexable; the same page on a preview deployment is not.
   {
@@ -321,11 +430,14 @@ const tagErrors = (html, label, url) => {
     ['/?title=endgame&guide=before-doomsday', '/titles/endgame?guide=before-doomsday'],
     ['/?title=iron-man&char=tony', '/titles/iron-man?char=tony'],
     ['/?sort=phase&title=endgame&phase=2,3', '/titles/endgame?sort=phase&phase=2,3'],
+    ['/?view=guides', '/guides'],
+    ['/?view=list', '/titles'],
+    ['/?view=list&phase=2,3&sort=phase', '/titles?phase=2,3&sort=phase'],
   ]) {
     const r = await run(q);
     expect(r && r.status === 308 && r.location === PUBLIC + to, `middleware ${q}: answered ${r && r.status} ${r && r.location}, not 308 to ${to}`);
   }
-  for (const q of ['/', '/?sort=phase', '/?title=not-a-title', '/?title=../index', '/?char=%3Cscript%3E', '/?guide=', '/about', '/og/title/iron-man.html']) {
+  for (const q of ['/', '/?sort=phase', '/?view=spatial', '/?title=not-a-title', '/?title=../index', '/?char=%3Cscript%3E', '/?guide=', '/about', '/og/title/iron-man.html']) {
     expect(await run(q) === null, `middleware ${q}: should pass through, but answered`);
   }
   for (const [from, to] of [['https://mcu-connections.vercel.app/', PUBLIC + '/'], ['https://mcu-connections.vercel.app/?title=iron-man&char=tony', PUBLIC + '/?title=iron-man&char=tony'], ['https://mcu-connections.vercel.app/guides/before-doomsday', PUBLIC + '/guides/before-doomsday']]) {
@@ -344,7 +456,7 @@ const tagErrors = (html, label, url) => {
     fs.writeFileSync(tmpA, code);
     const A = await import(pathToFileURL(tmpA).href);
     fs.unlinkSync(tmpA);
-    for (const q of ['?title=endgame&guide=before-doomsday&view=list', '?char=peggy&sort=phase', '?guide=before-doomsday', '?title=iron-man&char=tony']) {
+    for (const q of ['?title=endgame&guide=before-doomsday&view=list', '?char=peggy&sort=phase', '?guide=before-doomsday', '?title=iron-man&char=tony', '?view=guides', '?view=list&sort=phase']) {
       const r = await run('/' + q);
       const a = A.addressFor(new URLSearchParams(q));
       const want = PUBLIC + a.pathname + (a.search.toString() ? '?' + a.search.toString() : '');
@@ -385,6 +497,28 @@ const tagErrors = (html, label, url) => {
     const closed = await page.evaluate(() => ({ path: location.pathname, title: document.title }));
     out.afterClose = closed;
     expect(closed.path === '/' && closed.title === 'Red Thread — Marvel movies, series and character connections', 'after closing the details: ' + JSON.stringify(closed));
+    await ctx.close();
+  }
+  {
+    // /guides boots on the Guides tab and keeps its address (Findability 4).
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await ctx.addInitScript(NOWELCOME);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    const guides = fs.readFileSync(path.join(SITE, 'og', 'index', 'guides.html'));
+    await page.route('**/*', (r) => {
+      const u = r.request().url();
+      if (!u.startsWith('http://127.0.0.1')) return r.abort();
+      if (new URL(u).pathname === '/guides') return r.fulfill({ status: 200, contentType: 'text/html', body: guides });
+      return r.continue();
+    });
+    await page.goto(URL_BASE + 'guides');
+    await require('./ready').appReady(page, 300);
+    await page.waitForTimeout(500);
+    const g = await page.evaluate(() => ({ path: location.pathname + location.search, text: !!document.getElementById('mcu-page-text'), title: document.title,
+      tab: (document.querySelector('.nav-tabs button.on') || {}).textContent || '' }));
+    out.bootedAtGuides = g;
+    expect(g.path === '/guides' && !g.text && g.title === 'Marvel watch guides · Red Thread' && /Guides/.test(g.tab), '/guides: ' + JSON.stringify(g));
     await ctx.close();
   }
   await browser.close();

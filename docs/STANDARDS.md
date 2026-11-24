@@ -161,7 +161,8 @@ rules carry over unchanged.
   dark footage** (promo videos, end cards, social images) the pin stays
   the logo red and only the wordmark turns white: never an all-white logo
   (Andre, 2026-11-19).
-  `node tools/make-icons.js` redraws `favicon.png` and `apple-touch-icon.png`
+  `node tools/make-icons.js` redraws the favicons (`favicon.png`, `favicon-96.png`,
+  `favicon.ico`; Google's results want a multiple of 48px) and `apple-touch-icon.png`
   from the mark.
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
   real background. Both halves of that run: `qa/a11y-scan.js` (axe) and

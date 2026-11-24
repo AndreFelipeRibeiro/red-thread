@@ -81,7 +81,7 @@ const wait = (page) => page.waitForTimeout(1300);
     const c = out.char = await page.evaluate(H);
     expect(c && c.id === 'char', `the character view should show the step hint: ${JSON.stringify(c)}`);
     await page.keyboard.press('Escape'); await page.waitForTimeout(400);
-    const d = out.esc = await page.evaluate(() => ({ hint: !!document.querySelector('.first-hint'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))), done: JSON.parse(localStorage.getItem('mcu.hints.v1') || '{}') }));
+    const d = out.esc = await page.evaluate(() => ({ hint: !!document.querySelector('.first-hint'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))), done: JSON.parse(localStorage.getItem('mcu.hints.v1') || '{}') }));
     expect(!d.hint && /char=tony/.test(d.url) && d.done.canvas && d.done.ring && d.done.char, `Escape should dismiss the hint alone, and the three be done: ${JSON.stringify(d)}`);
     await page.reload(); await appReady(page); await wait(page);
     out.afterReload = await page.evaluate(H);

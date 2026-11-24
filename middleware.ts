@@ -17,17 +17,21 @@
 //         kept: /?title=endgame&guide=before-doomsday&view=list becomes
 //         /titles/endgame?guide=before-doomsday&view=list. An id with no page
 //         passes through to the home page untouched, as it always has.
+//   /guides, /titles, /characters (Notion "Findability 4")
+//       → the index page's copy, which lists every guide, title or
+//         character with a link. /?view=guides and /?view=list (with no
+//         thing) redirect to /guides and /titles, the rest of the query kept.
 //   Anything else passes through untouched.
 //
 // The path takes the first of title, guide and character, the order the app
 // gives them precedence (a title link may also pin a character, and then it
 // is the title that was shared). This table and that order are also in
 // src/share-card/addresses.ts, which the app and the build use; Vercel runs
-// this file on its own, and qa/test-addresses.js checks the two agree.
+// this file on its own, and qa/test-previews.js checks the two agree.
 // Configured here and in vercel.json only: dashboard settings apply to every
 // branch, including main (docs/V4-PLAN.md).
 
-export const config = { matcher: ['/', '/titles/:id', '/guides/:id', '/characters/:id'] };
+export const config = { matcher: ['/', '/titles', '/guides', '/characters', '/titles/:id', '/guides/:id', '/characters/:id'] };
 
 // The project's own *.vercel.app production address, kept by Vercel through
 // the project rename (red-thread.vercel.app belongs to someone else), sends
@@ -43,6 +47,9 @@ const SEGMENT: Record<Kind, string> = { title: 'titles', guide: 'guides', char: 
 const KIND_OF: Record<string, Kind> = { titles: 'title', guides: 'guide', characters: 'char' };
 const ID = /^[a-z0-9-]{1,80}$/;
 const PATH = /^\/(titles|guides|characters)\/([^/]+)\/?$/;
+const INDEX = /^\/(titles|guides|characters)\/?$/;
+/** The view each index address stands for, when it stands for one. */
+const INDEX_VIEW: Record<string, string | null> = { guides: 'guides', titles: 'list', characters: null };
 
 const HTML_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
@@ -75,6 +82,13 @@ export default async function middleware(request: Request): Promise<Response | u
     return new Response(home.body, { status: 404, headers: headersFor(url.hostname) });
   }
 
+  const index = INDEX.exec(url.pathname);
+  if (index) {
+    const page = await fetch(new URL(`/og/index/${index[1]}.html`, url.origin));
+    if (page.ok) return new Response(page.body, { status: 200, headers: headersFor(url.hostname) });
+    return undefined;
+  }
+
   if (url.pathname !== '/') return undefined;
   for (const kind of KINDS) {
     const id = url.searchParams.get(kind);
@@ -86,6 +100,13 @@ export default async function middleware(request: Request): Promise<Response | u
     rest.delete(kind);
     const query = rest.toString().replace(/%2C/gi, ',');
     return Response.redirect(`${url.origin}/${SEGMENT[kind]}/${id}${query ? '?' + query : ''}`, 308);
+  }
+  for (const segment of Object.keys(INDEX_VIEW)) {
+    if (!INDEX_VIEW[segment] || url.searchParams.get('view') !== INDEX_VIEW[segment]) continue;
+    const rest = new URLSearchParams(url.searchParams);
+    rest.delete('view');
+    const query = rest.toString().replace(/%2C/gi, ',');
+    return Response.redirect(`${url.origin}/${segment}${query ? '?' + query : ''}`, 308);
   }
   return undefined;
 }

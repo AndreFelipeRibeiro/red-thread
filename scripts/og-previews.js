@@ -4,6 +4,10 @@
 //   dist/og/<kind>/<id>.jpg    the 1200×630 preview image
 //   dist/og/<kind>/<id>.html   the built index.html with that preview's tags,
 //                              its own <title> and its readable text
+//   dist/og/index/<segment>.html  (Findability 4) /guides, /titles and
+//                              /characters, each listing every item with a link
+//   dist/index.html            the home page gets its readable text too
+// and every one of those pages its structured data (JSON-LD; Findability 5)
 //   dist/robots.txt, dist/sitemap.xml   (Findability 1) every page listed
 //   dist/llms.txt, dist/llms-full.txt   (Findability 7) the same, for assistants
 // and middleware.ts serves the .html at /titles/<id>, /characters/<id> and
@@ -33,9 +37,10 @@ import { Resvg } from '@resvg/resvg-js';
 import jpeg from 'jpeg-js';
 import { readLightTokens, previewColors } from '../src/share-card/tokens.ts';
 import { linkCard, paintSVG, LINK } from '../src/share-card/link-cards.ts';
-import { previewEntries } from '../src/share-card/previews.ts';
-import { applyPreviewTags, insertPageText } from '../src/share-card/meta.ts';
-import { pageTexts } from '../src/share-card/page-text.ts';
+import { previewEntries, makeTr } from '../src/share-card/previews.ts';
+import { applyPreviewTags, insertPageText, insertInHead } from '../src/share-card/meta.ts';
+import { structuredData, jsonLdScript } from '../src/share-card/structured-data.ts';
+import { pageTexts, INDEXES } from '../src/share-card/page-text.ts';
 import { thingPath } from '../src/share-card/addresses.ts';
 import { robotsTxt, sitemapXml, llmsTxt, llmsFullTxt } from '../src/share-card/site-files.ts';
 
@@ -153,6 +158,12 @@ export async function buildPreviews({ root, outDir }) {
   const en = loadLocale(root, 'en');
   const entries = previewEntries(catalog, en, colors, SITE.replace(/^https:\/\//, ''), images);
   const texts = pageTexts(catalog, en);
+  const data = structuredData(SITE, catalog, en);
+  /** A page's readable text and its JSON-LD, both keyed like the texts. */
+  const finish = (html, key) => {
+    if (!texts.get(key) || !data.get(key)) throw new Error('link previews: no page text or structured data for ' + key);
+    return insertInHead(insertPageText(html, texts.get(key)), jsonLdScript(data.get(key)));
+  };
   const index = readFileSync(join(outDir, 'index.html'), 'utf8');
   let bytes = 0;
   for (const e of entries) {
@@ -169,14 +180,25 @@ export async function buildPreviews({ root, outDir }) {
     if (e.kind === 'default') continue;
     // Each page's own address (src/share-card/addresses.ts) is its canonical,
     // and its readable text goes in for crawlers (page-text.ts).
-    const text = texts.get(e.kind + '/' + e.id);
-    if (!text) throw new Error(`link previews: no page text for ${e.kind} ${e.id}`);
-    writeFileSync(join(dir, name + '.html'), insertPageText(applyPreviewTags(index, {
+    writeFileSync(join(dir, name + '.html'), finish(applyPreviewTags(index, {
       title: e.title, description: e.description, alt: e.alt,
       url: SITE + thingPath(e.kind, e.id),
       image: `${SITE}/og/${e.kind}/${name}.jpg`,
-    }), text));
+    }), e.kind + '/' + e.id));
   }
+  // The index pages (Findability 4), with the app-wide card as their preview,
+  // and the home page's own text, written last: every copy above is made
+  // from the built index.html as it was.
+  const tr = makeTr(en);
+  mkdirSync(join(outDir, 'og', 'index'), { recursive: true });
+  for (const i of INDEXES) {
+    writeFileSync(join(outDir, 'og', 'index', i.segment + '.html'), finish(applyPreviewTags(index, {
+      title: tr('og.pageTitle', { name: tr(i.name), app: tr('app.name') }),
+      description: tr(i.description), alt: tr('og.defaultAlt'),
+      url: `${SITE}/${i.segment}`, image: `${SITE}/og/default.jpg`,
+    }), 'index/' + i.segment));
+  }
+  writeFileSync(join(outDir, 'index.html'), finish(index, 'home'));
   // robots.txt and the sitemap of the pages just written (Notion
   // "Findability 1"; src/share-card/site-files.ts).
   const pages = entries.filter((e) => e.kind !== 'default').map((e) => e.kind + '/' + e.id);

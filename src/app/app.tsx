@@ -3355,8 +3355,12 @@ function App() {
     if (t) name = `${I18N.titleName(t)} (${t.year})`;
     else if (guide) name = window.MCU_GUIDE.name(guide);
     else if (urlChar) name = I18N.charName(urlChar);
+    // The index addresses (Findability 4) name their section, as their pages'
+    // own <title> does: /guides, and /titles where the list is asked for.
+    else if (section === 'guides') name = tr('page.guidesName');
+    else if (!isTouch && desktopView === 'list') name = tr('page.titlesName');
     document.title = name ? tr('og.pageTitle', { name, app: tr('app.name') }) : tr('page.homeTitle');
-  }, [urlTitle, urlChar, guide, lang]);
+  }, [urlTitle, urlChar, guide, lang, section, isTouch, desktopView]);
   // Back and Forward restore the title and the character, never the filters:
   // closing the phone filter sheet is itself a step back in history, and
   // restoring filters there would undo the choices just made in it. A step

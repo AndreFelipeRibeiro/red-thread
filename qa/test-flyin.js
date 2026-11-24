@@ -74,7 +74,7 @@ async function track(page, act, ms = 3200) {
 const place = (page, id) => page.evaluate((id) => {
   const vpEl = document.querySelector('.viewport');
   const el = document.querySelector(`.card[data-id="${id}"]`);
-  if (!el) return { missing: id, url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))), cards: document.querySelectorAll('.card').length, vp: !!document.querySelector('.viewport') };
+  if (!el) return { missing: id, url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))), cards: document.querySelectorAll('.card').length, vp: !!document.querySelector('.viewport') };
   const c = el.getBoundingClientRect(), vp = vpEl.getBoundingClientRect();
   const drawer = document.querySelector('.drawer.open');
   const right = drawer && innerWidth >= 768 ? drawer.getBoundingClientRect().left : vp.right;

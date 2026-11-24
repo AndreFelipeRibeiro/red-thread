@@ -1,8 +1,14 @@
-// Draws favicon.png (64px) and apple-touch-icon.png (180px) from the logo mark,
-// src/assets/logo-mark.svg, so the browser tab and the home-screen icon match
-// the mark in the app. Run it again after replacing that file:
+// Draws favicon.png (64px), favicon-96.png, favicon.ico (48 and 32px) and
+// apple-touch-icon.png (180px) from the logo mark, src/assets/logo-mark.svg,
+// so the browser tab, search results and the home-screen icon match the mark
+// in the app. Run it again after replacing that file:
 //
-//   node tools/make-icons.js
+//   node tools/make-icons.js                  every icon
+//   node tools/make-icons.js favicon.ico      only the files named
+//
+// Google shows a site's favicon in search only when it is a multiple of 48px
+// square, and asks for /favicon.ico whatever the page links (Notion
+// "Findability 13"), hence the 96px PNG and the .ico.
 //
 // Uses the Playwright that qa/ installs (bash qa/setup.sh), rendering in
 // headless Chromium so the SVG is drawn exactly as the app draws it: as a mask.
@@ -26,14 +32,34 @@ const ICONS = [
   // The tab icon keeps transparent corners; the tile is the icon.
   // The mark is a tall pin: these sizes are its height.
   { file: 'favicon.png', size: 64, radius: 14, mark: 50 },
+  // The same tile, scaled: radius and mark keep favicon.png's proportions.
+  { file: 'favicon-96.png', size: 96, radius: 21, mark: 75 },
+  { file: 'favicon.ico', ico: [{ size: 48, radius: 10.5, mark: 37.5 }, { size: 32, radius: 7, mark: 25 }] },
   // iOS rounds the corners itself and fills transparency with black, so this
   // one is a full, opaque square.
   { file: 'apple-touch-icon.png', size: 180, radius: 0, mark: 124 },
 ];
 
+// An .ico of PNG images (every browser and Google read PNG entries): a 6-byte
+// header, a 16-byte entry per image, then the images.
+function ico(pngs) {
+  const head = Buffer.alloc(6 + 16 * pngs.length);
+  head.writeUInt16LE(0, 0); head.writeUInt16LE(1, 2); head.writeUInt16LE(pngs.length, 4);
+  let offset = head.length;
+  pngs.forEach(({ size, data }, i) => {
+    const e = 6 + 16 * i;
+    head.writeUInt8(size, e); head.writeUInt8(size, e + 1);
+    head.writeUInt16LE(1, e + 4); head.writeUInt16LE(32, e + 6);
+    head.writeUInt32LE(data.length, e + 8); head.writeUInt32LE(offset, e + 12);
+    offset += data.length;
+  });
+  return Buffer.concat([head, ...pngs.map((p) => p.data)]);
+}
+
 (async () => {
+  const only = process.argv.slice(2);
   const browser = await chromium.launch();
-  for (const ic of ICONS) {
+  const draw = async (ic) => {
     const page = await browser.newPage({ viewport: { width: ic.size, height: ic.size } });
     await page.setContent(`<!doctype html><style>
       html, body { margin: 0; background: transparent; }
@@ -42,8 +68,20 @@ const ICONS = [
       .mark { width: ${ic.mark}px; height: ${ic.mark}px; background: ${BRAND};
         -webkit-mask: ${mask} center / contain no-repeat; mask: ${mask} center / contain no-repeat; }
     </style><div class="tile"><div class="mark"></div></div>`);
-    await page.screenshot({ path: path.join(ROOT, ic.file), omitBackground: ic.radius > 0 });
+    const data = await page.screenshot({ omitBackground: ic.radius > 0 });
     await page.close();
+    return data;
+  };
+  for (const ic of ICONS) {
+    if (only.length && !only.includes(ic.file)) continue;
+    if (ic.ico) {
+      const pngs = [];
+      for (const one of ic.ico) pngs.push({ size: one.size, data: await draw(one) });
+      fs.writeFileSync(path.join(ROOT, ic.file), ico(pngs));
+      console.log('wrote ' + ic.file + ' (' + ic.ico.map((x) => x.size + 'px').join(', ') + ')');
+      continue;
+    }
+    fs.writeFileSync(path.join(ROOT, ic.file), await draw(ic));
     console.log('wrote ' + ic.file + ' (' + ic.size + 'px)');
   }
   await browser.close();

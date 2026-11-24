@@ -176,9 +176,17 @@ It is switched on in the Vercel project's Analytics tab.
   `/?guide=…`, `/?title=…` and `/?char=…` links redirect (308) to the new
   address with the rest of the query kept; an unknown id at a page's
   address gets the home page with a 404.
+- Index addresses (Findability 4): `/guides` is the Guides tab and
+  `/titles` the Titles list (on phones, where the list is the default view,
+  the address stays `/`); `/characters` opens the home view. Their HTML lists
+  every guide, title or character with a link, and the home page's HTML
+  links to all three and to every guide, so a crawler reaches every page from
+  the home page. Old `/?view=guides` and `/?view=list` links redirect there.
+  A title's page text also lists the titles it connects to (Follow the
+  thread's list), and a character's who they share the most titles with.
 - Search and crawlers (Findability 1): the build writes `robots.txt` (every
   crawler allowed, the search and AI crawlers named, the sitemap linked) and
-  `sitemap.xml` (the home page and every guide, title and character address,
+  `sitemap.xml` (the home page, the three index pages and every guide, title and character address,
   guides with their reviewed date), from `src/share-card/site-files.ts`.
   Everything off `redthread.tv` (staging, previews) answers
   `X-Robots-Tag: noindex` (`vercel.json`, and `middleware.ts` for the pages
@@ -187,6 +195,15 @@ It is switched on in the Vercel project's Analytics tab.
   Red Thread is, then every guide, title and character at its address, in
   the llmstxt.org format) and `llms-full.txt` (every guide's stops in order
   with their reasons); robots.txt points to both.
+- Structured data (Findability 5): every page's HTML also carries JSON-LD
+  from `src/share-card/structured-data.ts`: WebSite, Organization and
+  WebApplication on the home page; an ordered list of films and series for a
+  guide or a character; a Movie or TVSeries with its cast for a title; a list
+  for each index page; and breadcrumbs. No `sameAs` until Red Thread has
+  profiles elsewhere.
+- IndexNow (Findability 14): after each merge to `main`, `node tools/indexnow.js`
+  tells Bing and the other IndexNow engines to crawl every address in the
+  sitemap, so new pages don't wait to be found.
 - Text size: Settings → Text size (Small / Default / Large) scales every
   piece of text, and the controls around it, except the Spatial cards (zoom
   the canvas for those): 87.5 / 100 / 106.25% on desktop, and a step larger
@@ -785,7 +802,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 |---|---|
 | `index.html` | Entry point; startup screen markup, the locale scripts, the pinned/SRI supabase-js script and the app bundle |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render; a classic script so it runs before the bundle |
-| `favicon.png`, `apple-touch-icon.png` | Tab icon and home-screen icon, drawn from the logo mark by `tools/make-icons.js`. Link-preview images are drawn by the build (`scripts/og-previews.js`); the old `og-image.jpg` address redirects to the app-wide card |
+| `favicon.png`, `favicon-96.png`, `favicon.ico`, `apple-touch-icon.png` | Tab icon (the 96px PNG and the 48px .ico are the sizes search results can show) and home-screen icon, drawn from the logo mark by `tools/make-icons.js`. Link-preview images are drawn by the build (`scripts/og-previews.js`); the old `og-image.jpg` address redirects to the app-wide card |
 | `src/data/data.ts` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `src/data/media-data.ts` | TMDB poster and actor-portrait paths |
 | `src/config.ts` | Public Supabase project URL and publishable key |
@@ -802,7 +819,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `src/assets/logo-mark.svg` | The logo mark (the work-in-progress push pin), the one file every place that shows the mark draws from, icons and link previews included |
 | `src/assets/logo-wordmark.svg` | The wordmark's lettering, drawn beside the mark in the toolbar and the phone app bar |
-| `tools/make-icons.js` | Maintainer script: redraws `favicon.png` and `apple-touch-icon.png` from the logo mark (uses the Playwright that `qa/` installs; not deployed) |
+| `tools/indexnow.js`, `indexnow-key.txt` | After a merge to `main` has deployed, `node tools/indexnow.js` submits every address in the live sitemap to IndexNow (Bing and others), once redthread.tv serves the key file; the key is public by design. The ship-batch skill runs it (Findability 14) |
+| `tools/make-icons.js` | Maintainer script: redraws the favicons and `apple-touch-icon.png` from the logo mark (uses the Playwright that `qa/` installs; not deployed) |
 | `tools/poster-colors.cjs` | Maintainer script: each poster's dominant colour into `src/data/media-data.ts` (`poster_color`, `poster_color_raw`) and a review table in `tools/poster-colors-report.html` (uses the Playwright that `qa/` installs; not deployed). Re-run when posters change |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
@@ -818,7 +836,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/share-image.tsx` | The share card dialog (desktop) and sheet (phone): the progress or finished-guide image, Share image, Download image, Copy link |
 | `src/share-card/` | The share card's templates (`cards.ts`) and the link previews' (`link-cards.ts`), colors read from `src/index.css` (`tokens.ts`), what each title, character and guide preview says and shows (`previews.ts`), the preview tags and page title (`meta.ts`), each page's readable text (`page-text.ts`), the page addresses (`addresses.ts`), and the in-browser renderer (`render-browser.ts`, loaded on demand) |
 | `scripts/og-previews.js` | Renders the link previews during `npm run build` as 1200×630 JPEGs in `dist/og/` (Satori, resvg and jpeg-js; no browser), with the real posters and portraits fetched from TMDB's image CDN; a missing image fails the build. Also writes each page's HTML, `robots.txt` and `sitemap.xml` |
-| `middleware.ts` | Vercel Routing Middleware: `/titles/<id>`, `/characters/<id>` and `/guides/<id>` get their page (an unknown id: the home page, 404); the old `/?title=`, `/?char=`, `/?guide=` links redirect there; everything else passes through |
+| `middleware.ts` | Vercel Routing Middleware: `/titles/<id>`, `/characters/<id>` and `/guides/<id>` get their page (an unknown id: the home page, 404), and `/guides`, `/titles`, `/characters` their index page; the old `/?title=`, `/?char=`, `/?guide=`, `/?view=guides` and `/?view=list` links redirect there; everything else passes through |
 | `src/app/share.tsx` | Sharing: the one `share()` helper (the system share sheet on phones, copy the link elsewhere, with a "Link copied" toast), the Share button, and the production address every link uses |
 | `src/app/settings.tsx` | Settings (panel on desktop, sheet on phones), the motion and celebration preferences, and their sync to the account; the first surface built from the shadcn components |
 | `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |

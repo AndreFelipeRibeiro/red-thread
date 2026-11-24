@@ -54,6 +54,12 @@ order:
    first so a batch never gets two events, and never misses one.
 6. **Recap** in chat (the `log-session` skill).
 
+After a merge to `main`, once production's smoke test is clean, tell the
+search engines: `node tools/indexnow.js` (Notion "Findability 14"; it checks
+that redthread.tv serves the key first, and submits every address in the
+live sitemap to IndexNow, which Bing and others read). Never for staging.
+Say in the recap that it was accepted, or why it wasn't.
+
 A merge of an already-shipped batch to production repeats steps 2 and 3
 (CHANGELOG: "merged to main"), checks that 4 and 5 were done, and does them
 if they weren't. Its step 2 is the smoke test on production only, with no

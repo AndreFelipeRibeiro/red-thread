@@ -51,6 +51,9 @@ http.createServer = function (...args) {
         const kind = { titles: 'title', guides: 'guide', characters: 'char' }[page[1]];
         p = fs.existsSync(path.join(siteRoot(), 'og', kind, page[2] + '.html')) ? `/og/${kind}/${page[2]}.html` : '/index.html';
       }
+      // The index pages (Notion "Findability 4"): /guides, /titles, /characters.
+      const index = p.match(/^\/(titles|guides|characters)\/?$/);
+      if (index) p = `/og/index/${index[1]}.html`;
       const root = siteRoot();
       const file = path.join(root, p);
       if (file.startsWith(root) && fs.existsSync(file) && fs.statSync(file).isFile()) {

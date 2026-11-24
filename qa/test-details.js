@@ -95,7 +95,7 @@ const inspect = () => {
       const order = [...head.children]; const syn = order.findIndex(e => e.classList.contains('synopsis'));
       return order.indexOf(root.querySelector('.td-slot-watch')) - syn; })(),
     guides: (() => { const order = [...head.children]; const g = root.querySelector('.td-slot-guides');
-      const id = new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('title');
+      const id = new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('title');
       return { at: g ? order.indexOf(g) - order.indexOf(root.querySelector('.td-slot-watch')) : null,
         rows: root.querySelectorAll('.g-partof-row').length, expected: window.MCU_GUIDE ? window.MCU_GUIDE.forTitle(id).length : 0 }; })(),
   };

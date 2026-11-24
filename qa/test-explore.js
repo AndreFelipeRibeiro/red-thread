@@ -183,7 +183,7 @@ const SURFACES = [
     // the photo on her card opens the trail (Notion "Connections with a
     // character pinned", 2026-11-18).
     if (label === 'desktop') {
-      const kept = out.pinKeepsDetails = await page.evaluate(() => ({ char: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('char'), title: (document.querySelector('.drawer.open h2') || {}).textContent || null, trail: !!document.querySelector('.drawer .ex-trail') }));
+      const kept = out.pinKeepsDetails = await page.evaluate(() => ({ char: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('char'), title: (document.querySelector('.drawer.open h2') || {}).textContent || null, trail: !!document.querySelector('.drawer .ex-trail') }));
       expect(kept.char === 'pepper' && kept.title === 'Iron Man' && !kept.trail, `desktop: picking Pepper Potts should pin her and keep Iron Man's details: ${JSON.stringify(kept)}`);
       await page.locator('.char-card .cc-badge').click(); await page.waitForTimeout(800);
     }
@@ -207,7 +207,7 @@ const SURFACES = [
     // The pin pins them (the address says so).
     if (await page.locator(`${root} .trail-pin`).count()) await page.locator(`${root} .trail-pin`).click();
     await page.waitForTimeout(1200);
-    const pinned = out[label].trailPin = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('char'));
+    const pinned = out[label].trailPin = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('char'));
     expect(pinned === 'pepper', `${label}: the trail's pin should pin Pepper Potts (char=${pinned})`);
     await ctx.close();
   }
