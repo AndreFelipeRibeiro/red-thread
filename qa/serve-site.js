@@ -43,6 +43,14 @@ http.createServer = function (...args) {
     try {
       let p = decodeURIComponent((req.url || '/').split('?')[0]);
       if (p === '/') p = '/index.html';
+      // A page's own address, as middleware.ts serves it in production
+      // (Notion "Findability 3"): /titles/<id> gets dist/og/title/<id>.html,
+      // and an unknown id the home page.
+      const page = p.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/);
+      if (page) {
+        const kind = { titles: 'title', guides: 'guide', characters: 'char' }[page[1]];
+        p = fs.existsSync(path.join(siteRoot(), 'og', kind, page[2] + '.html')) ? `/og/${kind}/${page[2]}.html` : '/index.html';
+      }
       const root = siteRoot();
       const file = path.join(root, p);
       if (file.startsWith(root) && fs.existsSync(file) && fs.statSync(file).isFile()) {

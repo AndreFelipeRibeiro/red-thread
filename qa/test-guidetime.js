@@ -123,7 +123,7 @@ const text = (sel) => (document.querySelector(sel) || {}).textContent || null;
     expect(!!w.q && /Get ready for Avengers: Doomsday/.test(w.first || '') && /Start the guide/.test(w.first || ''), `the welcome should offer the guide first, as its primary button: ${JSON.stringify(w)}`);
     if (w.q) {
       await page.locator('.welcome-guide-go').click(); await page.waitForTimeout(900);
-      const after = await page.evaluate(() => ({ url: location.search, followed: window.MCU_GUIDE.followed(), open: !!document.querySelector('.welcome-pick') }));
+      const after = await page.evaluate(() => ({ url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))), followed: window.MCU_GUIDE.followed(), open: !!document.querySelector('.welcome-pick') }));
       out.welcomeStart = after;
       expect(/guide=/.test(after.url) && after.followed.length === 1 && !after.open, `Start the guide should close the welcome, follow and open the guide: ${JSON.stringify(after)}`);
     }

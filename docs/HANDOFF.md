@@ -367,7 +367,11 @@ hand.
   push, open `/?title=iron-man` on staging and check the page source's
   `og:image`, then try the link in the Facebook Sharing Debugger or LinkedIn
   Post Inspector on production. If it doesn't run, shared links fall back to
-  the app-wide card and nothing else changes.
+  the app-wide card and nothing else changes. Since Findability 3 it also
+  serves the page addresses (`/guides/<id>`, `/titles/<id>`,
+  `/characters/<id>`) and redirects the old `?guide=` links to them, so if it
+  stops running those addresses 404 instead: after each push, check
+  `/guides/before-doomsday` loads and `/?title=iron-man` redirects.
 - **The share card loads about 340 KB (gzip) on demand**: Satori, its layout
   engine (yoga.wasm) and text shaper (hb.wasm, which Satori fetches from the
   site root, so the build copies it there), and three Inter weights. Only when

@@ -323,7 +323,7 @@ const COVER = (id) => {
       const row = a && a.closest && a.closest('[data-row-id]');
       return {
         drawer: (document.querySelector('.drawer.open #drawer-title') || {}).textContent || null,
-        drawerId: new URL(location.href).searchParams.get('title'),
+        drawerId: location.pathname.startsWith('/titles/') ? location.pathname.split('/')[2] : new URL(location.href).searchParams.get('title'),
         current: (document.querySelector('.g-stop.current') || { getAttribute: () => null }).getAttribute('data-row-id'),
         focusRow: row ? row.getAttribute('data-row-id') : null,
         focusOpen: !!(a && a.classList && a.classList.contains('g-open')),

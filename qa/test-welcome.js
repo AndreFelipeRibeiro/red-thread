@@ -24,7 +24,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .about'),
     title: (document.querySelector('.about-title') || {}).textContent || null, cta: !!document.querySelector('.welcome-start, .about-cta'), flag: localStorage.getItem('mcu.welcome.v1'),
     cols: (() => { const u = document.querySelector('.about-ways'); return u ? getComputedStyle(u).gridTemplateColumns.split(' ').length : null; })(),
-    scroll: (() => { const d = document.querySelector('.about-dialog'); return d ? d.scrollHeight > d.clientHeight : null; })(), url: location.search }));
+    scroll: (() => { const d = document.querySelector('.about-dialog'); return d ? d.scrollHeight > d.clientHeight : null; })(), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))) }));
   // 1. first visit (desktop): welcome shows, CTA closes, reload doesn't show again
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);

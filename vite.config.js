@@ -92,7 +92,7 @@ const checkLegacy = () => ({
     const tags = html.match(/<script[^>]*\ssrc="(?!http)[^"]+"[^>]*>/g) || [];
     const referenced = tags
       .filter(t => !/type="module"/.test(t))
-      .map(t => t.match(/\ssrc="([^"]+)"/)[1]);
+      .map(t => t.match(/\ssrc="([^"]+)"/)[1].replace(/^\//, ''));
     const missing = referenced.filter(f => !LEGACY.includes(f));
     if (missing.length) {
       this.error(
@@ -146,7 +146,12 @@ const themePrepaint = () => ({
 export default {
   plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy(), shareCardWasm(), linkPreviews()],
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: [
+      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      // The share card's text shaper, loading hb.wasm from the site root on
+      // every page address (src/share-card/harfbuzz.js).
+      { find: /^harfbuzzjs$/, replacement: fileURLToPath(new URL('./src/share-card/harfbuzz.js', import.meta.url)) },
+    ],
   },
   build: {
     rollupOptions: {

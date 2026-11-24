@@ -163,8 +163,30 @@ It is switched on in the Vercel project's Analytics tab.
   in chat apps and social networks (its name, a short description and the
   app's own card art, no studio imagery). The build draws one 1200×630 image
   per title, character and guide (`scripts/og-previews.js`, a few seconds),
-  and `middleware.ts` serves a shared link a copy of the page with that
+  and `middleware.ts` serves each one's page at its own address with that
   preview's tags. Previews are English; unknown ids get the app-wide card.
+- Page addresses (Findability 3): every guide, title and character has its
+  own address, `/guides/<id>`, `/titles/<id>` and `/characters/<id>`. It
+  opens the app exactly as before, on that guide, title or character; the
+  page's HTML also carries its own `<title>`, canonical and readable text
+  (the guide's stops and their reasons, a title's facts and cast, a
+  character's appearances, from `src/share-card/page-text.ts`) for search
+  engines and assistants that read pages without running scripts. The text
+  is visually hidden and the app's first render replaces it. Old
+  `/?guide=…`, `/?title=…` and `/?char=…` links redirect (308) to the new
+  address with the rest of the query kept; an unknown id at a page's
+  address gets the home page with a 404.
+- Search and crawlers (Findability 1): the build writes `robots.txt` (every
+  crawler allowed, the search and AI crawlers named, the sitemap linked) and
+  `sitemap.xml` (the home page and every guide, title and character address,
+  guides with their reviewed date), from `src/share-card/site-files.ts`.
+  Everything off `redthread.tv` (staging, previews) answers
+  `X-Robots-Tag: noindex` (`vercel.json`, and `middleware.ts` for the pages
+  it serves), so only production is indexed.
+- For AI assistants (Findability 7): the build also writes `llms.txt` (what
+  Red Thread is, then every guide, title and character at its address, in
+  the llmstxt.org format) and `llms-full.txt` (every guide's stops in order
+  with their reasons); robots.txt points to both.
 - Text size: Settings → Text size (Small / Default / Large) scales every
   piece of text, and the controls around it, except the Spatial cards (zoom
   the canvas for those): 87.5 / 100 / 106.25% on desktop, and a step larger
@@ -365,7 +387,9 @@ It is switched on in the Vercel project's Analytics tab.
   written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,
   order and catalogue filters live in the URL (for example
-  `?sort=chrono&phase=3&title=thor-ragnarok`), so a view can be bookmarked or
+  `/titles/thor-ragnarok?sort=chrono&phase=3`: the open title, else the
+  guide, else the pinned character is the path, the rest the query;
+  `src/share-card/addresses.ts`), so a view can be bookmarked or
   sent. A link opens exactly that state; what it leaves out takes the app's
   defaults. `&explore=thread` with a title opens its Follow the thread (the
   horizontal line on Connections and the timeline in the panel; the thread
@@ -792,9 +816,9 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
 | `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
 | `src/app/share-image.tsx` | The share card dialog (desktop) and sheet (phone): the progress or finished-guide image, Share image, Download image, Copy link |
-| `src/share-card/` | The share card's templates (`cards.ts`) and the link previews' (`link-cards.ts`), colors read from `src/index.css` (`tokens.ts`), what each title, character and guide preview says and shows (`previews.ts`), the preview tags (`meta.ts`), and the in-browser renderer (`render-browser.ts`, loaded on demand) |
-| `scripts/og-previews.js` | Renders the link previews during `npm run build` as 1200×630 JPEGs in `dist/og/` (Satori, resvg and jpeg-js; no browser), with the real posters and portraits fetched from TMDB's image CDN; a missing image fails the build |
-| `middleware.ts` | Vercel Routing Middleware: `/?title=`, `/?char=`, `/?guide=` get their preview page; everything else passes through |
+| `src/share-card/` | The share card's templates (`cards.ts`) and the link previews' (`link-cards.ts`), colors read from `src/index.css` (`tokens.ts`), what each title, character and guide preview says and shows (`previews.ts`), the preview tags and page title (`meta.ts`), each page's readable text (`page-text.ts`), the page addresses (`addresses.ts`), and the in-browser renderer (`render-browser.ts`, loaded on demand) |
+| `scripts/og-previews.js` | Renders the link previews during `npm run build` as 1200×630 JPEGs in `dist/og/` (Satori, resvg and jpeg-js; no browser), with the real posters and portraits fetched from TMDB's image CDN; a missing image fails the build. Also writes each page's HTML, `robots.txt` and `sitemap.xml` |
+| `middleware.ts` | Vercel Routing Middleware: `/titles/<id>`, `/characters/<id>` and `/guides/<id>` get their page (an unknown id: the home page, 404); the old `/?title=`, `/?char=`, `/?guide=` links redirect there; everything else passes through |
 | `src/app/share.tsx` | Sharing: the one `share()` helper (the system share sheet on phones, copy the link elsewhere, with a "Link copied" toast), the Share button, and the production address every link uses |
 | `src/app/settings.tsx` | Settings (panel on desktop, sheet on phones), the motion and celebration preferences, and their sync to the account; the first surface built from the shadcn components |
 | `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |

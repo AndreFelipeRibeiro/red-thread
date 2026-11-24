@@ -2,8 +2,12 @@
 //
 // For the app-wide card and every title, character and guide this writes
 //   dist/og/<kind>/<id>.jpg    the 1200×630 preview image
-//   dist/og/<kind>/<id>.html   the built index.html with that preview's tags
-// and middleware.ts serves the .html to /?title=…, /?char=… and /?guide=….
+//   dist/og/<kind>/<id>.html   the built index.html with that preview's tags,
+//                              its own <title> and its readable text
+//   dist/robots.txt, dist/sitemap.xml   (Findability 1) every page listed
+//   dist/llms.txt, dist/llms-full.txt   (Findability 7) the same, for assistants
+// and middleware.ts serves the .html at /titles/<id>, /characters/<id> and
+// /guides/<id> (Notion "Findability 3"), redirecting the old ?title= links.
 // Images are static files: the CDN caches them and they cost nothing per
 // visit. The app-wide card is dist/og/default.jpg, and index.html points at it.
 // JPEG, because the posters make PNGs of 250–450 KB and WhatsApp skips a
@@ -30,7 +34,10 @@ import jpeg from 'jpeg-js';
 import { readLightTokens, previewColors } from '../src/share-card/tokens.ts';
 import { linkCard, paintSVG, LINK } from '../src/share-card/link-cards.ts';
 import { previewEntries } from '../src/share-card/previews.ts';
-import { applyPreviewTags } from '../src/share-card/meta.ts';
+import { applyPreviewTags, insertPageText } from '../src/share-card/meta.ts';
+import { pageTexts } from '../src/share-card/page-text.ts';
+import { thingPath } from '../src/share-card/addresses.ts';
+import { robotsTxt, sitemapXml, llmsTxt, llmsFullTxt } from '../src/share-card/site-files.ts';
 
 /** Production, under the public name (src/app/share.tsx's PUBLIC_URL). */
 export const SITE = 'https://redthread.tv';
@@ -143,7 +150,9 @@ export async function buildPreviews({ root, outDir }) {
     poster: (id) => ({ src: fetched.get(posterURL(id)), color: media.poster_color[id] || colors.card }),
     portrait: (id) => fetched.get(portraitURL(id)),
   };
-  const entries = previewEntries(catalog, loadLocale(root, 'en'), colors, SITE.replace(/^https:\/\//, ''), images);
+  const en = loadLocale(root, 'en');
+  const entries = previewEntries(catalog, en, colors, SITE.replace(/^https:\/\//, ''), images);
+  const texts = pageTexts(catalog, en);
   const index = readFileSync(join(outDir, 'index.html'), 'utf8');
   let bytes = 0;
   for (const e of entries) {
@@ -158,12 +167,23 @@ export async function buildPreviews({ root, outDir }) {
     writeFileSync(join(dir, name + '.jpg'), jpg);
     bytes += jpg.length;
     if (e.kind === 'default') continue;
-    const query = { title: 'title', char: 'char', guide: 'guide' }[e.kind];
-    writeFileSync(join(dir, name + '.html'), applyPreviewTags(index, {
+    // Each page's own address (src/share-card/addresses.ts) is its canonical,
+    // and its readable text goes in for crawlers (page-text.ts).
+    const text = texts.get(e.kind + '/' + e.id);
+    if (!text) throw new Error(`link previews: no page text for ${e.kind} ${e.id}`);
+    writeFileSync(join(dir, name + '.html'), insertPageText(applyPreviewTags(index, {
       title: e.title, description: e.description, alt: e.alt,
-      url: `${SITE}/?${query}=${encodeURIComponent(e.id)}`,
+      url: SITE + thingPath(e.kind, e.id),
       image: `${SITE}/og/${e.kind}/${name}.jpg`,
-    }));
+    }), text));
   }
+  // robots.txt and the sitemap of the pages just written (Notion
+  // "Findability 1"; src/share-card/site-files.ts).
+  const pages = entries.filter((e) => e.kind !== 'default').map((e) => e.kind + '/' + e.id);
+  writeFileSync(join(outDir, 'robots.txt'), robotsTxt(SITE));
+  writeFileSync(join(outDir, 'sitemap.xml'), sitemapXml(SITE, catalog, pages));
+  // And the summary for AI assistants (Findability 7).
+  writeFileSync(join(outDir, 'llms.txt'), llmsTxt(SITE, catalog, en, pages));
+  writeFileSync(join(outDir, 'llms-full.txt'), llmsFullTxt(SITE, catalog, en, pages));
   return { count: entries.length, bytes, ms: Date.now() - started };
 }

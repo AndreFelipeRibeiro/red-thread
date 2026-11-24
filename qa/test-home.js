@@ -64,14 +64,14 @@ const settle = (page) => require('./ready').appReady(page, 1000);
 
 // The state the logo is meant to reset, read from the page.
 const STATE = () => {
-  const q = new URLSearchParams(location.search);
+  const q = new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))));
   // The status filter: a pressed header pill (Seen, Watchlist), else All.
   const pill = document.querySelector('.status-counts [aria-pressed="true"]');
   const coll = pill ? { textContent: pill.dataset.coll } : { textContent: 'All' };
   const search = document.querySelector('.search-wrap input, .m-search-input input');
   const canvas = document.querySelector('.canvas');
   return {
-    url: location.pathname + location.search,
+    url: location.pathname + (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))),
     search: search ? search.value : null,
     coll: coll ? coll.textContent.trim() : null,
     chips: document.querySelectorAll('.ctx-chip').length,

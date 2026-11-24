@@ -54,7 +54,8 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // address follows the state as it changes, Back and Forward restore the open
 // title and character, and nothing private ever reaches the address.
 const OURS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char', 'guide', 'explore'];
-const params = (page) => page.evaluate(() => Object.fromEntries(new URLSearchParams(location.search)));
+// The address's state, the page's path included (/titles/<id>; Findability 3).
+const params = (page) => page.evaluate(() => Object.fromEntries(((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/))));
 const at = async (page, qs) => { await page.goto(URL + qs); await require('./ready').appReady(page); };
 
 (async () => {
@@ -150,7 +151,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
     const pin = document.querySelector('.m-sheet .trail-pin');
     if (!pin) return { error: 'no pin in James Rhodes\'s trail' };
     pin.click(); await new Promise(r => setTimeout(r, 1500));
-    return { pill: !!document.querySelector('.char-card'), char: new URLSearchParams(location.search).get('char') };
+    return { pill: !!document.querySelector('.char-card'), char: ((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/)).get('char') };
   });
   if (R.pin.error) errors.push(R.pin.error);
   else {
@@ -172,7 +173,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
     const close = document.querySelector('.m-sheet .m-sheet-close, .m-sheet button[aria-label*="Close"], .m-sheet button[aria-label*="Fechar"]');
     if (close) close.click(); else history.back();
     await new Promise(r => setTimeout(r, 1500));
-    return { phase: new URLSearchParams(location.search).get('phase'), sheetOpen: !!document.querySelector('.m-sheet') };
+    return { phase: ((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/)).get('phase'), sheetOpen: !!document.querySelector('.m-sheet') };
   });
   if (R.filterSheet.error) errors.push(R.filterSheet.error);
   else if (R.filterSheet.phase !== '2') errors.push(`closing the filter sheet reverted the phase (address has phase=${R.filterSheet.phase})`);
@@ -180,19 +181,19 @@ const at = async (page, qs) => { await page.goto(URL + qs); await require('./rea
   // ---- ?title=…&explore=thread opens Follow the thread --------------------
   // (Notion "Link straight to a title's Follow the thread view")
   await at(page, '?title=civil-war&explore=thread'); await page.waitForTimeout(800);
-  R.thread = await page.evaluate(() => ({ thread: !!document.querySelector('.drawer.open .ex-thread'), title: (document.querySelector('.drawer.open .ex-thread .ex-title') || {}).textContent || null, explore: new URLSearchParams(location.search).get('explore') }));
+  R.thread = await page.evaluate(() => ({ thread: !!document.querySelector('.drawer.open .ex-thread'), title: (document.querySelector('.drawer.open .ex-thread .ex-title') || {}).textContent || null, explore: ((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/)).get('explore') }));
   if (!R.thread.thread) errors.push('?title=civil-war&explore=thread did not open the thread in the panel');
   if (R.thread.explore !== 'thread') errors.push('the thread link lost explore=thread from the address');
   R.thread.back = await page.evaluate(async () => { const b = document.querySelector('.drawer.open .ex-back'); if (!b) return 'no back'; b.click(); await new Promise(r => setTimeout(r, 700));
-    const p = new URLSearchParams(location.search); return { explore: p.get('explore'), title: p.get('title'), details: !!document.querySelector('.drawer.open .td-thread') }; });
+    const p = ((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/)); return { explore: p.get('explore'), title: p.get('title'), details: !!document.querySelector('.drawer.open .td-thread') }; });
   if (R.thread.back === 'no back') errors.push('no Back to details in the thread');
   else { if (R.thread.back.explore) errors.push('Back to details left explore= in the address'); if (R.thread.back.title !== 'civil-war' || !R.thread.back.details) errors.push('Back to details did not return to the details'); }
-  R.thread.again = await page.evaluate(async () => { const t = document.querySelector('.td-thread'); if (!t) return null; t.click(); await new Promise(r => setTimeout(r, 700)); return new URLSearchParams(location.search).get('explore'); });
+  R.thread.again = await page.evaluate(async () => { const t = document.querySelector('.td-thread'); if (!t) return null; t.click(); await new Promise(r => setTimeout(r, 700)); return ((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/)).get('explore'); });
   if (R.thread.again !== 'thread') errors.push('following the thread did not add explore=thread to the address');
   await at(page, '?explore=thread'); R.thread.alone = await params(page);
   if (R.thread.alone.explore) errors.push('explore=thread without a title stayed in the address');
   await at(m, '?title=civil-war&explore=thread'); await m.waitForTimeout(900);
-  R.thread.phone = await m.evaluate(() => ({ thread: !!document.querySelector('.m-sheet .ex-thread'), explore: new URLSearchParams(location.search).get('explore') }));
+  R.thread.phone = await m.evaluate(() => ({ thread: !!document.querySelector('.m-sheet .ex-thread'), explore: ((q, m) => (m && q.set({ titles: 'title', guides: 'guide', characters: 'char' }[m[1]], m[2]), q))(new URLSearchParams(location.search), location.pathname.match(/^\/(titles|guides|characters)\/([a-z0-9-]+)\/?$/)).get('explore') }));
   if (!R.thread.phone.thread) errors.push('on a phone, the thread link did not open the thread sheet');
 
   R.errors = errors;

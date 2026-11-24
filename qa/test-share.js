@@ -100,17 +100,17 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     const btn = page.locator('.drawer .td-share');
     expect(await btn.getAttribute('aria-label') === 'Share Iron Man', 'drawer: Share has no "Share Iron Man" name');
     await reset(); await btn.click(); await copiedShown('drawer');
-    goodLink(await clip(), '?title=iron-man', 'desktop title');
+    goodLink(await clip(), 'titles/iron-man', 'desktop title');
     expect(await page.evaluate(() => history.length) === hist, 'drawer: sharing added a history entry');
 
     await go(page, '?char=peggy');
     await page.locator('.char-card .cb-more').click(); await page.waitForTimeout(300);
     await reset(); await page.locator('.cc-menu .cb-share').click(); await copiedShown('banner');
-    goodLink(await clip(), '?char=peggy', 'desktop character');
+    goodLink(await clip(), 'characters/peggy', 'desktop character');
 
     await go(page, '?guide=before-doomsday&view=list');
     await reset(); await page.locator('.g-desk .g-head .g-share').click(); await copiedShown('guide card');
-    goodLink(await clip(), '?guide=before-doomsday', 'desktop guide');
+    goodLink(await clip(), 'guides/before-doomsday', 'desktop guide');
     await go(page, '?guide=before-doomsday');
     // Share lives on the guide's page, not on the Spatial guide card (Andre, 2026-11-16).
     expect(await page.locator('.g-module.spatial .gm-share').count() === 0, 'Spatial guide card still has Share');
@@ -178,7 +178,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.locator('.g-desk .g-head .g-share').click();
     await cardOpen(page, 'finished guide', /^A Red Thread card: Catch up before Avengers: Doomsday, complete$/);
     await reset(); await page.locator('.share-image-actions button', { hasText: 'Copy link' }).click(); await copiedShown('guide card');
-    goodLink(await clip(), '?guide=before-doomsday', 'desktop finished guide');
+    goodLink(await clip(), 'guides/before-doomsday', 'desktop finished guide');
     await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     await ctx.close();
   }
@@ -192,7 +192,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.locator('.m-sheet .td-share').click(); await page.waitForTimeout(200);
     let d = await last();
     out.phoneTitle = d;
-    goodLink(d && d.url, '?title=iron-man', 'phone title');
+    goodLink(d && d.url, 'titles/iron-man', 'phone title');
     expect(d && d.text === 'Iron Man (2008), and how it connects to the rest of the MCU', 'phone title: message ' + JSON.stringify(d && d.text));
     expect(d && d.title === 'Red Thread', 'phone title: share title is not Red Thread');
     expect(!(await page.evaluate(() => document.querySelector('.share-toast').classList.contains('show'))), 'phone: a "Link copied" toast showed after the share sheet');
@@ -210,13 +210,13 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.locator('.char-card .cb-more').tap(); await page.waitForTimeout(300);
     await page.locator('.cc-menu .cb-share').click(); await page.waitForTimeout(200);
     d = await last();
-    goodLink(d && d.url, '?char=peggy', 'phone character');
+    goodLink(d && d.url, 'characters/peggy', 'phone character');
     expect(d && /^Follow Peggy Carter across \d+ titles$/.test(d.text), 'phone character: message ' + JSON.stringify(d && d.text));
 
     await go(page, '?guide=before-doomsday&view=list');
     await page.locator('.g-head .g-share').click(); await page.waitForTimeout(200);
     d = await last();
-    goodLink(d && d.url, '?guide=before-doomsday', 'phone guide');
+    goodLink(d && d.url, 'guides/before-doomsday', 'phone guide');
     expect(d && /essential titles to watch/.test(d.text), 'phone guide: message ' + JSON.stringify(d && d.text));
 
     // My progress on a phone: the card in a sheet, and Share image sends the

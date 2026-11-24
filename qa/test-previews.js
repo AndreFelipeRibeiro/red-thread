@@ -11,10 +11,27 @@
 //     mcu-connections.vercel.app to redthread.tv with the path and query,
 //     never a preview address; the retired og-image.jpg goes to the new card.
 //     (Notion V4 Tasks, "Rename the app to Red Thread".)
-//   - middleware.ts, run here against the built files: /?title=, /?char= and
-//     /?guide= get their page; an unknown or malformed id, a plain / and any
-//     other parameter pass through (the app-wide card).
-//   - The app boots from a preview page exactly as from index.html.
+//   - Every page has its own address (Notion "Findability 3", option B1):
+//     /titles/<id>, /characters/<id>, /guides/<id> is its og:url and
+//     canonical, it has its own <title>, and its HTML carries its readable
+//     text (src/share-card/page-text.ts): the name as the h1, and for a guide
+//     every stop, in order, linking to its title's page.
+//   - middleware.ts, run here against the built files: each page's address
+//     gets its page; an unknown id there gets the home page with a 404; the
+//     old /?title=, /?char= and /?guide= links are redirected (308) to the
+//     page's address with the rest of the query kept; an unknown or malformed
+//     id, a plain / and any other parameter pass through (the app-wide card).
+//     Its table agrees with src/share-card/addresses.ts, which the app uses.
+//   - robots.txt and sitemap.xml (Notion "Findability 1"): robots allows
+//     everyone, names the AI crawlers and points at the sitemap; the sitemap
+//     lists the home page and every page's address exactly once (no ?guide=
+//     link, no draft), guides with their reviewed date. Off redthread.tv
+//     every answer says noindex (vercel.json and the middleware).
+//   - llms.txt and llms-full.txt (Notion "Findability 7"): a summary, every
+//     page linked at its own address, every guide's stops in order.
+//   - The app boots from a page at its address exactly as from index.html,
+//     opens what the page names and keeps the address.
+//   - The tab title follows what is open (Notion "Findability 2").
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8304;
 const { chromium } = require('playwright');
@@ -56,7 +73,11 @@ const meta = (html, prop) => { const m = html.match(new RegExp(`<meta (?:propert
 const canonical = (html) => { const m = html.match(/<link rel="canonical" href="([^"]*)"/); return m ? m[1] : null; };
 const stripMeta = (html) => html
   .replace(/<meta (?:property="og:[a-z:]+"|name="(?:description|twitter:[a-z:]+)") content="[^"]*"\/>/g, '')
-  .replace(/<link rel="canonical" href="[^"]*"\/>/g, '');
+  .replace(/<link rel="canonical" href="[^"]*"\/>/g, '')
+  .replace(/<title>[^<]*<\/title>/, '')
+  .replace(/<article id="mcu-page-text"[\s\S]*?<\/article>/, '');
+const SEGMENT = { title: 'titles', guide: 'guides', char: 'characters' };
+const pageText = (html) => { const m = html.match(/<article id="mcu-page-text"[^>]*>([\s\S]*?)<\/article>/); return m ? m[1] : null; };
 const MAX_BYTES = 300 * 1024;
 // The tags a preview is built from, which must agree with each other and
 // carry the public name only.
@@ -115,14 +136,26 @@ const tagErrors = (html, label, url) => {
       biggest = Math.max(biggest, bytes);
       if (bytes >= MAX_BYTES) errors.push(`${kind} ${id}: image is ${Math.round(bytes / 1024)} KB, over 300 KB`);
       const html = fs.readFileSync(page, 'utf8');
-      const q = `${PUBLIC}/?${kind}=${id}`;
+      const q = `${PUBLIC}/${SEGMENT[kind]}/${id}`;
       if (meta(html, 'og:url') !== q) errors.push(`${kind} ${id}: og:url ${meta(html, 'og:url')}`);
       if (meta(html, 'og:image') !== `${PUBLIC}/og/${kind}/${id}.jpg`) errors.push(`${kind} ${id}: og:image ${meta(html, 'og:image')}`);
       if (meta(html, 'og:image:type') !== 'image/jpeg') errors.push(`${kind} ${id}: og:image:type ${meta(html, 'og:image:type')}`);
       if (!(meta(html, 'og:title') || '').includes(name.replace(/&/g, '&amp;'))) errors.push(`${kind} ${id}: og:title "${meta(html, 'og:title')}" does not name ${name}`);
       if (!meta(html, 'og:description') || !meta(html, 'og:image:alt')) errors.push(`${kind} ${id}: empty description or alt`);
       errors.push(...tagErrors(html, `${kind} ${id}`, q));
-      if (stripMeta(html) !== base) errors.push(`${kind} ${id}: the page differs from index.html beyond its preview tags`);
+      const title = (html.match(/<title>([^<]*)<\/title>/) || [])[1];
+      if (title !== meta(html, 'og:title')) errors.push(`${kind} ${id}: <title> "${title}" is not its og:title`);
+      const text = pageText(html);
+      const h1 = text && (text.match(/<h1>([^<]*)<\/h1>/) || [])[1];
+      if (!h1 || !h1.includes(name.replace(/&/g, '&amp;').replace(/'/g, "'"))) errors.push(`${kind} ${id}: the page text's h1 "${h1}" does not name ${name}`);
+      if (kind === 'guide') {
+        const g = win.GUIDES.find(x => x.id === id);
+        const links = [...(text || '').matchAll(/<li><a href="\/titles\/([a-z0-9-]+)">/g)].map(m => m[1]);
+        if (links.join() !== g.stops.map(st => st.id).join()) errors.push(`guide ${id}: the page text lists ${links.join()}, not its stops in order`);
+        const why = g.stops[0].why.en.replace(/&/g, '&amp;');
+        if (!text.includes(why.slice(0, 30))) errors.push(`guide ${id}: the page text leaves out the stops' reasons`);
+      }
+      if (stripMeta(html) !== base) errors.push(`${kind} ${id}: the page differs from index.html beyond its preview tags, title and text`);
       checked++;
     }
   }
@@ -192,6 +225,59 @@ const tagErrors = (html, label, url) => {
   const oldPng = rules.find(r => r.source === '/og/:kind/:id.png');
   expect(oldPng && oldPng.destination === '/og/:kind/:id.jpg' && oldPng.permanent === true, 'vercel.json: /og/<kind>/<id>.png does not go to its .jpg');
 
+  // ---- robots.txt and sitemap.xml (Findability 1) ---------------------------
+  {
+    const robots = fs.existsSync(path.join(SITE, 'robots.txt')) ? fs.readFileSync(path.join(SITE, 'robots.txt'), 'utf8') : '';
+    expect(/^User-agent: \*\nAllow: \/$/m.test(robots), 'robots.txt: no "User-agent: *" group allowing /');
+    expect(!/^Disallow:/m.test(robots), 'robots.txt disallows something');
+    for (const ua of ['GPTBot', 'OAI-SearchBot', 'ClaudeBot', 'Claude-SearchBot', 'PerplexityBot', 'Google-Extended', 'Bingbot']) {
+      expect(new RegExp('^User-agent: ' + ua + '$', 'm').test(robots), 'robots.txt does not name ' + ua);
+    }
+    expect(robots.includes(`Sitemap: ${PUBLIC}/sitemap.xml`), 'robots.txt has no Sitemap line');
+    const sm = fs.existsSync(path.join(SITE, 'sitemap.xml')) ? fs.readFileSync(path.join(SITE, 'sitemap.xml'), 'utf8') : '';
+    const locs = [...sm.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)].map(m => ({ loc: m[1], lastmod: m[2] || null }));
+    const want = [PUBLIC + '/', ...Object.keys(sets).flatMap(kind => sets[kind]
+      .filter(([id]) => fs.existsSync(path.join(SITE, 'og', kind, id + '.html')))
+      .map(([id]) => `${PUBLIC}/${SEGMENT[kind]}/${id}`))];
+    expect(sm.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'), 'sitemap.xml: not a sitemap');
+    expect(locs.length === new Set(locs.map(l => l.loc)).size, 'sitemap.xml lists an address twice');
+    expect(locs.length === want.length && want.every(u => locs.some(l => l.loc === u)), `sitemap.xml lists ${locs.length} addresses, expected ${want.length}`);
+    expect(!locs.some(l => l.loc.includes('?')), 'sitemap.xml lists a query address');
+    for (const g of win.GUIDES) {
+      const l = locs.find(x => x.loc === `${PUBLIC}/guides/${g.id}`);
+      if (l && l.lastmod !== g.reviewed) errors.push(`sitemap.xml: guide ${g.id} lastmod ${l.lastmod}, not its reviewed ${g.reviewed}`);
+    }
+    out.sitemap = { addresses: locs.length, withLastmod: locs.filter(l => l.lastmod).length };
+    // llms.txt and llms-full.txt (Findability 7): the llmstxt.org shape, every
+    // page at its own address, every guide's stops in order.
+    const llms = fs.existsSync(path.join(SITE, 'llms.txt')) ? fs.readFileSync(path.join(SITE, 'llms.txt'), 'utf8') : '';
+    const full = fs.existsSync(path.join(SITE, 'llms-full.txt')) ? fs.readFileSync(path.join(SITE, 'llms-full.txt'), 'utf8') : '';
+    expect(/^# Red Thread\n\n> \S/.test(llms), 'llms.txt does not open with "# Red Thread" and a > summary');
+    const llmsLinks = [...llms.matchAll(/\]\((https:[^)]+)\)/g)].map(m => m[1]);
+    const pageLinks = want.filter(u => u !== PUBLIC + '/');
+    expect(pageLinks.every(u => llmsLinks.includes(u)), `llms.txt leaves out ${pageLinks.filter(u => !llmsLinks.includes(u)).length} page addresses`);
+    expect(!llms.includes('?') || !/\]\([^)]*\?/.test(llms), 'llms.txt links a query address');
+    expect(llmsLinks.includes(PUBLIC + '/llms-full.txt') && robots.includes(PUBLIC + '/llms.txt'), 'llms.txt does not link llms-full.txt, or robots.txt does not mention llms.txt');
+    for (const g of win.GUIDES) {
+      const at = full.indexOf(`## ${g.name.en}\n`);
+      if (at < 0) { errors.push(`llms-full.txt has no section for guide ${g.id}`); continue; }
+      const section = full.slice(at, (full.indexOf('\n## ', at + 3) + 1 || full.length + 1) - 1);
+      const n = (section.match(/^\d+\. /gm) || []).length;
+      if (n !== g.stops.length) errors.push(`llms-full.txt: guide ${g.id} lists ${n} stops, not ${g.stops.length}`);
+    }
+    out.llms = { lines: llms.split('\n').length, links: llmsLinks.length, fullLines: full.split('\n').length };
+    // Off production, noindex on everything (vercel.json; Vercel matches a
+    // host value as a whole-string pattern, so does this).
+    const noindex = (vercel.headers || []).find(h => (h.headers || []).some(x => x.key === 'X-Robots-Tag' && x.value === 'noindex'));
+    const miss = noindex && (noindex.missing || []).find(m => m.type === 'host');
+    const missRe = miss && new RegExp('^(?:' + miss.value + ')$');
+    expect(noindex && noindex.source === '/:path*' && missRe, 'vercel.json: no X-Robots-Tag noindex rule for every path off production');
+    expect(missRe && missRe.test('redthread.tv'), 'vercel.json: redthread.tv itself would be noindex');
+    for (const host of ['red-thread-git-version-50-afr-bfcd.vercel.app', 'www.redthread.tv', 'localhost']) {
+      expect(missRe && !missRe.test(host), `vercel.json: ${host} would be indexable`);
+    }
+  }
+
   // ---- The middleware, against the built files ------------------------------
   const { code: mw } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'middleware.ts'), 'utf8'), 'middleware.ts', { lang: 'ts' });
   const tmp = path.join(require('os').tmpdir(), 'mcu-middleware-' + process.pid + '.mjs');
@@ -205,22 +291,67 @@ const tagErrors = (html, label, url) => {
   };
   const middleware = (await import(pathToFileURL(tmp).href)).default;
   const config = (await import(pathToFileURL(tmp).href)).config;
-  expect(config && config.matcher === '/', 'middleware: matcher is not the home page only');
-  const run = async (q) => { const r = await middleware(new Request(PUBLIC + '/' + q)); return r ? { status: r.status, type: r.headers.get('content-type'), html: await r.text() } : null; };
-  for (const [q, kind, id] of [['?title=iron-man', 'title', 'iron-man'], ['?char=peggy', 'char', 'peggy'], ['?guide=before-doomsday', 'guide', 'before-doomsday'], ['?title=iron-man&char=tony', 'title', 'iron-man'], ['?sort=phase&title=endgame', 'title', 'endgame']]) {
+  expect(config && JSON.stringify(config.matcher) === JSON.stringify(['/', '/titles/:id', '/guides/:id', '/characters/:id']),
+    'middleware: matcher is not the home page and the three page addresses: ' + JSON.stringify(config && config.matcher));
+  const run = async (p) => { const r = await middleware(new Request(PUBLIC + p)); return r ? { status: r.status, type: r.headers.get('content-type'), location: r.headers.get('location'), html: r.status === 308 ? '' : await r.text() } : null; };
+  // A page's address gets its page.
+  for (const [p, kind, id] of [['/titles/iron-man', 'title', 'iron-man'], ['/characters/peggy', 'char', 'peggy'], ['/guides/before-doomsday', 'guide', 'before-doomsday'], ['/guides/before-doomsday?view=list', 'guide', 'before-doomsday'], ['/titles/endgame/', 'title', 'endgame']]) {
+    const r = await run(p);
+    expect(r && r.status === 200 && /text\/html/.test(r.type) && meta(r.html, 'og:image') === `${PUBLIC}/og/${kind}/${id}.jpg` && pageText(r.html),
+      `middleware ${p}: did not serve the ${kind} ${id} page`);
+  }
+  // Production pages are indexable; the same page on a preview deployment is not.
+  {
+    const prod = await middleware(new Request(PUBLIC + '/guides/before-doomsday'));
+    const stage = await middleware(new Request('https://red-thread-git-version-50-afr-bfcd.vercel.app/guides/before-doomsday'));
+    expect(prod && !prod.headers.get('x-robots-tag'), 'middleware: a production page says ' + (prod && prod.headers.get('x-robots-tag')));
+    expect(stage && stage.headers.get('x-robots-tag') === 'noindex', 'middleware: a staging page is not noindex');
+  }
+  // An unknown or malformed id at a page's address: the home page, 404.
+  for (const p of ['/titles/not-a-title', '/characters/Peggy', '/guides/before%20doomsday']) {
+    const r = await run(p);
+    expect(r && r.status === 404 && meta(r.html, 'og:url') === PUBLIC + '/', `middleware ${p}: answered ${r && r.status}, not the home page with a 404`);
+  }
+  // Every link shared before: a permanent redirect, the rest of the query kept.
+  for (const [q, to] of [
+    ['/?title=iron-man', '/titles/iron-man'],
+    ['/?char=peggy', '/characters/peggy'],
+    ['/?guide=before-doomsday', '/guides/before-doomsday'],
+    ['/?guide=before-doomsday&view=list', '/guides/before-doomsday?view=list'],
+    ['/?title=endgame&guide=before-doomsday', '/titles/endgame?guide=before-doomsday'],
+    ['/?title=iron-man&char=tony', '/titles/iron-man?char=tony'],
+    ['/?sort=phase&title=endgame&phase=2,3', '/titles/endgame?sort=phase&phase=2,3'],
+  ]) {
     const r = await run(q);
-    expect(r && r.status === 200 && /text\/html/.test(r.type) && meta(r.html, 'og:image') === `${PUBLIC}/og/${kind}/${id}.jpg`, `middleware ${q}: did not serve the ${kind} ${id} preview`);
+    expect(r && r.status === 308 && r.location === PUBLIC + to, `middleware ${q}: answered ${r && r.status} ${r && r.location}, not 308 to ${to}`);
   }
-  for (const q of ['', '?sort=phase', '?title=not-a-title', '?title=../index', '?char=%3Cscript%3E', '?guide=']) {
-    expect(await run(q) === null, `middleware ${q || '/'}: should pass through, but answered`);
+  for (const q of ['/', '/?sort=phase', '/?title=not-a-title', '/?title=../index', '/?char=%3Cscript%3E', '/?guide=', '/about', '/og/title/iron-man.html']) {
+    expect(await run(q) === null, `middleware ${q}: should pass through, but answered`);
   }
-  for (const [from, to] of [['https://mcu-connections.vercel.app/', PUBLIC + '/'], ['https://mcu-connections.vercel.app/?title=iron-man&char=tony', PUBLIC + '/?title=iron-man&char=tony'], ['https://mcu-connections.vercel.app/?guide=before-doomsday', PUBLIC + '/?guide=before-doomsday']]) {
+  for (const [from, to] of [['https://mcu-connections.vercel.app/', PUBLIC + '/'], ['https://mcu-connections.vercel.app/?title=iron-man&char=tony', PUBLIC + '/?title=iron-man&char=tony'], ['https://mcu-connections.vercel.app/guides/before-doomsday', PUBLIC + '/guides/before-doomsday']]) {
     const r = await middleware(new Request(from));
     expect(r && r.status === 308 && r.headers.get('location') === to, `middleware ${from}: answered ${r && r.status} ${r && r.headers.get('location')}, not 308 to ${to}`);
   }
   {
-    const r = await middleware(new Request('https://mcu-connections-git-version-40-afr-bfcd.vercel.app/?title=iron-man'));
-    expect(r && r.status === 200 && meta(await r.text(), 'og:image') === `${PUBLIC}/og/title/iron-man.jpg`, 'middleware: a preview address is redirected or gets no preview');
+    // A preview deployment keeps its own address: redirected within itself, never to production.
+    const r = await middleware(new Request('https://red-thread-git-version-50-afr-bfcd.vercel.app/?title=iron-man'));
+    expect(r && r.status === 308 && r.headers.get('location') === 'https://red-thread-git-version-50-afr-bfcd.vercel.app/titles/iron-man', 'middleware: a preview address is not redirected within itself');
+  }
+  // The middleware's table and the app's (src/share-card/addresses.ts) agree.
+  {
+    const { code } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'src/share-card/addresses.ts'), 'utf8'), 'addresses.ts', { lang: 'ts' });
+    const tmpA = path.join(require('os').tmpdir(), 'rt-addresses-' + process.pid + '.mjs');
+    fs.writeFileSync(tmpA, code);
+    const A = await import(pathToFileURL(tmpA).href);
+    fs.unlinkSync(tmpA);
+    for (const q of ['?title=endgame&guide=before-doomsday&view=list', '?char=peggy&sort=phase', '?guide=before-doomsday', '?title=iron-man&char=tony']) {
+      const r = await run('/' + q);
+      const a = A.addressFor(new URLSearchParams(q));
+      const want = PUBLIC + a.pathname + (a.search.toString() ? '?' + a.search.toString() : '');
+      expect(r && r.location === want, `addresses.ts and middleware.ts disagree on ${q}: ${r && r.location} vs ${want}`);
+      const back = A.stateParams(a.pathname, a.search.toString());
+      expect([...new URLSearchParams(q)].every(([k, v]) => back.get(k) === v), `addresses.ts: ${q} does not read back from ${want}`);
+    }
   }
   out.middlewareFetches = fetched.length;
   fs.unlinkSync(tmp);
@@ -236,12 +367,24 @@ const tagErrors = (html, label, url) => {
     await page.route('**/*', (r) => {
       const u = r.request().url();
       if (!u.startsWith('http://127.0.0.1')) return r.abort();
-      if (new URL(u).pathname === '/' ) return r.fulfill({ status: 200, contentType: 'text/html', body: preview });
+      if (new URL(u).pathname === '/titles/iron-man') return r.fulfill({ status: 200, contentType: 'text/html', body: preview });
       return r.continue();
     });
-    await page.goto(URL_BASE + '?title=iron-man');
+    await page.goto(URL_BASE + 'titles/iron-man');
     await require('./ready').appReady(page, 300);
-    expect((await page.locator('#drawer-title').textContent()).trim() === 'Iron Man', 'preview page: the app did not open Iron Man');
+    expect((await page.locator('#drawer-title').textContent()).trim() === 'Iron Man', 'page address: the app did not open Iron Man');
+    const after = await page.evaluate(() => ({ path: location.pathname, text: !!document.getElementById('mcu-page-text'), title: document.title }));
+    out.bootedAt = after;
+    expect(after.path === '/titles/iron-man', 'page address: the app moved off /titles/iron-man to ' + after.path);
+    expect(!after.text, 'page address: the readable text is still in the page after the app started');
+    // The tab title follows what is open (Findability 2): the page's own
+    // title on arrival, the home page's once the details close.
+    expect(after.title === 'Iron Man (2008) · Red Thread', 'tab title on /titles/iron-man: ' + after.title);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(700);
+    const closed = await page.evaluate(() => ({ path: location.pathname, title: document.title }));
+    out.afterClose = closed;
+    expect(closed.path === '/' && closed.title === 'Red Thread — Marvel movies, series and character connections', 'after closing the details: ' + JSON.stringify(closed));
     await ctx.close();
   }
   await browser.close();

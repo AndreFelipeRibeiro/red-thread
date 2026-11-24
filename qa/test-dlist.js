@@ -29,7 +29,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
     onRow: (document.querySelector('.dl-row.on .dl-open') || {}).textContent || null,
     hscroll: (() => { const d = document.querySelector('.dlist'); return d ? d.scrollWidth > d.clientWidth + 1 : null; })(),
     ctx: (document.querySelector('.dlist .ctx-count') || {}).textContent || null,
-    url: location.search,
+    url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))),
   }));
   const fails = [];
   // Picks an order from the header's Sort menu.

@@ -61,7 +61,7 @@ const ST = () => {
   const cards = [...document.querySelectorAll('.card')].filter(c => !c.classList.contains('ring-hidden') && getComputedStyle(c).visibility !== 'hidden');
   const cur = document.querySelector('.card.current');
   return {
-    url: location.search, trail: !!document.querySelector('.drawer .ex-trail'), pin: !!document.querySelector('.drawer .trail-pin'),
+    url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))), trail: !!document.querySelector('.drawer .ex-trail'), pin: !!document.querySelector('.drawer .trail-pin'),
     here: (document.querySelector('.drawer .ex-row.here') || {}).dataset?.title || null,
     current: cur ? cur.dataset.id : null, quiet: cur ? cur.classList.contains('guide-at') || cur.classList.contains('up-next') : null,
     lifted: cur ? /scale\((?!1\))/.test(getComputedStyle(cur).transform) && getComputedStyle(cur).getPropertyValue('--lift').trim() === '1.08' : null,
@@ -106,7 +106,7 @@ const ST = () => {
     items: [...document.querySelectorAll('.cc-menu [role^="menuitem"]')].map(e => e.textContent.trim()) }));
   expect(/^Robert Downey Jr\. · \d+ titles$/.test(menu.who || '') && menu.items.includes('Show all titles') && menu.items.includes('Share'), `the card's menu: ${JSON.stringify(menu)}`);
   await page.keyboard.press('Escape'); await page.waitForTimeout(400);
-  const esc = out.menuEsc = await page.evaluate(() => ({ open: [...document.querySelectorAll('.cc-menu')].some(m => !m.hasAttribute('data-closed')), card: !!document.querySelector('.char-card'), char: new URLSearchParams(location.search).get('char') }));
+  const esc = out.menuEsc = await page.evaluate(() => ({ open: [...document.querySelectorAll('.cc-menu')].some(m => !m.hasAttribute('data-closed')), card: !!document.querySelector('.char-card'), char: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('char') }));
   expect(!esc.open && esc.card && esc.char === 'tony', `Escape should close the menu and keep the pin: ${JSON.stringify(esc)}`);
   // The photo opens the trail, on the current title.
   await page.locator('.char-card .cc-badge').click(); await page.waitForTimeout(800);
