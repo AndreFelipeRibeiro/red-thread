@@ -2834,6 +2834,12 @@ function App() {
     if (item.kind === 'actor') pinActor(item.label);
     else if (item.actor) pinActor(item.actor);
     else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
+    // On Guides, which shows nothing of a pinned character, the pick opens
+    // Titles on their titles (Notion "Search: Enter on the Guides page does
+    // nothing"; Andre, 2026-11-24). Guides is already the list view and the
+    // pin has closed any open guide, so only the Guides page is left to leave;
+    // goSection would also reset the stepper's starting title.
+    if (section === 'guides') setGuidesPage(false);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
     if (!isTouch && how.viaKeyboard) requestAnimationFrame(() => requestAnimationFrame(() => {
