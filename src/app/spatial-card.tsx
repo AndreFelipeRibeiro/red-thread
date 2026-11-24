@@ -336,9 +336,13 @@ export function CardText({ title, skipped = false, query, mark, pop = false, tou
         {(facet === 'year' || facet === 'imdb' || facet === 'rt') && <span className="flex-none whitespace-nowrap">{title.year}</span>}
         {facet === 'story' && title.story && <window.StoryYear title={title} className={cn('card-story min-w-0 text-[inherit] in-[.card]:text-[inherit] [&>svg]:size-[1em]')}/>}
         {facet === 'budget' && <span className="card-budget flex-none whitespace-nowrap">{title.budget != null ? tr('budget.format', { n: title.budget }) : '—'}</span>}
-        {/* A title not out yet carries its badge too, so it drops the
-            separator to keep the line on one row. */}
-        {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
+        {/* A title not out yet carries its badge instead: a series drops
+            "Series" for it, since "2027 Series Coming soon" ran past the
+            card's edge, and would on the phone's selected card too (Notion
+            "Connections cards: the Coming soon pill runs into a series
+            card's right edge", Andre's choice, 2026-11-24). Rows and the
+            details keep "Series". */}
+        {title.type === 'series' && !upcoming && <>{dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
         {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
         {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-card-micro font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
       </div>}

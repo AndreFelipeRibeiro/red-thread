@@ -54,6 +54,24 @@ const CARD = (sel) => {
   };
 };
 const SCALE = () => Number((document.querySelector('.canvas').style.transform.match(/scale\(([\d.]+)\)/) || [])[1]);
+// Every card's meta line stays inside its padding (Notion "Connections cards:
+// the Coming soon pill runs into a series card's right edge", 2026-11-24): a
+// title not out yet shows its release pill, and a series drops "Series" for
+// it. Measured in the card's own pixels, whatever the canvas zoom.
+const LINEFIT = () => {
+  const cards = [...document.querySelectorAll('.canvas .card')];
+  const over = [], series = [];
+  for (const c of cards) {
+    const line = c.querySelector('.card-year');
+    if (!line) continue;
+    const s = c.getBoundingClientRect().width / c.offsetWidth;
+    const meta = c.querySelector('.card-meta'), edge = meta.getBoundingClientRect().right - parseFloat(getComputedStyle(meta).paddingRight) * s;
+    const right = Math.max(...[...line.children].map(e => e.getBoundingClientRect().right));
+    if (line.scrollWidth > line.clientWidth + 0.5 || right > edge + 0.5) over.push(c.dataset.id + ' ' + ((right - edge) / s).toFixed(1));
+    if (line.querySelector('.card-release') && line.querySelector('.card-type')) series.push(c.dataset.id);
+  }
+  return { cards: cards.length, pills: cards.filter(c => c.querySelector('.card-year .card-release')).map(c => c.dataset.id), over, series };
+};
 
 (async () => {
   await new Promise(r => server.listen(PORT, r));
@@ -69,6 +87,8 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     out[scheme + ' rest'] = a;
     expect(a && Math.abs(a.ratio - 2 / 3) < 0.01 && !a.over.length && !a.band && !a.acts, `${scheme}: at rest: ${JSON.stringify(a)}`);
     expect(a && a.phase && /2010/.test(a.line) && !/Set in|\$|connection/.test(a.line) && a.marks === 0 && a.conn > 0 && a.connCorner, `${scheme}: the meta line and corners: ${JSON.stringify(a)}`);
+    const fit = out[scheme + ' line fit'] = await page.evaluate(LINEFIT);
+    expect(fit.cards > 40 && !fit.over.length && !fit.series.length, `${scheme}: a card's meta line runs past its padding, or keeps "Series" beside its release pill: ${JSON.stringify(fit)}`);
     const seen = await page.evaluate(CARD, '.card[data-id="iron-man"]');
     out[scheme + ' seen'] = seen;
     expect(seen && seen.seenMark && seen.marks === 1 && seen.markCorner && !seen.washed, `${scheme}: a seen card: ${JSON.stringify(seen)}`);
@@ -146,6 +166,8 @@ const SCALE = () => Number((document.querySelector('.canvas').style.transform.ma
     const pc = await page.evaluate(TEXT);
     out.phoneCards = pc;
     expect(pc.title === '17px' && pc.line === '12px' && !pc.out.length, `phone: canvas card text: ${JSON.stringify(pc)}`);
+    const pfit = out.phoneLineFit = await page.evaluate(LINEFIT);
+    expect(pfit.cards > 40 && !pfit.over.length && !pfit.series.length, `phone: a card's meta line runs past its padding, or keeps "Series" beside its release pill: ${JSON.stringify(pfit)}`);
     // Double-tap on empty canvas: the overview (Notion "Explore E 5/5"), where
     // each card shows its title alone, larger; again, back to reading.
     const bg = await page.evaluate(() => { for (let y = 200; y < innerHeight - 200; y += 20) for (let x = 20; x < innerWidth - 20; x += 20) { const e = document.elementFromPoint(x, y); if (e && !e.closest('.card') && e.closest('.viewport')) return { x, y }; } return null; });
