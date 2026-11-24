@@ -47,6 +47,13 @@ export function insertPageText(html: string, text: string): string {
   return html.replace(marker, () => marker + text);
 }
 
+/** Puts a block (the page's structured data; structured-data.ts) at the end
+ *  of <head>. */
+export function insertInHead(html: string, block: string): string {
+  if (!html.includes('</head>')) throw new Error('share-card: index.html has no </head>');
+  return html.replace('</head>', () => block + '</head>');
+}
+
 export function applyPreviewTags(html: string, t: PreviewTags): string {
   let out = html;
   out = setTitle(out, t.title);

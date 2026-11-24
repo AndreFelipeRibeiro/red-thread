@@ -56,7 +56,7 @@ async function ctxPage(browser, opts) {
   const out = {}, errors = [];
   const expect = (ok, msg) => { if (!ok) errors.push(msg); };
   const read = (page) => page.evaluate(() => ({
-    url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))), page: !!document.querySelector('.g-head'),
+    url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))), page: !!document.querySelector('.g-head'),
     card: !!document.querySelector('.guide-banner.spatial'), dock: !!document.querySelector('.g-dock'),
     spatial: !!document.querySelector('.viewport'), details: (document.querySelector('.drawer.open h2') || {}).textContent || null,
   }));

@@ -39,7 +39,7 @@ const state = () => {
     top: area ? Math.round(area.scrollTop) : null,
     tab: on ? on.textContent.trim() : null,
     order: (document.querySelector('.m-toolrow .sort-menu-trigger') || {}).getAttribute?.('aria-label') || '',
-    search: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))),
+    search: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))),
   };
 };
 

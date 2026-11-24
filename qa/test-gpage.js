@@ -135,7 +135,7 @@ const seed = (states) => `localStorage.setItem('mcu.collection.v1', JSON.stringi
 
   // 5. A card opens its guide.
   await page.locator('.g-gcard .g-card-open').first().click(); await page.waitForTimeout(700);
-  r = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'));
+  r = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'));
   if (!r) err('a card did not open its guide');
   errors.forEach(e => err('desktop console: ' + e));
   await ctx.close();

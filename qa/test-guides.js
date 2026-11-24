@@ -169,14 +169,14 @@ const DATA = () => {
   const menu = await page.evaluate(() => ({
     rows: document.querySelectorAll('.g-page .g-row').length,
     groups: [...document.querySelectorAll('.g-page .g-group-h')].map(h => h.textContent),
-    url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))),
+    url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))),
   }));
   out.menu = menu;
   if (menu.rows !== data.guides.length) err(`desktop Guides lists ${menu.rows} guides, expected ${data.guides.length}`);
   if (!/view=guides/.test(menu.url)) err('the Guides tab is not in the address: ' + menu.url);
   await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(700);
   const desk = await page.evaluate(() => ({
-    url: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'),
+    url: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'),
     pop: !!document.querySelector('.g-page'),
     banner: !!document.querySelector('.g-desk .g-head'),
     charBanner: !!document.querySelector('.char-card'),
@@ -251,14 +251,14 @@ const DATA = () => {
   out.switcher = sw;
   if (sw.items !== data.guides.length || !sw.current || !sw.all) err(`desktop switcher: ${JSON.stringify(sw)}`);
   await page.locator('.g-switch-list .g-sw-item:not([aria-current])').first().click(); await page.waitForTimeout(700);
-  const swTo = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'));
+  const swTo = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'));
   if (!swTo || swTo === plan.id) err(`the switcher did not open another guide (${swTo})`);
   await page.locator('.g-desk .g-back').click(); await page.waitForTimeout(600);
-  let backTo = await page.evaluate(() => ({ page: !!document.querySelector('.g-page'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))) }));
+  let backTo = await page.evaluate(() => ({ page: !!document.querySelector('.g-page'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))) }));
   if (!backTo.page || /guide=/.test(backTo.url)) err(`"‹ Guides" did not go back to the list: ${JSON.stringify(backTo)}`);
   await page.locator('.g-page .g-row', { hasText: plan.name }).click(); await page.waitForTimeout(600);
   await page.locator('.nav-tabs button', { hasText: 'Guides' }).click(); await page.waitForTimeout(600);
-  backTo = await page.evaluate(() => ({ page: !!document.querySelector('.g-page'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))) }));
+  backTo = await page.evaluate(() => ({ page: !!document.querySelector('.g-page'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))) }));
   if (!backTo.page || /guide=/.test(backTo.url)) err(`the Guides tab did not close the open guide: ${JSON.stringify(backTo)}`);
   await finish('desktop', ctx, errors);
 
@@ -269,7 +269,7 @@ const DATA = () => {
   if (!restored) err('desktop: ?guide= did not open the guide on load');
   await page.mouse.click(1420, 880); await page.waitForTimeout(100); // empty margin, beside the list
   await page.keyboard.press('Escape'); await page.waitForTimeout(400);
-  const esc = await page.evaluate(() => ({ banner: !!document.querySelector('.g-desk'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))) }));
+  const esc = await page.evaluate(() => ({ banner: !!document.querySelector('.g-desk'), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))) }));
   if (esc.banner) err('desktop: Escape did not close the guide');
   if (/guide=/.test(esc.url)) err(`desktop: the address still names the guide after closing (${esc.url})`);
   await page.goto(URL + '?view=list&guide=no-such-guide'); await settle(page);
@@ -314,7 +314,7 @@ const DATA = () => {
     if (has !== 1) err(`desktop: the ${plan.charGuide.character} card's menu has ${has} "See the curated path" items`);
     if (has) {
       await page.locator('.cc-menu .cb-guide').click(); await page.waitForTimeout(600);
-      const r = await page.evaluate(() => ({ url: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))), guide: !!document.querySelector('.guide-banner, .g-desk .g-head'), pin: !!document.querySelector('.char-card') }));
+      const r = await page.evaluate(() => ({ url: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))), guide: !!document.querySelector('.guide-banner, .g-desk .g-head'), pin: !!document.querySelector('.char-card') }));
       if (!r.guide || r.pin) err('desktop: "See the curated path" did not swap the pin for the guide');
     }
     if (plan.plain) {
@@ -336,7 +336,7 @@ const DATA = () => {
     // Part of starts collapsed (Notion "Explore E 2/5"): open it first.
     await page.locator('.td-slot-guides .td-acc-btn').click(); await page.waitForTimeout(300);
     await page.locator('.td-slot-guides .g-partof-row', { hasText: plan.name }).click(); await page.waitForTimeout(600);
-    const r = await page.evaluate(() => ({ guide: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'), cur: (document.querySelector('.g-stop.current') || { dataset: {} }).dataset.rowId }));
+    const r = await page.evaluate(() => ({ guide: new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'), cur: (document.querySelector('.g-stop.current') || { dataset: {} }).dataset.rowId }));
     if (r.guide !== plan.id) err(`details: Part of opened ${r.guide}, expected ${plan.id}`);
     if (r.cur !== plan.ess[0]) err(`details: Part of should start the guide at ${plan.ess[0]} (current row ${r.cur})`);
   }
@@ -484,7 +484,7 @@ const DATA = () => {
   ({ ctx, page, errors } = await ctxPage(browser, PHONE320, seedJs(seed1) + "localStorage.setItem('mcu.lang.v1','pt-BR');"));
   await page.goto(URL + `?view=list&guide=${plan.id}`); await settle(page);
   const narrow = await page.evaluate(() => {
-    const G = window.MCU_GUIDE, g = G.get(new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'));
+    const G = window.MCU_GUIDE, g = G.get(new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'));
     const W = document.documentElement.clientWidth;
     const over = [...document.querySelectorAll('.g-head *, .g-stop *, .guide-pill *')].filter(e => e.getBoundingClientRect().right > W + 0.5 && e.getClientRects().length).map(e => e.className);
     return { over: over.slice(0, 5), name: (document.querySelector('.g-name') || {}).textContent, want: g.name['pt-BR'], lang: document.documentElement.lang,

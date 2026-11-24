@@ -5,7 +5,7 @@
 // What is left in LEGACY is not waiting to be converted â each entry has its
 // own reason to keep a plain URL, given beside it.
 import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'node:url';
@@ -29,9 +29,14 @@ const LEGACY = [
   // too. The old preview image, og-image.jpg, is gone: vercel.json sends its
   // address to the generated og/default.png.
   'favicon.png',
+  'favicon-96.png',
+  'favicon.ico',
   'apple-touch-icon.png',
   // Served today and linked from the README's setup notes.
   'schema.sql',
+  // IndexNow's key, which the engines fetch to check a submission
+  // (tools/indexnow.js; Notion "Findability 14").
+  'indexnow-key.txt',
 ];
 
 const copyLegacy = () => ({
@@ -70,15 +75,21 @@ const shareCardWasm = () => ({
 // app-wide card and every title, character and guide, in dist/og/, rendered
 // after the bundle is written because each page is a copy of the built
 // index.html. Loaded only here, so the dev server never pays for it.
-const linkPreviews = () => ({
+// It writes where the bundle went (build.outDir, dist unless --outDir says
+// otherwise), so a build into another folder never touches dist.
+const linkPreviews = () => {
+  let outDir = 'dist';
+  return {
   name: 'mcu-link-previews',
   apply: 'build',
+  configResolved(config) { outDir = resolve(config.root, config.build.outDir); },
   async closeBundle() {
     const { buildPreviews } = await import('./scripts/og-previews.js');
-    const r = await buildPreviews({ root: process.cwd(), outDir: 'dist' });
+    const r = await buildPreviews({ root: process.cwd(), outDir });
     console.log(`link previews: ${r.count} images, ${(r.bytes / 1048576).toFixed(1)} MB, ${(r.ms / 1000).toFixed(1)}s`);
   },
-});
+  };
+};
 
 // A file index.html loads as a classic script but LEGACY does not copy is a
 // 404 the browser reports as a blank page, so fail the build loudly rather

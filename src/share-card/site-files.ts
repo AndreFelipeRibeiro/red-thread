@@ -9,7 +9,8 @@
 //   own address; the full file adds every guide's stops and their reasons.
 //   No major assistant has said it reads them, so they are a cheap bet beside
 //   the pages themselves, which are the real fix.
-// - sitemap.xml lists the home page and every guide, title and character at
+// - sitemap.xml lists the home page, the index pages (/guides, /titles,
+//   /characters; Findability 4) and every guide, title and character at
 //   its own address (src/share-card/addresses.ts; Findability 3), never the
 //   old ?guide= links, which redirect. A guide's lastmod is its `reviewed`
 //   date; titles and characters have no date worth claiming, so they carry
@@ -52,6 +53,7 @@ const xml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
  *  those, so it never points at an address that 404s. */
 export function sitemapXml(site: string, cat: Catalog, pages: Iterable<string>): string {
   const reviewed = new Map(cat.guides.map((g) => [g.id, g.reviewed]));
+  const newest = cat.guides.map((g) => g.reviewed).sort().pop();
   const order: ThingKind[] = ['guide', 'title', 'char'];
   const keys = [...pages].map((k) => { const i = k.indexOf('/'); return { kind: k.slice(0, i) as ThingKind, id: k.slice(i + 1) }; })
     .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
@@ -61,6 +63,8 @@ export function sitemapXml(site: string, cat: Catalog, pages: Iterable<string>):
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     url(site + '/'),
+    // The index pages (Findability 4), dated by their newest guide review.
+    ...['guides', 'titles', 'characters'].map((seg) => url(`${site}/${seg}`, seg === 'guides' ? newest : undefined)),
     ...keys.map(({ kind, id }) => url(site + thingPath(kind, id), kind === 'guide' ? reviewed.get(id) : undefined)),
     '</urlset>',
     '',
@@ -108,6 +112,12 @@ export function llmsTxt(site: string, cat: Catalog, loc: LocaleTables, pages: It
     ...ABOUT.slice(1),
     '',
     `Every guide, title and character has its own page; each page's HTML carries its text. Home: ${site}/`,
+    '',
+    '## Indexes',
+    '',
+    `- [Every watch guide](${site}/guides)`,
+    `- [Every film and series, in release order](${site}/titles)`,
+    `- [Every character](${site}/characters)`,
     '',
     '## Guides',
     '',
