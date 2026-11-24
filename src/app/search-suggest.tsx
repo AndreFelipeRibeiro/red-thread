@@ -143,7 +143,12 @@ function SsThumb({ item }) {
 
 // `portalTo` (optional element) renders the list there instead of beside the
 // input: the mobile box is too small to anchor it, so it spans the search row.
-function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, ariaLabel, portalTo }) {
+// `onSubmit` (optional) is Enter with no suggestion highlighted: it gets the
+// typed text and returns true when it acted on it (on Guides, where there is
+// nothing to filter, it opens Titles with that search: Notion "Search: Enter
+// on the Guides page does nothing"). Anywhere else the text keeps filtering
+// as you type and Enter does nothing more.
+function SearchInput({ value, onChange, onPickTitle, onPickPerson, onSubmit, placeholder, ariaLabel, portalTo }) {
   const I = window.MCU_I18N;
   const { tr, lang } = window.useI18n();
   const [focused, setFocused] = React.useState(false);
@@ -207,7 +212,14 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
       });
       return;
     }
-    if (e.key === 'Enter' && open && active >= 0) { e.preventDefault(); pick(items[active], true); }
+    if (e.key === 'Enter' && open && active >= 0) { e.preventDefault(); pick(items[active], true); return; }
+    if (e.key === 'Enter' && onSubmit && value.trim() && onSubmit(value)) {
+      e.preventDefault();
+      // The results take over: let go of the box (and the phone keyboard).
+      if (inputRef.current) inputRef.current.blur();
+      setDismissed(true);
+      setActive(-1);
+    }
   };
   const secondary = (item) => {
     if (item.kind === 'guide') return `${window.MCU_GUIDE.kind(item.guide)} · ${window.MCU_GUIDE.size(item.guide)}`;

@@ -54,6 +54,30 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   await page.locator('.ss-item', { hasText: 'Forever' }).first().tap(); await page.waitForTimeout(800);
   out.mTitle = { sheet: await page.evaluate(() => (document.querySelector('.m-sh-title, .m-sheet h2, [class*="sheet"] h2') || {}).textContent || null), focus: await page.evaluate(() => document.activeElement.tagName) };
   out.mErrors = errors; await ctx.close();
+  // Enter with typed text and no suggestion highlighted, on Guides (Notion
+  // "Search: Enter on the Guides page does nothing"): Guides has nothing to
+  // filter, so it opens Titles with that search, the text kept as the filter.
+  for (const [label, opts, sel] of [['desktop', { viewport: { width: 1440, height: 900 } }, '.search-wrap input'], ['phone', { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, '.m-searchbar input']]) {
+    ({ ctx, page, errors } = await ctxPage(browser, opts, ART + SEED));
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/guides'); await require('./ready').appReady(page);
+    if (label === 'phone') { await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150); }
+    const b = page.locator(sel);
+    await b.click(); await b.type('peter parker'); await page.waitForTimeout(200);
+    const before = await page.evaluate(() => location.pathname);
+    await b.press('Enter'); await page.waitForTimeout(700);
+    const r = await page.evaluate(() => ({ path: location.pathname, rows: document.querySelectorAll('[data-row-id]').length, guidesPage: document.querySelectorAll('.g-page').length, pop: document.querySelectorAll('.ss-pop').length, focus: document.activeElement.tagName }));
+    r.before = before; r.value = await b.inputValue().catch(() => null);
+    out[label + 'GuidesEnter'] = r;
+    if (r.before !== '/guides') errors.push(label + ': the check did not start on Guides (' + r.before + ')');
+    // Titles is /titles on desktop; on a phone it is the default view, so /.
+    const want = label === 'phone' ? '/' : '/titles';
+    if (r.path !== want) errors.push(label + ': Enter on Guides left the address at ' + r.path + ', not ' + want);
+    if (r.guidesPage) errors.push(label + ': the Guides page is still showing after Enter');
+    if (r.value !== 'peter parker') errors.push(label + ': Enter on Guides did not keep the search as the filter (' + r.value + ')');
+    if (!r.rows || r.rows > 30) errors.push(label + ': Titles shows ' + r.rows + ' rows for "peter parker"');
+    if (r.pop) errors.push(label + ': the suggestions stayed open after Enter');
+    out[label + 'GuidesEnterErrors'] = errors; await ctx.close();
+  }
   console.log(JSON.stringify(out, null, 1));
   await browser.close(); server.close();
 })().catch(e => { console.error('FAIL', e.message.split('\\n')[0]); process.exit(1); });

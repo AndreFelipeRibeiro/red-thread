@@ -2887,6 +2887,16 @@ function App() {
     setCollectionFilter(v);
     if (section === 'guides') goSection('mylist');
   };
+  // Enter in the search box with no suggestion highlighted: on Guides, where
+  // there is nothing to filter, it opens Titles with that search, as the Seen
+  // and Watchlist pills do (Notion "Search: Enter on the Guides page does
+  // nothing").
+  // The text stays in the box as the filter. Elsewhere it already filters.
+  const submitSearch = () => {
+    if (section !== 'guides') return false;
+    goSection('mylist');
+    return true;
+  };
   // The trail's pin (See on canvas, or Highlight in Titles) pins the
   // character's thread where you are, what tapping a person did before
   // E 4/5; already pinned, it stays pinned.
@@ -3940,7 +3950,7 @@ function App() {
         <window.MobileTopBar
           onHome={onHomeClick}
           section={section}
-          search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson}
+          search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson} onSubmitSearch={submitSearch}
           onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
@@ -4055,7 +4065,7 @@ function App() {
         onHome={onHomeClick}
         onAbout={() => setAboutOpen(true)}
         onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
-        onPickTitle={pickTitle} onPickPerson={pickPerson}
+        onPickTitle={pickTitle} onPickPerson={pickPerson} onSubmitSearch={submitSearch}
         section={section} onSection={(s) => goSection(s)}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
