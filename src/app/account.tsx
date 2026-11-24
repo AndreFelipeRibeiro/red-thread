@@ -200,7 +200,9 @@ function AccountProvider({ children }) {
       setStatus('error');
     }, AUTH_TIMEOUT_MS);
     try {
-      const redirectTo = window.location.origin + window.location.pathname;
+      // The home page, as always: since Findability 3 the path can name a
+      // guide or title, and sign-in returns only to addresses Supabase allows.
+      const redirectTo = window.location.origin + '/';
       const { error: err } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, queryParams: { prompt: 'select_account' } },

@@ -148,6 +148,13 @@ window.MCU_LOCALES.en = {
     'og.charDesc': { one: 'Follow {name} on Red Thread: {first}.', other: 'Follow {name} across {n} titles, starting with {first}.' },
     'og.charAlt': '{name}’s titles in order, joined by one thread',
     'og.guideAlt': '{name}: the guide’s essential titles in order',
+    // The readable text in each guide, title and character page's HTML, for
+    // search engines and assistants (src/share-card/page-text.ts).
+    'page.homeTitle': 'Red Thread — Marvel movies, series and character connections',
+    'page.updated': 'Updated {date}',
+    'page.characters': 'Characters',
+    'page.inGuides': 'In these guides',
+    'page.appearances': 'Every appearance, in release order',
 
     'view.list': 'List',
     'view.spatial': 'Connections',

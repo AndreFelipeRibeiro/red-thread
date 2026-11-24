@@ -4,6 +4,7 @@ import { XIcon, ChevronRightIcon, SparklesIcon } from 'lucide-react';
 import { WhatsNew, RELEASES, releaseMonth } from './whats-new';
 import { Button } from '@/components/ui/button';
 import type { Guide, Title } from '@/types/catalog';
+import { stateParams } from '@/share-card/addresses';
 
 // About Red Thread: what the app is, ways to explore it, and credits
 // (TMDB requires its logo and notice in an About or Credits section).
@@ -37,7 +38,7 @@ function decideWelcome() {
     // recorded as decided; About keeps it reachable). Promotions still wait
     // for a returning visit (Notion "Shared links: the welcome no longer
     // covers the guide or title a first-time visitor came for").
-    const shared = ['guide', 'title', 'char'].some(k => url.searchParams.has(k));
+    const shared = ['guide', 'title', 'char'].some(k => stateParams(url.pathname, url.search).has(k));
     ls.setItem(WELCOME_KEY, returning ? 'returning' : shared ? 'shared' : 'shown');
     returningVisit = returning;
     return !returning && !shared;

@@ -1547,7 +1547,7 @@ function GuideHeader({ guide, includeOptional, setIncludeOptional, phone, onBack
         {!phone && <GuideShare guide={guide} className="g-share h-10 px-3.5 in-[.g-desk]:h-(--step-control-h)"/>}
         {/* The guide on the canvas (Notion "Guides: a See connections button",
             2026-11-18): Connections with the guide open, landing as a shared
-            ?guide= link does. */}
+            guide link (/guides/<id>) does. */}
         {onConnections && (
           <Button variant="outline" className="g-connections h-10 gap-1.5 px-3.5 text-body [&_svg]:size-3.5 in-[.g-desk]:h-(--step-control-h)"
             onClick={onConnections}>

@@ -13,14 +13,20 @@
 //   spend the plan's monthly events.
 // - What is measured is listed in docs/PRIVACY-REVIEW.md.
 import { inject } from '@vercel/analytics';
+import { parseThingPath, stateParams } from '@/share-card/addresses';
 
 const KEEP = ['guide', 'view', 'ref'];
 
 /** The address a page view reports: path plus the kept parameters. */
 export function analyticsURL(href: string): string {
   const u = new URL(href);
+  // Since Findability 3 the guide, title or character is in the path
+  // (/guides/<id>): read it back as a query and report the home page, so a
+  // view is reported exactly as before (and a title still isn't).
+  const q = stateParams(u.pathname, u.search);
   const kept = new URLSearchParams();
-  KEEP.forEach((k) => { const v = u.searchParams.get(k); if (v) kept.set(k, v); });
+  KEEP.forEach((k) => { const v = q.get(k); if (v) kept.set(k, v); });
+  if (parseThingPath(u.pathname)) u.pathname = '/';
   u.search = kept.toString();
   u.hash = '';
   return u.toString();

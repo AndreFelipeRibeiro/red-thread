@@ -346,7 +346,8 @@ function clearThisDevice() {
     keys.forEach((k) => localStorage.removeItem(k));
     sessionStorage.clear();
   } catch (e) { /* nothing stored, nothing to clear */ }
-  window.location.replace(window.location.pathname);
+  // The home page: since Findability 3 the path can name a guide or title.
+  window.location.replace('/');
 }
 
 // ---------------------------------------------------------------------------

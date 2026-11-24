@@ -12,6 +12,7 @@ import React from 'react';
 import * as B from './banners';
 import * as S from './shell';
 import ReactDOM from 'react-dom/client';
+import { addressFor, stateParams } from '@/share-card/addresses';
 
 // Red Thread — the app shell and the floating (Spatial) canvas layout
 
@@ -828,7 +829,10 @@ const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release',
 function readURLState() {
   const out = { any: false };
   let q;
-  try { q = new URLSearchParams(window.location.search); } catch (e) { return out; }
+  // The thing a link is about is in the path since Findability 3
+  // (/guides/<id>, /titles/<id>, /characters/<id>); stateParams puts it back
+  // under its key, so everything below reads one query, as before.
+  try { q = stateParams(window.location.pathname, window.location.search); } catch (e) { return out; }
   out.any = URL_KEYS.some(k => q.has(k));
   const v = q.get('view'); if (v === 'grid') out.view = 'list'; else if (VIEW_MODE_VALUES.indexOf(v) !== -1 || v === 'guides') out.view = v;
   const s = q.get('sort'); if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, s)) out.sort = s;
@@ -855,10 +859,15 @@ Object.assign(window, { MCU_phaseMatches: phaseMatches, MCU_filterMatches: filte
 function writeURLState(params) {
   try {
     const url = new URL(window.location.href);
-    URL_KEYS.forEach(k => url.searchParams.delete(k));
-    Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+    const q = stateParams(url.pathname, url.search);
+    URL_KEYS.forEach(k => q.delete(k));
+    Object.keys(params).forEach(k => q.set(k, params[k]));
+    // The open title, else the guide, else the pinned character becomes the
+    // path (src/share-card/addresses.ts); the rest stays in the query.
+    const { pathname, search } = addressFor(q);
     // Phases stay readable in the address: phase=2,3, not phase=2%2C3.
-    const next = url.pathname + url.search.replace(/%2C/gi, ',') + url.hash;
+    const query = search.toString().replace(/%2C/gi, ',');
+    const next = pathname + (query ? '?' + query : '') + url.hash;
     const now = window.location.pathname + window.location.search + window.location.hash;
     if (next !== now) window.history.replaceState(window.history.state, '', next);
   } catch (e) { /* an out-of-date address is not worth a crash */ }
@@ -3140,7 +3149,7 @@ function App() {
   // sheet or a dialog. A shared link's landing skips the canvas hint (the
   // visitor came for what it shows). Each is marked done by its action below.
   const hintsV = useHintsVersion();
-  const landedOnLinkRef = useRef(['guide', 'title', 'char'].some(k => new URLSearchParams(window.location.search).has(k)));
+  const landedOnLinkRef = useRef(['guide', 'title', 'char'].some(k => stateParams(window.location.pathname, window.location.search).has(k)));
   const hintOverlay = welcome || !!sheet || aboutOpen || settingsOpen || pickerOpen || !!promo || keysOpen;
   const hintId = useMemo(() => {
     if (!MCU_HINTS.enabled() || hintOverlay || !spatialShown) return null;
@@ -3275,7 +3284,7 @@ function App() {
     const fromHistory = !!(opts && opts.fromHistory);
     if (!fromHistory) {
       homeSnapRef.current = { search, phaseFilter, typeFilter, budgetFilter, releaseFilter, collectionFilter, sort, sortDir };
-      try { window.history.pushState({ mcuHome: 1 }, '', window.location.pathname); } catch (e) { /* the reset still happens */ }
+      try { window.history.pushState({ mcuHome: 1 }, '', '/'); } catch (e) { /* the reset still happens */ }
     }
     // A drag's momentum glide would carry on past the reset: stop it first.
     stopInertia();
@@ -3335,6 +3344,19 @@ function App() {
   }, []);
   useEffect(() => { writeURLState(urlParams()); },
     [isTouch, viewMode, desktopView, guidesPage, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId, explore && explore.kind]);
+  // The tab title follows the address (Notion "Findability 2"): the open
+  // title, else the guide, else the pinned character, the same order the path
+  // takes (src/share-card/addresses.ts) and the same words each page's own
+  // <title> says (og.pageTitle), in the visitor's language. Search engines
+  // that run scripts read this one; with nothing open it is the home page's.
+  useEffect(() => {
+    let name = null;
+    const t = urlTitle ? window.TITLES.find(x => x.id === urlTitle) : null;
+    if (t) name = `${I18N.titleName(t)} (${t.year})`;
+    else if (guide) name = window.MCU_GUIDE.name(guide);
+    else if (urlChar) name = I18N.charName(urlChar);
+    document.title = name ? tr('og.pageTitle', { name, app: tr('app.name') }) : tr('page.homeTitle');
+  }, [urlTitle, urlChar, guide, lang]);
   // Back and Forward restore the title and the character, never the filters:
   // closing the phone filter sheet is itself a step back in history, and
   // restoring filters there would undo the choices just made in it. A step

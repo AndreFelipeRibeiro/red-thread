@@ -17,8 +17,8 @@
      --background in each theme. -->
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
 <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)"/>
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
-<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Red Thread"/>
 <meta property="og:title" content="Red Thread"/>
@@ -46,7 +46,10 @@
      the UI's Inter is the design system's, served with the bundle, and
      numbers use the system monospace. -->
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
-<script src="boot.js"></script>
+<!-- Root-relative, as every local file below: the page is also served at
+     /guides/<id>, /titles/<id> and /characters/<id> (middleware.ts), where a
+     relative path would point inside that folder. -->
+<script src="/boot.js"></script>
 </head>
 <body>
 <div id="root">
@@ -61,9 +64,9 @@
 <!-- Languages first (small, local): the startup screen speaks the visitor's
      language while the bundle below downloads. One catalog per file
      (English is the base), then the runtime. -->
-<script src="locales/en.js"></script>
-<script src="locales/pt-BR.js"></script>
-<script src="i18n.js"></script>
+<script src="/locales/en.js"></script>
+<script src="/locales/pt-BR.js"></script>
+<script src="/i18n.js"></script>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js" integrity="sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd" crossorigin="anonymous"></script>
 
@@ -71,6 +74,6 @@
      every view. A module script is deferred, so it runs after the libraries
      above and after watch-data.js below, which is what the app expects. -->
 <script type="module" src="/src/main.ts"></script>
-<script src="watch-data.js"></script>
+<script src="/watch-data.js"></script>
 </body>
 </html>

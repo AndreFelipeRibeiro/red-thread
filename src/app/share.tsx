@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { addressFor } from '@/share-card/addresses';
 
 // Sharing (Notion V4 Tasks, "Share 1/3 — Share buttons and links"). One helper
 // does it everywhere, so every button behaves the same:
@@ -9,8 +10,9 @@ import { cn } from '@/lib/utils';
 //     "Link copied" toast says so (screen readers announce it).
 // Links always point at production, never at the address the page is on
 // (staging, a preview or localhost), and carry only what opens the same
-// thing: ?title=, ?char= or ?guide= (the keys app.tsx's readURLState knows),
-// or nothing for the home page. Sharing never touches browser history.
+// thing: the page's own address (/titles/<id>, /characters/<id> or
+// /guides/<id>, Notion "Findability 3"), or the home page. Sharing never
+// touches browser history.
 
 /** Production, under the public name's domain (Andre, 2026-11-01). www and
  *  the project's own mcu-connections.vercel.app redirect here (vercel.json). */
@@ -24,8 +26,10 @@ export interface SharePayload {
 }
 
 export function shareURL(params: Record<string, string> = {}): string {
-  const url = new URL(PUBLIC_URL);
-  Object.keys(params).forEach((k) => url.searchParams.set(k, params[k]));
+  // The thing shared is the path (/guides/<id>; src/share-card/addresses.ts).
+  const { pathname, search } = addressFor(new URLSearchParams(params));
+  const url = new URL(pathname, PUBLIC_URL);
+  url.search = search.toString();
   return url.toString();
 }
 

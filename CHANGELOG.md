@@ -13,6 +13,41 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 24 — Findability 3: an address with readable text for every guide, title and character
+
+Recorded: 2026-11-23 22:10 EST (-0500). Pushed to `version/5.0` (V5 staging) at 22:07 and merged to
+`main` (production); full regression on the tested tree (`02d31ca`: commit
+[39769be](https://github.com/AndreFelipeRibeiro/red-thread/commit/39769be) plus the other agent's
+uncommitted Figma docs and tools, no app code): all 85 check runs clean; `qa/smoke.js` clean on
+the staging preview and on production.
+
+- Option B1 from the Findability audit (Notion "Findability 0"): `/guides/<id>`, `/titles/<id>` and `/characters/<id>` open the app exactly as `?guide=`, `?title=` and `?char=` did, with no design change. `middleware.ts` serves each page's build-written copy with its own `<title>`, canonical and readable text (a guide's stops and reasons, a title's facts and cast, a character's appearances; `src/share-card/page-text.ts`), which the app's first render replaces. An unknown id gets the home page with a 404.
+- Every link shared before redirects (308) to the new address with the rest of the query kept: `/?title=endgame&guide=before-doomsday` becomes `/titles/endgame?guide=before-doomsday`. The app reads and writes the new addresses and shares them (`src/share-card/addresses.ts`, `src/app/app.tsx`, `share.tsx`; analytics still records the old form).
+- Two things the deeper paths broke, fixed: `index.html`'s local scripts are root-relative, and HarfBuzz loads `hb.wasm` from the root (`src/share-card/harfbuzz.js`), so the share card works on `/titles/…`.
+- Verified on staging with `curl`: pages 200, unknown ids 404, the three old link kinds 308 to the right address, an unknown old id passes through; in the browser, phone and desktop, English and Portuguese, reload, Back and the logo, with no console errors. Not checked on a real iPhone.
+
+## V5 Batch 24 — Findability 1: robots.txt and a sitemap built from the catalog
+
+Recorded: 2026-11-23 22:10 EST (-0500). Pushed to `version/5.0` (V5 staging) at 22:07 and merged to
+`main` (production), in commit [39769be](https://github.com/AndreFelipeRibeiro/red-thread/commit/39769be).
+
+- The build writes `robots.txt` (everyone may crawl everything; the search and AI crawlers named; the sitemap and `llms.txt` pointed to) and `sitemap.xml` (the home page and 192 pages; guides dated by their review). `src/share-card/site-files.ts`, `scripts/og-previews.js`.
+- Every host but `redthread.tv` answers `X-Robots-Tag: noindex` (`vercel.json` for files, `middleware.ts` for pages), so staging and previews never compete with production. Verified on staging.
+
+## V5 Batch 24 — Findability 2: the tab title follows what's open
+
+Recorded: 2026-11-23 22:10 EST (-0500). Pushed to `version/5.0` (V5 staging) at 22:07 and merged to
+`main` (production), in commit [39769be](https://github.com/AndreFelipeRibeiro/red-thread/commit/39769be).
+
+- The tab title names the open title, guide or character in the visitor's language ("Iron Man (2008) · Red Thread"), and the home page has a descriptive title in English and Portuguese (`page.homeTitle`). Checked by test-previews and on staging.
+
+## V5 Batch 24 — Findability 7: llms.txt and llms-full.txt from the catalog
+
+Recorded: 2026-11-23 22:10 EST (-0500). Pushed to `version/5.0` (V5 staging) at 22:07 and merged to
+`main` (production), in commit [39769be](https://github.com/AndreFelipeRibeiro/red-thread/commit/39769be).
+
+- `llms.txt` (what Red Thread is, then every guide, title and character at its address) and `llms-full.txt` (every guide's stops in order with why each matters), in the llmstxt.org format. No major assistant says it reads them; the pages themselves are the main fix.
+
 ## V5 Batch 23 — Before Doomsday: the twelve stops the major watch guides agree on
 
 Recorded: 2026-11-23 15:31 EST (-0500). Pushed to `version/5.0` (V5 staging) at 15:29 and merged to

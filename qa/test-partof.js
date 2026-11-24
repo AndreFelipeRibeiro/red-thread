@@ -149,7 +149,7 @@ const PART = () => {
     await page.goto(URL + '?view=list&title=loki-s2'); await settle(page);
     await page.locator('.drawer .td-acc-guides .td-acc-btn').click(); await page.waitForTimeout(300);
     await page.locator('.drawer .g-partof-row').first().click(); await page.waitForTimeout(700);
-    const g = await page.evaluate(() => new URLSearchParams(location.search).get('guide'));
+    const g = await page.evaluate(() => new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/')))).get('guide'));
     expect(!!g, 'a Part of row did not open its guide');
     errors.push(...e);
     await ctx.close();

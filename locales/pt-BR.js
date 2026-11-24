@@ -147,6 +147,11 @@ window.MCU_LOCALES['pt-BR'] = {
     'og.charDesc': { one: 'Acompanhe {name} no Red Thread: {first}.', other: 'Acompanhe {name} em {n} títulos, a partir de {first}.' },
     'og.charAlt': 'Os títulos de {name} em ordem, ligados por um fio',
     'og.guideAlt': '{name}: os títulos essenciais do guia em ordem',
+    'page.homeTitle': 'Red Thread — filmes, séries e conexões entre personagens da Marvel',
+    'page.updated': 'Atualizado em {date}',
+    'page.characters': 'Personagens',
+    'page.inGuides': 'Nestes guias',
+    'page.appearances': 'Todas as aparições, em ordem de lançamento',
 
     'view.list': 'Lista',
     'view.spatial': 'Conexões',

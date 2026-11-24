@@ -33,7 +33,7 @@ return;
 const TAB = (page, name) => page.locator('.nav-tabs button', { hasText: name }).click();
 const STATE = () => ({
   tab: (document.querySelector('.nav-tabs button.on') || {}).textContent || null,
-  url: location.search,
+  url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : '')(location.pathname.split('/'))),
   rows: document.querySelectorAll('.toolbar .tb-row').length,
   sort: (document.querySelector('.toolbar .sort-menu-trigger .sort-menu-label:not(.min-\\[1440px\\]\\:hidden)') || document.querySelector('.toolbar .sort-menu-trigger') || {}).textContent || null,
   sortShown: !!document.querySelector('.toolbar .sort-menu-trigger'),
