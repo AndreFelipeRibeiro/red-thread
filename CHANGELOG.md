@@ -13,6 +13,50 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 26 — Titles and Connections: a quiet marker for who each title is here for
+
+Recorded: 2026-11-24 19:13 EST (-0500). Committed at 17:58 as
+[98dba3d](https://github.com/AndreFelipeRibeiro/red-thread/commit/98dba3d), pushed to `version/5.0` (V5 staging) at 19:09 and
+merged to `main` (production) at 19:11 as [200baa4](https://github.com/AndreFelipeRibeiro/red-thread/commit/200baa4). Full regression on
+[40f5265](https://github.com/AndreFelipeRibeiro/red-thread/commit/40f5265)'s tree, the tree that was pushed: all 86 check runs clean, plus the accessibility scans in English,
+Portuguese and dark, with no violations. `qa/smoke.js` clean on the staging preview and on production.
+
+- `CharMark` (`src/app/list-parts.tsx`) replaces the pink match badge: overlapping portraits (up to three) and the name on one muted line, with no box. The typed part is semibold. Rows list every name ("Peter Quill, Peter Parker"; "Peter Parker · Tom Holland" when the actor matched). A card shows the first name, "+1" for more, or only the actor. The tooltip reads "Tom Holland as Peter Parker" (Portuguese: "como").
+- `charMarks` (`src/app/app.tsx`) decides what each title shows. A typed search wins over a pick, so the two never show at once. A pick shows the picked character's portrayals with the picked one first, and names the performer only where it isn't the picked one ("Bruce Banner · Edward Norton").
+- Desktop and phone rows show the line under the caption. On Connections cards it replaces the year line, so the card keeps its 330 px; before, the badge was cut off there. A title-only match keeps its year.
+- Design approved by Andre in chat (v2, v3). Figma: a new Char mark component, and a "Char mark" property on List row, Phone title row and Spatial card, published and Current. App Screens shows it in the Character pinned and Search open frames, Light and Dark. The tokens check is clean.
+- QA: the new `test-charmark` covers typed, actor and pick cases on desktop cards and rows, on phone rows, and in Portuguese. Checked live on production: "pete" marks Guardians of the Galaxy "Peter Quill" and Infinity War "Peter Quill, Peter Parker", and the old badge is gone. Not checked on a real iPhone.
+
+## V5 Batch 26 — Connections cards: a series not out yet drops "Series" for its release pill
+
+Recorded: 2026-11-24 19:13 EST (-0500). Committed at 18:57 as
+[40f5265](https://github.com/AndreFelipeRibeiro/red-thread/commit/40f5265), pushed to `version/5.0` (V5 staging) at 19:09 and merged to `main`
+(production) at 19:11 in [200baa4](https://github.com/AndreFelipeRibeiro/red-thread/commit/200baa4). Covered by the batch's full regression and smoke tests above.
+
+- "2027 Series Coming soon" was 157 px in the card's 144 px line, so the pill ran into the card's right edge (Your Friendly Neighborhood Spider-Man Season 2). `CardText` (`src/app/spatial-card.tsx`) now shows "Series" only for a series that's out. A title not out yet shows its release pill instead, on the canvas cards and the phone's selected card. Rows and details keep "Series". This was Andre's choice.
+- The library's Spatial card (`Release=coming`) matches, published and Current. No App Screens frame uses that variant.
+- `test-cards` checks that no canvas card's line runs past its padding and that no card shows "Series" beside a release pill, on desktop (dark, light) and the phone canvas. Measured in the dev server, every pill card has at least 37 px to spare on desktop and 34 px on the phone canvas. The phone's selected card wasn't seen on screen, because a tap opens the details.
+
+## V5 Batch 26 — Search: Enter and picking a person on the Guides page lead to Titles
+
+Recorded: 2026-11-24 19:13 EST (-0500). Committed at 14:33 as [bac1920](https://github.com/AndreFelipeRibeiro/red-thread/commit/bac1920) and at 14:56 as
+[64b1125](https://github.com/AndreFelipeRibeiro/red-thread/commit/64b1125), pushed to `version/5.0` (V5 staging) at 19:09 and merged to `main` (production) at 19:11
+in [200baa4](https://github.com/AndreFelipeRibeiro/red-thread/commit/200baa4). Covered by the batch's full regression and smoke tests above.
+
+- Enter with typed text and no suggestion highlighted did nothing on Guides. `SearchInput` (`src/app/search-suggest.tsx`) now takes an `onSubmit`, and on Guides `submitSearch` opens Titles with the text kept as the filter, on desktop and phone. Elsewhere, Enter behaves as before.
+- Picking a person from the suggestions on Guides pinned them but stayed on Guides. `pickPerson` now lands on Titles on their titles (`/characters/peter?view=list`).
+- `test-suggest` covers both on desktop and phone. Not checked on a real phone.
+
+## V5 Batch 26 — Findability 16: every listed film gets an image
+
+Recorded: 2026-11-24 19:13 EST (-0500). Committed at 14:33 as [9e22653](https://github.com/AndreFelipeRibeiro/red-thread/commit/9e22653), pushed to `version/5.0`
+(V5 staging) at 19:09 and merged to `main` (production) at 19:11 in [200baa4](https://github.com/AndreFelipeRibeiro/red-thread/commit/200baa4). IndexNow accepted the 196 addresses
+after the merge.
+
+- Google's Rich Results Test found image-less Movie items on guide and character pages. `work()` in `src/share-card/structured-data.ts` now gives every film or series `image: <site>/og/title/<id>.jpg`, so every list's items have one. Still no `director`: the catalog has no director data, and Google lists it as optional.
+- `test-previews` fails any Movie or TVSeries in a page's or index's JSON-LD whose image is missing or names a card the build didn't write.
+- The Rich Results Test on `/guides/before-doomsday`, `/characters/peter` and `/titles` is still to be repeated on production.
+
 ## V5 Batch 25 — Findability 4: index pages, the home page's links and richer page text
 
 Recorded: 2026-11-24 00:35 EST (-0500). Pushed to `version/5.0` (V5 staging) at 00:32 and merged to
