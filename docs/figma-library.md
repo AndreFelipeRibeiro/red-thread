@@ -45,14 +45,15 @@ surface uses them, so they have no Figma counterpart until one does.
 
 | Figma | Node | Code |
 | --- | --- | --- |
-| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
+| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines; Char mark and Year switches: a picked or searched character's Char mark takes the year line's place, so the card keeps its height, V5 Batch 26) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
 | Poster (Title: one variant per catalog title id, 64; on the Posters page, 168 × 252, live TMDB posters at w500 over the poster's own color, checked 2026-11-19) | `100:696` | `src/app/poster.tsx` `PosterArt`; paths in `src/data/media-data.ts` |
-| List row (Seen × Up next; Up next is the row with the brand tint and the Up next pill) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
+| List row (Seen × Up next; Up next is the row with the brand tint and the Up next pill; a Char mark switch shows the Char mark under the caption, V5 Batch 26) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
 | List header | `16:82` | `desktop-list.tsx` `DlSortHeader` |
 | Phase header | `16:87` | `desktop-list.tsx` `GroupHeader` |
-| Phone title row (Seen, Unseen, Up next) | `63:691` | `list-parts.tsx` (m-lrow) |
+| Phone title row (Seen, Unseen, Up next; a Char mark switch, as on the List row) | `63:691` | `list-parts.tsx` (m-lrow) |
+| Char mark (Size: Row, Phone row, Card, Phone card, Selected card × Faces: 1, 2, 3): a picked or searched character's overlapping portraits and name, quiet, under a title (V5 Batch 26, Notion "Titles: show the picked character on each of their title rows") | `224:740` | `src/app/list-parts.tsx` `CharMark` |
 | Phone phase header | `63:642` | `desktop-list.tsx` `GroupHeader` (phone) |
 | Phone Up next | `63:705` | `src/app/upnext.tsx` (phone card) |
 | Logo / mark, Logo / wordmark | `17:2`, `17:3` | `src/assets/logo-mark.svg`, `logo-wordmark.svg` (CSS masks in the app) |
