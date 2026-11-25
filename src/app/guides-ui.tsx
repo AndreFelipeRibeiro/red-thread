@@ -1096,8 +1096,8 @@ function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId
             <span className="flex-none whitespace-nowrap">{count}</span>
           </span>
           {shown
-            ? <button type="button" className={cn(B.W_TITLE, 'gm-nextopen g-dock-next cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
-                aria-label={gtr('guide.openNextAria', { title: GI18N.titleName(shown) })}><span className="gm-ntitle">{GI18N.titleName(shown)}</span></button>
+            ? <button type="button" className={cn('gm-nextopen g-dock-next max-w-full cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
+                aria-label={gtr('guide.openNextAria', { title: GI18N.titleName(shown) })} title={GI18N.titleName(shown)}><span className={cn('gm-ntitle', B.W_TITLE_2)}>{GI18N.titleName(shown)}</span></button>
             : <span className={cn(B.W_TITLE, 'gm-doneline g-dock-sub', complete ? 'text-(--seen-text)' : 'text-muted-foreground')}>{complete ? doneLine : MCU_GUIDE.size(guide)}</span>}
         </div>
         <button type="button" className={B.W_CLOSE} aria-label={gtr('guide.close')} title={gtr('guide.close')} onClick={onClose}>×</button>

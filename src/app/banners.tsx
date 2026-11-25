@@ -43,6 +43,13 @@ export const W_POSTER = 'h-[54px] w-9 flex-[0_0_36px] rounded-[5px] in-[.app.tou
 export const W_TEXT = 'flex min-w-0 flex-1 flex-col gap-px text-left';
 export const W_KICKER = 'truncate text-label font-medium text-muted-foreground';
 export const W_TITLE = 'truncate text-body font-semibold text-foreground';
+/** A title's name on these cards: up to two lines, then "…" (Andre,
+ *  2026-11-24, Notion "Stepper: a long title runs past the card's edge":
+ *  "Your Friendly Neighborhood Spider-Man" and "Seu Amigão da Vizinhança:
+ *  Homem-Aranha" ran past the card). The card grows a line only for a long
+ *  name; the element that holds it carries the full name as its tooltip.
+ *  A button around it also needs `max-w-full`: a button sizes to its text. */
+export const W_TITLE_2 = 'line-clamp-2 text-body font-semibold text-foreground [overflow-wrap:anywhere]';
 /** The small × in the top-right corner, with a 40px touch area around it. */
 export const W_CLOSE = cn('cb-close', ROUND, DIM, "relative -mt-1 -mr-0.5 size-7 flex-none self-start text-heading after:absolute after:-inset-1.5 after:content-['']");
 /** ⋯ beside it (the pinned character's card), the same circle. */
