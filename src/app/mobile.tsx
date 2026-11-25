@@ -351,7 +351,7 @@ window.addEventListener('scroll', () => {
   window.scrollTo(0, 0);
 }, { passive: true });
 
-function MobileList({ header, currentId, titles, sort, sortDir, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, groupProgress, upNext }) {
+function MobileList({ header, currentId, titles, sort, sortDir, onSelect, charMarks, search, empty, orderKey, flipPaused, markWatch, groupProgress, upNext }) {
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
   const upNextId = upNext && upNext.result && upNext.result.kind === 'next' ? upNext.result.title.id : null;
@@ -393,7 +393,7 @@ function MobileList({ header, currentId, titles, sort, sortDir, onSelect, search
                 n += 1;
                 return (
                   <PhoneRow key={t.id} t={t} rank={n} ranked={ranked} lead={lead} story={sort === 'chrono'} upNext={t.id === upNextId}
-                    matchedChars={searchCharMatches ? searchCharMatches[t.id] : null} search={search} onSelect={onSelect}
+                    mark={charMarks ? charMarks[t.id] : null} search={search} onSelect={onSelect}
                     seen={statusOf(t.id) === 'seen'} watch={!!markWatch && statusOf(t.id) === 'watchlist'} current={currentId === t.id}/>
                 );
               })}

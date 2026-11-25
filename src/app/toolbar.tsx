@@ -66,6 +66,8 @@ export interface ToolbarProps {
   settingsOpen: boolean;
   onPickTitle: (id: string) => void;
   onPickPerson: (person: unknown) => void;
+  /** Enter in the search box with no suggestion highlighted (SearchInput). */
+  onSubmitSearch?: (text: string) => boolean;
   section: Section; onSection: (s: Section) => void;
   sort: string; setSort: Setter;
   sortDir: string; setSortDir: Setter;
@@ -142,7 +144,7 @@ export function FiltersMenu({ collectionFilter, setCollectionFilter, phaseFilter
   );
 }
 
-export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, section, onSection, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collection, setCollection, search, setSearch }: ToolbarProps) {
+export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, onSubmitSearch, section, onSection, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collection, setCollection, search, setSearch }: ToolbarProps) {
   const { lang } = window.useI18n();
   const searchRef = useRef<HTMLDivElement | null>(null);
   // The top row's fit steps (Notion "Universal status pills": the Seen and
@@ -184,7 +186,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
         {/* Search, then (on Connections) Sort and Filters. */}
         <div ref={searchRef} className="search-wrap relative flex h-10 w-[300px] min-w-[180px] shrink items-center gap-2 rounded-md border border-input bg-(--field) px-3 text-muted-foreground shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 max-[1280px]:w-[240px] max-[1100px]:min-w-[150px] group-data-[fit=2]/toprow:min-w-[150px] group-data-[fit=3]/toprow:min-w-[120px] group-data-[fit=4]/toprow:min-w-[120px] [&_input]:min-w-0 [&_input]:flex-1 [&_input]:border-0 [&_input]:bg-transparent [&_input]:text-body [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
           <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
+          <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson} onSubmit={onSubmitSearch}
             ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={null}/>
           <kbd className="search-kbd shrink-0 group-data-[fit=3]/toprow:hidden group-data-[fit=4]/toprow:hidden rounded-[5px] border border-border px-1.5 font-sans text-label leading-[18px] text-muted-foreground" aria-hidden="true" title={tr('search.slash')}>/</kbd>
         </div>

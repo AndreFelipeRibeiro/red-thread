@@ -54,6 +54,50 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   await page.locator('.ss-item', { hasText: 'Forever' }).first().tap(); await page.waitForTimeout(800);
   out.mTitle = { sheet: await page.evaluate(() => (document.querySelector('.m-sh-title, .m-sheet h2, [class*="sheet"] h2') || {}).textContent || null), focus: await page.evaluate(() => document.activeElement.tagName) };
   out.mErrors = errors; await ctx.close();
+  // Enter with typed text and no suggestion highlighted, on Guides (Notion
+  // "Search: Enter on the Guides page does nothing"): Guides has nothing to
+  // filter, so it opens Titles with that search, the text kept as the filter.
+  // Then the same search with a person picked, below.
+  for (const [label, opts, sel] of [['desktop', { viewport: { width: 1440, height: 900 } }, '.search-wrap input'], ['phone', { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, '.m-searchbar input']]) {
+    ({ ctx, page, errors } = await ctxPage(browser, opts, ART + SEED));
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/guides'); await require('./ready').appReady(page);
+    if (label === 'phone') { await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150); }
+    const b = page.locator(sel);
+    await b.click(); await b.type('peter parker'); await page.waitForTimeout(200);
+    const before = await page.evaluate(() => location.pathname);
+    await b.press('Enter'); await page.waitForTimeout(700);
+    const r = await page.evaluate(() => ({ path: location.pathname, rows: document.querySelectorAll('[data-row-id]').length, guidesPage: document.querySelectorAll('.g-page').length, pop: document.querySelectorAll('.ss-pop').length, focus: document.activeElement.tagName }));
+    r.before = before; r.value = await b.inputValue().catch(() => null);
+    out[label + 'GuidesEnter'] = r;
+    if (r.before !== '/guides') errors.push(label + ': the check did not start on Guides (' + r.before + ')');
+    // Titles is /titles on desktop; on a phone it is the default view, so /.
+    const want = label === 'phone' ? '/' : '/titles';
+    if (r.path !== want) errors.push(label + ': Enter on Guides left the address at ' + r.path + ', not ' + want);
+    if (r.guidesPage) errors.push(label + ': the Guides page is still showing after Enter');
+    if (r.value !== 'peter parker') errors.push(label + ': Enter on Guides did not keep the search as the filter (' + r.value + ')');
+    if (!r.rows || r.rows > 30) errors.push(label + ': Titles shows ' + r.rows + ' rows for "peter parker"');
+    if (r.pop) errors.push(label + ': the suggestions stayed open after Enter');
+    // Picking Peter Parker from the suggestions on Guides pins him and opens
+    // Titles on his titles (Andre, 2026-11-24): Guides shows nothing of a
+    // pinned character. Keyboard on desktop, a tap on the phone.
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/guides'); await require('./ready').appReady(page);
+    if (label === 'phone') { await page.locator('.m-search-btn').click().catch(() => {}); await page.waitForTimeout(150); }
+    await b.click(); await b.type('peter parker'); await page.waitForTimeout(300);
+    const first = await page.evaluate(() => (document.querySelector('.ss-item .ss-main') || {}).textContent);
+    if (label === 'phone') await page.locator('.ss-item').first().tap();
+    else { await b.press('ArrowDown'); await b.press('Enter'); }
+    await page.waitForTimeout(800);
+    const p = await page.evaluate(() => ({ address: location.pathname + location.search, guidesPage: document.querySelectorAll('.g-page').length, rows: document.querySelectorAll('[data-row-id]').length, card: (document.querySelector('.char-card') || {}).textContent || null }));
+    p.first = first; p.value = await b.inputValue().catch(() => null);
+    out[label + 'GuidesPick'] = p;
+    const wantPick = label === 'phone' ? '/characters/peter' : '/characters/peter?view=list';
+    if (p.first !== 'Peter Parker') errors.push(label + ': the first suggestion for "peter parker" is ' + p.first);
+    if (p.address !== wantPick) errors.push(label + ': picking Peter Parker on Guides left the address at ' + p.address + ', not ' + wantPick);
+    if (p.guidesPage) errors.push(label + ': the Guides page is still showing after picking Peter Parker');
+    if (!p.rows) errors.push(label + ': Titles shows no rows after picking Peter Parker');
+    if (p.value) errors.push(label + ': picking a person left "' + p.value + '" in the box');
+    out[label + 'GuidesEnterErrors'] = errors; await ctx.close();
+  }
   console.log(JSON.stringify(out, null, 1));
   await browser.close(); server.close();
 })().catch(e => { console.error('FAIL', e.message.split('\\n')[0]); process.exit(1); });

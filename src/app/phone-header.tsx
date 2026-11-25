@@ -35,6 +35,8 @@ export interface MobileTopBarProps {
   setSearch: (q: string) => void;
   onPickTitle: SearchProps['onPickTitle'];
   onPickPerson: SearchProps['onPickPerson'];
+  /** Enter in the search box with no suggestion highlighted (SearchInput). */
+  onSubmitSearch?: SearchProps['onSubmit'];
   onOpenFilters: () => void;
   filterCount: number;
   sort: string;
@@ -56,7 +58,7 @@ export interface MobileTopBarProps {
 // spans it) and a ✕ closes it; it stays open while there is text. Guides has
 // no toolbar row.
 // An open guide on the canvas dims Filters (GuideOff); Sort still arranges it.
-export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, guideActive, collection, setCollection }: MobileTopBarProps) {
+export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, onPickPerson, onSubmitSearch, onOpenFilters, filterCount, sort, sortDir, setSort, setSortDir, onOpenAccount, onOpenSettings, guideActive, collection, setCollection }: MobileTopBarProps) {
   const { lang } = window.useI18n();
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState<HTMLDivElement | null>(null);
@@ -114,7 +116,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
                 iPhones zoom the page when it takes focus (13.8px at Large;
                 Andre, 2026-11-02). */}
             <div className="m-search-input relative h-6 min-w-0 flex-1 [&_input]:absolute [&_input]:inset-y-0 [&_input]:left-0 [&_input]:h-6 [&_input]:w-[123.076923%] [&_input]:origin-left [&_input]:scale-[.8125] [&_input]:border-0 [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-[length:max(16px,calc(var(--fs-heading)*var(--fs-chrome-scale,1)))] [&_input]:text-foreground [&_input]:outline-none [&_input]:placeholder:text-muted-foreground">
-              <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
+              <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson} onSubmit={onSubmitSearch}
                 ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={searchRow}/>
             </div>
           </div>

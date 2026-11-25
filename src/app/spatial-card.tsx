@@ -31,6 +31,7 @@
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { Title } from '../types/catalog';
+import type { CharMarkData } from './list-parts';
 
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
@@ -81,7 +82,8 @@ export interface CardProps {
   /** The character view's row: the current card is marked as a guide stop is. */
   lineView?: boolean;
   curColor?: string;
-  matchedChars?: string[] | null;
+  /** Who the card is here for (CharMark): it takes the year line's place. */
+  mark?: CharMarkData | null;
   searchQuery?: string;
   /** What the meta line adds, from the sort and filters (cardFacet). */
   facet?: CardFacet;
@@ -99,7 +101,7 @@ export interface CardProps {
   overview?: boolean;
 }
 
-export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, isGuideAt = false, lineView = false, curColor, matchedChars, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
+export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, isUpNext = false, isPeek = false, isGuideAt = false, lineView = false, curColor, mark, searchQuery, scale, guideBadge, guide, guideSkip, onGuideSkip, entering, connections = 0, touch = false, overview = false, facet = 'year' }: CardProps) {
   const I18N = window.MCU_I18N;
   const phaseColor = (window.PHASE_COLORS as Record<string, string>)[title.phase];
   // A card a filter brings back fades in (Notion V4 Tasks, "Micro-interaction:
@@ -204,7 +206,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         <window.PosterArt title={title}/>
         <CardMark seen={seen} guideBadge={guideBadge} skipped={skipped} connections={connections} title={title} facet={facet}/>
       </div>
-      <CardText title={title} skipped={skipped} query={searchQuery} matchedChars={matchedChars} touch={touch} overview={overview} facet={facet}/>
+      <CardText title={title} skipped={skipped} query={searchQuery} mark={mark} touch={touch} overview={overview} facet={facet}/>
     </div>
   );
 }
@@ -296,8 +298,8 @@ export function cardFacet(sort: string, filters: { budget?: string } = {}): Card
  *  the title, then one meta line: phase dot · year · "Series" (a title not out
  *  yet adds its release badge). What else it shows by sort and filter is
  *  Notion "Cards show what the current sort and filters are about". */
-export function CardText({ title, skipped = false, query, matchedChars, pop = false, touch = false, overview = false, facet = 'year' }: {
-  title: Title; skipped?: boolean; query?: string; matchedChars?: string[] | null; pop?: boolean; touch?: boolean; facet?: CardFacet;
+export function CardText({ title, skipped = false, query, mark, pop = false, touch = false, overview = false, facet = 'year' }: {
+  title: Title; skipped?: boolean; query?: string; mark?: CharMarkData | null; pop?: boolean; touch?: boolean; facet?: CardFacet;
   /** The phone canvas zoomed out (Notion "Explore E 5/5"): at about 80px a
    *  card's two lines were too small to read, so the title alone, larger, in
    *  place of the year line (the ticket's fallback). */
@@ -320,18 +322,30 @@ export function CardText({ title, skipped = false, query, matchedChars, pop = fa
       <div className={cn('card-title line-clamp-2 flex-none pr-4 pb-px font-medium tracking-tight text-pretty', overview ? 'pr-0 text-card-title-ov/[1.15] font-semibold' : pop ? 'text-card-title-pop/[1.3]' : fit ? 'text-card-title-lg/[1.2]' : 'text-card-title/[1.3]', skipped && 'opacity-40')}>
         <Highlight text={I18N.titleName(title)} query={query}/>
       </div>
-      {!overview && <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-card-meta-pop leading-[1.35]' : fit ? 'text-card-meta-lg leading-[1.3]' : 'text-card-meta leading-[1.35]', skipped && 'opacity-40')}>
+      {/* While a search or a pick reaches this card through a character, the
+          year line becomes who it is here for: the phase dot, a portrait and
+          the name, in the same type and height, so the card keeps its 330px
+          (Notion "Titles: show the picked character…", design v3; the badge
+          that used to go under it was cut off). A title-only match keeps it. */}
+      {!overview && mark && <div className={cn('card-year card-line card-mark-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground', pop ? 'text-card-meta-pop leading-[1.35]' : fit ? 'text-card-meta-lg leading-[1.3]' : 'text-card-meta leading-[1.35]', skipped && 'opacity-40')}>
+        <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
+        <window.CharMark mark={mark} title={title} card size={pop ? 17 : fit ? 15 : 14} className="gap-[5px]"/>
+      </div>}
+      {!overview && !mark && <div className={cn('card-year card-line flex min-w-0 items-center gap-x-[5px] text-muted-foreground tabular-nums', pop ? 'text-card-meta-pop leading-[1.35]' : fit ? 'text-card-meta-lg leading-[1.3]' : 'text-card-meta leading-[1.35]', skipped && 'opacity-40')}>
         <span className={cn('card-phase flex-none rounded-full', pop ? 'size-[8px]' : 'size-[7px]')} style={{ background: phaseColor }} role="img" aria-label={tr('phase.label', { n: title.phase })} title={tr('phase.label', { n: title.phase })}/>
         {(facet === 'year' || facet === 'imdb' || facet === 'rt') && <span className="flex-none whitespace-nowrap">{title.year}</span>}
         {facet === 'story' && title.story && <window.StoryYear title={title} className={cn('card-story min-w-0 text-[inherit] in-[.card]:text-[inherit] [&>svg]:size-[1em]')}/>}
         {facet === 'budget' && <span className="card-budget flex-none whitespace-nowrap">{title.budget != null ? tr('budget.format', { n: title.budget }) : '—'}</span>}
-        {/* A title not out yet carries its badge too, so it drops the
-            separator to keep the line on one row. */}
-        {title.type === 'series' && <>{!upcoming && dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
+        {/* A title not out yet carries its badge instead: a series drops
+            "Series" for it, since "2027 Series Coming soon" ran past the
+            card's edge, and would on the phone's selected card too (Notion
+            "Connections cards: the Coming soon pill runs into a series
+            card's right edge", Andre's choice, 2026-11-24). Rows and the
+            details keep "Series". */}
+        {title.type === 'series' && !upcoming && <>{dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
         {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
         {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-card-micro font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
       </div>}
-      <window.MatchBadge matchedChars={matchedChars} query={query} title={title}/>
     </div>
   );
 }

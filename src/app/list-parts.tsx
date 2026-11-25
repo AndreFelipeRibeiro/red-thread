@@ -1,6 +1,6 @@
 // The List and Grid views' pieces on the design system (Notion "shadcn pass
 // 4/5: List and Grid views"): the progress meters, score chips, the PH badge,
-// the search-match badge, the empty state, the phone List row and Grid card,
+// the character marker, the empty state, the phone List row and Grid card,
 // the seen-run header and the collapsible wrapper the phone lists fold with,
 // and the class recipes the phone List and Grid lay themselves out with.
 //
@@ -12,7 +12,7 @@
 // Same content, order and actions as before; only the building blocks
 // changed. Class names the app, the QA checks and the surfaces still on V3
 // (guides) read are kept as hooks (`pgh`, `pgh-*`, `m-card`, `m-lrow`,
-// `m-lrow-open`, `m-sc`, `m-scores`, `m-pbadge`, `card-match*`, `m-run`,
+// `m-lrow-open`, `m-sc`, `m-scores`, `m-pbadge`, `char-mark*`, `m-run`,
 // `m-fx`, `m-phase-divider`, `m-glabel`, `m-grid`, `m-list`…); they carry no
 // V3 styling here any more.
 import React from 'react';
@@ -212,35 +212,59 @@ export function BulkHeaderAction({ ids, group, className = '' }: { ids: string[]
 /** Which character matched the search, with their performer. `title` makes
  *  the credit right: The Incredible Hulk names Edward Norton. Inside a Spatial
  *  card it keeps the canvas's pixel sizes; elsewhere it follows the scale. */
-export function MatchBadge({ matchedChars, query, title }: { matchedChars?: string[] | null; query?: string; title?: Title }) {
-  if (!matchedChars || !matchedChars.length) return null;
-  const id = matchedChars[0];
-  const c = window.CHARACTERS[id];
-  if (!c) return null;
+/** Who a title is here for (Notion "Titles: show the picked character on each
+ *  of their title rows", design v2/v3, Andre 2026-11-24): one quiet line of
+ *  overlapping portraits and names, no box. App.tsx works out the groups
+ *  (`charMarks`): for a typed search, each row's own matches, grouped by
+ *  character so a recast's Peters read "Peter Parker" once, with the actor
+ *  named and bold when the actor is what matched; for a picked character or
+ *  actor, their portrayal in that title, the performer named only when it
+ *  isn't the one picked. Rows list every name; a card, which has one fixed
+ *  line, shows the first ("+1" for more), or the actor alone when the actor
+ *  matched, so the ellipsis never cuts off the part that matched. The typed
+ *  part is semibold, not underlined. Phones and desktop share it. */
+export type CharMarkGroup = { chars: string[]; name: string; actor: string | null; actorMatched: boolean };
+export type CharMarkData = { groups: CharMarkGroup[]; query?: string };
+const MARK_HL = '[&_mark.hl]:font-semibold [&_mark.hl]:text-foreground [&_mark.hl]:no-underline';
+export function CharMark({ mark, title, card = false, size = 20, className }: { mark?: CharMarkData | null; title: Title; card?: boolean; size?: number; className?: string }) {
+  if (!mark || !mark.groups.length) return null;
   const I = I18N();
-  const credited = title && window.MCU_credit ? window.MCU_credit(title, id) : c.actor;
-  const media = window.MEDIA;
-  const portrait = title && window.castPortrait
-    ? window.castPortrait(title, id)
-    : (media && media.actors && media.actors[id]
-      ? (window.mediaURL ? window.mediaURL('a', id, media.profile_base + media.actors[id]) : media.profile_base + media.actors[id])
-      : null);
+  const chars = mark.groups.flatMap(g => g.chars).filter(c => window.CHARACTERS[c]);
+  if (!chars.length) return null;
+  const credit = (c: string) => (window.MCU_credit ? window.MCU_credit(title, c) : window.CHARACTERS[c].actor);
+  const tip = mark.groups.flatMap(g => g.chars.map(c => tr('charmark.as', { actor: credit(c), name: g.name }))).join(', ');
+  const faces = (
+    <span className="char-mark-faces flex flex-none items-center" aria-hidden="true">
+      {chars.slice(0, 3).map((c, i) => {
+        const ch = window.CHARACTERS[c];
+        return (
+          <span key={c} className={cn('char-mark-face flex flex-none items-center justify-center overflow-hidden rounded-full text-card-micro font-bold text-(--on-image-base) ring-[1.5px] ring-(--background) in-[.card]:ring-(--card) in-[.m-lrow]:ring-(--card) [&_img]:block [&_img]:size-full [&_img]:object-cover', i > 0 && '-ml-[5px]')}
+            style={{ width: size, height: size, zIndex: 3 - i, background: `linear-gradient(135deg, ${ch.color}, ${ch.color}88)` }}>
+            <window.Portrait url={window.castPortrait ? window.castPortrait(title, c) : null} alt="" initials={ch.initials}/>
+          </span>
+        );
+      })}
+    </span>
+  );
+  const q = mark.query;
+  let text: React.ReactNode;
+  if (card) {
+    const g = mark.groups[0];
+    text = <>{g.actorMatched && g.actor ? <Highlight text={g.actor} query={q}/> : <Highlight text={g.name} query={q}/>}{mark.groups.length > 1 ? ` +${mark.groups.length - 1}` : ''}</>;
+  } else {
+    text = mark.groups.map((g, i) => (
+      <React.Fragment key={g.chars[0]}>
+        {i > 0 && ', '}
+        <Highlight text={g.name} query={q}/>
+        {g.actor && <> · <Highlight text={g.actor} query={q}/></>}
+      </React.Fragment>
+    ));
+  }
   return (
-    <div className="card-match mt-1.5 flex max-w-full items-center gap-[7px] rounded-md border border-[color-mix(in_oklab,var(--match-color)_40%,transparent)] bg-[color-mix(in_oklab,var(--match-color)_14%,transparent)] py-1 pr-[7px] pl-1 in-[.card]:mt-[7px]"
-      style={{ '--match-color': c.color } as React.CSSProperties} title={matchedChars.map(mid => I.charName(mid)).join(', ')}>
-      <div className="card-match-portrait flex size-[22px] flex-[0_0_22px] items-center justify-center overflow-hidden rounded-full text-card-micro font-bold text-(--on-image-base) shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--foreground)_13%,transparent)] [&_img]:block [&_img]:size-full [&_img]:object-cover"
-        style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }}>
-        <window.Portrait url={portrait} alt={I.charName(id)} initials={c.initials}/>
-      </div>
-      <div className="card-match-text min-w-0 flex-1">
-        <div className={cn('card-match-char truncate font-semibold text-(--match-color) in-[.card]:text-card-micro [&_mark.hl]:decoration-(--match-color)', XS)}>
-          <Highlight text={I.charName(id)} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}
-        </div>
-        <div className={cn('card-match-actor mt-px truncate text-muted-foreground in-[.card]:text-card-micro [&_mark.hl]:font-bold [&_mark.hl]:text-(--match-color) [&_mark.hl]:decoration-(--match-color)', XS)}>
-          <Highlight text={credited} query={query}/>
-        </div>
-      </div>
-    </div>
+    <span className={cn('char-mark flex max-w-full min-w-0 items-center gap-1.5', MARK_HL, className)} title={tip}>
+      {faces}
+      <span className="char-mark-text min-w-0 truncate">{text}</span>
+    </span>
   );
 }
 
@@ -279,7 +303,7 @@ const CURRENT = 'current shadow-[0_0_0_2px_var(--cur-color,var(--brand))]';
 type RowProps = {
   t: Title; rank: number | null; ranked: boolean; lead: 'rt' | 'imdb'; story?: boolean;
   seen: boolean; watch: boolean; current: boolean; upNext?: boolean;
-  matchedChars?: string[] | null; search?: string; onSelect: (id: string) => void;
+  mark?: CharMarkData | null; search?: string; onSelect: (id: string) => void;
 };
 
 /** A title in the phone List (Notion "Titles 4/5"): rank (score orders), a
@@ -289,7 +313,7 @@ type RowProps = {
  *  strength, as on desktop (Andre, 2026-11-15: no dimming; the mark and the
  *  green check say it). Up next gets the desktop row's red edge, its pill and
  *  the filled red check (icon only here: the pill names it). */
-export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, current, upNext = false, matchedChars, search, onSelect }: RowProps) {
+export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, current, upNext = false, mark, search, onSelect }: RowProps) {
   const I = I18N();
   const { PosterArt, StoryYear, ReleaseBadge } = window;
   const dot = <span className="m-dot size-[3px] flex-[0_0_3px] rounded-[2px] bg-muted-foreground"/>;
@@ -331,7 +355,7 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
             {t.editions && t.editions[0] && <>{dot}<span className="m-ledition">{tr('edition.tag', { name: t.editions[0].name[I.lang] || t.editions[0].name.en, service: t.editions[0].service })}</span></>}
             <ReleaseBadge title={t} className="m-lrelease ml-1.5"/>
           </div>
-          <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
+          <CharMark mark={mark} title={t} size={18} className={cn('m-lmark mt-1 text-muted-foreground', XS)}/>
         </div>
       </button>
       <window.TitleStatusActions title={t} upNext={upNext}
@@ -341,4 +365,4 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
   );
 }
 
-Object.assign(window, { ScoreBadges, ScoreChip, PhaseBadge, ProgressHeader, BulkHeaderAction, MatchBadge, EmptyState });
+Object.assign(window, { ScoreBadges, ScoreChip, PhaseBadge, ProgressHeader, BulkHeaderAction, CharMark, EmptyState });

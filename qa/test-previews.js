@@ -36,6 +36,8 @@
 //     WebSite, Organization, WebApplication; a guide and a character an
 //     ordered ItemList of their titles; a title a Movie or TVSeries with its
 //     cast; an index an ItemList), every page but home a BreadcrumbList.
+//     Findability 16: every Movie or TVSeries in it, list items too, has an
+//     image the build wrote.
 //   - Findability 14: indexnow-key.txt ships at the root for tools/indexnow.js.
 //   - Findability 13: favicon.ico (48px) and favicon-96.png ship at the root
 //     and index.html links both, sizes Google's search results can show.
@@ -98,6 +100,23 @@ const jsonLd = (html) => {
   try { const d = JSON.parse(blocks[0][1]); return d['@context'] === 'https://schema.org' && Array.isArray(d['@graph']) ? d['@graph'] : null; } catch (e) { return null; }
 };
 const ldTypes = (g) => (g || []).map(x => x['@type']).join(',');
+// Every Movie or TVSeries anywhere in a graph, a list's items included, must
+// carry an image the build wrote, or Google's Rich Results Test marks it
+// invalid (Notion "Findability 16"). Returns the names of those that don't.
+const filmsWithoutImage = (g) => {
+  const bad = [];
+  const walk = (x) => {
+    if (Array.isArray(x)) return x.forEach(walk);
+    if (!x || typeof x !== 'object') return;
+    if (x['@type'] === 'Movie' || x['@type'] === 'TVSeries') {
+      const m = typeof x.image === 'string' && x.image.match(/\/og\/title\/([a-z0-9-]+)\.jpg$/);
+      if (!m || !fs.existsSync(path.join(SITE, 'og', 'title', m[1] + '.jpg'))) bad.push(x.name);
+    }
+    Object.values(x).forEach(walk);
+  };
+  walk(g);
+  return bad;
+};
 const SEGMENT = { title: 'titles', guide: 'guides', char: 'characters' };
 const pageText = (html) => { const m = html.match(/<article id="mcu-page-text"[^>]*>([\s\S]*?)<\/article>/); return m ? m[1] : null; };
 const MAX_BYTES = 300 * 1024;
@@ -220,6 +239,8 @@ const tagErrors = (html, label, url) => {
           const ids = g[0].itemListElement.map(li => li.item.url.split('/').pop()).join();
           if (ids !== win.GUIDES.find(x => x.id === id).stops.map(st => st.id).join()) errors.push(`guide ${id}: structured data lists ${ids}, not its stops`);
         } else if (kind === 'title' && !g[0].actor.length && t.cast.length) errors.push(`title ${id}: structured data has no cast`);
+        const noImage = filmsWithoutImage(g);
+        if (noImage.length) errors.push(`${kind} ${id}: structured data lists ${noImage.length} title(s) with no image: ${noImage.slice(0, 3).join(', ')}`);
       }
       if (stripMeta(html) !== base) errors.push(`${kind} ${id}: the page differs from index.html beyond its preview tags, title and text`);
       checked++;
@@ -252,6 +273,8 @@ const tagErrors = (html, label, url) => {
     expect(stripMeta(html) === base, `index ${seg}: the page differs from index.html beyond its preview tags, title and text`);
     const ld = jsonLd(html);
     expect(ldTypes(ld) === 'ItemList,BreadcrumbList' && ld[0].numberOfItems === pages.length, `index ${seg}: structured data [${ldTypes(ld)}] with ${ld && ld[0].numberOfItems} items`);
+    const noImage = filmsWithoutImage(ld);
+    expect(!noImage.length, `index ${seg}: structured data lists ${noImage.length} title(s) with no image`);
     for (const other of Object.keys(INDEX_PAGES)) expect(text.includes(`<a href="/${other}">`), `index ${seg}: no link to /${other}`);
   }
   {

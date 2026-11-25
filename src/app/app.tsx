@@ -1851,6 +1851,70 @@ function App() {
     const c = hoveredCharacter || trailChar;
     return c ? [c] : null;
   }, [highlightedChar, pinnedChars, hoveredCharacter, trailChar]);
+  // Who each title is here for, for the quiet marker on rows and cards
+  // (CharMark in list-parts.tsx; Notion "Titles: show the picked character on
+  // each of their title rows", design v2/v3, Andre 2026-11-24). A typed search
+  // wins over a pick, so the two never show at once.
+  //   search  each title's own matches, grouped by character (a recast's
+  //           Peters read "Peter Parker" once); a character matched only by
+  //           its actor's credit names the actor, who is what matched.
+  //   pick    the picked character's portrayals in that title, the picked one
+  //           first, named once; the performer only when the one portrayal
+  //           there isn't the picked performer ("Bruce Banner · Edward
+  //           Norton"). A performer of several characters (pinnedActor) shows
+  //           the one they play in each title.
+  // A title matched only by its own name has no entry and keeps its year.
+  const charMarks = useMemo(() => {
+    const credit = (t, c) => window.MCU_credit(t, c);
+    const q = search.trim();
+    if (q && searchCharMatches) {
+      const fq = I18N.fold(q);
+      const byName = c => I18N.charNames(c).some(n => I18N.fold(n).includes(fq));
+      const out = {};
+      window.TITLES.forEach(t => {
+        const chars = searchCharMatches[t.id];
+        if (!chars || !chars.length) return;
+        const groups = [];
+        chars.forEach(c => {
+          const p = primeOf(c);
+          let g = groups.find(x => x.prime === p);
+          if (!g) { g = { prime: p, chars: [], named: false }; groups.push(g); }
+          g.chars.push(c);
+          if (byName(c)) g.named = true;
+        });
+        out[t.id] = {
+          query: q,
+          groups: groups.map(g => {
+            // The family's name, unless only a variant's own name matched
+            // ("raimi" finds "Peter Parker (Raimi)").
+            const family = I18N.charName(g.prime);
+            const name = !g.named || g.chars.includes(g.prime) || I18N.fold(family).includes(fq) ? family : I18N.charName(g.chars[0]);
+            return { chars: g.chars, name, actor: g.named ? null : credit(t, g.chars[0]), actorMatched: !g.named };
+          }),
+        };
+      });
+      return out;
+    }
+    if (!highlightedChar) return null;
+    const out = {};
+    if (pinnedActor) {
+      const mine = pinnedChars || [];
+      window.TITLES.forEach(t => {
+        const chars = t.cast.filter(c => mine.includes(c) && credit(t, c) === pinnedActor);
+        if (chars.length) out[t.id] = { groups: chars.map(c => ({ chars: [c], name: I18N.charName(c), actor: null, actorMatched: false })) };
+      });
+      return out;
+    }
+    const prime = primeOf(highlightedChar);
+    const usual = window.CHARACTERS[highlightedChar].actor;
+    window.TITLES.forEach(t => {
+      const chars = t.cast.filter(c => primeOf(c) === prime).sort((a, b) => (b === highlightedChar ? 1 : 0) - (a === highlightedChar ? 1 : 0));
+      if (!chars.length) return;
+      const actor = chars.length === 1 && credit(t, chars[0]) !== usual ? credit(t, chars[0]) : null;
+      out[t.id] = { groups: [{ chars, name: I18N.charName(prime), actor, actorMatched: false }] };
+    });
+    return out;
+  }, [search, searchCharMatches, highlightedChar, pinnedActor, pinnedChars, lang]);
   // One portrayal reuses its own set; a performer needs the union, memoised so
   // the canvas is not handed a fresh Set on every render.
   const pinnedVisibleIds = useMemo(() => {
@@ -2834,6 +2898,12 @@ function App() {
     if (item.kind === 'actor') pinActor(item.label);
     else if (item.actor) pinActor(item.actor);
     else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
+    // On Guides, which shows nothing of a pinned character, the pick opens
+    // Titles on their titles (Notion "Search: Enter on the Guides page does
+    // nothing"; Andre, 2026-11-24). Guides is already the list view and the
+    // pin has closed any open guide, so only the Guides page is left to leave;
+    // goSection would also reset the stepper's starting title.
+    if (section === 'guides') setGuidesPage(false);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
     if (!isTouch && how.viaKeyboard) requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -2886,6 +2956,16 @@ function App() {
   const pickCollection = (v) => {
     setCollectionFilter(v);
     if (section === 'guides') goSection('mylist');
+  };
+  // Enter in the search box with no suggestion highlighted: on Guides, where
+  // there is nothing to filter, it opens Titles with that search, as the Seen
+  // and Watchlist pills do (Notion "Search: Enter on the Guides page does
+  // nothing").
+  // The text stays in the box as the filter. Elsewhere it already filters.
+  const submitSearch = () => {
+    if (section !== 'guides') return false;
+    goSection('mylist');
+    return true;
   };
   // The trail's pin (See on canvas, or Highlight in Titles) pins the
   // character's thread where you are, what tapping a person did before
@@ -3884,7 +3964,7 @@ function App() {
               isUpNext={upNextCardId === t.id} isPeek={!isTouch && peekId === t.id}
               isGuideAt={!!guide && (stepId || drawerId) === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
-              matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
+              mark={charMarks ? charMarks[t.id] : null}
               searchQuery={search}
               scale={view.scale}
               touch={isTouch}
@@ -3940,7 +4020,7 @@ function App() {
         <window.MobileTopBar
           onHome={onHomeClick}
           section={section}
-          search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson}
+          search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson} onSubmitSearch={submitSearch}
           onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
@@ -3957,7 +4037,7 @@ function App() {
               onBack={() => closeGuide()} onPick={(id) => openGuide(id)} onConnections={() => goSection('explore')}/>
           )}
           {!guide && guidesPage && viewMode !== 'spatial' && <window.GuidesPage inMain onPick={(id) => openGuide(id)}/>}
-          {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} groupProgress={groupProgress} markWatch={collectionFilter !== 'watchlist'} header={narrowed ? contextSummary('line') : null} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} sortDir={sortDir} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {!guide && !guidesPage && viewMode === 'list' && <window.MobileList upNext={upNext} groupProgress={groupProgress} markWatch={collectionFilter !== 'watchlist'} header={narrowed ? contextSummary('line') : null} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} sortDir={sortDir} onSelect={onCardTap} charMarks={charMarks} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className={S.M_SPATIAL_WRAP}>
               {canvasEl}
@@ -4055,7 +4135,7 @@ function App() {
         onHome={onHomeClick}
         onAbout={() => setAboutOpen(true)}
         onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
-        onPickTitle={pickTitle} onPickPerson={pickPerson}
+        onPickTitle={pickTitle} onPickPerson={pickPerson} onSubmitSearch={submitSearch}
         section={section} onSection={(s) => goSection(s)}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
@@ -4094,7 +4174,7 @@ function App() {
             myList={{ collection: collectionFilter, setCollection: setCollectionFilter,
               filters: { phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter } }}
             groupProgress={groupProgress} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
-            search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
+            search={search} charMarks={charMarks} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={toggleDetails}
             onFollow={(id, n, total) => {
               keepFocusOnStep();

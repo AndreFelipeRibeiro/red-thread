@@ -38,11 +38,16 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
   const hasPage = (id: string) => !!cat.characters[id] && appearances(id).length > 0;
   const url = (path: string) => site + path;
 
-  /** A film or series, as a list item or a page of its own. */
+  /** A film or series, as a list item or a page of its own. Google's Movie
+   *  rich result requires an image on every Movie, a list's items too
+   *  (Notion "Findability 16"): the title's own link-preview card, which the
+   *  build writes for every title. No director: the catalog has none, and
+   *  Google lists it as optional. */
   const work = (t: Title): Json => ({
     '@type': t.type === 'film' ? 'Movie' : 'TVSeries',
     name: `${titleName(t)}`,
     url: url(thingPath('title', t.id)),
+    image: `${site}/og/title/${t.id}.jpg`,
     datePublished: t.release,
   });
   const list = (name: string, items: Json[], ordered: boolean): Json => ({
@@ -88,7 +93,6 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
     out.set('title/' + t.id, page(
       {
         ...work(t),
-        image: `${site}/og/title/${t.id}.jpg`,
         ...(synopsis ? { description: synopsis } : {}),
         ...(t.type === 'film' && t.runtime ? { duration: duration(t.runtime) } : {}),
         ...(t.type === 'series' && t.episodes ? { numberOfEpisodes: t.episodes } : {}),
