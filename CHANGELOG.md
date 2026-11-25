@@ -13,6 +13,20 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 27 — Findability 8 (first pass): first paint no longer waits on scripts, posters at the size shown
+
+Recorded: 2026-11-24 19:58 EST (-0500). Committed at 19:38 as
+[fe74ce4](https://github.com/AndreFelipeRibeiro/red-thread/commit/fe74ce4), pushed to `version/5.0` (V5 staging) at 19:51, not merged to `main`. The rest of Batch 27 joins before the merge. Full regression on fe74ce4's tree, the tree that was pushed: all 86 check runs clean, plus the accessibility scans in English, Portuguese and dark. `qa/smoke.js` clean on the staging preview.
+
+- `index.html`: the Google Fonts stylesheet for Bebas Neue and its two preconnects are gone. Nothing has used that face since the Monogram posters (Batch 8), and the stylesheet held up every first paint.
+- `index.html`: the classic scripts the bundle reads (`locales/en.js`, `locales/pt-BR.js`, `i18n.js`, supabase-js, `watch-data.js`) are now `defer` in `<head>`. They download at once and no longer stop the startup screen from painting. They still run in the same order before the bundle, which Vite places after them.
+- `src/app/poster.tsx`: posters list TMDB's 92/154/185/342 widths with `sizes="auto, 342px"`. A 40 px list thumbnail now loads w92 or w154 instead of w342, about 1.2 MB less on a phone's first screen. A browser without `sizes=auto` keeps the 342 px file, as before.
+- PageSpeed Insights, mobile, same evening:
+  - Production (Batch 26): 81 and 81; LCP 3.2 s and 4.8 s.
+  - Staging: 98, 87 and 86; LCP 0.9, 2.8 and 4.1 s; first paint 0.9–2.8 s.
+  - Findability 8's target, LCP under 2.5 s and 90+, isn't met reliably yet, so the ticket stays open.
+- Checked headless (Chromium) on phone and desktop, in English and Portuguese: no errors, supabase-js ready before the app, posters at w154 for 40 px rows at 3× and w342 for desktop cards. Not checked on a real phone.
+
 ## V5 Batch 26 — Titles and Connections: a quiet marker for who each title is here for
 
 Recorded: 2026-11-24 19:13 EST (-0500). Committed at 17:58 as
