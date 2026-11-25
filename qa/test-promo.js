@@ -384,7 +384,8 @@ const labelsOverlap = (page) => page.evaluate(() => {
     out['caughtUp_' + label] = { ...c, confetti };
     const h = lang === 'en' ? "You're all caught up" : 'Você está em dia';
     expect(c && c.h === h, `${label}: caught-up heading "${c && c.h}"`);
-    expect(c && /^47 /.test(c.band), `${label}: caught-up countdown "${c && c.band}"`);
+    // Brazil's release day is a day earlier (Notion "Findability 6").
+    expect(c && (lang === 'en' ? /^47 / : /^46 /).test(c.band), `${label}: caught-up countdown "${c && c.band}"`);
     expect(c && c.covers > 0 && c.done === c.covers && c.dest, `${label}: the featured guide is not shown complete with its destination: ${JSON.stringify(c)}`);
     expect(c && c.share, `${label}: no Share button`);
     expect(c && /caught-up:doomsday/.test(c.key || ''), `${label}: not remembered per release: ${c && c.key}`);
