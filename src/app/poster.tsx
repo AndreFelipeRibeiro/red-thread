@@ -105,6 +105,9 @@ function useImageFallback(url: string | null | undefined) {
   return [failed, onError] as const;
 }
 
+// The poster widths TMDB serves, up to the 342px every poster used to load.
+const POSTER_WIDTHS = [92, 154, 185, 342];
+
 // A real poster when media metadata has one and it loads; otherwise (no
 // address, or the image fails) the Monogram above. The box takes the poster's
 // colour while the image loads.
@@ -117,9 +120,20 @@ function PosterArt({ title }: { title: Title }) {
     : null;
   const [failed, onError] = useImageFallback(url);
   if (url && !failed) {
+    // TMDB's smaller widths too (Notion "Findability 8"), so a 40px list
+    // thumbnail no longer downloads the 342px poster the details panel needs:
+    // about 1.2 MB less on a phone's first screen. `sizes="auto"` lets the
+    // browser pick from the box the poster is actually laid out in (lazy
+    // images only); a browser without it reads the 342px after the comma,
+    // which is what every poster loaded before. Only for the TMDB address the
+    // media data built: a bundled or local poster keeps its single file.
+    const tmdb = !local && path && media.poster_base.endsWith('/w342') && url === media.poster_base + path;
+    const srcSet = tmdb
+      ? POSTER_WIDTHS.map((w) => `${media.poster_base.slice(0, -4)}w${w}${path} ${w}w`).join(', ')
+      : undefined;
     return (
       <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:`color-mix(in oklab, ${posterColor(title)} 35%, #121214)`}}>
-        <img src={url} alt={window.MCU_I18N.titleName(title)} loading="lazy" onError={onError} style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
+        <img src={url} srcSet={srcSet} sizes={srcSet ? 'auto, 342px' : undefined} alt={window.MCU_I18N.titleName(title)} loading="lazy" onError={onError} style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
       </div>
     );
   }
