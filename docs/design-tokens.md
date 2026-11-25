@@ -70,7 +70,9 @@ token carrying that alpha, per mode: `popover-ring` (`ring-foreground/10`),
 `background-glass` (`bg-background/95`, and the phone app bar's 94%),
 `on-image-veil` (`on-image-base` at 78%), `seen-foreground-soft`
 (`seen-foreground` at 90%), `foreground-strong` (`foreground` at 85%) and
-`muted-soft` (`muted` at 50%). The code keeps the modifiers; these exist so
+`muted-soft` (`muted` at 50%), and since 2026-11-22 `muted-foreground-soft`
+(`muted-foreground` at 60%, the Guide destination poster's dashed border). The
+code keeps the modifiers; these exist so
 the Screens file renders them as the app does.
 
 **Controls** (2026-11-17, Notion "Build the Red Thread component library in

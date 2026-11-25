@@ -90,6 +90,8 @@ surface uses them, so they have no Figma counterpart until one does.
 | Guide header (State: In progress, Complete) | `172:774` | `guides-ui.tsx` (g-head) |
 | Guide stop (Up next, Default, Seen) | `45:670` | `guides-ui.tsx` (g-stop) |
 | Phone guide header (State: In progress, Complete) | `172:1009` | `guides-ui.tsx` (g-head, phones) |
+| Guide destination (State: Watchlist off, On Watchlist; "Where it leads", an event guide's right column) | `192:1614` | `guides-ui.tsx` `GuideDest` |
+| Phone guide destination (State: Watchlist off, On Watchlist; "Then: …" after the stops) | `192:1629` | `guides-ui.tsx` `GuideDest` (phones) |
 | Phone guide stop (Up next, Default, Seen) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
 | Phone guide promo (State: Not started, Complete: every stop a small seen poster) | `167:815` | `guides-ui.tsx` `GuidesHero` (phones) |
 | About dialog (Kind: Welcome, About × Device: Desktop, Phone; the guide offer's poster is a nested Poster) | `119:1765` | `src/app/about.tsx` `AboutContent` in `ModalDialog` (desktop) or `Sheet` (phones) |
@@ -119,6 +121,7 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Guides (desktop) | `17:2384` | `17:2624` |
 | Guide page, Thor (desktop) | `17:2641` | `17:2876` |
 | Guide page, Thor, complete (desktop; every stop seen) | `77:7009` | `77:7439` |
+| Guide page, Before Doomsday (desktop; event guide, 7 of 8, Where it leads on the right) | `82:7456` | `97:7866` |
 | Follow the thread (desktop) | `17:2888` | `17:3142` |
 | Settings over Titles (desktop) | `16:5024` | `16:5152` |
 | Search open (desktop) | `19:3906` | `19:4033` |
@@ -173,6 +176,10 @@ The rules are the `promote-design` skill (`.claude/skills/promote-design/SKILL.m
   Phone guide promo, Guide header and Phone guide header. After Andre
   publishes, accept the update in App Screens and swap the hand-drawn parts
   of each affected screen for instances.
+- **Progress bars in instances:** an instance can't resize a layer, so the
+  In progress Guide header and Phone guide header set their bar with the
+  track's right padding: padding = track width × (1 − seen ÷ total), 25 for
+  7 of 8 on the desktop's 200 track (since 2026-11-22).
 - **Checking a publish:** the Plugin API's `getPublishStatusAsync()` on a
   component reads Current, Changed or Unpublished. Changed or Unpublished
   after a publish means it did not go out. Other files are not updated
@@ -213,7 +220,8 @@ counterpart (same tools, `tools/figma/README.md`):
   opacity equal to that alpha (`seen-tint`, `brand-tint`, and since
   2026-11-18 `popover-ring`, `border-soft`, `background-glass`,
   `on-image-veil`, `seen-foreground-soft`, `foreground-strong`,
-  `muted-soft`; `docs/design-tokens.md`). Published and checked in Screens
+  `muted-soft`, and since 2026-11-22 `muted-foreground-soft`;
+  `docs/design-tokens.md`). Published and checked in Screens
   on 2026-11-18: the popover and dialog outlines resolve to 10%. Left: the
   tokens whose alpha differs by mode, where one paint opacity can't match
   both and the token's own alpha applies in other files, which is right:
