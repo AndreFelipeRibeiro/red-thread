@@ -72,12 +72,22 @@ function profileOf(user) {
 
 // States: initializing | signed_out | signing_in | signed_in | error
 function AccountProvider({ children }) {
-  const client = window.mcuSupabase;
-  // With no client there is nothing to restore, so never show a loading state.
-  const [status, setStatus] = React.useState(client ? 'initializing' : 'signed_out');
+  // supabase-js loads on demand (src/supabase-client.ts, Notion "Findability
+  // 8"), so the client can arrive after the first render: at once for a saved
+  // session or a sign-in return, or when Sign in is pressed. `mcu:supabase`
+  // says it is ready, or that it failed.
+  const [client, setClient] = React.useState(() => window.mcuSupabase);
+  const sbStatus = () => window.MCU_SUPABASE_STATUS || { ok: false };
+  // A client on its way means a session may be about to be restored: show
+  // that, not a signed-out flash. With none coming, there is nothing to
+  // restore, so never show a loading state.
+  const [status, setStatus] = React.useState(() => (client || sbStatus().loading) ? 'initializing' : 'signed_out');
+  const statusRef = React.useRef(status);
+  statusRef.current = status;
   const [user, setUser] = React.useState(null);
   const [error, setError] = React.useState(null);
-  const [syncAvailable, setSyncAvailable] = React.useState(!!client);
+  // Sync is on offer whenever supabase-js can be had, loaded or not.
+  const [syncAvailable, setSyncAvailable] = React.useState(() => !!sbStatus().ok);
   const [offlineReason, setOfflineReason] = React.useState(null);
   const offlineRef = React.useRef(false);
   const attemptRef = React.useRef(0);
@@ -89,6 +99,32 @@ function AccountProvider({ children }) {
     setSyncAvailable(false);
     setStatus('signed_out');
   }, []);
+
+  // The client arriving, or failing to (the CDN blocked or down).
+  React.useEffect(() => {
+    const sync = () => {
+      if (window.mcuSupabase) { setClient(window.mcuSupabase); return; }
+      if (!sbStatus().ok) {
+        setSyncAvailable(false);
+        setStatus((s) => (s === 'initializing' ? 'signed_out' : s));
+      }
+    };
+    sync(); // it may have settled between the first render and this effect
+    window.addEventListener('mcu:supabase', sync);
+    return () => window.removeEventListener('mcu:supabase', sync);
+  }, []);
+
+  // Waiting for supabase-js to restore a session is bounded like the restore
+  // itself: a CDN that never answers leaves the visitor a guest, not a spinner.
+  React.useEffect(() => {
+    if (client || status !== 'initializing') return;
+    const timer = setTimeout(() => {
+      if (window.mcuSupabase) return;
+      console.warn('[mcu] supabase-js did not arrive; running as guest');
+      continueAsGuest(window.MCU_I18N.tr('error.restore'));
+    }, AUTH_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [client, status, continueAsGuest]);
 
   React.useEffect(() => {
     if (!client) return;
@@ -105,8 +141,11 @@ function AccountProvider({ children }) {
     };
     const applySession = (session) => {
       if (offlineRef.current) return;
-      attemptRef.current += 1;
       const nextUser = session && session.user;
+      // Sign in fetched supabase-js and is on its way to Google: the empty
+      // first session that arrives with the client must not undo that.
+      if (!nextUser && statusRef.current === 'signing_in') return;
+      attemptRef.current += 1;
       setUser(nextUser || null);
       setStatus(nextUser ? 'signed_in' : 'signed_out');
       setSyncAvailable(true);
@@ -189,7 +228,7 @@ function AccountProvider({ children }) {
   }, [status, client]);
 
   const signIn = React.useCallback(async () => {
-    if (!client) return;
+    if (!sbStatus().ok) return;
     setError(null);
     setStatus('signing_in');
     const attempt = ++attemptRef.current;
@@ -203,7 +242,11 @@ function AccountProvider({ children }) {
       // The home page, as always: since Findability 3 the path can name a
       // guide or title, and sign-in returns only to addresses Supabase allows.
       const redirectTo = window.location.origin + '/';
-      const { error: err } = await client.auth.signInWithOAuth({
+      // A guest's first Sign in fetches supabase-js here (src/supabase-client.ts).
+      const sb = client || await window.MCU_loadSupabase();
+      if (!sb) throw new Error((sbStatus().reason) || 'sync unavailable');
+      if (attemptRef.current !== attempt) return;
+      const { error: err } = await sb.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, queryParams: { prompt: 'select_account' } },
       });

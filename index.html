@@ -58,16 +58,45 @@
      wait for each, so the startup screen paints while they download. Deferred
      scripts run in the order written, and Vite puts the bundle's module
      script after these at the end of <head>, so the order the app relies on
-     is unchanged: the languages, the runtime, supabase-js, watch-data.js,
-     then the bundle. -->
+     is unchanged: the languages, the runtime, watch-data.js, then the
+     bundle. -->
 <!-- Languages first (small, local): the startup screen speaks the visitor's
      language while the bundle downloads. One catalog per file (English is
      the base), then the runtime. -->
 <script defer src="/locales/en.js"></script>
 <script defer src="/locales/pt-BR.js"></script>
 <script defer src="/i18n.js"></script>
-<script defer src="https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js" integrity="sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd" crossorigin="anonymous"></script>
 <script defer src="/watch-data.js"></script>
+<!-- supabase-js, for sign-in and sync, loads on demand (Notion "Findability
+     8"; src/supabase-client.ts): a visitor who isn't signed in never waits
+     for it, and gets it when they press Sign in. A saved session (the
+     mcu.auth.v1 keys, the storageKey in supabase-client.ts) or a return from
+     Google (?code= or ?error=) needs it at once, so this starts that download
+     now, alongside the bundle. The version and hash live here only. -->
+<script>
+window.MCU_SUPABASE_JS = {
+  src: 'https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js',
+  integrity: 'sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd'
+};
+(function () {
+  try {
+    var js = window.MCU_SUPABASE_JS;
+    var early = /[?&](code|error|error_description)=/.test(location.search);
+    for (var i = 0; !early && i < localStorage.length; i++) {
+      if (String(localStorage.key(i)).indexOf('mcu.auth.v1') === 0) early = true;
+    }
+    if (!early) return;
+    js.early = true;
+    var link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'script';
+    link.href = js.src;
+    link.integrity = js.integrity;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <div id="root">

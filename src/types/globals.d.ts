@@ -138,9 +138,15 @@ declare global {
     mcuSupabase: unknown;
     /** Why sync is or is not available, so the account UI can say something
      *  more useful than "something went wrong". */
-    MCU_SUPABASE_STATUS: { ok: boolean; reason?: string };
-    /** The supabase-js UMD build, the one library still loaded from a CDN. */
+    MCU_SUPABASE_STATUS: { ok: boolean; reason?: string; loading?: boolean };
+    /** The supabase-js UMD build, the one library still loaded from a CDN,
+     *  now on demand (src/supabase-client.ts, Notion "Findability 8"). */
     supabase?: { createClient(url: string, key: string, opts?: unknown): unknown };
+    /** Its address and hash, and whether to fetch it at once (a saved session
+     *  or a sign-in return), set by index.html's head script. */
+    MCU_SUPABASE_JS?: { src: string; integrity?: string; early?: boolean };
+    /** Fetches supabase-js once; resolves with the client, or null. */
+    MCU_loadSupabase(): Promise<unknown>;
     MCU_AUTH_CONTEXT: unknown;
 
     // ---- Components and helpers, typed from their modules ------------------
