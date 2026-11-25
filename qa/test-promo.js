@@ -388,7 +388,7 @@ const labelsOverlap = (page) => page.evaluate(() => {
     expect(c && c.covers > 0 && c.done === c.covers && c.dest, `${label}: the featured guide is not shown complete with its destination: ${JSON.stringify(c)}`);
     expect(c && c.share, `${label}: no Share button`);
     expect(c && /caught-up:doomsday/.test(c.key || ''), `${label}: not remembered per release: ${c && c.key}`);
-    const body = lang === 'en' ? "You've seen everything you need before Avengers: Doomsday." : 'Você já viu tudo o que precisa antes de Vingadores: Doomsday.';
+    const body = lang === 'en' ? "You've seen everything you need before Avengers: Doomsday." : 'Você já viu tudo o que precisa antes de Vingadores: Doutor Destino.';
     expect(c && c.body === body, `${label}: caught-up body "${c && c.body}"`);
     expect(confetti, `${label}: no confetti`);
     if (opts === DESK) {

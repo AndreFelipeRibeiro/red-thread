@@ -44,7 +44,16 @@
     return BASE;
   }
 
-  let lang = stored() || detect();
+  // A Portuguese address (/pt, /pt/guias/…; Notion "Findability 6") opens the
+  // app in Portuguese whatever was saved or the browser says, so a page a
+  // search engine or a friend sent reads in the language of its address. It
+  // isn't saved: choosing English in Settings moves the address back to
+  // English (app.tsx), and an English address keeps the saved choice.
+  function pathLang() {
+    try { return /^\/pt(\/|$)/.test(window.location.pathname) && LOCALES['pt-BR'] ? 'pt-BR' : null; } catch (e) { return null; }
+  }
+
+  let lang = pathLang() || stored() || detect();
   if (!LOCALES[lang]) lang = BASE;
 
   function apply() {
@@ -142,8 +151,16 @@
   // two apart — released / upcoming for a confirmed day, expected for a month —
   // so an announced month never reads as a premiere, even once it has passed
   // (the same rule MCU_isReleased applies to the completion count).
+  // The release day in the current language's market: locales/<code>.js
+  // `releases` holds the days that differ from data.ts (Avengers: Doomsday
+  // opens a day earlier in Brazil; Notion "Findability 6").
+  function releaseDay(title) {
+    if (!title) return null;
+    return table(lang, 'releases')[title.id] || title.release || null;
+  }
+
   function release(title) {
-    const r = title && title.release;
+    const r = releaseDay(title);
     if (!r) return { status: 'expected', date: null };
     const day = /^\d{4}-\d{2}-\d{2}$/.test(r);
     const [y, m, d] = r.split('-').map(Number);
@@ -180,7 +197,7 @@
   const api = {
     get lang() { return lang; },
     setLang, tr, titleName, titleNames, charName, charNames, storyLabel, storyNote, synopsis,
-    release, budget, upper, compare, languages, detect, fold, subscribe,
+    release, releaseDay, budget, upper, compare, languages, detect, fold, subscribe,
   };
 
   // Components call useI18n() to re-render when the language changes.

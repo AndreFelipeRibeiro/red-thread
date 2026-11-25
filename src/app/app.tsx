@@ -12,7 +12,7 @@ import React from 'react';
 import * as B from './banners';
 import * as S from './shell';
 import ReactDOM from 'react-dom/client';
-import { addressFor, stateParams } from '@/share-card/addresses';
+import { addressFor, homePath, stateParams } from '@/share-card/addresses';
 
 // Red Thread — the app shell and the floating (Spatial) canvas layout
 
@@ -854,7 +854,28 @@ function readURLState() {
 // Writes the given state into the address without adding a history entry.
 // history.state is passed through untouched: it carries the phone sheets'
 // token (mobile.jsx sheetHistory), and replacing it would break their Back.
-Object.assign(window, { MCU_phaseMatches: phaseMatches, MCU_filterMatches: filterMatches });
+// MCU_stateParams: an address's state as one query, in either language (the
+// QA checks read the open guide or title with it; Notion "Findability 6").
+Object.assign(window, { MCU_phaseMatches: phaseMatches, MCU_filterMatches: filterMatches, MCU_stateParams: stateParams });
+
+// The language addresses are written in: the one on screen.
+function addressLang() {
+  return window.MCU_I18N && window.MCU_I18N.lang === 'pt-BR' ? 'pt-BR' : 'en';
+}
+
+// Choosing another language moves the address to that language's version of
+// the same page (/titles/iron-man ↔ /pt/titulos/homem-de-ferro), keeping the
+// query and history.state, without a new history entry.
+function rewriteAddressLang() {
+  try {
+    const url = new URL(window.location.href);
+    const { pathname, search } = addressFor(stateParams(url.pathname, url.search), addressLang());
+    const query = search.toString().replace(/%2C/gi, ',');
+    const next = pathname + (query ? '?' + query : '') + url.hash;
+    if (next !== url.pathname + url.search + url.hash) window.history.replaceState(window.history.state, '', next);
+  } catch (e) { /* an out-of-date address is not worth a crash */ }
+}
+if (window.MCU_I18N && window.MCU_I18N.subscribe) window.MCU_I18N.subscribe(rewriteAddressLang);
 
 function writeURLState(params) {
   try {
@@ -864,7 +885,9 @@ function writeURLState(params) {
     Object.keys(params).forEach(k => q.set(k, params[k]));
     // The open title, else the guide, else the pinned character becomes the
     // path (src/share-card/addresses.ts); the rest stays in the query.
-    const { pathname, search } = addressFor(q);
+    // In the language on screen: /titles/iron-man or /pt/titulos/homem-de-ferro
+    // (Notion "Findability 6").
+    const { pathname, search } = addressFor(q, addressLang());
     // Phases stay readable in the address: phase=2,3, not phase=2%2C3.
     const query = search.toString().replace(/%2C/gi, ',');
     const next = pathname + (query ? '?' + query : '') + url.hash;
@@ -3364,7 +3387,7 @@ function App() {
     const fromHistory = !!(opts && opts.fromHistory);
     if (!fromHistory) {
       homeSnapRef.current = { search, phaseFilter, typeFilter, budgetFilter, releaseFilter, collectionFilter, sort, sortDir };
-      try { window.history.pushState({ mcuHome: 1 }, '', '/'); } catch (e) { /* the reset still happens */ }
+      try { window.history.pushState({ mcuHome: 1 }, '', homePath(addressLang())); } catch (e) { /* the reset still happens */ }
     }
     // A drag's momentum glide would carry on past the reset: stop it first.
     stopInertia();

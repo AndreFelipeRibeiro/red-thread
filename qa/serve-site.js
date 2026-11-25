@@ -54,6 +54,17 @@ http.createServer = function (...args) {
       // The index pages (Notion "Findability 4"): /guides, /titles, /characters.
       const index = p.match(/^\/(titles|guides|characters)\/?$/);
       if (index) p = `/og/index/${index[1]}.html`;
+      // The Portuguese pages (Notion "Findability 6"), as middleware.ts serves
+      // them: /pt, /pt/guias (index), /pt/titulos/<slug>; an unknown slug gets
+      // the Portuguese home page.
+      if (/^\/pt\/?$/.test(p)) p = '/og/pt/home.html';
+      const ptPage = p.match(/^\/pt\/(titulos|guias|personagens)\/([a-z0-9-]+)\/?$/);
+      if (ptPage) {
+        const kind = { titulos: 'title', guias: 'guide', personagens: 'char' }[ptPage[1]];
+        p = fs.existsSync(path.join(siteRoot(), 'og', 'pt', kind, ptPage[2] + '.html')) ? `/og/pt/${kind}/${ptPage[2]}.html` : '/og/pt/home.html';
+      }
+      const ptIndex = p.match(/^\/pt\/(titulos|guias|personagens)\/?$/);
+      if (ptIndex) p = `/og/pt/index/${{ titulos: 'titles', guias: 'guides', personagens: 'characters' }[ptIndex[1]]}.html`;
       const root = siteRoot();
       const file = path.join(root, p);
       if (file.startsWith(root) && fs.existsSync(file) && fs.statSync(file).isFile()) {

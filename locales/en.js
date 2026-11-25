@@ -152,6 +152,8 @@ window.MCU_LOCALES.en = {
     // search engines and assistants (src/share-card/page-text.ts).
     'page.homeTitle': 'Red Thread — Marvel movies, series and character connections',
     'page.updated': 'Updated {date}',
+    // A Portuguese page's English name, where Brazil's differs (Findability 6).
+    'page.originalTitle': 'Original title: {name}',
     'page.characters': 'Characters',
     'page.inGuides': 'In these guides',
     'page.appearances': '{name} in the MCU: every appearance, in release order',

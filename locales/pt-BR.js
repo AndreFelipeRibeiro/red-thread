@@ -149,6 +149,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'og.guideAlt': '{name}: os títulos essenciais do guia em ordem',
     'page.homeTitle': 'Red Thread — filmes, séries e conexões entre personagens da Marvel',
     'page.updated': 'Atualizado em {date}',
+    'page.originalTitle': 'Título original: {name}',
     'page.characters': 'Personagens',
     'page.inGuides': 'Nestes guias',
     'page.appearances': '{name} no MCU: todas as aparições, em ordem de lançamento',
@@ -769,7 +770,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'friendly-spidey': 'Seu Amigão da Vizinhança: Homem-Aranha',
     'cap-brave': 'Capitão América: Admirável Mundo Novo',
     'daredevil-born-again': 'Demolidor: Renascido',
-    'thunderbolts': 'Thunderbolts*',
+    'thunderbolts': '*Os Novos Vingadores',
     'ironheart': 'Coração de Ferro',
     'fantastic-four': 'Quarteto Fantástico: Primeiros Passos',
     'eyes-of-wakanda': 'Olhos de Wakanda',
@@ -779,7 +780,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'daredevil-born-again-s2': 'Demolidor: Renascido – Temporada 2',
     'visionquest': 'VisionQuest',
     'friendly-spidey-s2': 'Seu Amigão da Vizinhança: Homem-Aranha – Temporada 2',
-    'doomsday': 'Vingadores: Doomsday',
+    'doomsday': 'Vingadores: Doutor Destino',
     'daredevil-born-again-s3': 'Demolidor: Renascido – Temporada 3',
     'secret-wars': 'Vingadores: Guerras Secretas',
   },
@@ -789,6 +790,16 @@ window.MCU_LOCALES['pt-BR'] = {
     'agatha': ['Agatha Desde Sempre'],
     'friendly-spidey': ['Seu Amigável Vizinho Homem-Aranha'],
     'friendly-spidey-s2': ['Seu Amigável Vizinho Homem-Aranha'],
+    // The working title, used in Brazil until Disney confirmed "Vingadores:
+    // Doutor Destino" (Notion "Findability 6", Andre 2026-11-23).
+    'doomsday': ['Vingadores: Doomsday'],
+  },
+
+  // Release days that differ in Brazil, shown wherever the Portuguese app
+  // gives a date (i18n.js release()). Avengers: Doomsday opens a day earlier
+  // there (Notion "Findability 6").
+  releases: {
+    'doomsday': '2026-12-17',
   },
 
   // Characters whose Brazilian name differs; personal names stay as in data.js.
@@ -889,6 +900,6 @@ window.MCU_LOCALES['pt-BR'] = {
     "friendly-spidey-s2": "Os primeiros anos de Peter Parker como Homem-Aranha continuam, agora contra vilões clássicos como Doutor Octopus, Lagarto e Rino.",
     "doomsday": "Heróis de três universos diferentes são arrastados para um conflito contra uma ameaça diferente de tudo o que já enfrentaram: o Doutor Destino.",
     "daredevil-born-again-s3": "A terceira temporada de Demolidor: Renascido. Os detalhes da trama ainda não foram divulgados.",
-    "secret-wars": "A conclusão da Saga do Multiverso, depois de Vingadores: Doomsday. Os detalhes da trama ainda não foram divulgados.",
+    "secret-wars": "A conclusão da Saga do Multiverso, depois de Vingadores: Doutor Destino. Os detalhes da trama ainda não foram divulgados.",
   },
 };

@@ -17,6 +17,8 @@ export interface LocaleTables {
   titles?: Record<string, string>;
   characters?: Record<string, string>;
   synopses?: Record<string, string>;
+  /** Release days that differ in this language's market (pt-BR: Doomsday). */
+  releases?: Record<string, string>;
 }
 
 /** The app's tr() (i18n.js), for a build that has no page: plain strings
@@ -71,7 +73,9 @@ function chipDate(release: string): string {
  *  needs a new layout: ask Andre before the build squeezes further. */
 const MAX_STOPS = 14;
 
-export function previewEntries(cat: Catalog, loc: LocaleTables, colors: PreviewColors, site: string, images: Images): PreviewEntry[] {
+/** `lang` 'pt-BR' gives the Portuguese pages' titles and descriptions (their
+ *  guide names and blurbs; loc carries the rest). Notion "Findability 6". */
+export function previewEntries(cat: Catalog, loc: LocaleTables, colors: PreviewColors, site: string, images: Images, lang: 'en' | 'pt-BR' = 'en'): PreviewEntry[] {
   const tr = makeTr(loc);
   const app = tr('app.name');
   const titleName = (t: Title) => (loc.titles && loc.titles[t.id]) || t.title;
@@ -181,11 +185,11 @@ export function previewEntries(cat: Catalog, loc: LocaleTables, colors: PreviewC
     const target = g.group === 'coming' && g.target ? byId(g.target) : null;
     const stops = target ? ess : ess.slice(0, -1);
     const last = target || ess[ess.length - 1];
-    const name = g.name.en;
+    const name = (lang === 'pt-BR' && g.name['pt-BR']) || g.name.en;
     out.push({
       kind: 'guide', id: g.id,
       title: page(name),
-      description: shorten(g.blurb.en, 200),
+      description: shorten((lang === 'pt-BR' && g.blurb['pt-BR']) || g.blurb.en, 200),
       alt: tr('og.guideAlt', { name }),
       input: {
         site,

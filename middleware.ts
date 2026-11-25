@@ -21,6 +21,13 @@
 //       → the index page's copy, which lists every guide, title or
 //         character with a link. /?view=guides and /?view=list (with no
 //         thing) redirect to /guides and /titles, the rest of the query kept.
+//   /pt, /pt/guias, /pt/titulos, /pt/personagens and
+//   /pt/guias/<slug>, /pt/titulos/<slug>, /pt/personagens/<slug>
+//       (Notion "Findability 6") → the Portuguese copies the build writes in
+//         og/pt/ (home.html, index/<segment>.html, <kind>/<slug>.html). A
+//         slug with no page gets the Portuguese home page with a 404. The
+//         slugs are frozen in src/share-card/pt-slugs.ts; this file needs
+//         only the files' names.
 //   Anything else passes through untouched.
 //
 // The path takes the first of title, guide and character, the order the app
@@ -31,7 +38,7 @@
 // Configured here and in vercel.json only: dashboard settings apply to every
 // branch, including main (docs/V4-PLAN.md).
 
-export const config = { matcher: ['/', '/titles', '/guides', '/characters', '/titles/:id', '/guides/:id', '/characters/:id'] };
+export const config = { matcher: ['/', '/titles', '/guides', '/characters', '/titles/:id', '/guides/:id', '/characters/:id', '/pt', '/pt/:segment', '/pt/:segment/:slug'] };
 
 // The project's own *.vercel.app production address, kept by Vercel through
 // the project rename (red-thread.vercel.app belongs to someone else), sends
@@ -48,6 +55,12 @@ const KIND_OF: Record<string, Kind> = { titles: 'title', guides: 'guide', charac
 const ID = /^[a-z0-9-]{1,80}$/;
 const PATH = /^\/(titles|guides|characters)\/([^/]+)\/?$/;
 const INDEX = /^\/(titles|guides|characters)\/?$/;
+/** The Portuguese addresses: segment → kind, and → the English index name. */
+const PT_KIND: Record<string, Kind> = { titulos: 'title', guias: 'guide', personagens: 'char' };
+const PT_INDEX_OF: Record<string, string> = { titulos: 'titles', guias: 'guides', personagens: 'characters' };
+const PT_HOME = /^\/pt\/?$/;
+const PT_PATH = /^\/pt\/(titulos|guias|personagens)\/([^/]+)\/?$/;
+const PT_INDEX = /^\/pt\/(titulos|guias|personagens)\/?$/;
 /** The view each index address stands for, when it stands for one. */
 const INDEX_VIEW: Record<string, string | null> = { guides: 'guides', titles: 'list', characters: null };
 
@@ -68,6 +81,23 @@ const headersFor = (host: string): Record<string, string> =>
 export default async function middleware(request: Request): Promise<Response | undefined> {
   const url = new URL(request.url);
   if (OLD_HOSTS.includes(url.hostname)) return Response.redirect(PUBLIC + url.pathname + url.search, 308);
+
+  // Portuguese (Findability 6).
+  const serve = async (file: string, status = 200) => {
+    const page = await fetch(new URL(file, url.origin));
+    return page.ok ? new Response(page.body, { status, headers: headersFor(url.hostname) }) : undefined;
+  };
+  if (PT_HOME.test(url.pathname)) return serve('/og/pt/home.html');
+  const ptPath = PT_PATH.exec(url.pathname);
+  if (ptPath) {
+    if (ID.test(ptPath[2])) {
+      const page = await serve(`/og/pt/${PT_KIND[ptPath[1]]}/${ptPath[2]}.html`);
+      if (page) return page;
+    }
+    return serve('/og/pt/home.html', 404);
+  }
+  const ptIndex = PT_INDEX.exec(url.pathname);
+  if (ptIndex) return serve(`/og/pt/index/${PT_INDEX_OF[ptIndex[1]]}.html`);
 
   const path = PATH.exec(url.pathname);
   if (path) {

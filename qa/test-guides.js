@@ -484,7 +484,7 @@ const DATA = () => {
   ({ ctx, page, errors } = await ctxPage(browser, PHONE320, seedJs(seed1) + "localStorage.setItem('mcu.lang.v1','pt-BR');"));
   await page.goto(URL + `?view=list&guide=${plan.id}`); await settle(page);
   const narrow = await page.evaluate(() => {
-    const G = window.MCU_GUIDE, g = G.get(new URLSearchParams((location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/')))).get('guide'));
+    const G = window.MCU_GUIDE, g = G.get(new URLSearchParams(('?' + window.MCU_stateParams(location.pathname, location.search).toString())).get('guide'));
     const W = document.documentElement.clientWidth;
     const over = [...document.querySelectorAll('.g-head *, .g-stop *, .guide-pill *')].filter(e => e.getBoundingClientRect().right > W + 0.5 && e.getClientRects().length).map(e => e.className);
     return { over: over.slice(0, 5), name: (document.querySelector('.g-name') || {}).textContent, want: g.name['pt-BR'], lang: document.documentElement.lang,

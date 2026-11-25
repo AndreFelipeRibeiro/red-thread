@@ -60,6 +60,8 @@ export interface I18nRuntime {
   synopsis(title: Title): string;
   /** Released, coming, or expected at the precision the catalog has. */
   release(title: Title): { status: 'released' | 'upcoming' | 'expected'; date: string | null };
+  /** The release day (ISO) in the current language's market, or null. */
+  releaseDay(title: Title): string | null;
   /** Millions of USD, formatted for the current language. */
   budget(millions: number): string;
   upper(text: string): string;
@@ -314,6 +316,8 @@ declare global {
     PHASE_COLORS: App['PHASE_COLORS'];
     /** Phase is multi-select: 'all' or phases joined with commas ("2,3"). */
     MCU_phaseMatches(t: Title, phases: string): boolean;
+    /** An address's state as one query, either language (src/share-card/addresses.ts). */
+    MCU_stateParams(pathname: string, search: string): URLSearchParams;
     /** The catalog filters (phase, type, budget, released) in one test. */
     MCU_filterMatches(t: Title, f: { phase: string; type: string; budget: string; release: string }): boolean;
     sortTitles: App['sortTitles'];
