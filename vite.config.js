@@ -37,6 +37,12 @@ const LEGACY = [
   // IndexNow's key, which the engines fetch to check a submission
   // (tools/indexnow.js; Notion "Findability 14").
   'indexnow-key.txt',
+  // The startup screen's animated pin, "Bounce" (Notion "Startup loader: a
+  // branded Lottie animation instead of the plain spinner"). boot.js fetches
+  // it before the bundle has run, so it needs a plain URL. The source is the
+  // `Loader Bounce` composition in LottieFiles Creator; re-export it there
+  // rather than editing this file by hand.
+  'boot-loader.json',
 ];
 
 const copyLegacy = () => ({
@@ -68,6 +74,26 @@ const shareCardWasm = () => ({
   },
   writeBundle(options) {
     copyFileSync(HB_WASM, join(options.dir, 'hb.wasm'));
+  },
+});
+
+// The Lottie player for the startup screen's animated pin (boot.js). It has
+// to run before the bundle does, while the bundle is still downloading, so it
+// is served as its own file from the site root rather than imported: copied
+// into the build, and answered by the dev server. lottie-web's "light" build
+// is the SVG renderer only (168 KB, 46 KB gzipped). boot.js asks for it at
+// low priority, and only when motion is allowed.
+const LOTTIE_PLAYER = fileURLToPath(new URL('./node_modules/lottie-web/build/player/lottie_light.min.js', import.meta.url));
+const bootLottie = () => ({
+  name: 'mcu-boot-lottie',
+  configureServer(server) {
+    server.middlewares.use('/lottie-light.js', (req, res) => {
+      res.setHeader('Content-Type', 'text/javascript');
+      res.end(readFileSync(LOTTIE_PLAYER));
+    });
+  },
+  writeBundle(options) {
+    copyFileSync(LOTTIE_PLAYER, join(options.dir, 'lottie-light.js'));
   },
 });
 
@@ -155,7 +181,7 @@ const themePrepaint = () => ({
 });
 
 export default {
-  plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy(), shareCardWasm(), linkPreviews()],
+  plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy(), shareCardWasm(), bootLottie(), linkPreviews()],
   resolve: {
     alias: [
       { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
