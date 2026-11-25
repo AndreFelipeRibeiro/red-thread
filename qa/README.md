@@ -416,6 +416,24 @@ one.
     three times running (`B moved off the pointer`); the check moves on, but if
     that grows it's worth a look at the app.
 
+- `test-settings` failed now and then under load at "Spatial card click with
+  Settings open" and "Settings should slide out, then the details slide in"
+  (Batch 22's regression, and once in a 16-check run on 2026-11-24). Both were
+  the check, not the app, and both are fixed (2026-11-24, Notion
+  "test-settings: 'Spatial card click with Settings open' failed once…").
+  - The card press came after a fixed 700 ms wait, sometimes while the canvas
+    was still re-laying out as Settings opened, so it landed on empty canvas
+    and opened nothing. It now waits until the card has stopped moving, and
+    presses once more if no details panel opens.
+  - The slide was judged by sampling both panels' positions every frame. A
+    busy machine skipped the frames in the middle of the 360 ms slides (51
+    frames in 1.7 s), so neither slide was seen. It now listens for the
+    panels' own `transitionrun` events and the moment Settings leaves the
+    page: Settings slides, leaves, and only then does the details panel slide
+    in. These events fire whatever the frame rate. `slide.ms` reports the gap:
+    0.4 to 0.6 s on a quiet machine, 0.8 to 1.2 s under load. Twelve runs,
+    four at a time, were clean, four of them beside four CPU-bound processes.
+
 - `test-skip` **used to fail, and it was the check, not the app** (fixed
   2026-10-31). Batch 10 replaced the desktop guide's meter row with one taller
   card (`GuideModule`), which draws progress as `.gm-count` / `.gm-notes` and

@@ -157,21 +157,49 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     }));
     const gear = async () => { await page.locator('.settings-btn').click(); await page.waitForTimeout(400); };
     // A real click where the card is on screen (the canvas, not the card, takes
-    // pointer events once a card is selected).
-    const clickCard = async (id) => {
-      await page.waitForTimeout(700);
-      const b = await page.locator(`.card[data-id="${id}"]`).boundingBox();
-      await page.mouse.click(b.x + b.width / 2, b.y + b.height * 0.8); await page.waitForTimeout(1000);
+    // pointer events once a card is selected). The card is pressed only once
+    // it has stopped moving: under a full regression's load the canvas can
+    // still be re-laying out when a fixed wait ends, and the press then lands
+    // on empty canvas and opens nothing (Notion "test-settings: 'Spatial card
+    // click with Settings open' failed once"). One more press if that happens.
+    const still = async (id) => {
+      let last = null;
+      for (let i = 0; i < 30; i++) {
+        const b = await page.locator(`.card[data-id="${id}"]`).boundingBox();
+        if (b && last && Math.abs(b.x - last.x) < 0.5 && Math.abs(b.y - last.y) < 0.5) return b;
+        last = b; await page.waitForTimeout(100);
+      }
+      return last;
     };
-    // Every frame's left edge of Settings and of the drawer (null: not there).
+    const clickCard = async (id) => {
+      await page.waitForTimeout(300);
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const b = await still(id);
+        await page.mouse.click(b.x + b.width / 2, b.y + b.height * 0.8);
+        try { await page.waitForSelector('.drawer.open', { timeout: 2500 }); break; } catch (e) { /* missed: press again */ }
+      }
+      await page.waitForTimeout(500);
+    };
+    // When each panel slides and when Settings goes, as events with their
+    // times. Sampling each panel's position every frame (as this check did)
+    // misses a 360 ms slide whenever a loaded machine skips frames; the
+    // transitions' own events fire whatever the frame rate.
     const record = () => page.evaluate(() => {
-      window.__seq = [];
-      const f = () => {
-        const sp = document.querySelector('.settings-panel'), d = document.querySelector('.drawer');
-        window.__seq.push({ s: sp ? Math.round(sp.getBoundingClientRect().left) : null, d: d ? Math.round(d.getBoundingClientRect().left) : null });
-        if (window.__seq.length < 90) requestAnimationFrame(f);
-      };
-      requestAnimationFrame(f);
+      const log = window.__slide = [];
+      const at = () => performance.now();
+      const which = (el) => el.classList && (el.classList.contains('settings-panel') ? 's' : el.classList.contains('drawer') ? 'd' : null);
+      for (const type of ['transitionrun', 'transitionend']) {
+        document.addEventListener(type, (e) => {
+          const w = which(e.target);
+          if (w && /transform|translate/.test(e.propertyName)) log.push({ w, type, t: at(), left: Math.round(e.target.getBoundingClientRect().left) });
+        }, true);
+      }
+      new MutationObserver(() => {
+        const sp = !!document.querySelector('.settings-panel');
+        const last = log.filter(x => x.type === 'present').pop();
+        if (!last || last.sp !== sp) log.push({ type: 'present', sp, t: at() });
+      }).observe(document.body, { childList: true, subtree: true });
+      log.push({ type: 'present', sp: !!document.querySelector('.settings-panel'), t: at() });
     });
     await page.goto(URL_BASE); await ready(page);
     await gear();
@@ -180,13 +208,17 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     let st = await state();
     out.cardClick = st;
     expect(!st.settings && /Incredible Hulk/.test(st.drawer || ''), 'Spatial card click with Settings open: ' + JSON.stringify(st));
-    const seq = await page.evaluate(() => window.__seq);
-    const W = DESK.viewport.width, X = W - 380;
-    const settingsSlid = seq.some(f => f.s !== null && f.s > X + 2 && f.s < W - 2);
-    const overlap = seq.filter(f => f.s !== null && f.d !== null).length;
-    const drawerSlid = seq.some(f => f.s === null && f.d !== null && f.d > X + 2 && f.d < W - 2);
-    out.slide = { settingsSlid, overlap, drawerSlid, frames: seq.length };
-    expect(settingsSlid && !overlap && drawerSlid, 'Settings should slide out, then the details slide in: ' + JSON.stringify(out.slide));
+    // Settings slid out (a transform transition ran on it), then was removed,
+    // and only after that did the details drawer slide in.
+    const log = await page.evaluate(() => window.__slide);
+    const sRun = log.find(x => x.w === 's' && x.type === 'transitionrun');
+    const gone = log.find(x => x.type === 'present' && !x.sp);
+    const dRun = log.find(x => x.w === 'd' && x.type === 'transitionrun');
+    const settingsSlid = !!sRun;
+    const drawerSlid = !!dRun;
+    const order = !!(sRun && gone && dRun && sRun.t <= gone.t && gone.t <= dRun.t);
+    out.slide = { settingsSlid, drawerSlid, order, ms: sRun && dRun ? Math.round(dRun.t - sRun.t) : null };
+    expect(settingsSlid && drawerSlid && order, 'Settings should slide out, then the details slide in: ' + JSON.stringify({ ...out.slide, log }));
     await gear();
     await clickCard('incredible-hulk');
     st = await state();
