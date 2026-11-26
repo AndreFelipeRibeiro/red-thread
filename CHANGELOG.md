@@ -13,6 +13,52 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 30 — Small win: halfway through a guide, with a star pop
+
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:04 as [8e0e386](https://github.com/AndreFelipeRibeiro/red-thread/commit/8e0e386), pushed to `version/5.0` (V5 staging) at 17:06 with the batch at [35f4159](https://github.com/AndreFelipeRibeiro/red-thread/commit/35f4159). Not on production. Full regression on the pushed tree (frozen copy of 35f4159): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- A mark that brings a followed guide (4 or more released essential stops) to half its stops seen shows "Halfway there!" with the guide's name and "6 of 12 seen", and plays C · Star pop from the toast's star, above the toast. The star pop is fetched when the guide is one stop short.
+- Once per guide: Undo and mark again shows it again, never after the guide is past halfway. A milestone on the same mark wins; Celebrations off gives an ordinary toast, reduced motion the toast with no star pop. Small wins never fall back to the canvas confetti.
+- The sign-in reminder waits for the star pop to finish.
+- `qa/test-cel.js` covers the toast, the star pop, the fetch, Undo, Celebrations off and the phone.
+- Not checked: Portuguese on screen (strings and `test-i18n` only), real iPhone Safari.
+
+## V5 Batch 30 — Small win: the first title marked, once, with a star pop
+
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:23 as [4e3ff0e](https://github.com/AndreFelipeRibeiro/red-thread/commit/4e3ff0e), pushed to `version/5.0` (V5 staging) at 17:06 with the batch. Not on production. Full regression: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+
+- A visitor's very first seen mark shows "Your first title!" with C · Star pop, once per device (`mcu.firstSeen.v1`, which Undo doesn't reset). A visitor who already has seen marks, such as a synced account, never gets it; a bulk mark, a mark that starts following a guide, or Celebrations off uses it up silently.
+- The star pop is fetched at a markless visitor's first scroll, tap or key on a screen with Seen buttons, once the page is idle, never on the way in. The sign-in reminder waits while a small win's toast is on screen.
+- `qa/test-cel.js` covers no fetch before interacting, the toast, once only (Undo, reload), a visitor with marks, and the reminder.
+- Not checked: real iPhone Safari.
+
+## V5 Batch 30 — Small win: up to date with the newest release, with a star pop
+
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:38 as [c60d365](https://github.com/AndreFelipeRibeiro/red-thread/commit/c60d365), pushed to `version/5.0` (V5 staging) at 17:06 with the batch. Not on production. Full regression: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+
+- Marking the newest release seen in its first 7 days shows "You're up to date!" with C · Star pop. The week runs from the release day in the visitor's market, in their own calendar; a series counts by its premiere; titles released the same day are all the newest. Single marks only.
+- A milestone, halfway or a first title on the same mark wins. The star pop is fetched once the page is idle while the newest release is in its week and unseen.
+- `qa/test-cel.js` fixes the clock: inside the week, the toast and star pop; after it, an ordinary toast and no fetch; as the last unseen release, the milestone wins.
+- Not checked: real iPhone Safari.
+
+## V5 Batch 30 — Tokens: merge four duplicate color roles, in the code and the Design System
+
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 15:42 as [c9bdff5](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9bdff5). It reached `version/5.0` (V5 staging) earlier, under Batch 29's CHANGELOG push, before its full regression; production doesn't have it (Batch 29 merged [fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067) only). This batch's full regression covers it: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+
+- `brand-foreground` into `on-color`, `progress-done` into `seen`, `button-outline-border` into `input`, `switch-thumb-off` into `switch-thumb`. Each pair had the same Light and Dark values, so nothing changes on screen.
+- Figma: bindings moved first, then the variables merged, published as "DS · 2026-11-26 · Foundations reboot, four color merges". `docs/design-tokens.md` records the six groups kept apart on purpose.
+
+## V5 Batch 30 — Tokens: second consolidation pass (solid bars, named radii, three color merges)
+
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:53 as [35f4159](https://github.com/AndreFelipeRibeiro/red-thread/commit/35f4159), pushed to `version/5.0` (V5 staging) at 17:06. Not on production. Full regression on this tree: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+
+- The desktop and phone app bars, the phone nav bar, the band labels, the meter and the empty note are solid `background` with no blur: nothing scrolls under them, so the 95% glass never showed. The floating cards over the canvas keep their glass.
+- A new `--radius-xs` (4 px). Every one-off `rounded-[Npx]` in `src/` becomes a named size (14 → `xl`, 10 → `lg`, 9 and 7 → `md`, 5/4/3 → `xs`; the filter badge and the canvas count pill → `rounded-full`), all within 2 px of before.
+- `--progress-track` into `--brand-tint-strong`, the 78% `on-image-base` glass into `--on-image-ground`, `--chip-border` into `--input`. The seen check uses `shadow-mark`; Dark `--elevation-card` stays written out, with a note (Tailwind doesn't expose `--shadow-sm` at runtime).
+- Figma: published as "DS · 2026-11-26 · Solid bars, named corner radii" and "DS · 2026-11-26 · Three color merges"; App Screens updated (52 Phone instances swapped by hand). All 66 components and 186 variables read Current. Logged in `docs/design-system-changelog.md`.
+- Not checked: real iPhone Safari.
+
+
 ## V5 Batch 29 — Milestone confetti: a Lottie burst, fetched only near a milestone
 
 Recorded: 2026-11-26 15:44 EST (-0500). Committed at 13:19 as [4656449](https://github.com/AndreFelipeRibeiro/red-thread/commit/4656449) by the animation session (Andre approved it there), pushed to `version/5.0` (V5 staging) at 15:41 and merged to `main` (production) at 15:46 as [c9a868e](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9a868e). `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree ([fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067)'s, frozen copy): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
