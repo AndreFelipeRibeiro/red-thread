@@ -18,6 +18,7 @@ the Portuguese "Quero ver" by Andre on 2026-11-16.
 | Idea | Use (English) | Use (Portuguese) | Not |
 | --- | --- | --- | --- |
 | The canvas of linked title cards | Connections | Conexões | Explore, Spatial (internal and code name only), Map |
+| Red Thread described in one line, off-site and in the site's description (Findability 11, 2026-11-26) | An interactive map of how every Marvel film and series connects | Um mapa interativo de como cada filme e série da Marvel se conecta | Other wordings in listings and bios. "Map" describes the product here only; the canvas is still Connections |
 | The list of every title | Titles | Títulos | My list, Lists, Library |
 | Curated viewing orders | Guides (one: a guide) | Guias | Paths, Playlists |
 | Go from a title to its place on the canvas | See connections | Ver conexões | Show in Explore, Open in Spatial |

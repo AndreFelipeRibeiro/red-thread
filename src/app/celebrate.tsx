@@ -10,6 +10,7 @@ import ReactDOM from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DIALOG } from './about';
+import { celebrationReady, playCelebration, prefetchCelebrations } from './celebrate-lottie';
 
 // On the design system since Notion "shadcn pass 5/5" (this file is listed
 // with `@source` in src/index.css). The toast takes Sonner's look (the popover
@@ -63,6 +64,33 @@ function completedMilestoneBulk(e) {
   return null;
 }
 
+// One title from a milestone: the last released title of a phase, or of
+// everything, or the last stop of a guide being followed or open. That is when
+// the Lottie confetti is fetched (celebrate-lottie.ts), so a visit that never
+// comes near a milestone never downloads it. Celebrations off or motion
+// reduced: never.
+function nearMilestone(states) {
+  if (!window.MCU_PREFS.celebrations() || reducedMotion()) return false;
+  const released = window.MCU_isReleased;
+  if (!released || !states) return false;
+  const seen = (id) => states[id] === 'seen';
+  const all = (window.TITLES || []).filter(t => released(t));
+  if (all.filter(t => !seen(t.id)).length === 1) return true;
+  const phases = {};
+  all.forEach(t => { const p = phases[t.phase] || (phases[t.phase] = { n: 0, left: 0 }); p.n += 1; if (!seen(t.id)) p.left += 1; });
+  if (Object.values(phases).some(p => p.n > 1 && p.left === 1)) return true;
+  const G = window.MCU_GUIDE;
+  if (!G) return false;
+  const statusOf = (id) => states[id] || 'none';
+  const ids = G.followed().concat(window.MCU_activeGuideId ? [window.MCU_activeGuideId] : []);
+  return ids.some(id => {
+    const g = G.get(id);
+    if (!g) return false;
+    const p = G.progress(g, statusOf);
+    return !p.complete && p.ess.released - p.ess.seen === 1;
+  });
+}
+
 // The space a celebration belongs to: the window, less the desktop details
 // drawer when it is open (phones show details in a sheet, so they keep the
 // full width). The toast centres in it and the confetti stays inside it, so
@@ -73,45 +101,81 @@ function celebrationArea() {
   return { width: Math.max(0, window.innerWidth - right) };
 }
 
-// Lightweight confetti on a canvas over the celebration area that removes
-// itself. The two bursts start just inside the toast's ends, under it (the
-// toast sits above the canvas), so they seem to come from behind it and fan
-// out up and away; a toast at the top (a phone sheet is open) sends them down.
-// With no toast on screen they rise from a quarter and three quarters across
-// the bottom. `palette` (optional) replaces the phase colours: a finished
-// guide bursts in greens.
+// Where the two bursts start: just inside the toast's ends, under it (the
+// toast sits above the confetti), so they seem to come from behind it and fan
+// out up and away (the canvas would send them down from a toast in the top
+// half, but the toast no longer goes there). With no toast on screen they rise
+// from a quarter and three quarters across the bottom.
+function burstPlan(W, H) {
+  const toast = document.querySelector('.mcu-toast');
+  const r = toast ? toast.getBoundingClientRect() : null;
+  const fromToast = !!(r && r.width > 0);
+  // A full-width toast (phones) starts the bursts further in and aims them
+  // higher, or most of the confetti would leave the screen at once.
+  const wide = fromToast && r.width > W * 0.7;
+  const inset = !fromToast ? 0 : wide ? r.width * 0.16 : Math.min(26, r.width * 0.1);
+  const down = fromToast && r.top + r.height / 2 < H / 2;
+  const y0 = fromToast ? r.top + r.height / 2 : H + 10;
+  const ends = fromToast ? [r.left + inset, r.right - inset] : [W * 0.25, W * 0.75];
+  return { r, fromToast, wide, down, y0, ends };
+}
+
+// A milestone's confetti, over the celebration area, removing itself when it
+// ends. "A · Flutter" (celebrate-lottie.ts) once its player has been fetched
+// near a milestone; until then, the canvas confetti. `palette` (optional)
+// replaces the phase colours: a finished guide bursts in greens.
 function burstConfetti(palette) {
   // Off in Settings, or motion reduced.
   if (!window.MCU_PREFS.celebrations() || reducedMotion()) return;
+  const W = celebrationArea().width || window.innerWidth, H = window.innerHeight;
+  // The phase colours are CSS tokens now (var(--phase-1)…), and neither a
+  // canvas nor the Lottie player can read var(): resolve each one first.
+  const root = getComputedStyle(document.documentElement);
+  const resolve = (c) => { const m = /^var\((--[\w-]+)\)$/.exec(c); return m ? root.getPropertyValue(m[1]).trim() || '#888' : c; };
+  const colors = (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['var(--seen)', '#d4a05a', '#ffffff'])).map(resolve);
+  if (celebrationReady('milestone')) { lottieBurst(W, colors); return; }
+  canvasBurst(W, H, colors);
+}
+
+// "A · Flutter": one burst at each end, the left one mirrored, in a layer that
+// stays inside the celebration area.
+function lottieBurst(W, colors) {
+  const layer = document.createElement('div');
+  layer.className = 'mcu-confetti pointer-events-none fixed top-0 left-0 z-125 h-screen w-screen overflow-hidden';
+  layer.style.width = W + 'px';
+  layer.setAttribute('aria-hidden', 'true');
+  layer.dataset.renderer = 'lottie';
+  document.body.appendChild(layer);
+  let tries = 0;
+  const launch = () => {
+    if (!document.querySelector('.mcu-toast') && ++tries <= 3) { requestAnimationFrame(launch); return; }
+    const p = burstPlan(W, window.innerHeight);
+    layer.dataset.origin = [p.ends[0], p.ends[1], p.y0].map(Math.round).join(',');
+    Promise.all([
+      playCelebration('milestone', layer, p.ends[0], p.y0, true, colors),
+      playCelebration('milestone', layer, p.ends[1], p.y0, false, colors),
+    ]).then(() => layer.remove());
+  };
+  requestAnimationFrame(launch);
+}
+
+// The canvas confetti: the fallback while the Lottie player isn't there.
+function canvasBurst(W, H, colors) {
   const canvas = document.createElement('canvas');
   canvas.className = 'mcu-confetti pointer-events-none fixed top-0 left-0 z-125 h-screen w-screen';
   canvas.setAttribute('aria-hidden', 'true');
+  canvas.dataset.renderer = 'canvas';
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = celebrationArea().width || window.innerWidth, H = window.innerHeight;
   canvas.width = W * dpr; canvas.height = H * dpr;
   canvas.style.width = W + 'px';
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   if (!ctx) { canvas.remove(); return; }
   ctx.scale(dpr, dpr);
-  // The phase colours are CSS tokens now (var(--phase-1)…), and a canvas
-  // cannot read var(): resolve each one against the page before painting.
-  const root = getComputedStyle(document.documentElement);
-  const resolve = (c) => { const m = /^var\((--[\w-]+)\)$/.exec(c); return m ? root.getPropertyValue(m[1]).trim() || '#888' : c; };
-  const colors = (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['var(--seen)', '#d4a05a', '#ffffff'])).map(resolve);
   const parts = [];
   // Called once the toast has rendered (it usually has by the first frame).
   const launch = () => {
-    const toast = document.querySelector('.mcu-toast');
-    const r = toast ? toast.getBoundingClientRect() : null;
-    const fromToast = !!(r && r.width > 0);
-    // A full-width toast (phones) starts the bursts further in and aims them
-    // higher, or most of the confetti would leave the screen at once.
-    const wide = fromToast && r.width > W * 0.7;
-    const inset = !fromToast ? 0 : wide ? r.width * 0.16 : Math.min(26, r.width * 0.1);
-    const down = fromToast && r.top + r.height / 2 < H / 2;
-    const y0 = fromToast ? r.top + r.height / 2 : H + 10;
-    const ends = fromToast ? [r.left + inset, r.right - inset] : [W * 0.25, W * 0.75];
+    const { r, fromToast, wide, down, y0, ends } = burstPlan(W, H);
     // Where it started, for the QA checks.
     canvas.dataset.origin = [ends[0], ends[1], y0].map(Math.round).join(',');
     [[ends[0], -1], [ends[1], 1]].forEach(([x0, side]) => {
@@ -145,12 +209,12 @@ function burstConfetti(palette) {
   requestAnimationFrame(frame);
 }
 
-// Where the toast goes: clear of the desktop details drawer, above the phone's
-// bottom bar (when there is one) and the character pill, or at the top while
-// a phone sheet is open.
+// Where the toast goes: clear of the desktop details drawer, and above the
+// phone's bottom bar (when there is one) and the character pill. It stays
+// there while a phone sheet is open too, over the sheet (Andre, 2026-11-26:
+// at the top it "looks off"); it used to move to the top.
 function toastPlacement(touch) {
   if (touch) {
-    if (document.querySelector('.m-sheet')) return { top: 'calc(12px + env(safe-area-inset-top, 0px))' };
     let edge = window.innerHeight;
     ['.m-navbar', '.char-pill', '.char-card.docked'].forEach(sel => {
       const el = document.querySelector(sel);
@@ -164,10 +228,15 @@ function toastPlacement(touch) {
 }
 
 function StatusToast({ touch }) {
-  const { setStatus, undoMany, progress } = window.useCollection();
+  const { setStatus, undoMany, progress, states } = window.useCollection();
   const { tr } = window.useI18n();
   const [toast, setToast] = React.useState(null);
   const timer = React.useRef(null);
+
+  // Close to a milestone: fetch the Lottie confetti while the page is idle.
+  React.useEffect(() => {
+    if (nearMilestone(states)) prefetchCelebrations(['milestone']);
+  }, [states]);
 
   React.useEffect(() => window.onStatusChange((e) => {
     // A single removal only updates the counters; a bulk one still gets its

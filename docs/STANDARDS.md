@@ -295,6 +295,17 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   are the `promote-design` skill
   ([.claude/skills/promote-design/SKILL.md](../.claude/skills/promote-design/SKILL.md));
   [figma-library.md](figma-library.md), "Upkeep", has the details.
+- **Phone screenshots sit in a device frame** (Andre, 2026-11-26). In any
+  design, promo or marketing file, a phone screenshot never fills a
+  rounded-corner shape on its own, where the corners cut into the app.
+  - It goes inside a device frame, with a band above the screenshot and a
+    band with the home bar below it, so the whole screen stays clear of the
+    corners.
+  - The model is 1. Social Post's phone (Social file): 364 px wide, 36 px
+    above the screen, 26 px below it, corner radius 43, a 116 × 4 home bar at
+    30% black. Scale every measure with the device's width.
+  - A device that runs off the edge of an image may lose the band on the
+    edge that is cut, never on an edge that shows.
 - Do not write to the user's Figma files (create or change frames, variables
   or components) unless the ticket or the user asks for it.
 - Never put Figma access tokens or other credentials in the repository,

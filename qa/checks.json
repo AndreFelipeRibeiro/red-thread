@@ -58,6 +58,8 @@
     "src/app/about.tsx": ["test-whatsnew", "test-share", "test-settings", "test-logo", "test-about", "test-welcome", "test-picker", "test-promo", "test-guidetime"],
     "src/app/account.tsx": ["test-signin-lazy", "test-nav", "test-share", "test-settings", "test-picker", "test-about"],
     "src/app/celebrate.tsx": ["test-follow", "test-share", "test-settings", "test-cel", "test-nudgeundo"],
+    "src/app/celebrate-lottie.ts": ["test-cel", "test-promo", "test-guides"],
+    "src/app/celebrations/": ["test-cel"],
     "src/app/search-suggest.tsx": ["test-threads", "test-suggest", "test-pickperson"],
     "src/app/poster.tsx": ["test-monogram", "test-portrait", "test-recastname"],
     "i18n.js": ["test-ptpages", "test-i18n"],
