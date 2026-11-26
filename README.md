@@ -164,7 +164,8 @@ It is switched on in the Vercel project's Analytics tab.
   app's own card art, no studio imagery). The build draws one 1200×630 image
   per title, character and guide (`scripts/og-previews.js`, a few seconds),
   and `middleware.ts` serves each one's page at its own address with that
-  preview's tags. Previews are English; unknown ids get the app-wide card.
+  preview's tags. Previews are English (the Portuguese pages use them too);
+  unknown ids get the app-wide card.
 - Page addresses (Findability 3): every guide, title and character has its
   own address, `/guides/<id>`, `/titles/<id>` and `/characters/<id>`. It
   opens the app exactly as before, on that guide, title or character; the
@@ -184,10 +185,26 @@ It is switched on in the Vercel project's Analytics tab.
   the home page. Old `/?view=guides` and `/?view=list` links redirect there.
   A title's page text also lists the titles it connects to (Follow the
   thread's list), and a character's who they share the most titles with.
+- Portuguese addresses (Findability 6): every page also has a Portuguese
+  address in Portuguese words: `/pt`, `/pt/guias`, `/pt/titulos`,
+  `/pt/personagens`, and `/pt/guias/antes-de-doutor-destino`,
+  `/pt/titulos/homem-de-ferro`, `/pt/personagens/peter-parker` for each
+  guide, title and character. The slugs come from the Portuguese names and
+  are frozen in `src/share-card/pt-slugs.ts`, so renaming a title never
+  breaks a link; `node tools/pt-slugs.mjs` gives a new id its slug. The build
+  writes each Portuguese page's own copy (`lang="pt-BR"`, Portuguese title,
+  description, text and structured data), and every page in both languages
+  links to its twin with `hreflang` (en, pt-BR, x-default). A `/pt` address
+  opens the app in Portuguese, the app writes and shares addresses in the
+  language on screen, and switching language moves the address to its twin.
+  Brazil's names and release days apply there: "Vingadores: Doutor Destino"
+  (17 December 2026) and "*Os Novos Vingadores"; each Portuguese title page
+  also gives its original title, so searches for the English name find it.
 - Search and crawlers (Findability 1): the build writes `robots.txt` (every
   crawler allowed, the search and AI crawlers named, the sitemap linked) and
   `sitemap.xml` (the home page, the three index pages and every guide, title and character address,
-  guides with their reviewed date), from `src/share-card/site-files.ts`.
+  each in English and Portuguese with its `hreflang` alternates, guides with
+  their reviewed date), from `src/share-card/site-files.ts`.
   Everything off `redthread.tv` (staging, previews) answers
   `X-Robots-Tag: noindex` (`vercel.json`, and `middleware.ts` for the pages
   it serves), so only production is indexed.
@@ -411,8 +428,9 @@ It is switched on in the Vercel project's Analytics tab.
   defaults. `&explore=thread` with a title opens its Follow the thread (the
   horizontal line on Connections and the timeline in the panel; the thread
   sheet on phones), and leaves the address when you go back to the details.
-  The Seen / Unseen / Watchlist filter, the search text, the language
-  and anything from the account never go in. On phones, Back and Forward close
+  The language goes in only as the Portuguese prefix (`/pt/titulos/…`,
+  above). The Seen / Unseen / Watchlist filter, the search text and anything
+  from the account never go in. On phones, Back and Forward close
   and reopen the details.
 - Release status at the precision it is known: "Released May 2, 2008",
   "Coming December 18, 2026", or "Expected March 2027 · day not yet confirmed"

@@ -198,6 +198,21 @@ The rules are the `promote-design` skill (`.claude/skills/promote-design/SKILL.m
   the old Welcome dialog (Dialogs & sheets), replaced by About dialog on
   2026-11-19. Shipped proposals go to an "Archive · shipped proposals"
   section beside it.
+- **Releases and history** (2026-11-25): every publish is a named release,
+  logged on the **Changelog** page of the Design System (`255:647`) and of App
+  Screens (`126:9547`) and in [design-system-changelog.md](design-system-changelog.md),
+  with the history back to the first library ([WORKFLOW.md](WORKFLOW.md),
+  "Design system releases"). Both files keep archived pages below a
+  "--- Archive ---" divider: in the Design System, "Archive · Foundations
+  explorations · 2026-11-25" (Headline pairings, Theme test), "Archive ·
+  Foundations before reboot · 2026-11-25" and "Archive · Titles picked
+  character · approved 2026-11-24".
+- **Fill overrides in App Screens:** an instance should take its component's
+  fill. A fill override bound to a token at a hand-set opacity looks right
+  until the next publish, then renders solid (2026-11-25, the Titles Up next
+  row). After accepting an update, scan for instances whose root fill differs
+  from their component's; the Dark-mode translucent tokens differ on purpose,
+  since their opacity comes from the token.
 - **Archiving explorations:** in the Explorations file, save a named version
   ("Countdown approved 2026-11-19"), rename the pages "Archive · <topic> ·
   approved <date>" and move them below an Archive divider page, with a note

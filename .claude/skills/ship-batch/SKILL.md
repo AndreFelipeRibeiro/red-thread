@@ -31,7 +31,10 @@ order:
      publish, and wait;
    - **tokens:** "check tokens against Figma" comes back with no
      differences, or only the known, documented ones (the `figma-tokens`
-     skill).
+     skill);
+   - **release logged:** its Design System release has a row on the
+     Changelog page and an entry in `docs/design-system-changelog.md`
+     ([docs/WORKFLOW.md](../../../docs/WORKFLOW.md), "Design system releases").
 
    A ticket that fails the gate doesn't ship: fix it, or ask Andre whether
    to hold it back to the next push. Say on the ticket that the gate
