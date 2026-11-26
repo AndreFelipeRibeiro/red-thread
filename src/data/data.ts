@@ -336,7 +336,7 @@ const EDITIONS: Record<string, Edition[]> = {
     theatrical: '2026-09-25', streaming: '2026-11-13', service: 'Disney+', extraMinutes: 4,
     note: {
       en: 'About 4 minutes of new scenes that lead into Avengers: Doomsday, and a new color grade.',
-      'pt-BR': 'Cerca de 4 minutos de cenas novas que levam a Vingadores: Doomsday, e uma nova correção de cor.',
+      'pt-BR': 'Cerca de 4 minutos de cenas novas que levam a Vingadores: Doutor Destino, e uma nova correção de cor.',
     },
   }],
 };

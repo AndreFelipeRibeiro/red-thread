@@ -150,7 +150,7 @@ function AllTitlesWidget({ info, all, label, onClose, collapsed = false, offScre
                   <span className="un-tag shrink-0" title={`${info.lead} · ${info.detail}. ${untr('upnext.rule')}`}>{info.lead}</span>
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <span className={cn('un-title block min-w-0', B.W_TITLE)}>{UpNI18N.titleName(t)}</span>
+                  <span className={cn('un-title min-w-0', B.W_TITLE_2)} title={UpNI18N.titleName(t)}>{UpNI18N.titleName(t)}</span>
                   {offScreen && <span className="un-off inline-flex flex-none items-center gap-0.5 rounded-full bg-(--brand)/10 px-1.5 py-px text-label font-semibold whitespace-nowrap text-(--brand)">
                     <span aria-hidden="true">{offScreen}</span>{untr('upnext.offScreen')}</span>}
                 </span>

@@ -91,7 +91,9 @@ const stripMeta = (html) => html
   .replace(/<link rel="canonical" href="[^"]*"\/>/g, '')
   .replace(/<title>[^<]*<\/title>/, '')
   .replace(/<article id="mcu-page-text"[\s\S]*?<\/article>/, '')
-  .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '');
+  .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
+  // Each page names its own two languages (Findability 6).
+  .replace(/<link rel="alternate" hreflang="[^"]*" href="[^"]*"\/>/g, '');
 // A page's structured data (Findability 5): its one JSON-LD block, parsed;
 // null when it has none, or more than one, or it isn't JSON.
 const jsonLd = (html) => {
@@ -184,6 +186,8 @@ const tagErrors = (html, label, url) => {
     const { code } = await transformWithOxc(fs.readFileSync(path.join(ROOT, f), 'utf8'), f, { lang: 'ts' });
     vm.runInNewContext(code.replace(/^export \{\};?\s*$/m, ''), { window: win, console });
   }
+  // The frozen Portuguese slugs (Findability 6), read as the data they are.
+  const PT_SLUGS = JSON.parse(/= (\{[\s\S]*\});/.exec(fs.readFileSync(path.join(ROOT, 'src/share-card/pt-slugs.ts'), 'utf8'))[1]);
   const sets = {
     title: win.TITLES.map(t => [t.id, t.title]),
     char: Object.keys(win.CHARACTERS).map(id => [id, win.CHARACTERS[id].name]),
@@ -361,13 +365,21 @@ const tagErrors = (html, label, url) => {
     }
     expect(robots.includes(`Sitemap: ${PUBLIC}/sitemap.xml`), 'robots.txt has no Sitemap line');
     const sm = fs.existsSync(path.join(SITE, 'sitemap.xml')) ? fs.readFileSync(path.join(SITE, 'sitemap.xml'), 'utf8') : '';
-    const locs = [...sm.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)].map(m => ({ loc: m[1], lastmod: m[2] || null }));
+    // Each entry names its twin in the other language (Findability 6).
+    const locs = [...sm.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?((?:<xhtml:link [^>]*\/>)*)<\/url>/g)].map(m => ({ loc: m[1], lastmod: m[2] || null, alt: m[3] }));
     const want = [PUBLIC + '/', PUBLIC + '/guides', PUBLIC + '/titles', PUBLIC + '/characters', ...Object.keys(sets).flatMap(kind => sets[kind]
       .filter(([id]) => fs.existsSync(path.join(SITE, 'og', kind, id + '.html')))
       .map(([id]) => `${PUBLIC}/${SEGMENT[kind]}/${id}`))];
-    expect(sm.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'), 'sitemap.xml: not a sitemap');
+    const PT_SEG = { title: 'titulos', guide: 'guias', char: 'personagens' };
+    const wantPt = [PUBLIC + '/pt', PUBLIC + '/pt/guias', PUBLIC + '/pt/titulos', PUBLIC + '/pt/personagens', ...Object.keys(sets).flatMap(kind => sets[kind]
+      .filter(([id]) => fs.existsSync(path.join(SITE, 'og', kind, id + '.html')))
+      .map(([id]) => `${PUBLIC}/pt/${PT_SEG[kind]}/${PT_SLUGS[kind][id]}`))];
+    expect(sm.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'), 'sitemap.xml: not a sitemap with xhtml alternates');
+    expect(wantPt.every(u => locs.some(l => l.loc === u)), `sitemap.xml leaves out ${wantPt.filter(u => !locs.some(l => l.loc === u)).length} Portuguese addresses`);
+    expect(locs.every(l => (l.alt.match(/hreflang="(en|pt-BR|x-default)"/g) || []).length === 3), 'sitemap.xml: an entry without its three hreflang alternates');
+    const smWant = [...want, ...wantPt];
     expect(locs.length === new Set(locs.map(l => l.loc)).size, 'sitemap.xml lists an address twice');
-    expect(locs.length === want.length && want.every(u => locs.some(l => l.loc === u)), `sitemap.xml lists ${locs.length} addresses, expected ${want.length}`);
+    expect(locs.length === smWant.length && smWant.every(u => locs.some(l => l.loc === u)), `sitemap.xml lists ${locs.length} addresses, expected ${smWant.length}`);
     expect(!locs.some(l => l.loc.includes('?')), 'sitemap.xml lists a query address');
     for (const g of win.GUIDES) {
       const l = locs.find(x => x.loc === `${PUBLIC}/guides/${g.id}`);
@@ -417,8 +429,8 @@ const tagErrors = (html, label, url) => {
   };
   const middleware = (await import(pathToFileURL(tmp).href)).default;
   const config = (await import(pathToFileURL(tmp).href)).config;
-  expect(config && JSON.stringify(config.matcher) === JSON.stringify(['/', '/titles', '/guides', '/characters', '/titles/:id', '/guides/:id', '/characters/:id']),
-    'middleware: matcher is not the home page, the three indexes and the three page addresses: ' + JSON.stringify(config && config.matcher));
+  expect(config && JSON.stringify(config.matcher) === JSON.stringify(['/', '/titles', '/guides', '/characters', '/titles/:id', '/guides/:id', '/characters/:id', '/pt', '/pt/:segment', '/pt/:segment/:slug']),
+    'middleware: matcher is not the home page, the three indexes, the three page addresses and their Portuguese twins: ' + JSON.stringify(config && config.matcher));
   const run = async (p) => { const r = await middleware(new Request(PUBLIC + p)); return r ? { status: r.status, type: r.headers.get('content-type'), location: r.headers.get('location'), html: r.status === 308 ? '' : await r.text() } : null; };
   // A page's address gets its page.
   for (const [p, kind, id] of [['/titles/iron-man', 'title', 'iron-man'], ['/characters/peggy', 'char', 'peggy'], ['/guides/before-doomsday', 'guide', 'before-doomsday'], ['/guides/before-doomsday?view=list', 'guide', 'before-doomsday'], ['/titles/endgame/', 'title', 'endgame']]) {
@@ -431,6 +443,21 @@ const tagErrors = (html, label, url) => {
     const r = await run('/' + seg);
     const name = seg.replace('/', '');
     expect(r && r.status === 200 && canonical(r.html) === `${PUBLIC}/${name}` && pageText(r.html), `middleware /${seg}: did not serve the ${name} index`);
+  }
+  // The Portuguese addresses (Findability 6): their own pages, in Portuguese,
+  // each naming its English twin; an unknown slug gets the Portuguese home
+  // with a 404.
+  for (const [p, canon, twin] of [['/pt', '/pt', '/'], ['/pt/guias', '/pt/guias', '/guides'], ['/pt/titulos/homem-de-ferro', '/pt/titulos/homem-de-ferro', '/titles/iron-man'], ['/pt/titulos/vingadores-doutor-destino/', '/pt/titulos/vingadores-doutor-destino', '/titles/doomsday'], ['/pt/personagens/peter-parker', '/pt/personagens/peter-parker', '/characters/peter']]) {
+    const r = await run(p);
+    expect(r && r.status === 200 && /<html lang="pt-BR">/.test(r.html) && canonical(r.html) === PUBLIC + canon && pageText(r.html)
+      && r.html.includes(`hreflang="en" href="${PUBLIC}${twin}"`) && r.html.includes(`hreflang="pt-BR" href="${PUBLIC}${canon}"`),
+      `middleware ${p}: did not serve the Portuguese page (lang, canonical ${canon}, hreflang to ${twin})`);
+  }
+  {
+    const r = await run('/pt/titulos/no-such-title');
+    expect(r && r.status === 404 && /<html lang="pt-BR">/.test(r.html), 'middleware: an unknown Portuguese slug does not get the Portuguese home with a 404');
+    const en = await run('/titles/iron-man');
+    expect(en && en.html.includes(`hreflang="pt-BR" href="${PUBLIC}/pt/titulos/homem-de-ferro"`), 'middleware: an English page does not name its Portuguese twin');
   }
   // Production pages are indexable; the same page on a preview deployment is not.
   {
@@ -474,11 +501,23 @@ const tagErrors = (html, label, url) => {
   }
   // The middleware's table and the app's (src/share-card/addresses.ts) agree.
   {
+    // addresses.ts imports the frozen Portuguese slugs (Findability 6): both
+    // compiled side by side.
+    const dirA = fs.mkdtempSync(path.join(require('os').tmpdir(), 'rt-addresses-'));
+    const { code: slugs } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'src/share-card/pt-slugs.ts'), 'utf8'), 'pt-slugs.ts', { lang: 'ts' });
+    fs.writeFileSync(path.join(dirA, 'pt-slugs.mjs'), slugs);
     const { code } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'src/share-card/addresses.ts'), 'utf8'), 'addresses.ts', { lang: 'ts' });
-    const tmpA = path.join(require('os').tmpdir(), 'rt-addresses-' + process.pid + '.mjs');
-    fs.writeFileSync(tmpA, code);
-    const A = await import(pathToFileURL(tmpA).href);
-    fs.unlinkSync(tmpA);
+    fs.writeFileSync(path.join(dirA, 'addresses.mjs'), code.replace(/from ['"]\.\/pt-slugs['"]/, "from './pt-slugs.mjs'"));
+    const A = await import(pathToFileURL(path.join(dirA, 'addresses.mjs')).href);
+    fs.rmSync(dirA, { recursive: true, force: true });
+    // Portuguese: every address it writes is a page the build wrote, and reads back.
+    for (const q of ['?title=endgame&guide=before-doomsday&view=list', '?char=peggy&sort=phase', '?guide=before-doomsday', '?view=guides', '']) {
+      const a = A.addressFor(new URLSearchParams(q), 'pt-BR');
+      const r = await run(a.pathname);
+      expect(r && r.status === 200 && /<html lang="pt-BR">/.test(r.html), `addresses.ts writes ${a.pathname} for ${q || 'home'} in Portuguese, which the middleware doesn't serve`);
+      const back = A.stateParams(a.pathname, a.search.toString());
+      expect([...new URLSearchParams(q)].every(([k, v]) => back.get(k) === v), `addresses.ts: Portuguese ${q} does not read back from ${a.pathname}`);
+    }
     for (const q of ['?title=endgame&guide=before-doomsday&view=list', '?char=peggy&sort=phase', '?guide=before-doomsday', '?title=iron-man&char=tony', '?view=guides', '?view=list&sort=phase']) {
       const r = await run('/' + q);
       const a = A.addressFor(new URLSearchParams(q));

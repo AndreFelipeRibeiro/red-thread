@@ -24,7 +24,7 @@ const tok = (p) => (!p ? null : p.v ? p.v : 'raw');
 export const TRANSLUCENT = {
   'background-glass': 'background', 'border-soft': 'border', 'foreground-strong': 'foreground',
   'on-image-veil': 'on-image-base', 'seen-foreground-soft': 'seen-foreground', 'popover-ring': 'foreground',
-  'muted-soft': 'muted',
+  'muted-soft': 'muted', 'muted-foreground-soft': 'muted-foreground',
 };
 
 /** From a capture-dom.js spec. */

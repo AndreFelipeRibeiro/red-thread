@@ -38,10 +38,10 @@ import jpeg from 'jpeg-js';
 import { readLightTokens, previewColors } from '../src/share-card/tokens.ts';
 import { linkCard, paintSVG, LINK } from '../src/share-card/link-cards.ts';
 import { previewEntries, makeTr } from '../src/share-card/previews.ts';
-import { applyPreviewTags, insertPageText, insertInHead } from '../src/share-card/meta.ts';
+import { applyPreviewTags, insertPageText, insertInHead, setHtmlLang, setOgLocale, hreflangLinks } from '../src/share-card/meta.ts';
 import { structuredData, jsonLdScript } from '../src/share-card/structured-data.ts';
 import { pageTexts, INDEXES } from '../src/share-card/page-text.ts';
-import { thingPath } from '../src/share-card/addresses.ts';
+import { thingPath, indexPath, homePath, ptSlug } from '../src/share-card/addresses.ts';
 import { robotsTxt, sitemapXml, llmsTxt, llmsFullTxt } from '../src/share-card/site-files.ts';
 
 /** Production, under the public name (src/app/share.tsx's PUBLIC_URL). */
@@ -159,11 +159,28 @@ export async function buildPreviews({ root, outDir }) {
   const entries = previewEntries(catalog, en, colors, SITE.replace(/^https:\/\//, ''), images);
   const texts = pageTexts(catalog, en);
   const data = structuredData(SITE, catalog, en);
-  /** A page's readable text and its JSON-LD, both keyed like the texts. */
-  const finish = (html, key) => {
-    if (!texts.get(key) || !data.get(key)) throw new Error('link previews: no page text or structured data for ' + key);
-    return insertInHead(insertPageText(html, texts.get(key)), jsonLdScript(data.get(key)));
+  // The Portuguese pages (Notion "Findability 6"): Portuguese tables over the
+  // English ones, as the app falls back key by key.
+  const ptRaw = loadLocale(root, 'pt-BR');
+  const pt = {
+    strings: { ...en.strings, ...ptRaw.strings },
+    titles: { ...(ptRaw.titles || {}) },
+    characters: { ...(ptRaw.characters || {}) },
+    synopses: { ...(en.synopses || {}), ...(ptRaw.synopses || {}) },
+    releases: { ...(ptRaw.releases || {}) },
   };
+  const ptEntries = previewEntries(catalog, pt, colors, SITE.replace(/^https:\/\//, ''), images, 'pt-BR');
+  const ptTexts = pageTexts(catalog, pt, 'pt-BR');
+  const ptData = structuredData(SITE, catalog, pt, 'pt-BR');
+  /** A page's readable text, its JSON-LD and its hreflang pair (both
+   *  languages' absolute addresses), keyed like the texts. */
+  const finish = (html, key, pair, lang = 'en') => {
+    const t = (lang === 'pt-BR' ? ptTexts : texts).get(key), d = (lang === 'pt-BR' ? ptData : data).get(key);
+    if (!t || !d) throw new Error('link previews: no page text or structured data for ' + lang + ' ' + key);
+    return insertInHead(insertPageText(html, t), jsonLdScript(d) + hreflangLinks(pair[0], pair[1]));
+  };
+  /** Both addresses of a page, English first. */
+  const pairFor = (kind, id) => [SITE + thingPath(kind, id), SITE + thingPath(kind, id, 'pt-BR')];
   const index = readFileSync(join(outDir, 'index.html'), 'utf8');
   let bytes = 0;
   for (const e of entries) {
@@ -184,21 +201,48 @@ export async function buildPreviews({ root, outDir }) {
       title: e.title, description: e.description, alt: e.alt,
       url: SITE + thingPath(e.kind, e.id),
       image: `${SITE}/og/${e.kind}/${name}.jpg`,
-    }), e.kind + '/' + e.id));
+    }), e.kind + '/' + e.id, pairFor(e.kind, e.id)));
+  }
+  // The Portuguese copies, named by their slug (src/share-card/pt-slugs.ts)
+  // so middleware.ts serves /pt/titulos/<slug> straight from the file. They
+  // show the English preview image for now: its words are English.
+  const ptIndex = setOgLocale(setHtmlLang(index, 'pt-BR'), 'pt_BR', 'en_US');
+  for (const e of ptEntries) {
+    if (e.kind === 'default') continue;
+    const dir = join(outDir, 'og', 'pt', e.kind);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, ptSlug(e.kind, e.id) + '.html'), finish(applyPreviewTags(ptIndex, {
+      title: e.title, description: e.description, alt: e.alt,
+      url: SITE + thingPath(e.kind, e.id, 'pt-BR'),
+      image: `${SITE}/og/${e.kind}/${e.id}.jpg`,
+    }), e.kind + '/' + e.id, pairFor(e.kind, e.id), 'pt-BR'));
   }
   // The index pages (Findability 4), with the app-wide card as their preview,
   // and the home page's own text, written last: every copy above is made
   // from the built index.html as it was.
   const tr = makeTr(en);
+  const ptTr = makeTr(pt);
   mkdirSync(join(outDir, 'og', 'index'), { recursive: true });
+  mkdirSync(join(outDir, 'og', 'pt', 'index'), { recursive: true });
   for (const i of INDEXES) {
+    const pair = [SITE + indexPath(i.segment), SITE + indexPath(i.segment, 'pt-BR')];
     writeFileSync(join(outDir, 'og', 'index', i.segment + '.html'), finish(applyPreviewTags(index, {
       title: tr('og.pageTitle', { name: tr(i.name), app: tr('app.name') }),
       description: tr(i.description), alt: tr('og.defaultAlt'),
       url: `${SITE}/${i.segment}`, image: `${SITE}/og/default.jpg`,
-    }), 'index/' + i.segment));
+    }), 'index/' + i.segment, pair));
+    writeFileSync(join(outDir, 'og', 'pt', 'index', i.segment + '.html'), finish(applyPreviewTags(ptIndex, {
+      title: ptTr('og.pageTitle', { name: ptTr(i.name), app: ptTr('app.name') }),
+      description: ptTr(i.description), alt: ptTr('og.defaultAlt'),
+      url: pair[1], image: `${SITE}/og/default.jpg`,
+    }), 'index/' + i.segment, pair, 'pt-BR'));
   }
-  writeFileSync(join(outDir, 'index.html'), finish(index, 'home'));
+  const homePair = [SITE + homePath(), SITE + homePath('pt-BR')];
+  writeFileSync(join(outDir, 'og', 'pt', 'home.html'), finish(applyPreviewTags(ptIndex, {
+    title: ptTr('og.defaultTitle', { app: ptTr('app.name') }), description: ptTr('og.defaultSub'), alt: ptTr('og.defaultAlt'),
+    url: homePair[1], image: `${SITE}/og/default.jpg`,
+  }), 'home', homePair, 'pt-BR'));
+  writeFileSync(join(outDir, 'index.html'), finish(index, 'home', homePair));
   // robots.txt and the sitemap of the pages just written (Notion
   // "Findability 1"; src/share-card/site-files.ts).
   const pages = entries.filter((e) => e.kind !== 'default').map((e) => e.kind + '/' + e.id);

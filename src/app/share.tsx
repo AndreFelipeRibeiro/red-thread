@@ -27,7 +27,10 @@ export interface SharePayload {
 
 export function shareURL(params: Record<string, string> = {}): string {
   // The thing shared is the path (/guides/<id>; src/share-card/addresses.ts).
-  const { pathname, search } = addressFor(new URLSearchParams(params));
+  // In the sharer's language: a friend gets the page in the language it was
+  // shared from (Notion "Findability 6").
+  const lang = window.MCU_I18N && window.MCU_I18N.lang === 'pt-BR' ? 'pt-BR' : 'en';
+  const { pathname, search } = addressFor(new URLSearchParams(params), lang);
   const url = new URL(pathname, PUBLIC_URL);
   url.search = search.toString();
   return url.toString();

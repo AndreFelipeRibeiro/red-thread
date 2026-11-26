@@ -13,7 +13,7 @@
 //   spend the plan's monthly events.
 // - What is measured is listed in docs/PRIVACY-REVIEW.md.
 import { inject } from '@vercel/analytics';
-import { parseIndexPath, parseThingPath, stateParams } from '@/share-card/addresses';
+import { homePath, langOfPath, parseIndexPath, parseThingPath, stateParams } from '@/share-card/addresses';
 
 const KEEP = ['guide', 'view', 'ref'];
 
@@ -27,7 +27,9 @@ export function analyticsURL(href: string): string {
   const q = stateParams(u.pathname, u.search);
   const kept = new URLSearchParams();
   KEEP.forEach((k) => { const v = q.get(k); if (v) kept.set(k, v); });
-  if (parseThingPath(u.pathname) || parseIndexPath(u.pathname)) u.pathname = '/';
+  // A Portuguese page reports /pt, so the two languages can be told apart
+  // (Notion "Findability 6").
+  if (parseThingPath(u.pathname) || parseIndexPath(u.pathname)) u.pathname = homePath(langOfPath(u.pathname));
   u.search = kept.toString();
   u.hash = '';
   return u.toString();

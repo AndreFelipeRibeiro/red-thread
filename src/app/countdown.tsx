@@ -28,7 +28,10 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 
 /** Local midnight at the start of a dated release, or null for a month-only or missing date. */
 function releaseStart(title: Title | null): Date | null {
-  const m = title ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(title.release || '') : null;
+  // The day in the visitor's language's market (i18n.js releaseDay: Avengers:
+  // Doomsday opens a day earlier in Brazil).
+  const day = title ? (window.MCU_I18N && window.MCU_I18N.releaseDay ? window.MCU_I18N.releaseDay(title) : title.release) : null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day || '');
   return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
 }
 
@@ -100,7 +103,7 @@ function Part({ value, unit, accent, motion }: { value: number; unit: string; ac
 function shortDate(title: Title): string {
   try {
     return new Intl.DateTimeFormat(document.documentElement.lang || 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
-      .format(new Date(title.release + 'T00:00:00Z'));
+      .format(new Date(window.MCU_I18N.releaseDay(title) + 'T00:00:00Z'));
   } catch (e) { return title.release; }
 }
 

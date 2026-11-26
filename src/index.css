@@ -632,6 +632,28 @@
 /* The startup screen's spinner (index.html), the refocus flash and a pinned
    character's thread drawing itself (src/app/shell.tsx). */
 @keyframes boot-spin { to { transform: rotate(360deg); } }
+/* The startup pin's "Bounce" (index.html, boot.js; Notion "Startup loader: a
+   branded Lottie animation instead of the plain spinner"). Designed in
+   LottieFiles Creator ("Red Thread loader – Bounce", a 128px composition) and
+   shipped as CSS so no player has to download beside the bundle: these are
+   its keys, scaled to the 78px box (x 0.609), with its eases. A 1.2 s loop,
+   linear except where a key sets its own curve. The pin lifts, pushes in past
+   rest and settles; a ripple grows and fades from its point. */
+@keyframes boot-bounce {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  33.333% { transform: translateY(-7.3px); animation-timing-function: cubic-bezier(.32, 0, .67, 0); }
+  50% { transform: translateY(1.8px); animation-timing-function: cubic-bezier(.33, 0, .4, 1); }
+  63.333%, 100% { transform: translateY(0); }
+}
+@keyframes boot-ripple-grow {
+  0%, 50% { transform: scale(.3); animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+  91.667%, 100% { transform: scale(1.6); }
+}
+@keyframes boot-ripple-fade {
+  0%, 50% { opacity: 0; }
+  51.667% { opacity: .7; animation-timing-function: cubic-bezier(.2, .6, .4, 1); }
+  91.667%, 100% { opacity: 0; }
+}
 @keyframes refocus-flash { 0%, 35% { box-shadow: inset 0 0 0 2px var(--brand); background: color-mix(in oklab, var(--brand) 12%, transparent); } 100% { box-shadow: inset 0 0 0 2px transparent; } }
 @keyframes thread-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 /* The phone's tapped card popping out of the canvas (src/app/shell.tsx). */

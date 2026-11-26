@@ -9,7 +9,8 @@
 // - the last day drops the days, release day reads "In theaters today", and
 //   the day after the ticker is gone;
 // - screen readers get one line that changes by the day, never the digits;
-// - Portuguese: "min", the phone label "Até Vingadores: Doomsday · 18 de dez."
+// - Portuguese: "min", the phone label "Até Vingadores: Doutor Destino · 17 de dez.",
+//   counting to Brazil's release day, a day earlier (Notion "Findability 6")
 //   and "Mark 1 more seen" in the phone actions row (not under the progress);
 // - only a changed digit rolls, and Reduce motion changes it in place;
 // - desktop: beside See connections while it fits (no overflow at 1100 in
@@ -197,9 +198,9 @@ const TICKER = (sel) => {
     const p = out.ptPhone;
     expect(p && p.visible, 'no countdown in the Portuguese phone header');
     if (p) {
-      expect(p.face === '28d 12h 00min 00s', `Portuguese countdown reads "${p.face}"`);
-      expect(p.label === 'Até Vingadores: Doomsday · 18 de dez.', `phone label "${p.label}"`);
-      expect(p.sr === 'Faltam 29 dias para Vingadores: Doomsday', `Portuguese screen-reader line "${p.sr}"`);
+      expect(p.face === '27d 12h 00min 00s', `Portuguese countdown reads "${p.face}"`);
+      expect(p.label === 'Até Vingadores: Doutor Destino · 17 de dez.', `phone label "${p.label}"`);
+      expect(p.sr === 'Faltam 28 dias para Vingadores: Doutor Destino', `Portuguese screen-reader line "${p.sr}"`);
     }
     const r = out.ptPhoneRow;
     expect(!r.bulkInMeter && r.bulk === 'Marcar mais 1 como visto', `phone "Mark 1 more seen" belongs in the actions row: ${JSON.stringify(r)}`);

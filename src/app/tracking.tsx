@@ -37,7 +37,10 @@ function todayISO() {
 
 function isReleased(title, today) {
   // An announced month is a window, not proof that the title has premiered.
-  return /^\d{4}-\d{2}-\d{2}$/.test(title.release) && title.release <= (today || todayISO());
+  // The day is the visitor's language's market's (i18n.js releaseDay: Avengers:
+  // Doomsday opens a day earlier in Brazil; Notion "Findability 6").
+  const day = (window.MCU_I18N && window.MCU_I18N.releaseDay && window.MCU_I18N.releaseDay(title)) || title.release;
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) && day <= (today || todayISO());
 }
 
 // Whether the Seen button is offered: from 7 days before a day-precision

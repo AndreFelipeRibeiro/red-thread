@@ -445,7 +445,9 @@ export function CastConnections({ title, surface, activeChar, activeChars, searc
                   <window.Portrait url={window.castPortrait(title, ch)} alt={name} initials={c.initials}/>
                 </span>
                 <span className="cast-text min-w-0 flex-1">
-                  <span className={cn(drawer ? 'char-name' : 'm-cn', 'block truncate text-body font-semibold')}><Highlight text={name} query={search}/></span>
+                  {/* Two lines, then "…" (Andre's rule, 2026-11-24; Notion "Portuguese copy
+                      pass"): "Peter Parker (Raimi)" was cut on one line. */}
+                  <span className={cn(drawer ? 'char-name' : 'm-cn', 'line-clamp-2 text-body font-semibold [overflow-wrap:anywhere]')} title={name}><Highlight text={name} query={search}/></span>
                   <span className={cn(drawer ? 'actor-name' : 'm-an', 'cast-sub mt-px block truncate text-label text-muted-foreground')}><Highlight text={window.MCU_credit(title, ch)} query={search}/></span>
                 </span>
               </button>
@@ -575,7 +577,7 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
                 </span>
                 <span className={cn('h-[60px] w-10 flex-none rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold text-foreground">{I18N().titleName(t)}</span>
+                  <span className="line-clamp-2 text-body font-semibold text-foreground [overflow-wrap:anywhere]" title={I18N().titleName(t)}>{I18N().titleName(t)}</span>
                   <span className="mt-0.5 block truncate text-label text-muted-foreground tabular-nums">{t.year} · {tr('thread.via', { names: shown })}</span>
                 </span>
                 <span className="flex flex-none items-center gap-[3px]" aria-hidden="true">
@@ -660,7 +662,7 @@ export function TrailView({ char, from, current, pinned = false, surface, headin
                 </span>
                 <span className={cn('h-[60px] w-10 flex-none rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold text-foreground">{I18N().titleName(t)}</span>
+                  <span className="line-clamp-2 text-body font-semibold text-foreground [overflow-wrap:anywhere]" title={I18N().titleName(t)}>{I18N().titleName(t)}</span>
                   <span className={cn('mt-0.5 block truncate text-label', here ? 'text-(--brand)' : 'text-muted-foreground')}>
                     {tr(t.type === 'film' ? 'type.film.one' : 'type.series.one')} · {tr('phase.label', { n: t.phase })}{here && <> · {tr('trail.here')}</>}
                   </span>

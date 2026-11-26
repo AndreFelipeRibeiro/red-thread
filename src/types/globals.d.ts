@@ -60,6 +60,8 @@ export interface I18nRuntime {
   synopsis(title: Title): string;
   /** Released, coming, or expected at the precision the catalog has. */
   release(title: Title): { status: 'released' | 'upcoming' | 'expected'; date: string | null };
+  /** The release day (ISO) in the current language's market, or null. */
+  releaseDay(title: Title): string | null;
   /** Millions of USD, formatted for the current language. */
   budget(millions: number): string;
   upper(text: string): string;
@@ -138,9 +140,15 @@ declare global {
     mcuSupabase: unknown;
     /** Why sync is or is not available, so the account UI can say something
      *  more useful than "something went wrong". */
-    MCU_SUPABASE_STATUS: { ok: boolean; reason?: string };
-    /** The supabase-js UMD build, the one library still loaded from a CDN. */
+    MCU_SUPABASE_STATUS: { ok: boolean; reason?: string; loading?: boolean };
+    /** The supabase-js UMD build, the one library still loaded from a CDN,
+     *  now on demand (src/supabase-client.ts, Notion "Findability 8"). */
     supabase?: { createClient(url: string, key: string, opts?: unknown): unknown };
+    /** Its address and hash, and whether to fetch it at once (a saved session
+     *  or a sign-in return), set by index.html's head script. */
+    MCU_SUPABASE_JS?: { src: string; integrity?: string; early?: boolean };
+    /** Fetches supabase-js once; resolves with the client, or null. */
+    MCU_loadSupabase(): Promise<unknown>;
     MCU_AUTH_CONTEXT: unknown;
 
     // ---- Components and helpers, typed from their modules ------------------
@@ -308,6 +316,8 @@ declare global {
     PHASE_COLORS: App['PHASE_COLORS'];
     /** Phase is multi-select: 'all' or phases joined with commas ("2,3"). */
     MCU_phaseMatches(t: Title, phases: string): boolean;
+    /** An address's state as one query, either language (src/share-card/addresses.ts). */
+    MCU_stateParams(pathname: string, search: string): URLSearchParams;
     /** The catalog filters (phase, type, budget, released) in one test. */
     MCU_filterMatches(t: Title, f: { phase: string; type: string; budget: string; release: string }): boolean;
     sortTitles: App['sortTitles'];

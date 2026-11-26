@@ -7,6 +7,7 @@
     {"name": "Guides (desktop)", "light": "17:2384", "dark": "17:2624", "device": "desktop", "url": "?view=guides", "loose": {"TEXT": 2}},
     {"name": "Guide page, Thor (desktop)", "light": "17:2641", "dark": "17:2876", "device": "desktop", "url": "?view=guides&guide=thor"},
     {"name": "Guide page, Thor, complete (desktop)", "light": "77:7009", "dark": "77:7439", "device": "desktop"},
+    {"name": "Guide page, Before Doomsday (desktop)", "light": "82:7456", "dark": "97:7866", "device": "desktop"},
     {"name": "Follow the thread (desktop)", "light": "17:2888", "dark": "17:3142", "device": "desktop", "url": "?view=spatial&title=iron-man&explore=thread", "loose": {"VECTOR": 4}},
     {"name": "Settings over Titles (desktop)", "light": "16:5024", "dark": "16:5152", "device": "desktop"},
     {"name": "Search open (desktop)", "light": "19:3906", "dark": "19:4033", "device": "desktop"},

@@ -45,17 +45,19 @@ surface uses them, so they have no Figma counterpart until one does.
 
 | Figma | Node | Code |
 | --- | --- | --- |
-| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
+| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines; Char mark and Year switches: a picked or searched character's Char mark takes the year line's place, so the card keeps its height, V5 Batch 26) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
 | Poster (Title: one variant per catalog title id, 64; on the Posters page, 168 × 252, live TMDB posters at w500 over the poster's own color, checked 2026-11-19) | `100:696` | `src/app/poster.tsx` `PosterArt`; paths in `src/data/media-data.ts` |
-| List row (Seen × Up next; Up next is the row with the brand tint and the Up next pill) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
+| List row (Seen × Up next; Up next is the row with the brand tint and the Up next pill; a Char mark switch shows the Char mark under the caption, V5 Batch 26) | `16:61` | `src/app/desktop-list.tsx` (row), `status-actions.tsx` (buttons) |
 | List header | `16:82` | `desktop-list.tsx` `DlSortHeader` |
 | Phase header | `16:87` | `desktop-list.tsx` `GroupHeader` |
-| Phone title row (Seen, Unseen, Up next) | `63:691` | `list-parts.tsx` (m-lrow) |
+| Phone title row (Seen, Unseen, Up next; a Char mark switch, as on the List row) | `63:691` | `list-parts.tsx` (m-lrow) |
+| Char mark (Size: Row, Phone row, Card, Phone card, Selected card × Faces: 1, 2, 3): a picked or searched character's overlapping portraits and name, quiet, under a title (V5 Batch 26, Notion "Titles: show the picked character on each of their title rows") | `224:740` | `src/app/list-parts.tsx` `CharMark` |
 | Phone phase header | `63:642` | `desktop-list.tsx` `GroupHeader` (phone) |
 | Phone Up next | `63:705` | `src/app/upnext.tsx` (phone card) |
 | Logo / mark, Logo / wordmark | `17:2`, `17:3` | `src/assets/logo-mark.svg`, `logo-wordmark.svg` (CSS masks in the app) |
+| Startup loader (Motion: Bounce, the pin at rest in the animation's 78 px box; Reduced, the still pin and the ring). The bounce itself is designed in LottieFiles Creator ("Red Thread loader – Bounce") and shipped as CSS keyframes, not drawn here. No `components.json` entry: the app replaces the startup screen before the check can capture it; `qa/test-boot.js` checks it instead | `234:716` | `index.html` `#mcu-boot`, `boot.js`, `src/index.css` (`boot-bounce`, `boot-ripple-*`) |
 | App bar | `17:57` | `src/app/toolbar.tsx` `Toolbar`, `header-controls.tsx` (`StatusCounts`, `SortMenu`, `PickerButton`) |
 | Zoom control | `20:32` | `src/app/spatial-chrome.tsx` `ZoomControl` |
 | Title count | `20:35` | `spatial-chrome.tsx` `ContextSummary` |
@@ -90,6 +92,8 @@ surface uses them, so they have no Figma counterpart until one does.
 | Guide header (State: In progress, Complete) | `172:774` | `guides-ui.tsx` (g-head) |
 | Guide stop (Up next, Default, Seen) | `45:670` | `guides-ui.tsx` (g-stop) |
 | Phone guide header (State: In progress, Complete) | `172:1009` | `guides-ui.tsx` (g-head, phones) |
+| Guide destination (State: Watchlist off, On Watchlist; "Where it leads", an event guide's right column) | `192:1614` | `guides-ui.tsx` `GuideDest` |
+| Phone guide destination (State: Watchlist off, On Watchlist; "Then: …" after the stops) | `192:1629` | `guides-ui.tsx` `GuideDest` (phones) |
 | Phone guide stop (Up next, Default, Seen) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
 | Phone guide promo (State: Not started, Complete: every stop a small seen poster) | `167:815` | `guides-ui.tsx` `GuidesHero` (phones) |
 | About dialog (Kind: Welcome, About × Device: Desktop, Phone; the guide offer's poster is a nested Poster) | `119:1765` | `src/app/about.tsx` `AboutContent` in `ModalDialog` (desktop) or `Sheet` (phones) |
@@ -119,15 +123,18 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Guides (desktop) | `17:2384` | `17:2624` |
 | Guide page, Thor (desktop) | `17:2641` | `17:2876` |
 | Guide page, Thor, complete (desktop; every stop seen) | `77:7009` | `77:7439` |
+| Guide page, Before Doomsday (desktop; event guide, 7 of 8, Where it leads on the right) | `82:7456` | `97:7866` |
 | Follow the thread (desktop) | `17:2888` | `17:3142` |
 | Settings over Titles (desktop) | `16:5024` | `16:5152` |
 | Search open (desktop) | `19:3906` | `19:4033` |
 | Filters open (desktop) | `19:4050` | `19:4138` |
 | What have you seen? (desktop) | `19:4155` | `19:4252` |
 | Character pinned, Titles (desktop): the Character card top right | `19:4270` | `19:4565` |
+| Startup screen (desktop): the Startup loader (Bounce, drawn at rest) and "Loading…" | `114:9580` | `114:9595` |
 | Titles (phone) | `17:4759` | `17:4964` |
 | Details sheet over Titles (phone) | `17:4952` | `17:5267` |
 | Character pinned, Titles (phone): their titles, the card docked | `33:7655` | `33:7876` |
+| Startup screen (phone) | `114:9605` | `114:9615` |
 
 Posters are the app's TMDB posters: the library's **Poster** component set
 (`100:696`, Posters page) has one per catalog title, so a screen or an
@@ -173,6 +180,10 @@ The rules are the `promote-design` skill (`.claude/skills/promote-design/SKILL.m
   Phone guide promo, Guide header and Phone guide header. After Andre
   publishes, accept the update in App Screens and swap the hand-drawn parts
   of each affected screen for instances.
+- **Progress bars in instances:** an instance can't resize a layer, so the
+  In progress Guide header and Phone guide header set their bar with the
+  track's right padding: padding = track width × (1 − seen ÷ total), 25 for
+  7 of 8 on the desktop's 200 track (since 2026-11-22).
 - **Checking a publish:** the Plugin API's `getPublishStatusAsync()` on a
   component reads Current, Changed or Unpublished. Changed or Unpublished
   after a publish means it did not go out. Other files are not updated
@@ -213,7 +224,8 @@ counterpart (same tools, `tools/figma/README.md`):
   opacity equal to that alpha (`seen-tint`, `brand-tint`, and since
   2026-11-18 `popover-ring`, `border-soft`, `background-glass`,
   `on-image-veil`, `seen-foreground-soft`, `foreground-strong`,
-  `muted-soft`; `docs/design-tokens.md`). Published and checked in Screens
+  `muted-soft`, and since 2026-11-22 `muted-foreground-soft`;
+  `docs/design-tokens.md`). Published and checked in Screens
   on 2026-11-18: the popover and dialog outlines resolve to 10%. Left: the
   tokens whose alpha differs by mode, where one paint opacity can't match
   both and the token's own alpha applies in other files, which is right:

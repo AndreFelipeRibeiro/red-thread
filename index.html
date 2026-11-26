@@ -44,40 +44,85 @@
 <!-- The one public address: the old mcu-connections.vercel.app redirects here
      (vercel.json), and each shared link's page names its own (meta.ts). -->
 <link rel="canonical" href="https://redthread.tv/"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<!-- Only the generated poster art's display face comes from Google Fonts:
-     the UI's Inter is the design system's, served with the bundle, and
-     numbers use the system monospace. -->
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<!-- No web fonts from Google: the UI's Inter is the design system's, served
+     with the bundle, and numbers use the system monospace. (Bebas Neue, the
+     old fallback posters' face, loaded here until Notion "Findability 8":
+     nothing had used it since the Monogram posters, and its stylesheet
+     held up every first paint.) -->
 <!-- Root-relative, as every local file below: the page is also served at
      /guides/<id>, /titles/<id> and /characters/<id> (middleware.ts), where a
      relative path would point inside that folder. -->
 <script src="/boot.js"></script>
+<!-- The classic scripts the bundle reads, deferred (Notion "Findability 8"):
+     the browser fetches them at once but no longer stops drawing the page to
+     wait for each, so the startup screen paints while they download. Deferred
+     scripts run in the order written, and Vite puts the bundle's module
+     script after these at the end of <head>, so the order the app relies on
+     is unchanged: the languages, the runtime, watch-data.js, then the
+     bundle. -->
+<!-- Languages first (small, local): the startup screen speaks the visitor's
+     language while the bundle downloads. One catalog per file (English is
+     the base), then the runtime. -->
+<script defer src="/locales/en.js"></script>
+<script defer src="/locales/pt-BR.js"></script>
+<script defer src="/i18n.js"></script>
+<script defer src="/watch-data.js"></script>
+<!-- supabase-js, for sign-in and sync, loads on demand (Notion "Findability
+     8"; src/supabase-client.ts): a visitor who isn't signed in never waits
+     for it, and gets it when they press Sign in. A saved session (the
+     mcu.auth.v1 keys, the storageKey in supabase-client.ts) or a return from
+     Google (?code= or ?error=) needs it at once, so this starts that download
+     now, alongside the bundle. The version and hash live here only. -->
+<script>
+window.MCU_SUPABASE_JS = {
+  src: 'https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js',
+  integrity: 'sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd'
+};
+(function () {
+  try {
+    var js = window.MCU_SUPABASE_JS;
+    var early = /[?&](code|error|error_description)=/.test(location.search);
+    for (var i = 0; !early && i < localStorage.length; i++) {
+      if (String(localStorage.key(i)).indexOf('mcu.auth.v1') === 0) early = true;
+    }
+    if (!early) return;
+    js.early = true;
+    var link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'script';
+    link.href = js.src;
+    link.integrity = js.integrity;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <div id="root">
   <div id="mcu-boot" class="boot group flex min-h-screen min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center" data-state="loading" role="status" aria-live="polite">
-    <div class="boot-mark logo-mark size-[48px]" aria-hidden="true"></div>
-    <div class="boot-spinner size-[22px] animate-[boot-spin_0.9s_linear_infinite] rounded-full border-2 border-muted border-t-foreground group-data-[state=failed]:hidden motion-reduce:[animation-duration:2.4s]" aria-hidden="true"></div>
+    <!-- The pin, bouncing or still (boot.js sets <html data-boot-anim> before
+         the first paint). "Bounce" is CSS (boot-bounce and boot-ripple-* in
+         src/index.css), drawn in the 128px Lottie design's box at 78, so the
+         pin is the mark's 48px. The ripple sits under the pin's point, in
+         --logo like the mark. -->
+    <div class="boot-anim relative size-[78px]" aria-hidden="true">
+      <div class="boot-ripple absolute top-[57.1px] left-[26.8px] h-[6.7px] w-[24.4px] opacity-0 [:root[data-boot-anim=playing]_&]:animate-[boot-ripple-fade_1.2s_linear_infinite]">
+        <div class="size-full rounded-[50%] border-[1.5px] border-(--logo) [:root[data-boot-anim=playing]_&]:animate-[boot-ripple-grow_1.2s_linear_infinite]"></div>
+      </div>
+      <div class="boot-mark logo-mark absolute top-[12.5px] left-[15px] size-[48px] [:root[data-boot-anim=playing]_&]:animate-[boot-bounce_1.2s_linear_infinite]" aria-hidden="true"></div>
+    </div>
+    <!-- The ring, only when the pin doesn't bounce (motion reduced). -->
+    <div class="boot-spinner size-[22px] animate-[boot-spin_0.9s_linear_infinite] rounded-full border-2 border-muted border-t-foreground group-data-[state=failed]:hidden motion-reduce:[animation-duration:2.4s] [:root[data-boot-anim=playing]_&]:hidden" aria-hidden="true"></div>
     <p class="boot-msg m-0 min-h-[1.4em] max-w-80 text-sm leading-[1.45] text-muted-foreground"></p>
     <button class="boot-reload h-9 min-h-9 cursor-pointer rounded-md border bg-background px-[18px] text-sm font-medium text-foreground shadow-xs outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50" type="button" hidden></button>
   </div>
 </div>
 
-<!-- Languages first (small, local): the startup screen speaks the visitor's
-     language while the bundle below downloads. One catalog per file
-     (English is the base), then the runtime. -->
-<script src="/locales/en.js"></script>
-<script src="/locales/pt-BR.js"></script>
-<script src="/i18n.js"></script>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js" integrity="sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd" crossorigin="anonymous"></script>
-
 <!-- The whole app is one bundle now (src/main.js): React, the data layer and
-     every view. A module script is deferred, so it runs after the libraries
-     above and after watch-data.js below, which is what the app expects. -->
+     every view. The build moves this tag to the end of <head>, after the
+     deferred scripts there, and a module script is deferred too, so it runs
+     after them, which is what the app expects. -->
 <script type="module" src="/src/main.ts"></script>
-<script src="/watch-data.js"></script>
 </body>
 </html>

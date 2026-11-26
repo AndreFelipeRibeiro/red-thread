@@ -16,9 +16,9 @@
 // Organization's sameAs until Red Thread has profiles elsewhere (Findability
 // 10). English, like the rest of each page's HTML.
 // Plain data in, JSON objects out; meta.ts puts them in the page.
-import type { Guide, Title } from '../types/catalog';
+import type { Guide, Localized, Title } from '../types/catalog';
 import { makeTr, type Catalog, type LocaleTables } from './previews';
-import { thingPath } from './addresses';
+import { homePath, indexPath, thingPath, type AddressLang } from './addresses';
 
 type Json = Record<string, unknown>;
 const CONTEXT = 'https://schema.org';
@@ -26,8 +26,15 @@ const CONTEXT = 'https://schema.org';
 /** ISO 8601 for a runtime in minutes: PT2H6M. */
 const duration = (min: number) => `PT${Math.floor(min / 60) ? Math.floor(min / 60) + 'H' : ''}${min % 60 ? (min % 60) + 'M' : ''}`;
 
-export function structuredData(site: string, cat: Catalog, loc: LocaleTables): Map<string, Json> {
+/** `lang` writes the Portuguese pages' data (Notion "Findability 6"): their
+ *  addresses, names and Brazil's release days, `inLanguage` pt-BR, and a
+ *  title's English name as `alternateName` where Brazil's differs. */
+export function structuredData(site: string, cat: Catalog, loc: LocaleTables, lang: AddressLang = 'en'): Map<string, Json> {
   const tr = makeTr(loc);
+  const pt = lang === 'pt-BR';
+  const L = (o: Localized) => (pt && o['pt-BR']) || o.en;
+  const path = (kind: 'title' | 'guide' | 'char', id: string) => thingPath(kind, id, lang);
+  const inLanguage = pt ? { inLanguage: 'pt-BR' } : {};
   const app = tr('app.name');
   const titleName = (t: Title) => (loc.titles && loc.titles[t.id]) || t.title;
   const charName = (id: string) => (loc.characters && loc.characters[id]) || (cat.characters[id] ? cat.characters[id].name : id);
@@ -46,9 +53,10 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
   const work = (t: Title): Json => ({
     '@type': t.type === 'film' ? 'Movie' : 'TVSeries',
     name: `${titleName(t)}`,
-    url: url(thingPath('title', t.id)),
+    ...(pt && titleName(t) !== t.title ? { alternateName: t.title } : {}),
+    url: url(path('title', t.id)),
     image: `${site}/og/title/${t.id}.jpg`,
-    datePublished: t.release,
+    datePublished: (loc.releases && loc.releases[t.id]) || t.release,
   });
   const list = (name: string, items: Json[], ordered: boolean): Json => ({
     '@type': 'ItemList',
@@ -59,20 +67,20 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
   });
   const crumbs = (trail: [string, string][]): Json => ({
     '@type': 'BreadcrumbList',
-    itemListElement: [[app, '/'] as [string, string], ...trail].map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: url(path) })),
+    itemListElement: [[app, homePath(lang)] as [string, string], ...trail].map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: url(path) })),
   });
   const page = (...graph: Json[]): Json => ({ '@context': CONTEXT, '@graph': graph });
-  const guidesCrumb: [string, string] = [tr('page.guidesName'), '/guides'];
-  const titlesCrumb: [string, string] = [tr('page.titlesName'), '/titles'];
-  const charsCrumb: [string, string] = [tr('page.charactersName'), '/characters'];
+  const guidesCrumb: [string, string] = [tr('page.guidesName'), indexPath('guides', lang)];
+  const titlesCrumb: [string, string] = [tr('page.titlesName'), indexPath('titles', lang)];
+  const charsCrumb: [string, string] = [tr('page.charactersName'), indexPath('characters', lang)];
 
   const out = new Map<string, Json>();
 
   out.set('home', page(
-    { '@type': 'WebSite', '@id': url('/#website'), name: app, url: url('/'), description: tr('og.defaultSub'), inLanguage: ['en', 'pt-BR'], publisher: { '@id': url('/#organization') } },
+    { '@type': 'WebSite', '@id': url('/#website'), name: app, url: url(homePath(lang)), description: tr('og.defaultSub'), inLanguage: ['en', 'pt-BR'], publisher: { '@id': url('/#organization') } },
     { '@type': 'Organization', '@id': url('/#organization'), name: app, url: url('/'), logo: url('/apple-touch-icon.png') },
     {
-      '@type': 'WebApplication', name: app, url: url('/'), description: tr('og.defaultSub'),
+      '@type': 'WebApplication', name: app, url: url(homePath(lang)), description: tr('og.defaultSub'),
       applicationCategory: 'EntertainmentApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript',
       inLanguage: ['en', 'pt-BR'], isAccessibleForFree: true,
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -82,8 +90,8 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
   for (const g of cat.guides as Guide[]) {
     const stops = g.stops.map((s) => byId.get(s.id)).filter((t): t is Title => !!t);
     out.set('guide/' + g.id, page(
-      { ...list(g.name.en, stops.map((t) => ({ item: work(t) })), true), description: g.blurb.en, url: url(thingPath('guide', g.id)), dateModified: g.reviewed },
-      crumbs([guidesCrumb, [g.name.en, thingPath('guide', g.id)]]),
+      { ...list(L(g.name), stops.map((t) => ({ item: work(t) })), true), description: L(g.blurb), url: url(path('guide', g.id)), dateModified: g.reviewed, ...inLanguage },
+      crumbs([guidesCrumb, [L(g.name), path('guide', g.id)]]),
     ));
   }
 
@@ -97,13 +105,14 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
         ...(t.type === 'film' && t.runtime ? { duration: duration(t.runtime) } : {}),
         ...(t.type === 'series' && t.episodes ? { numberOfEpisodes: t.episodes } : {}),
         isPartOf: { '@type': 'CreativeWorkSeries', name: 'Marvel Cinematic Universe' },
+        ...inLanguage,
         actor: cast.map((id) => ({
           '@type': 'PerformanceRole',
           actor: { '@type': 'Person', name: (t.credits && t.credits[id]) || cat.characters[id].actor },
           characterName: charName(id),
         })),
       },
-      crumbs([titlesCrumb, [`${titleName(t)} (${t.year})`, thingPath('title', t.id)]]),
+      crumbs([titlesCrumb, [`${titleName(t)} (${t.year})`, path('title', t.id)]]),
     ));
   }
 
@@ -111,23 +120,23 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables): M
     if (!hasPage(id)) continue;
     const name = charName(id);
     out.set('char/' + id, page(
-      { ...list(tr('page.appearances', { name }), appearances(id).map((t) => ({ item: work(t) })), true), url: url(thingPath('char', id)) },
-      crumbs([charsCrumb, [name, thingPath('char', id)]]),
+      { ...list(tr('page.appearances', { name }), appearances(id).map((t) => ({ item: work(t) })), true), url: url(path('char', id)), ...inLanguage },
+      crumbs([charsCrumb, [name, path('char', id)]]),
     ));
   }
 
   // The index pages list what their HTML lists, by address.
   out.set('index/guides', page(
-    { ...list(tr('page.guidesName'), cat.guides.map((g) => ({ name: g.name.en, url: url(thingPath('guide', g.id)) })), false), url: url('/guides') },
+    { ...list(tr('page.guidesName'), cat.guides.map((g) => ({ name: L(g.name), url: url(path('guide', g.id)) })), false), url: url(indexPath('guides', lang)), ...inLanguage },
     crumbs([guidesCrumb]),
   ));
   out.set('index/titles', page(
-    { ...list(tr('page.titlesName'), byRelease.map((t) => ({ item: work(t) })), true), url: url('/titles') },
+    { ...list(tr('page.titlesName'), byRelease.map((t) => ({ item: work(t) })), true), url: url(indexPath('titles', lang)), ...inLanguage },
     crumbs([titlesCrumb]),
   ));
-  const chars = Object.keys(cat.characters).filter(hasPage).sort((a, b) => charName(a).localeCompare(charName(b)));
+  const chars = Object.keys(cat.characters).filter(hasPage).sort((a, b) => charName(a).localeCompare(charName(b), pt ? 'pt-BR' : 'en'));
   out.set('index/characters', page(
-    { ...list(tr('page.charactersName'), chars.map((id) => ({ name: charName(id), url: url(thingPath('char', id)) })), false), url: url('/characters') },
+    { ...list(tr('page.charactersName'), chars.map((id) => ({ name: charName(id), url: url(path('char', id)) })), false), url: url(indexPath('characters', lang)), ...inLanguage },
     crumbs([charsCrumb]),
   ));
   return out;

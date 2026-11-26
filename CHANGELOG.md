@@ -13,6 +13,54 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 27 — Findability 8 (second pass): supabase-js loads on demand
+
+Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:17 as
+[5fe6bb6](https://github.com/AndreFelipeRibeiro/red-thread/commit/5fe6bb6) and pushed to `version/5.0` (V5 staging) at 21:44, with the startup loader and the Figma records below. Not merged to `main`. Full regression on [4837cef](https://github.com/AndreFelipeRibeiro/red-thread/commit/4837cef)'s app tree, the tree that was pushed (4837cef adds only docs and Figma tooling): all 87 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on the staging preview.
+
+- A visitor who isn't signed in no longer downloads supabase-js (53 KB from unpkg) before the app can draw. `index.html` replaces its script tag with a small head script that holds the address and hash, and preloads it at once only when a session is saved (the `mcu.auth.v1` keys) or the address carries a Google return (`?code=`, `?error=`).
+- `src/supabase-client.ts`: `window.MCU_loadSupabase()` fetches it once and sends `mcu:supabase` when the client is ready or has failed. `src/app/account.tsx` follows the client as it arrives. A guest's Sign in fetches supabase-js first, then goes to Google. A session waiting on it shows "checking" and falls back to guest after 5 s.
+- New check `test-signin-lazy`, in the regression. It covers three cases:
+  - a guest's load asks unpkg for nothing, and Sign in fetches it once and reaches Supabase's Google authorize;
+  - a saved session preloads it;
+  - with the CDN down, the app runs as a guest with sync marked unavailable.
+- Andre signed in with Google on localhost:8126. A reload kept the session, with supabase-js preloaded. Signing out wasn't tested.
+- Local Lighthouse (mobile), alone: 90–91 and LCP 3.5–3.6 s (the first pass: 88–89, 3.7–3.9 s).
+- PageSpeed Insights on staging with the startup loader (below), 21:47–21:48: 90, 91 and 86; FCP 1.1 s each time; LCP 3.6, 3.2 and 3.9 s.
+  - Locally the loader's player takes back about 0.3–0.4 s of LCP (86–88 with it, 91 without), because it downloads beside the bundle.
+  - Findability 8's target (LCP under 2.5 s) isn't met, and the ticket stays open.
+
+## V5 Batch 27 — Startup loader: the pin bounces while the app loads
+
+Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:27 as
+[54f184b](https://github.com/AndreFelipeRibeiro/red-thread/commit/54f184b) by the Lottie session, and pushed to `version/5.0` (V5 staging) at 21:44 in the same push. Not merged to `main`. Covered by the batch's full regression above. `qa/test-boot.js` (not in the regression) passes every loader case on the pushed tree. Its only `!!` is the intentional broken-bundle case.
+
+- "Bounce", made in LottieFiles Creator: the pin from the logo lifts and pushes in with a ripple, a 1.2 s loop (`boot-loader.json`, 4.2 KB). It replaces the startup screen's spinner.
+- lottie-web 5.13.0, pinned. Its light SVG build (46 KB gzipped) is served at `/lottie-light.js`, not bundled. `boot.js` fetches it at low priority beside the bundle, and plays the animation once the markup is parsed and the stylesheet has sized the box.
+- Reduced motion (Settings or the system), a player that can't load, or a failed start shows the still pin and the ring instead. A player failure never counts as a failed start.
+- Andre approved the commit in the Lottie session, and waived the Figma gate for this push. The library and App Screens step follows in its own change, and the ticket stays open until then.
+
+## V5 Batch 27 — Figma records: "Where it leads", the event guide's destination card
+
+Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:28 as
+[4837cef](https://github.com/AndreFelipeRibeiro/red-thread/commit/4837cef) by the Lottie session, and pushed to `version/5.0` at 21:44 in the same push. Docs and Figma tooling only, no app code.
+
+- The repo records of the Design ticket "Library: Where it leads, the event guide's destination card…" (Completed 2026-11-23 without a commit): `docs/figma-library.md`, `docs/design-tokens.md`, and `tools/figma/` components, fingerprint and screens. They had sat uncommitted since then. Andre reviewed them and approved committing them.
+
+## V5 Batch 27 — Findability 8 (first pass): first paint no longer waits on scripts, posters at the size shown
+
+Recorded: 2026-11-24 19:58 EST (-0500). Committed at 19:38 as
+[fe74ce4](https://github.com/AndreFelipeRibeiro/red-thread/commit/fe74ce4), pushed to `version/5.0` (V5 staging) at 19:51, not merged to `main`. The rest of Batch 27 joins before the merge. Full regression on fe74ce4's tree, the tree that was pushed: all 86 check runs clean, plus the accessibility scans in English, Portuguese and dark. `qa/smoke.js` clean on the staging preview.
+
+- `index.html`: the Google Fonts stylesheet for Bebas Neue and its two preconnects are gone. Nothing has used that face since the Monogram posters (Batch 8), and the stylesheet held up every first paint.
+- `index.html`: the classic scripts the bundle reads (`locales/en.js`, `locales/pt-BR.js`, `i18n.js`, supabase-js, `watch-data.js`) are now `defer` in `<head>`. They download at once and no longer stop the startup screen from painting. They still run in the same order before the bundle, which Vite places after them.
+- `src/app/poster.tsx`: posters list TMDB's 92/154/185/342 widths with `sizes="auto, 342px"`. A 40 px list thumbnail now loads w92 or w154 instead of w342, about 1.2 MB less on a phone's first screen. A browser without `sizes=auto` keeps the 342 px file, as before.
+- PageSpeed Insights, mobile, same evening:
+  - Production (Batch 26): 81 and 81; LCP 3.2 s and 4.8 s.
+  - Staging: 98, 87 and 86; LCP 0.9, 2.8 and 4.1 s; first paint 0.9–2.8 s.
+  - Findability 8's target, LCP under 2.5 s and 90+, isn't met reliably yet, so the ticket stays open.
+- Checked headless (Chromium) on phone and desktop, in English and Portuguese: no errors, supabase-js ready before the app, posters at w154 for 40 px rows at 3× and w342 for desktop cards. Not checked on a real phone.
+
 ## V5 Batch 26 — Titles and Connections: a quiet marker for who each title is here for
 
 Recorded: 2026-11-24 19:13 EST (-0500). Committed at 17:58 as

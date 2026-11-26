@@ -387,6 +387,31 @@ described in V3-SPEC.md §7.1 (marking a title never reflows the Spatial
 canvas; since 2026-11-17 the Seen, Unseen and Watchlist filters pack their
 titles into a lens, taken when the filter changes: decisions.md).
 
+### Text that doesn't fit
+
+Portuguese runs longer than English, and some titles are long in both
+("Your Friendly Neighborhood Spider-Man", "Seu Amigão da Vizinhança:
+Homem-Aranha"). Text never runs past its card, row, button or panel, and is
+never cut without "…" (Notion "Portuguese copy pass", 2026-11-25).
+
+- **Names** (a title's or a character's name, as the thing a row or card is
+  about): up to **two lines, then "…"**, with the full name as a tooltip
+  (`title`). Andre, 2026-11-24. `W_TITLE_2` in `src/app/banners.tsx` for the
+  floating cards; `line-clamp-2` with `[overflow-wrap:anywhere]` elsewhere.
+  A button around a name needs `max-w-full`: a button sizes to its text.
+- **Labels and meta lines** (a kicker, a count, "2008 · via Tony Stark,
+  Pepper Potts", a menu's sub-line): one line, then "…". *Proposed; Andre to
+  confirm.* Where a label is a fixed word that keeps getting cut, the fix is
+  a shorter string in that language, not a smaller font.
+- **Running text** (synopses, a guide stop's reason): its own line clamp with
+  a "See more" where the full text matters.
+- **Dates in tight chips**: the compact form, day and month only ("17 dez",
+  "Dec 18"; `MCU_GUIDE.targetDate(g, true)`).
+
+`qa/test-overflow.js` fails on text that runs past or is cut without "…"
+(English and Portuguese, 1440px and 375px); `qa/overflow-audit.js` is the
+full sweep, with 1024px and 320px, and lists every "…" for review.
+
 ## Released versions
 
 Moved verbatim from AGENTS.md ("Branches, deploys and approvals"). Each shipped state has a tag; create and push a tag only with the user's approval.

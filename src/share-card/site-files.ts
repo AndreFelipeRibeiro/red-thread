@@ -18,7 +18,7 @@
 // Plain data in, text out.
 import type { Title } from '../types/catalog';
 import { makeTr, type Catalog, type LocaleTables } from './previews';
-import { thingPath, type ThingKind } from './addresses';
+import { homePath, indexPath, thingPath, type ThingKind } from './addresses';
 
 /** The crawlers named in robots.txt: search first, then AI assistants'. */
 export const NAMED_CRAWLERS = [
@@ -50,22 +50,30 @@ export function robotsTxt(site: string): string {
 const xml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** The pages the build wrote, as `kind/id` keys; the sitemap lists exactly
- *  those, so it never points at an address that 404s. */
+ *  those, so it never points at an address that 404s. Every page is listed
+ *  in both languages (Notion "Findability 6"), each entry naming its twin
+ *  with xhtml:link alternates, English the default. */
 export function sitemapXml(site: string, cat: Catalog, pages: Iterable<string>): string {
   const reviewed = new Map(cat.guides.map((g) => [g.id, g.reviewed]));
   const newest = cat.guides.map((g) => g.reviewed).sort().pop();
   const order: ThingKind[] = ['guide', 'title', 'char'];
   const keys = [...pages].map((k) => { const i = k.indexOf('/'); return { kind: k.slice(0, i) as ThingKind, id: k.slice(i + 1) }; })
     .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-  const url = (loc: string, lastmod?: string) =>
-    `  <url><loc>${xml(loc)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}</url>`;
+  /** Both <url> entries of a page: English, then Portuguese. */
+  const pair = (en: string, pt: string, lastmod?: string) => {
+    const alt = `<xhtml:link rel="alternate" hreflang="en" href="${xml(en)}"/>`
+      + `<xhtml:link rel="alternate" hreflang="pt-BR" href="${xml(pt)}"/>`
+      + `<xhtml:link rel="alternate" hreflang="x-default" href="${xml(en)}"/>`;
+    const mod = lastmod ? `<lastmod>${lastmod}</lastmod>` : '';
+    return [`  <url><loc>${xml(en)}</loc>${mod}${alt}</url>`, `  <url><loc>${xml(pt)}</loc>${mod}${alt}</url>`];
+  };
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    url(site + '/'),
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    ...pair(site + homePath(), site + homePath('pt-BR')),
     // The index pages (Findability 4), dated by their newest guide review.
-    ...['guides', 'titles', 'characters'].map((seg) => url(`${site}/${seg}`, seg === 'guides' ? newest : undefined)),
-    ...keys.map(({ kind, id }) => url(site + thingPath(kind, id), kind === 'guide' ? reviewed.get(id) : undefined)),
+    ...['guides', 'titles', 'characters'].flatMap((seg) => pair(site + indexPath(seg), site + indexPath(seg, 'pt-BR'), seg === 'guides' ? newest : undefined)),
+    ...keys.flatMap(({ kind, id }) => pair(site + thingPath(kind, id), site + thingPath(kind, id, 'pt-BR'), kind === 'guide' ? reviewed.get(id) : undefined)),
     '</urlset>',
     '',
   ].join('\n');

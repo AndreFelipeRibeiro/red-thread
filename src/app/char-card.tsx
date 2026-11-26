@@ -110,8 +110,8 @@ export function CharCard({ touch, inList = false, color, photo, initials, name, 
             <span className={cn('cb-pos flex-none whitespace-nowrap tabular-nums', stepping && 'text-foreground')} aria-live="polite">{where}</span>
           </span>
           {shown && (
-            <button type="button" className={cn(B.W_TITLE, 'cc-title cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
-              aria-label={tr('details.openTitle', { title: I18N.titleName(shown) })}>{I18N.titleName(shown)}</button>
+            <button type="button" className={cn('cc-title max-w-full cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
+              aria-label={tr('details.openTitle', { title: I18N.titleName(shown) })} title={I18N.titleName(shown)}><span className={B.W_TITLE_2}>{I18N.titleName(shown)}</span></button>
           )}
         </div>
         <DropdownMenu>

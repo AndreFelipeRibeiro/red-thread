@@ -24,7 +24,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 66 check scripts in 68 runs (`test-fit` runs three times: English, Portuguese, and Portuguese at the Large text size) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 9 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 70 check scripts in 72 runs (`test-fit` runs three times: English, Portuguese, and Portuguese at the Large text size) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 9 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `qa/history.log` | Written by every run (`regress.sh` and `quick.sh`, through `run.js`): one tab-separated line per run (time, kind, runs, failed, seconds, JOBS) and one per failing check (time, check, env, its first failing line). Local, gitignored as `*.log`; `QA_HISTORY` points it elsewhere. Read it to see which checks catch problems. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
@@ -415,6 +415,24 @@ one.
     Iron Man 3 in Wonder Man's ring sometimes keeps moving under the pointer
     three times running (`B moved off the pointer`); the check moves on, but if
     that grows it's worth a look at the app.
+
+- `test-settings` failed now and then under load at "Spatial card click with
+  Settings open" and "Settings should slide out, then the details slide in"
+  (Batch 22's regression, and once in a 16-check run on 2026-11-24). Both were
+  the check, not the app, and both are fixed (2026-11-24, Notion
+  "test-settings: 'Spatial card click with Settings open' failed once…").
+  - The card press came after a fixed 700 ms wait, sometimes while the canvas
+    was still re-laying out as Settings opened, so it landed on empty canvas
+    and opened nothing. It now waits until the card has stopped moving, and
+    presses once more if no details panel opens.
+  - The slide was judged by sampling both panels' positions every frame. A
+    busy machine skipped the frames in the middle of the 360 ms slides (51
+    frames in 1.7 s), so neither slide was seen. It now listens for the
+    panels' own `transitionrun` events and the moment Settings leaves the
+    page: Settings slides, leaves, and only then does the details panel slide
+    in. These events fire whatever the frame rate. `slide.ms` reports the gap:
+    0.4 to 0.6 s on a quiet machine, 0.8 to 1.2 s under load. Twelve runs,
+    four at a time, were clean, four of them beside four CPU-bound processes.
 
 - `test-skip` **used to fail, and it was the check, not the app** (fixed
   2026-10-31). Batch 10 replaced the desktop guide's meter row with one taller

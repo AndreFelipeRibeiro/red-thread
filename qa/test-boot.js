@@ -94,6 +94,59 @@ const reload = async page => { await page.reload(); await settle(page); };
     await p.clock.install();
     await p.route(BUNDLE, () => {});   // never answers
   }, async (p, r) => { await p.waitForTimeout(500); await p.clock.fastForward(26000); await p.waitForTimeout(300); r.afterSlow = await bootState(p); });
+
+  // The bouncing pin (Notion "Startup loader: a branded Lottie animation
+  // instead of the plain spinner"), with the bundle held back so the screen
+  // stays up. "Bounce" is CSS keyframes (src/index.css), so nothing is
+  // downloaded for it. It bounces when motion is allowed, with the Lottie
+  // design's keys (sampled with the animation paused); the still pin and the
+  // ring show when motion is reduced (system or Settings) or startup failed.
+  const problems = [];
+  const expect = (ok, msg) => { if (!ok) problems.push(msg); };
+  const animState = p => p.evaluate(() => {
+    const h = document.documentElement;
+    const ring = document.querySelector('.boot-spinner');
+    const mark = document.querySelector('.boot-mark');
+    const ripple = document.querySelector('.boot-ripple');
+    // The pin's lift at a few moments of the loop, read off the paused animation.
+    const bounce = mark && mark.getAnimations().find(a => a.animationName === 'boot-bounce');
+    const lift = {};
+    if (bounce) {
+      bounce.pause();
+      for (const ms of [0, 400, 600, 760, 1000]) { bounce.currentTime = ms; lift[ms] = +new DOMMatrix(getComputedStyle(mark).transform).m42.toFixed(1); }
+    }
+    const r = mark && mark.getBoundingClientRect();
+    return {
+      anim: h.getAttribute('data-boot-anim'),
+      markAnim: mark && getComputedStyle(mark).animationName, rippleAnim: ripple && getComputedStyle(ripple).animationName,
+      lift, markH: r && Math.round(r.height),
+      ring: ring && getComputedStyle(ring).display, reduceClass: h.classList.contains('reduce-motion'),
+    };
+  });
+  const holdBundle = p => p.route(BUNDLE, () => {});   // never answers
+  const extraAsked = p => { p._extra = []; p.on('request', q => { if (/lottie|boot-loader/.test(q.url())) p._extra.push(q.url()); }); };
+  const animRun = (name, opts, setup) => run(name, opts, async p => { extraAsked(p); await holdBundle(p); if (setup) await setup(p); },
+    async (p, r) => { await p.waitForTimeout(1500); r.anim = await animState(p); r.boot = await bootState(p); r.extraRequests = p._extra; });
+  await animRun('anim-plays', DESKTOP, null);
+  await animRun('anim-system-reduced', { ...MOBILE, reducedMotion: 'reduce' }, null);
+  await animRun('anim-setting-reduced', DESKTOP, p => p.addInitScript("localStorage.setItem('mcu.motion.v1','reduced');"));
+  {
+    const a = R['anim-plays'];
+    expect(a.anim.anim === 'playing' && a.anim.markAnim === 'boot-bounce' && a.anim.rippleAnim === 'boot-ripple-fade' && a.anim.ring === 'none', 'anim-plays: ' + JSON.stringify(a.anim));
+    const want = { 0: 0, 400: -7.3, 600: 1.8, 760: 0, 1000: 0 };
+    for (const ms in want) expect(Math.abs((a.anim.lift[ms] ?? 99) - want[ms]) <= 0.15, 'anim-plays: at ' + ms + ' ms the pin is at ' + a.anim.lift[ms] + 'px, expected ' + want[ms]);
+    expect(a.anim.markH === 48, 'anim-plays: the pin is ' + a.anim.markH + 'px tall, expected 48');
+    expect(a.extraRequests.length === 0, 'anim-plays: asked for ' + a.extraRequests.join(', '));
+    for (const n of ['anim-system-reduced', 'anim-setting-reduced']) {
+      const r = R[n].anim;
+      expect(r.anim === 'off' && r.markAnim === 'none' && r.rippleAnim === 'none' && r.ring === 'block', n + ': ' + JSON.stringify(r));
+    }
+    expect(R['anim-setting-reduced'].anim.reduceClass, 'anim-setting-reduced: <html> lacks .reduce-motion');
+    const f = R['bundle-blocked'].final;
+    expect(f && f.state === 'failed', 'bundle-blocked: ' + JSON.stringify(f));
+  }
+  R.errors = problems;
   console.log(JSON.stringify(R, null, 1));
+  if (problems.length) { problems.forEach(m => console.log('!! ' + m)); process.exitCode = 1; }
   await browser.close(); server.close();
 })();

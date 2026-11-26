@@ -24,8 +24,14 @@
     {"name": "Phone nav bar", "figma": "22:42", "device": "phone", "url": "?view=list", "selector": ".m-tabs", "size": "h"},
     {"name": "Phone title row · State=Seen", "figma": "63:659", "device": "phone", "url": "?view=list", "selector": ".m-lrow[data-row-id=\"thor\"]", "size": "h"},
     {"name": "Phone title row · State=Unseen", "figma": "63:673", "device": "phone", "url": "?view=list", "selector": ".m-lrow[data-row-id=\"thor-ragnarok\"]", "size": "h"},
+    {"name": "Char mark · Size=Row, Faces=1", "figma": "224:665", "device": "desktop", "url": "?view=list&char=peter", "selector": "[data-row-id=\"civil-war\"] .char-mark", "size": "h"},
+    {"name": "Char mark · Size=Row, Faces=3", "figma": "224:674", "device": "desktop", "url": "?view=list&char=peter", "selector": "[data-row-id=\"no-way-home\"] .char-mark", "size": "h"},
+    {"name": "Char mark · Size=Phone row, Faces=1", "figma": "224:680", "device": "phone", "url": "?view=list&char=peter", "selector": ".m-lrow[data-row-id=\"civil-war\"] .char-mark", "size": "h"},
+    {"name": "Char mark · Size=Card, Faces=1", "figma": "224:695", "device": "desktop", "url": "?view=spatial&char=peter", "selector": ".card[data-id=\"civil-war\"] .char-mark", "size": "h"},
     {"name": "Phone phase header", "figma": "63:642", "device": "phone", "url": "?view=list", "selector": ".m-ghead", "size": "h"},
     {"name": "Phone guide promo · State=Complete", "figma": "167:814", "device": "phone", "url": "?view=guides", "selector": ".g-hero", "size": "", "seen": ["endgame", "loki-s2", "cap-brave", "thunderbolts", "fantastic-four"]},
-    {"name": "Phone guide header · State=Complete", "figma": "172:1008", "device": "phone", "url": "?view=guides&guide=thor", "selector": ".g-head", "size": "", "seen": ["thor-ragnarok", "infinity-war", "endgame", "thor-love"]}
+    {"name": "Phone guide header · State=Complete", "figma": "172:1008", "device": "phone", "url": "?view=guides&guide=thor", "selector": ".g-head", "size": "", "seen": ["thor-ragnarok", "infinity-war", "endgame", "thor-love"]},
+    {"name": "Guide destination · State=On Watchlist", "figma": "192:1599", "device": "desktop", "url": "?view=list&guide=before-doomsday", "selector": ".g-dest", "size": "wh", "storage": {"mcu.collection.v1": "{\"version\": 1, \"states\": {\"endgame\": \"seen\", \"loki-s2\": \"seen\", \"cap-brave\": \"seen\", \"thunderbolts\": \"seen\", \"doomsday\": \"watchlist\"}}"}},
+    {"name": "Phone guide destination · State=On Watchlist", "figma": "192:1615", "device": "phone", "url": "?view=list&guide=before-doomsday", "selector": ".g-dest", "size": "h", "storage": {"mcu.collection.v1": "{\"version\": 1, \"states\": {\"endgame\": \"seen\", \"loki-s2\": \"seen\", \"cap-brave\": \"seen\", \"thunderbolts\": \"seen\", \"doomsday\": \"watchlist\"}}"}}
   ]
 }

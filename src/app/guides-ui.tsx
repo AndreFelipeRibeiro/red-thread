@@ -42,6 +42,11 @@ const GI18N = window.MCU_I18N;
 const gtr = (key: string, vars?: Record<string, unknown>) => GI18N.tr(key, vars);
 const gloc = (o) => (o ? (o[GI18N.lang] || o.en || '') : '');
 
+// A title's release day in the visitor's language's market (i18n.js
+// releaseDay: Avengers: Doomsday opens a day earlier in Brazil; Notion
+// "Findability 6"). Every date this file shows or counts to goes through it.
+const relDay = (t) => (t && ((window.MCU_I18N && window.MCU_I18N.releaseDay && window.MCU_I18N.releaseDay(t)) || t.release)) || '';
+
 const MCU_GUIDE = {
   all: () => window.GUIDES || [],
   get: (id) => (window.GUIDES || []).find(g => g.id === id) || null,
@@ -89,13 +94,19 @@ const MCU_GUIDE = {
   forTitle: (id) => (window.GUIDES || []).filter(g => g.stops.some(s => s.id === id)),
   forChar: (ch) => (window.GUIDES || []).find(g => g.kind === 'character' && g.character === ch) || null,
   kind: (g) => gtr('guide.kind.' + (g.group || 'stories')),
-  targetDate(g) {
+  // compact: just the day and the month, for the chip on a guide's last
+  // poster, which is 40px wide on a phone ("17 dez" rather than "17 de dez.";
+  // Notion "Portuguese copy pass"). English reads "Dec 18" either way.
+  targetDate(g, compact = false) {
     const t = g.target && MCU_GUIDE.title(g.target);
-    if (!t || !/^\d{4}-\d{2}-\d{2}$/.test(t.release)) return '';
+    const day = t && relDay(t);
+    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return '';
     try {
-      return new Intl.DateTimeFormat(document.documentElement.lang || 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
-        .format(new Date(t.release + 'T00:00:00Z'));
-    } catch (e) { return t.release; }
+      const f = new Intl.DateTimeFormat(document.documentElement.lang || 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      const d = new Date(day + 'T00:00:00Z');
+      if (!compact) return f.format(d);
+      return f.formatToParts(d).filter(p => p.type === 'day' || p.type === 'month').map(p => p.value.replace('.', '')).join(' ');
+    } catch (e) { return day; }
   },
   // "5 stops · about 11 h" (Notion "Time to finish"): the stops' runtimes,
   // released ones only.
@@ -144,7 +155,7 @@ window.MCU_GUIDE = MCU_GUIDE;
 // and how many days are left to its destination when that is still to come.
 function guideDaysLeft(g) {
   const t = g.target && MCU_GUIDE.title(g.target);
-  const m = t && /^(\d{4})-(\d{2})-(\d{2})$/.exec(t.release || '');
+  const m = t && /^(\d{4})-(\d{2})-(\d{2})$/.exec(relDay(t));
   if (!m) return 0;
   const now = new Date();
   const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
@@ -265,7 +276,7 @@ Object.assign(MCU_GUIDE, {
   // it prepares for. Only a day-precision date counts.
   upcomingTitle(g) {
     const t = MCU_GUIDE.title(g.target || g.preparesFor);
-    return t && /^\d{4}-\d{2}-\d{2}$/.test(t.release) ? t : null;
+    return t && /^\d{4}-\d{2}-\d{2}$/.test(relDay(t)) ? t : null;
   },
   // Whole days from one calendar date to another (both YYYY-MM-DD).
   daysBetween(from, to) {
@@ -291,7 +302,7 @@ Object.assign(MCU_GUIDE, {
     return MCU_GUIDE.all()
       .map(g => ({ guide: g, title: MCU_GUIDE.upcomingTitle(g) }))
       .filter(x => x.title)
-      .map(x => ({ ...x, days: MCU_GUIDE.daysBetween(today, x.title.release) }))
+      .map(x => ({ ...x, days: MCU_GUIDE.daysBetween(today, relDay(x.title)) }))
       .filter(x => x.days >= 1)
       .sort((a, b) => a.days - b.days || MCU_GUIDE.menuOrder(a.guide) - MCU_GUIDE.menuOrder(b.guide));
   },
@@ -737,7 +748,7 @@ function GuidesHero({ guide, followed, onPick }) {
           <li className={cn('g-hstop dest relative z-1 flex-none', done && 'hidden in-[.app.touch]:block')} aria-label={gtr('guide.destLabel', { title: GI18N.titleName(target) }) + (date ? ' · ' + date : '')}>
             <span className={cn(POSTER, 'h-24 w-16 rounded-md border-[1.5px] border-dashed border-muted-foreground in-[.app.touch]:h-12 in-[.app.touch]:w-8 [&>:first-child]:opacity-60')}>
               <window.PosterArt title={target}/>
-              {date && <span aria-hidden="true" className="absolute inset-x-1 bottom-1.5 z-2 rounded-full bg-black/60 px-1 py-0.5 text-center text-tag leading-[1.3] font-semibold whitespace-nowrap text-white/90 in-[.app.touch]:inset-x-0 in-[.app.touch]:bottom-0.5 in-[.app.touch]:text-card-micro">{date}</span>}
+              {date && <span aria-hidden="true" className="absolute inset-x-1 bottom-1.5 z-2 rounded-full bg-black/60 px-1 py-0.5 text-center text-tag leading-[1.3] font-semibold whitespace-nowrap text-white/90 in-[.app.touch]:inset-x-0 in-[.app.touch]:bottom-0.5 in-[.app.touch]:text-card-micro">{MCU_GUIDE.targetDate(guide, true)}</span>}
             </span>
           </li>
         )}
@@ -1096,8 +1107,8 @@ function GuideWidget({ guide, p, next, current = null, stepIndex = -1, currentId
             <span className="flex-none whitespace-nowrap">{count}</span>
           </span>
           {shown
-            ? <button type="button" className={cn(B.W_TITLE, 'gm-nextopen g-dock-next cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
-                aria-label={gtr('guide.openNextAria', { title: GI18N.titleName(shown) })}><span className="gm-ntitle">{GI18N.titleName(shown)}</span></button>
+            ? <button type="button" className={cn('gm-nextopen g-dock-next max-w-full cursor-pointer self-start rounded-sm text-left', FOCUS)} onClick={open}
+                aria-label={gtr('guide.openNextAria', { title: GI18N.titleName(shown) })} title={GI18N.titleName(shown)}><span className={cn('gm-ntitle', B.W_TITLE_2)}>{GI18N.titleName(shown)}</span></button>
             : <span className={cn(B.W_TITLE, 'gm-doneline g-dock-sub', complete ? 'text-(--seen-text)' : 'text-muted-foreground')}>{complete ? doneLine : MCU_GUIDE.size(guide)}</span>}
         </div>
         <button type="button" className={B.W_CLOSE} aria-label={gtr('guide.close')} title={gtr('guide.close')} onClick={onClose}>×</button>
@@ -1928,7 +1939,7 @@ function GuidePromo({ promo, touch, onStart, onClose }) {
 function PromoCountdown({ target, days, touch, label }) {
   const cd = cn('gp-cd flex items-end', touch ? 'gap-3 pr-12' : 'gap-3.5 pr-[52px]');
   if (!target) return <div className={cd} id="gp-cd"><span className="gp-lab inline-flex items-center gap-2 pt-2 pb-6 text-label font-bold tracking-[1.2px] text-white uppercase [&_i]:block [&_i]:size-2 [&_i]:rounded-[2px] [&_i]:bg-white"><i aria-hidden="true"/>{label}</span></div>;
-  const date = promoDateParts(target.release, !touch);
+  const date = promoDateParts(relDay(target), !touch);
   const word = days === 1;
   return (
     <div className={cd} id="gp-cd">
@@ -1958,7 +1969,7 @@ function GuideCaughtUp({ promo, touch, onClose }) {
   const cap = target ? 5 : 6;
   const shown = ess.length > cap ? ess.slice(0, cap - 1) : ess;
   const more = ess.length - shown.length;
-  const date = target ? promoDateParts(target.release, !touch) : null;
+  const date = target ? promoDateParts(relDay(target), !touch) : null;
   const when = target ? (days === 1 ? gtr('guide.promoTomorrow') : gtr('guide.promoIn', { n: days })) : '';
   const P = promoCls(touch);
   const share = g
@@ -2033,7 +2044,7 @@ function GuidePromoOffer({ promo, touch, onStart, onClose }) {
   const cap = target ? 5 : 6;
   const shown = ess.length > cap ? ess.slice(0, cap - 1) : ess;
   const more = ess.length - shown.length;
-  const date = target ? promoDateParts(target.release, !touch) : null;
+  const date = target ? promoDateParts(relDay(target), !touch) : null;
   const when = days === 1 ? gtr('guide.promoTomorrow') : gtr('guide.promoIn', { n: days });
   const P = promoCls(touch);
   const later = <Button type="button" variant="outline" className={P.later} onClick={onClose}>{gtr('guide.promoLater')}</Button>;

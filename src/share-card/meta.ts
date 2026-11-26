@@ -70,3 +70,27 @@ export function applyPreviewTags(html: string, t: PreviewTags): string {
   out = setCanonical(out, t.url);
   return out;
 }
+
+// The Portuguese pages (Notion "Findability 6"): each is a copy of its
+// English twin's HTML in Portuguese, at /pt/… (src/share-card/addresses.ts).
+
+/** <html lang="…">: what search engines and screen readers read the page as. */
+export function setHtmlLang(html: string, lang: string): string {
+  const re = /<html lang="[^"]*">/;
+  if (!re.test(html)) throw new Error('share-card: index.html has no <html lang="…">');
+  return html.replace(re, `<html lang="${attr(lang)}">`);
+}
+
+/** og:locale and its alternate (pt_BR first on a Portuguese page). */
+export function setOgLocale(html: string, locale: string, alternate: string): string {
+  return setMeta(setMeta(html, 'property', 'og:locale', locale), 'property', 'og:locale:alternate', alternate);
+}
+
+/** The links between a page's two languages, for <head>: each version names
+ *  both, and English is the default for every other language. Absolute
+ *  addresses, as search engines require. */
+export function hreflangLinks(en: string, pt: string): string {
+  return `<link rel="alternate" hreflang="en" href="${attr(en)}"/>`
+    + `<link rel="alternate" hreflang="pt-BR" href="${attr(pt)}"/>`
+    + `<link rel="alternate" hreflang="x-default" href="${attr(en)}"/>`;
+}

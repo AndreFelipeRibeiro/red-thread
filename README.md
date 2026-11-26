@@ -595,8 +595,13 @@ from a CDN, pinned and with an SRI hash. Inside the bundle the app's files
 share their components through `window.*` rather than imports; that is
 deliberate for now and docs/V4-PLAN.md §5 explains it.
 
-`boot.js` loads first and shows a startup screen inside `#root` (brand, spinner,
-"Loading…") until React's first render replaces it. A bundle that cannot load,
+`boot.js` loads first and shows a startup screen inside `#root` (the pin,
+"Loading…") until React's first render replaces it. The pin bounces: "Bounce",
+designed in LottieFiles Creator and shipped as CSS keyframes (`boot-bounce`,
+`boot-ripple-*` in `src/index.css`), so nothing downloads for it. `boot.js`
+picks the mode before the first paint (`<html data-boot-anim>`): when motion
+is reduced, or once startup has failed, the still pin shows with the spinner
+instead. A bundle that cannot load,
 or will not parse, or an error before that render turns it into a short
 explanation with a Reload button; a slow start says so after 25 seconds. The
 locale files and `i18n.js` stay plain classic scripts, loaded before the
@@ -801,7 +806,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | File | Purpose |
 |---|---|
 | `index.html` | Entry point; startup screen markup, the locale scripts, the pinned/SRI supabase-js script and the app bundle |
-| `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render; a classic script so it runs before the bundle |
+| `boot.js` | Startup screen states (loading, slow, failed start with Reload) and the bouncing pin before the first render; a classic script so it runs before the bundle |
 | `favicon.png`, `favicon-96.png`, `favicon.ico`, `apple-touch-icon.png` | Tab icon (the 96px PNG and the 48px .ico are the sizes search results can show) and home-screen icon, drawn from the logo mark by `tools/make-icons.js`. Link-preview images are drawn by the build (`scripts/og-previews.js`); the old `og-image.jpg` address redirects to the app-wide card |
 | `src/data/data.ts` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `src/data/media-data.ts` | TMDB poster and actor-portrait paths |

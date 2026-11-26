@@ -63,6 +63,36 @@ title's "Not saved" line. The strings live under `error.*` in
 `locales/*.js`; a new failure gets a new plain string there rather than
 showing `e.message`.
 
+## Titles named differently in Brazil
+
+The Portuguese app uses Brazil's official title. The English one stays
+searchable (a `titleAliases` entry or the English title itself), and each
+title's Portuguese page names it once as plain text ("também chamado de …")
+and as `alternateName` in its structured data, so searches for it still
+find the page (Notion "Findability 6", Andre 2026-11-23).
+
+| Title (id) | Use (English) | Use (Portuguese) | Not (in Portuguese) |
+| --- | --- | --- | --- |
+| `doomsday` | Avengers: Doomsday | Vingadores: Doutor Destino (in running text the full name: "Doutor Destino" alone is also the villain) | Vingadores: Doomsday |
+| `thunderbolts` | Thunderbolts* | *Os Novos Vingadores | Thunderbolts* (except as the theatrical name, once) |
+
+Avengers: Doomsday opens on 2026-12-17 in Brazil, a day before the US: the
+Portuguese app shows that day (`releases` in `locales/pt-BR.js`).
+
+## Page addresses
+
+Every page has an English and a Portuguese address (Notion "Findability 3"
+and "Findability 6"; Andre chose Portuguese words, 2026-11-24). The
+Portuguese slugs are frozen in `src/share-card/pt-slugs.ts`, so renaming a
+title later never breaks a link.
+
+| Page | English | Portuguese |
+| --- | --- | --- |
+| Home | `/` | `/pt` |
+| Guides | `/guides`, `/guides/<id>` | `/pt/guias`, `/pt/guias/<slug>` |
+| Titles | `/titles`, `/titles/<id>` | `/pt/titulos`, `/pt/titulos/<slug>` |
+| Characters | `/characters`, `/characters/<id>` | `/pt/personagens`, `/pt/personagens/<slug>` |
+
 ## Internal names that stay
 
 Code, CSS hooks, storage keys and QA checks keep their old names: `spatial`,
