@@ -505,8 +505,11 @@ It is switched on in the Vercel project's Analytics tab.
   edges, so it's clear the canvas pans; the first row sits below the count pill.
 - Marking a title seen or adding it to the watchlist pops the button and shows a
   toast with Undo; completing every released title in a phase (or the whole MCU)
-  adds confetti. Seen and Watchlist show a count badge (hidden at zero) that
-  animates as it changes. Motion is skipped with reduced motion.
+  adds confetti. The confetti is a Lottie animation ("A · Flutter", made in
+  LottieFiles Creator) whose player is fetched only when a visitor is one title
+  from a milestone, once the page is idle; until it arrives, the older canvas
+  confetti plays instead. Seen and Watchlist show a count badge (hidden at
+  zero) that animates as it changes. Motion is skipped with reduced motion.
 - A title not out yet has no Seen button until 7 days before its release day
   (for early screenings), and none at all while only the month is known; the
   Watchlist button is always there. Progress and Up next still count it only
@@ -834,6 +837,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/account.tsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
 | `src/app/about.tsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
 | `src/app/celebrate.tsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
+| `src/app/celebrate-lottie.ts`, `src/app/celebrations/` | The Lottie celebrations: the lazy player, the milestone burst and the small-win star pop, recolored from the theme's tokens |
 | `src/app/app.tsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `src/app/mobile.tsx` | Phone List, filters, details and accessible sheets |
 | `src/app/upnext.tsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.tsx`) |

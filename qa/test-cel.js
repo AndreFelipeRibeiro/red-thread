@@ -29,7 +29,12 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
       toast: t ? { text: t.innerText.replace(/\\n/g, ' | '), cls: t.className, top: Math.round(r.top), bottom: Math.round(innerHeight - r.bottom), cx: Math.round(r.left + r.width / 2), w: Math.round(r.width) } : null,
       confetti: !!document.querySelector('.mcu-confetti'), pop: document.querySelectorAll('.tsa-btn.pop').length };
   });
+  // The Lottie confetti (celebrate-lottie.ts): its player and files, which
+  // must only be fetched near a milestone.
+  const LOTTIE = /lottie_light|milestone-(up|down)|small-win/;
+  const lottieGets = (page) => { const got = []; page.on('request', r => { if (LOTTIE.test(r.url())) got.push(r.url().split('/').pop()); }); return got; };
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + SEED);
+  const dLottie = lottieGets(page);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.load = await st(page);
   await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(700);
@@ -70,7 +75,8 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
     if (!c || !t || !d) return { canvas: !!c, toast: !!t, drawer: !!d };
     const cr = c.getBoundingClientRect(), tr = t.getBoundingClientRect(), dr = d.getBoundingClientRect();
     const [ox1, ox2, oy] = (c.dataset.origin || '').split(',').map(Number);
-    return { canvasLeft: Math.round(cr.left), canvasRight: Math.round(cr.right), drawerLeft: Math.round(dr.left),
+    return { renderer: c.dataset.renderer, bursts: c.querySelectorAll('svg').length,
+      canvasLeft: Math.round(cr.left), canvasRight: Math.round(cr.right), drawerLeft: Math.round(dr.left),
       canvasCx: Math.round(cr.left + cr.width / 2), toastCx: Math.round(tr.left + tr.width / 2),
       toast: [Math.round(tr.left), Math.round(tr.right), Math.round(tr.top), Math.round(tr.bottom)], origin: [ox1, ox2, oy],
       toastZ: +getComputedStyle(t).zIndex, canvasZ: +getComputedStyle(c).zIndex };
@@ -81,11 +87,20 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
       errors.push('milestone confetti not aligned with the toast beside the details: ' + JSON.stringify(dc));
     else if (!(dc.origin[0] > dc.toast[0] && dc.origin[0] < dc.toast[0] + 40 && dc.origin[1] < dc.toast[1] && dc.origin[1] > dc.toast[1] - 40
       && dc.origin[2] > dc.toast[2] - 20 && dc.origin[2] < dc.toast[3] + 20 && dc.toastZ > dc.canvasZ))
-      errors.push('confetti does not start at the ends of the toast, behind it: ' + JSON.stringify(dc)); }
+      errors.push('confetti does not start at the ends of the toast, behind it: ' + JSON.stringify(dc));
+    // Unmarking The Avengers left Phase 1 one title short, which fetched the
+    // Lottie confetti; by now it has arrived, so this milestone plays it.
+    if (dc.renderer !== 'lottie' || dc.bursts !== 2)
+      errors.push('milestone did not play the Lottie confetti (two bursts) once it was fetched: ' + JSON.stringify({ renderer: dc.renderer, bursts: dc.bursts, fetched: dLottie })); }
+  out.dLottie = dLottie;
   await page.screenshot({ path: path.join(S, 'shots', 'cel-d-drawer-confetti.png') });
+  // It removes itself when it ends.
+  await page.waitForTimeout(2800);
+  if (await page.evaluate(() => !!document.querySelector('.mcu-confetti'))) errors.push('the Lottie confetti did not remove itself');
   out.dErrors = errors; await ctx.close();
   // fresh visitor: no badges until the first mark
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART));
+  const freshLottie = lottieGets(page);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.fresh = await st(page);
   out.vq = await page.evaluate(() => { const t = window.TITLES.find(x => x.id === 'visionquest'); return { cast: t.cast, paladin: window.CHARACTERS.paladin && window.CHARACTERS.paladin.actor, bnd: window.TITLES.find(x => x.id === 'brand-new-day').imdb, chars: Object.keys(window.CHARACTERS).length, titles: window.TITLES.length }; });
@@ -93,6 +108,9 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await row('Iron Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(120);
   out.firstMark = await st(page);
   await page.screenshot({ path: path.join(S, 'shots', 'cel-d-first.png'), clip: { x: 900, y: 50, width: 540, height: 80 } });
+  // Nowhere near a milestone: the Lottie confetti is never fetched.
+  await page.waitForTimeout(3500);
+  if (freshLottie.length) errors.push('a visit far from any milestone fetched the Lottie confetti: ' + freshLottie.join(', '));
   out.freshErrors = errors; await ctx.close();
   // phone
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, NOWELCOME + ART + SEED));
@@ -106,13 +124,34 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await mrow('Guardians of the Galaxy').locator('.tsa-btn.seen').tap(); await page.waitForTimeout(150);
   out.mList = await st(page);
   await page.screenshot({ path: path.join(S, 'shots', 'cel-m-list.png') });
-  // inside the details sheet: toast at the top and its Undo still works
+  // inside the details sheet: the toast stays at the bottom (Andre,
+  // 2026-11-26), over the sheet, and its Undo still works
   await page.locator('.m-lrow-open', { hasText: 'Ant-Man' }).first().tap(); await page.waitForTimeout(700);
   await page.locator('.m-sheet .tsa-btn.seen').tap(); await page.waitForTimeout(200);
   out.mSheet = await st(page);
+  if (!out.mSheet.toast || out.mSheet.toast.bottom > 120 || out.mSheet.toast.top < 380)
+    errors.push('the toast left the bottom while a sheet was open: ' + JSON.stringify(out.mSheet.toast));
   await page.screenshot({ path: path.join(S, 'shots', 'cel-m-sheet.png') });
   await page.locator('.mt-undo').tap(); await page.waitForTimeout(300);
   out.mSheetUndo = await page.locator('.m-sheet .tsa-btn.seen').getAttribute('aria-pressed');
+  // A milestone inside a sheet: the toast is at the bottom, and the Lottie
+  // burst rises from its ends. Unmarking The Avengers leaves Phase 1 one title
+  // short (all of it is seen in the seed), which fetches the Lottie confetti.
+  await page.locator('.m-sheet-x').first().tap(); await page.waitForTimeout(500);
+  await page.locator('.m-lrow-open', { hasText: 'The Avengers' }).first().tap(); await page.waitForTimeout(700);
+  await page.locator('.m-sheet .tsa-btn.seen').tap(); await page.waitForTimeout(4500);
+  await page.locator('.m-sheet .tsa-btn.seen').tap(); await page.waitForTimeout(400);
+  out.mSheetMilestone = await page.evaluate(() => {
+    const c = document.querySelector('.mcu-confetti'), t = document.querySelector('.mcu-toast');
+    const [, , oy] = c ? (c.dataset.origin || '').split(',').map(Number) : [];
+    const r = t && t.getBoundingClientRect();
+    return { renderer: c && c.dataset.renderer, bursts: c ? c.querySelectorAll('svg').length : 0, originY: oy,
+      toast: r ? [Math.round(r.top), Math.round(r.bottom)] : null, milestone: !!(t && t.classList.contains('milestone')) };
+  });
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-m-sheet-milestone.png') });
+  { const m = out.mSheetMilestone;
+    if (!m.milestone || m.renderer !== 'lottie' || m.bursts !== 2 || !m.toast || m.toast[0] < 380 || !(m.originY > m.toast[0] && m.originY < m.toast[1]))
+      errors.push('a milestone in a phone sheet did not burst from the toast at the bottom: ' + JSON.stringify(m)); }
   out.mErrors = errors; await ctx.close();
   console.log(JSON.stringify(out));
   await browser.close(); server.close();
