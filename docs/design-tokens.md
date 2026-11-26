@@ -44,7 +44,7 @@ primitive directly, in code or in Figma.
 The `:root` block is Light, `.dark` is Dark. Every value is an alias of a
 primitive (or of another color token: `progress` and `ring` are `brand`,
 the Dark canvas is `background`); only
-`progress-track` and `canvas-dot`, which mix a color with transparency in
+`canvas-dot`, which mixes a color with transparency in
 code, hold computed values per mode. `thread-rest` (the resting threads'
 opacity, 42% / 55%) lives here too, as a number.
 
@@ -52,14 +52,14 @@ opacity, 42% / 55%) lives here too, as a number.
 | --- | --- |
 | Surfaces and text | `background`, `foreground`, `card`, `card-foreground`, `popover`, `popover-foreground`, `secondary`, `secondary-foreground`, `muted`, `muted-foreground`, `accent`, `accent-foreground`, `border`, `input` |
 | Accent (red) | `brand`, `primary`, `primary-foreground`, `ring`, `destructive`, `logo` |
-| Progress | `progress`, `progress-track` (complete progress is `seen`) |
+| Progress | `progress` (the track still ahead is `brand-tint-strong`; complete progress is `seen`) |
 | Collection status | `seen`, `seen-foreground`, `seen-text`, `status-watch`, `on-color` (ink on any solid color fill: phase, Watchlist, brand) |
 | Phases | `phase-1` … `phase-6` |
 | On artwork (same in both modes) | `on-image`, `on-image-dim`, `on-image-muted`, `on-image-ground`, `on-image-base` |
 | Score marks (same in both modes) | `imdb`, `rt`, `rt-text` |
 | Connections canvas | `canvas-top`, `canvas-bottom` (Light: `neutral-97` to `neutral-95`), `canvas-dot` |
 | Controls (shadcn at rest) | `field`, `button-outline`, `destructive-tint`, `switch-track`, `switch-thumb`, `invalid-border`, `invalid-ring` |
-| Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `guide-current`, `highlight-border`, `control-surface`, `chip`, `chip-border`, `chip-imdb`, `chip-rt`, `chip-muted` |
+| Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `guide-current`, `highlight-border`, `control-surface`, `chip`, `chip-imdb`, `chip-rt`, `chip-muted` |
 
 **Translucent colors** (2026-11-18, Notion "Library: translucent strokes
 and fills render solid outside the library"): a paint bound to a variable
@@ -67,8 +67,10 @@ keeps only the variable's own alpha in other Figma files, so a color the
 code writes as a token at an opacity (a Tailwind modifier) is a Figma color
 token carrying that alpha, per mode: `popover-ring` (`ring-foreground/10`),
 `border-soft` (`border-border/70`; 7% in Dark, 70% of its 10%),
-`background-glass` (`bg-background/95`, and the phone app bar's 94%),
-`on-image-veil` (`on-image-base` at 78%), `seen-foreground-soft`
+`background-glass` (`bg-background/95`, the floating cards over the Connections
+canvas that cards can pan under; the app bars and band labels are solid
+`background` since 2026-11-26, because nothing scrolls under them),
+`seen-foreground-soft`
 (`seen-foreground` at 90%), `foreground-strong` (`foreground` at 85%) and
 `muted-soft` (`muted` at 50%), and since 2026-11-22 `muted-foreground-soft`
 (`muted-foreground` at 60%, the Guide destination poster's dashed border). The
@@ -81,10 +83,10 @@ token at an opacity in Dark (`bg-transparent dark:bg-input/30`). One Figma
 variable can't follow a class like that, so those colors are tokens with a
 value per theme, the same colors as the classes gave (checked element by
 element in both themes). Aliases where a theme's value is a token; computed
-values where it is a mix, as for `progress-track`. Hover, focus and pressed
+values where it is a mix, as for `destructive-tint`. Hover, focus and pressed
 states stay classes.
 
-`progress`, `ring`, `progress-track` and the Dark canvas
+`progress`, `ring` and the Dark canvas
 values point at other tokens in code; in Figma they are aliases of those
 variables, not copies.
 
@@ -93,7 +95,12 @@ the ten color aliases"): ten groups of roles had the same Light and Dark
 values. Four were duplicates and are merged: `brand-foreground` into
 `on-color`, `progress-done` into `seen`, `button-outline-border` into
 `input` (the outline button's edge is the fields' edge in both themes), and
-`switch-thumb-off` into `switch-thumb` (one thumb color, on or off). The
+`switch-thumb-off` into `switch-thumb` (one thumb color, on or off). A
+second pass the same day merged three near-duplicates, each approved on a
+side-by-side: `progress-track` (brand at 22%) into `brand-tint-strong` (20%),
+`on-image-veil` (`on-image-base` at 78%, the connections count on a card's
+poster) into `on-image-ground` (82%), and `chip-border` into `input` (Dark
+went from 14% to 15% white). The
 rest stay separate on purpose: shadcn's own roles (`card` and `popover`;
 `secondary`, `muted` and `accent`; the foregrounds), which its components
 reference; and ideas that only match today (`phase-1` and `status-watch`;
@@ -118,7 +125,12 @@ one per theme, in `Light/` and `Dark/` folders (`Light/elevation-card`,
 
 The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
 `shadow-md` and `shadow-lg`; they are effect styles `tailwind/shadow-xs` …
-`tailwind/shadow-lg` with Tailwind's values.
+`tailwind/shadow-lg` with Tailwind's values. Dark `elevation-card` has the
+same value as `shadow-sm`. It stays written out in `src/index.css`, because
+Tailwind doesn't expose `--shadow-sm` at runtime: its utilities inline the
+value, so `var(--shadow-sm)` would be empty. Use the named shadows
+(`shadow-mark` and the rest), never a raw `shadow-[…]` for a shadow one of
+them already gives (2026-11-26, Notion "Tokens: second consolidation pass").
 
 ### Type (one mode) → number variables + text styles
 
@@ -162,10 +174,20 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
 
 ### Radius, spacing and sizes (one mode)
 
-- `radius` (0.625rem), and the scale derived from it: `radius-sm`,
-  `radius-md`, `radius-lg`, `radius-xl`, `radius-2xl`, `radius-3xl`,
-  `radius-4xl` (as Figma variables with the computed px; 2xl and 3xl are
-  unused today).
+- `radius` (0.625rem), and the scale derived from it: `radius-xs` (4px,
+  since 2026-11-26), `radius-sm`, `radius-md`, `radius-lg`, `radius-xl`,
+  `radius-2xl`, `radius-3xl`, `radius-4xl` (as Figma variables with the
+  computed px; 2xl and 3xl are unused today).
+- **Corners use the named sizes, never a one-off `rounded-[Npx]`**
+  (2026-11-26, Notion "Tokens: second consolidation pass"; Andre approved
+  each step on a side-by-side): 14px is `rounded-xl`, 10px `rounded-lg`, 7px
+  `rounded-md`, and 5, 4 and 3px `rounded-xs`; a pill or circle is
+  `rounded-full`. The named sizes are rem-based, so they follow the text
+  size: at the phone's Default (112.5%) `rounded-lg` is 11.25px, which is
+  fine (Andre). Left as px: the 1 and 2px radii of thin bars and marks.
+  Phone components in Figma are drawn at 112.5%, so their radii are the
+  scaled values (4.5, 9, 11.25, 15.75) and aren't bound to the one-mode
+  radius variables; desktop components bind them.
 - `spacing`, the 4px unit every padding and gap multiplies, plus Figma-only
   steps for binding (`spacing-0_5` … `spacing-16`; a dot can't go in a Figma
   name) whose code syntax is the real expression, `calc(var(--spacing) * 2.5)`.

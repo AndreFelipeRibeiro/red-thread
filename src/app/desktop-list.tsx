@@ -347,10 +347,10 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, charM
                         {/* Seen: the cards' quiet mark in the poster's corner
                             (Andre, 2026-11-15: no dimming, every row at full
                             strength; the mark and the green check say it). */}
-                        <span className={cn('dl-thumb relative block rounded-[5px]', THUMB_SIZE, THUMB)}>
+                        <span className={cn('dl-thumb relative block rounded-xs', THUMB_SIZE, THUMB)}>
                           <PosterArt title={t}/>
                           {seen && (
-                            <span className="dl-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-[0_1px_4px_rgba(0,0,0,.45)] @min-[84rem]:size-5 [&_svg]:size-2.5 @min-[84rem]:[&_svg]:size-3"
+                            <span className="dl-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-mark @min-[84rem]:size-5 [&_svg]:size-2.5 @min-[84rem]:[&_svg]:size-3"
                               role="img" aria-label={tr('status.seen')}><window.CheckIcon/></span>
                           )}
                         </span>

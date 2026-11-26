@@ -136,7 +136,7 @@ export function FiltersMenu({ collectionFilter, setCollectionFilter, phaseFilter
           <span className="filters-label max-[1280px]:hidden">{tr('filters.title')}{activeFilters ? ' ·' : ''}</span>
           {activeFilters ? <span className="fcount inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-label font-medium text-primary-foreground tabular-nums min-[1280px]:-ml-1 min-[1280px]:h-auto min-[1280px]:min-w-0 min-[1280px]:bg-transparent min-[1280px]:px-0 min-[1280px]:text-foreground">{activeFilters}</span> : null}
         </PopoverTrigger>
-        <PopoverContent align="end" sideOffset={9} className="filters-pop w-[380px] max-w-[calc(100vw-24px)] gap-0 rounded-[14px] px-4 pt-3 pb-3.5">
+        <PopoverContent align="end" sideOffset={9} className="filters-pop w-[380px] max-w-[calc(100vw-24px)] gap-0 rounded-xl px-4 pt-3 pb-3.5">
           <FiltersPanel f={f}/>
         </PopoverContent>
       </Popover>
@@ -166,7 +166,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
   const guideOn = !!guideId;
   const Off = window.GuideOff;
   return (
-    <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col border-b border-border bg-background/95 px-(--grid-margin) py-2.5 backdrop-blur-md" role="banner">
+    <div className="toolbar in-[.app.touch]:hidden sticky top-0 z-70 flex flex-col border-b border-border bg-background px-(--grid-margin) py-2.5" role="banner">
       <div ref={topRow} className="tb-row tb-top-row group/toprow flex min-w-0 items-center gap-3 max-[1100px]:gap-2">
         {/* The logo is a link home: it resets the app in place (onHome). */}
         <a className="brand group/brand flex min-w-0 shrink-0 items-center gap-3 rounded-lg text-inherit no-underline outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -188,7 +188,7 @@ export function Toolbar({ onHome, guideId, onAbout, onSettings, settingsOpen, on
           <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
           <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson} onSubmit={onSubmitSearch}
             ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')} portalTo={null}/>
-          <kbd className="search-kbd shrink-0 group-data-[fit=3]/toprow:hidden group-data-[fit=4]/toprow:hidden rounded-[5px] border border-border px-1.5 font-sans text-label leading-[18px] text-muted-foreground" aria-hidden="true" title={tr('search.slash')}>/</kbd>
+          <kbd className="search-kbd shrink-0 group-data-[fit=3]/toprow:hidden group-data-[fit=4]/toprow:hidden rounded-xs border border-border px-1.5 font-sans text-label leading-[18px] text-muted-foreground" aria-hidden="true" title={tr('search.slash')}>/</kbd>
         </div>
         {/* Sort and Filters on Connections and Titles (not Guides): the same
             top layer on both (Andre, 2026-11-15). */}

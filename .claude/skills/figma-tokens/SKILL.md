@@ -75,7 +75,7 @@ Figma leads, so the code follows Figma:
 - **New variables**: add the token in the same place, with the same name
   (no `--` in Figma), and its row in `docs/design-tokens.md`.
 - **Mixes go stale in Figma.** Figma stores a `color-mix()` token
-  (`progress-track`, the `*-tint`, `*-border` and `*-text` roles) as a plain
+  (the `*-tint`, `*-border` and `*-text` roles) as a plain
   value, so a changed primitive leaves its mixes behind in Figma while the
   code follows by itself. Once the mix's inputs agree, the check prints the
   value Figma should hold; updating it is a write to the library (the

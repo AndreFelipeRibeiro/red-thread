@@ -76,7 +76,7 @@ export function MenuSwitch({ options, value, onChange, label, tall = false, clas
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn('menu-switch flex gap-0.5 rounded-[10px] bg-muted p-[3px]', className)}>
+    <div role="radiogroup" aria-label={label} className={cn('menu-switch flex gap-0.5 rounded-lg bg-muted p-[3px]', className)}>
       {options.map((o) => {
         const on = o.value === value;
         const iconOnly = !!o.icon && !on;
@@ -116,7 +116,7 @@ function SortList({ sort, sortDir, onPick, onFlip, phone }: {
           const tag = SORT_TAG[key];
           return (
             <button key={key} type="button" role="radio" aria-checked={on} aria-pressed={on} data-sort={key} data-dir={DEFAULT_DIR[key]}
-              className={cn('sort-row flex w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 text-left outline-none transition-colors hover:bg-muted/70 focus-visible:ring-3 focus-visible:ring-ring/50',
+              className={cn('sort-row flex w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 text-left outline-none transition-colors hover:bg-muted/70 focus-visible:ring-3 focus-visible:ring-ring/50',
                 phone ? 'min-h-[max(58px,3.625rem)] py-2' : 'min-h-[max(50px,3.125rem)] py-1.5', on && 'on bg-muted hover:bg-muted')}
               onClick={() => onPick(key)}>
               {/* The radio: the accent fill with a light dot once chosen. */}
@@ -126,13 +126,13 @@ function SortList({ sort, sortDir, onPick, onFlip, phone }: {
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className={cn('flex items-center gap-1.5 text-label text-foreground', on ? 'font-semibold' : 'font-medium')}>
-                  {tag && <span aria-hidden="true" className={cn('rounded-[4px] px-[5px] py-px leading-[1.2] font-bold', XS_TAG, tag[1])}>{tag[0]}</span>}
+                  {tag && <span aria-hidden="true" className={cn('rounded-xs px-[5px] py-px leading-[1.2] font-bold', XS_TAG, tag[1])}>{tag[0]}</span>}
                   <span className="truncate">{tr('sortmenu.name.' + key)}</span>
                 </span>
                 <span className="truncate text-caption leading-[1.4] text-muted-foreground">{tr('sortmenu.desc.' + key)}</span>
               </span>
               {/* Its key (Notion "Keyboard shortcuts"), while the keys are on. */}
-              {!phone && keysOn && <kbd aria-hidden="true" className="sort-key inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-[5px] border border-b-2 bg-background px-1 font-sans text-caption font-medium text-muted-foreground">{KEY_OF_SORT[key]}</kbd>}
+              {!phone && keysOn && <kbd aria-hidden="true" className="sort-key inline-flex h-5 min-w-5 flex-none items-center justify-center rounded-xs border border-b-2 bg-background px-1 font-sans text-caption font-medium text-muted-foreground">{KEY_OF_SORT[key]}</kbd>}
             </button>
           );
         })}
@@ -206,7 +206,7 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
         {/* Opening puts focus on the current sort. */}
         <PopoverContent align="start" sideOffset={8}
           initialFocus={() => document.querySelector<HTMLElement>('.sort-menu-pop [aria-pressed="true"]')}
-          className="sort-menu-pop max-h-[min(80vh,600px)] w-[320px] max-w-[calc(100vw-24px)] gap-1 overflow-y-auto rounded-[14px] p-2" aria-label={tr('sortmenu.title')}>
+          className="sort-menu-pop max-h-[min(80vh,600px)] w-[320px] max-w-[calc(100vw-24px)] gap-1 overflow-y-auto rounded-xl p-2" aria-label={tr('sortmenu.title')}>
           <SortList sort={sort} sortDir={sortDir} onPick={pick} onFlip={flip} phone={false}/>
         </PopoverContent>
       </Popover>

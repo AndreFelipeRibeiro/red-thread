@@ -238,7 +238,7 @@ counterpart (same tools, `tools/figma/README.md`):
   translucent color is a token that carries its alpha, with the paint's
   opacity equal to that alpha (`seen-tint`, `brand-tint`, and since
   2026-11-18 `popover-ring`, `border-soft`, `background-glass`,
-  `on-image-veil`, `seen-foreground-soft`, `foreground-strong`,
+  `seen-foreground-soft`, `foreground-strong`,
   `muted-soft`, and since 2026-11-22 `muted-foreground-soft`;
   `docs/design-tokens.md`). Published and checked in Screens
   on 2026-11-18: the popover and dialog outlines resolve to 10%. Left: the

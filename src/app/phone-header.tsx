@@ -88,7 +88,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
   };
   const ICON_BTN = 'size-[max(38px,2.375rem)] flex-[0_0_38px] p-0 transition-[scale,background-color,color,border-color,box-shadow] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100';
   return (
-    <div role="banner" className={cn('m-appbar z-50 flex flex-[0_0_auto] flex-col gap-2.5 border-b border-border bg-background/94 px-3.5 pt-2.5 pb-[11px] backdrop-blur-md min-[600px]:px-5 min-[600px]:pt-3 min-[600px]:pb-[13px]',
+    <div role="banner" className={cn('m-appbar z-50 flex flex-[0_0_auto] flex-col gap-2.5 border-b border-border bg-background px-3.5 pt-2.5 pb-[11px] min-[600px]:px-5 min-[600px]:pt-3 min-[600px]:pb-[13px]',
       guideActive && 'guide')}>
       {guideActive && section === 'explore' && <window.GuideOffHint/>}
       <div className="m-appbar-top flex items-center justify-between gap-2">
@@ -130,7 +130,7 @@ export function MobileTopBar({ onHome, section, search, setSearch, onPickTitle, 
               onClick={onOpenFilters} aria-label={filterCount ? tr('filters.aria', { n: filterCount }) : tr('filters.title')} title={tr('filters.title')}>
               <svg className="size-[14px]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
               <span className="group-data-[fit=3]/toolrow:sr-only group-data-[fit=4]/toolrow:sr-only group-data-[fit=5]/toolrow:sr-only">{tr('filters.title')}</span>
-              {filterCount ? <span className="m-fcount absolute tabular-nums -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-[9px] bg-primary px-1 text-label font-bold text-primary-foreground">{filterCount}</span> : null}
+              {filterCount ? <span className="m-fcount absolute tabular-nums -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-primary px-1 text-label font-bold text-primary-foreground">{filterCount}</span> : null}
             </Button>
           </Off>
           {/* The Seen and Watchlist pills and "Mark what you've seen", in
@@ -169,7 +169,7 @@ export function MobileNavBar({ section, onSection, onReselect }: { section: Phon
   window.useI18n();
   return (
     <div className="m-navbar relative z-30 flex-[0_0_auto] bg-background">
-      <nav className="m-tabs relative z-30 flex flex-[0_0_auto] items-stretch border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom,8px)] backdrop-blur-md" aria-label={tr('nav.aria')}>
+      <nav className="m-tabs relative z-30 flex flex-[0_0_auto] items-stretch border-t border-border bg-background pb-[env(safe-area-inset-bottom,8px)]" aria-label={tr('nav.aria')}>
         {(['explore', 'mylist', 'guides'] as PhoneSection[]).map((v) => (
           <button key={v} type="button" data-section={v} aria-current={section === v ? 'page' : undefined}
             className={cn('m-tab flex min-h-[60px] flex-1 cursor-pointer flex-col items-center justify-center gap-[5px] border-0 bg-transparent px-0.5 pt-2.5 pb-2 text-[length:max(12px,calc(var(--fs-caption)*var(--fs-chrome-scale,1)))] leading-[1.3] font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset [-webkit-tap-highlight-color:transparent]',

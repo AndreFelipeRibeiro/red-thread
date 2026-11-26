@@ -54,7 +54,7 @@ function PickPoster({ title }) {
 // A thin progress bar: red fill on its track, the app's --progress tokens.
 function PkBar({ value, className }) {
   return (
-    <span aria-hidden="true" className={cn('pk-bar block overflow-hidden rounded-full bg-(--progress-track)', className)}>
+    <span aria-hidden="true" className={cn('pk-bar block overflow-hidden rounded-full bg-(--brand-tint-strong)', className)}>
       <span className="block h-full rounded-full bg-(--progress) transition-[width] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none" style={{ width: `${Math.round(value * 1000) / 10}%` }}/>
     </span>
   );
@@ -228,7 +228,7 @@ function SeenPicker({ touch, onClose }) {
                       <span aria-hidden="true" className={cn('pk-tick absolute right-1.5 bottom-1.5 flex items-center justify-center rounded-full shadow-mark',
                         touch ? 'size-[26px]' : 'size-6',
                         on ? 'on bg-(--seen) text-(--seen-foreground) [&_svg]:size-3.5' : 'border-2 border-white/85 bg-black/20')}>{on && <window.CheckIcon/>}</span>
-                      {watch && !on && <span className="pk-wl absolute top-1.5 left-1.5 flex size-5 items-center justify-center rounded-[5px] bg-black/75 text-(--status-watch) [&_svg]:size-[11px]" aria-hidden="true"><window.BookmarkIcon filled/></span>}
+                      {watch && !on && <span className="pk-wl absolute top-1.5 left-1.5 flex size-5 items-center justify-center rounded-xs bg-black/75 text-(--status-watch) [&_svg]:size-[11px]" aria-hidden="true"><window.BookmarkIcon filled/></span>}
                     </button>
                   );
                 })}

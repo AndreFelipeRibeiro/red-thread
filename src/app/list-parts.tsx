@@ -58,7 +58,7 @@ export const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-
 // (List rows and columns, the cards' covers, the details), at the 12px floor
 // and growing only with the Large text size; tighter padding.
 const SC_TEXT = 'text-caption leading-[1.25]';
-const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-[4px] border border-(--chip-border) bg-(--chip) px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums';
+const CHIP = 'm-sc flex flex-none items-center gap-[3px] rounded-xs border border-input bg-(--chip) px-[5px] py-[2px] font-bold whitespace-nowrap tabular-nums';
 const TAG = 'tg rounded-[2px] px-[3px] py-0 font-extrabold tracking-[.2px]';
 
 export function ScoreChip({ kind, title, compact = false, className }: { kind: 'imdb' | 'rt'; title: Title; compact?: boolean; className?: string }) {
@@ -329,7 +329,7 @@ export function PhoneRow({ t, rank, ranked, lead, story = false, seen, watch, cu
         upNext && 'up-next border-(--brand-border) bg-(--brand-tint)')}>
       {upNext && <span className="m-next-bar absolute top-3 bottom-3 left-[-1px] w-[3px] animate-[un-in_260ms_ease_both] rounded-full bg-(--brand) motion-reduce:animate-none" aria-hidden="true"/>}
       <button className="m-lrow-open flex min-w-0 flex-1 cursor-pointer items-center gap-[11px] rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50" onClick={() => onSelect(t.id)}>
-        <div className={cn('m-lthumb relative h-[60px] w-10 flex-[0_0_40px] rounded-[5px]', THUMB)}>
+        <div className={cn('m-lthumb relative h-[60px] w-10 flex-[0_0_40px] rounded-xs', THUMB)}>
           <PosterArt title={t}/>
           {seen && (
             <span className="m-seen absolute top-[3px] right-[3px] inline-flex size-4 items-center justify-center rounded-full border border-(--seen) bg-(--seen) text-(--seen-foreground) shadow-mark [&_svg]:size-2.5"

@@ -435,7 +435,7 @@ function StatusToast({ touch }) {
         toast.to, star && 'border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', m && 'milestone', half && 'small-win halfway', first && 'small-win first-title', latest && 'small-win up-to-date', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
-        <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-[9px] text-title text-(--on-color) [&_svg]:size-4',
+        <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-md text-title text-(--on-color) [&_svg]:size-4',
           star ? 'bg-linear-to-br from-[#f0c34a] to-[#e84a3a] text-white' : toast.to === 'watchlist' ? 'bg-(--status-watch)' : toast.to === 'none' ? 'bg-border text-foreground' : 'bg-(--seen) text-(--seen-foreground)')}>
           {star ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>

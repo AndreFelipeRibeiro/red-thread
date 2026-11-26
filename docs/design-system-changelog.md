@@ -23,6 +23,40 @@ Those entries are rebuilt from CHANGELOG.md, the git history of
 Notion tickets. To see one of those states in Figma, open the file's version
 history (File → Show version history) at the entry's date.
 
+## Screens · 2026-11-26 · Solid bars, radii, three color merges
+
+- **App Screens:** took today's three Design System releases with Update all ("Foundations reboot, four color merges", "Solid bars, named corner radii", "Three color merges").
+  - **Before the update:** 46 overrides moved off the merged variables: 30 strokes to `input`, and 16 more off `progress-track`, `on-image-veil` and `chip-border`.
+  - **After the update:** 4 Phone Details sheet chip strokes moved to `input`. Two of them dropped a hand-set 14% opacity that doubled the token's own.
+  - **Phone page:** Update all had missed it. 52 instances (Phone app bar, Phone title rows, Phone nav bar, Details sheet) were still on the old library copy; they were swapped to the latest, with their overrides kept. Every instance on both pages is now on the latest version.
+  - **Scan:** no references to deleted variables, and no corner-radius overrides. The two Titles Up next rows keep fill overrides that equal their component's.
+- **Ticket:** [Tokens: second consolidation pass](https://app.notion.com/p/4249e188029f8162b6defaced6350216).
+
+## DS · 2026-11-26 · Three color merges
+
+Published 2026-11-26 by Andre.
+
+- **Variables:** three near-duplicates merged, with every binding moved first (283 in the Design System, 16 overrides in App Screens). Color goes from 90 to 87 variables:
+  - `progress-track` (brand at 22%) into `brand-tint-strong` (20%);
+  - `on-image-veil` (78%, the connections count on a card's poster) into `on-image-ground` (82%);
+  - `chip-border` into `input` (Dark goes from 14% to 15% white).
+- **Foundations · Color · Roles:** the three rows removed; 86 roles.
+- **Ticket:** [Tokens: second consolidation pass](https://app.notion.com/p/4249e188029f8162b6defaced6350216), Batch 30 (with the code). Andre approved each on the comparison board.
+
+## DS · 2026-11-26 · Solid bars, named corner radii
+
+Published 2026-11-26 by Andre. App Screens took it the same day.
+
+- **Tier 1:** Foundations · Color · Roles shows `progress` and `ring` as "→ brand" rows, without swatches, since they only point at `brand`.
+- **Glass bars made solid:** App bar, Phone app bar, Phone nav bar and Band label use `background`, and their background blur is removed. Nothing ever scrolled under them, so the 95% `background-glass` never showed. `background-glass` stays for the Character card and Up next, which float over the Connections canvas.
+- **Corner radii:**
+  - New variable `radius-xs` (4px, `calc(var(--radius) * 0.4)`), with a row on Foundations · Spacing & radius.
+  - Desktop components' unbound corners are bound to the named radii.
+  - Desktop thumbnails, posters, the year tag and the keyboard key go from 3 or 5px to 4px, as `radius-xs`.
+  - Phone thumbnails and posters go to 4.5px, `radius-xs` at 112.5%.
+  - Circles, pills, 1 and 2px bars, and component-set containers are unchanged.
+- **Ticket:** [Tokens: second consolidation pass](https://app.notion.com/p/4249e188029f8162b6defaced6350216), Batch 30 (with the code).
+
 ## Screens · 2026-11-25 · Up next rows
 
 - **App Screens:** in Titles (Light, Dark), the Up next row had an old fill override, `brand` at a hand-set 10% opacity. A paint bound to a variable keeps a hand-set opacity only inside the library, so the Design System's re-publish turned that row solid red. It now uses the List row's own `brand-tint`, which carries its alpha. A scan of both pages found no other instance overriding its component's fill. The remaining differences are Dark-mode translucent tokens, whose opacity Figma takes from the token.
@@ -30,7 +64,7 @@ history (File → Show version history) at the entry's date.
 
 ## DS · 2026-11-26 · Foundations reboot, four color merges
 
-Published 2026-11-26 by Andre. One publish carries both pieces of work: the Foundations reboot and the token merges below. App Screens takes it with Update all; its row is logged once that is done.
+Published 2026-11-26 by Andre. One publish carries both pieces of work: the Foundations reboot and the token merges below. App Screens took it the same day ("Screens · 2026-11-26 · Solid bars, radii, three color merges").
 
 - **Variables:** four Color duplicates merged, with every binding moved first (322 in the Design System, 30 stroke overrides in App Screens; the rest of App Screens follows when it takes this update): `brand-foreground` into `on-color`, `progress-done` into `seen`, `button-outline-border` into `input`, `switch-thumb-off` into `switch-thumb`. Color goes from 94 to 90 variables. The survivors' descriptions name what they took in. Nothing changes on screen: each pair had the same values in both modes.
 - **Foundations · Color · Roles:** the four rows and their "Same as" chips removed; 89 roles. The page now says the remaining "Same as" roles are kept apart on purpose.
