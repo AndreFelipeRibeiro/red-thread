@@ -13,10 +13,76 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 27 — Startup loader: the bounce in CSS, no Lottie player
+
+Recorded: 2026-11-25 19:22 EST (-0500). Committed at 19:00 as
+[0eae20c](https://github.com/AndreFelipeRibeiro/red-thread/commit/0eae20c) by the Lottie session (Andre approved it there), pushed to `version/5.0` (V5 staging) on 2026-11-25 at 19:15 and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Full regression on the merged tree ([0eae20c](https://github.com/AndreFelipeRibeiro/red-thread/commit/0eae20c)'s, the tree that was pushed and merged): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/test-boot.js`: every loader case passes; its only `!!` is the intentional broken-bundle case. `qa/smoke.js` clean on staging and on production.
+
+- The Bounce animation is now CSS keyframes (`boot-bounce`, `boot-ripple-*` in `src/index.css`), driven by `boot.js`. lottie-web, its 46 KB player and `boot-loader.json` are gone, so nothing downloads beside the bundle while the app loads.
+- Reduced motion (Settings or the system) still shows the still pin and the ring.
+- Figma: the Startup loader component set (`234:716`) and the App Screens startup frames, published. The set's description changed to "ships as CSS keyframes" and needs a republish.
+
+## V5 Batch 27 — Findability 8 closes: phone speed on staging
+
+Recorded: 2026-11-25 19:22 EST (-0500). The two passes above ([fe74ce4](https://github.com/AndreFelipeRibeiro/red-thread/commit/fe74ce4), [5fe6bb6](https://github.com/AndreFelipeRibeiro/red-thread/commit/5fe6bb6)), with the CSS loader.
+- PageSpeed Insights (mobile) on staging, 19:17–19:18: 92, 90 and 93; LCP 2.2, 3.6 and 2.1 s; TBT 40–120 ms; CLS 0–0.01.
+- For comparison, production on 2026-11-24 read 81 and 81, with LCP 3.2 and 4.8 s.
+- The target (LCP under 2.5 s, 90+) holds on the median and on two runs of three. Google's estimate varies run to run.
+
+## V5 Batch 27 — test-settings: no more intermittent failures under load
+
+Recorded: 2026-11-25 19:22 EST (-0500). Committed on 2026-11-24 at 23:47 as [7cb9afe](https://github.com/AndreFelipeRibeiro/red-thread/commit/7cb9afe), pushed to `version/5.0` (V5 staging) on 2026-11-25 at 19:15 and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Covered by the full regression above.
+
+- The check, not the app. The card press waited a fixed 700 ms and sometimes landed while the canvas was still moving; it now waits until the card has stopped, and presses once more if nothing opens.
+- The slide was sampled frame by frame, which a busy machine skips. It now listens for the panels' `transitionrun` events and the moment Settings leaves.
+- Twelve runs in a row were clean, four of them under heavy CPU load. `qa/README.md` "Known noise" explains both causes.
+
+## V5 Batch 27 — Stepper: long titles wrap to two lines, then "…"
+
+Recorded: 2026-11-25 19:22 EST (-0500). Committed at 23:57 on 2026-11-24 as [35b57d2](https://github.com/AndreFelipeRibeiro/red-thread/commit/35b57d2), pushed to `version/5.0` (V5 staging) on 2026-11-25 at 19:15 and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23).
+
+- "Your Friendly Neighborhood Spider-Man" and "Seu Amigão da Vizinhança: Homem-Aranha" ran under the stepper's ⋯ and × and past its edge. The title was a button sized to its own text, so its ellipsis never applied.
+- Names on the floating cards now take up to two lines, then "…", with the full name on hover (`W_TITLE_2` in `banners.tsx`; Andre's rule): the stepper, the guide dock's next title, and the phone's All titles card.
+- New check `test-titlefit`: Peter Parker's 11 stops on desktop and phone, in English and Portuguese.
+- Andre waived the Figma gate for this push. The library follows in the Design ticket "Library: two-line names".
+
+## V5 Batch 27 — Findability 6: Portuguese pages at /pt, hreflang, and Brazil's names
+
+Recorded: 2026-11-25 19:22 EST (-0500). Committed at 00:24 as [392036b](https://github.com/AndreFelipeRibeiro/red-thread/commit/392036b), pushed to `version/5.0` (V5 staging) on 2026-11-25 at 19:15 and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). On production: `/pt`, `/pt/titulos/vingadores-doutor-destino` and the other Portuguese pages answer 200 with `lang="pt-BR"`. The sitemap lists 392 addresses, and IndexNow accepted all 392 (200).
+
+- **Addresses:** every page has a Portuguese address in Portuguese words (Andre, 2026-11-24): `/pt`, `/pt/guias`, `/pt/titulos/homem-de-ferro`, `/pt/personagens/peter-parker`. The 192 slugs are frozen in `src/share-card/pt-slugs.ts` (`tools/pt-slugs.mjs` makes new ones).
+- **Pages crawlers read:**
+  - each Portuguese page is its own copy with `lang="pt-BR"`, `og:locale` pt_BR, and Portuguese title, description, text and JSON-LD;
+  - every page in both languages names its twin with `hreflang`;
+  - the sitemap carries `xhtml:link` alternates;
+  - `middleware.ts` serves `/pt/…`.
+- **The app:** a `/pt` address opens it in Portuguese. Addresses and share links follow the language on screen, and switching language moves the address.
+- **Brazil's names** (Andre, 2026-11-23): "Vingadores: Doutor Destino" and "*Os Novos Vingadores". The guide is "Antes de Doutor Destino". The English names stay findable (an alias, "Título original: …", JSON-LD `alternateName`).
+- **Brazil's release day** for Doomsday, 2026-12-17, in the Portuguese app's dates, countdown and "released".
+- New check `test-ptpages`. `test-previews` covers the Portuguese pages. Four checks were updated to the new behavior.
+- The Portuguese pages reuse the English preview images for now.
+
+## V5 Batch 27 — Overflow pass: names wrap to two lines, no text runs past its box
+
+Recorded: 2026-11-25 19:22 EST (-0500). Committed at 00:42 as [ac99be1](https://github.com/AndreFelipeRibeiro/red-thread/commit/ac99be1), pushed to `version/5.0` (V5 staging) on 2026-11-25 at 19:15 and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23).
+
+- `qa/overflow-audit.js` checked 88 views (every surface, English and Portuguese, 1440, 1024, 375 and 320 px).
+  - Before: 6 pieces of text ran past their box, and 28 were cut without "…" (all false positives).
+  - Now: 0 and 0. The 184 "…" left are listed on the ticket.
+- Follow the thread, the Trail, and the cast list's names now get two lines, then "…".
+- The Guides page's date chip on phones takes Brazil's day and a compact form ("17 dez", "Dec 18"), and guides-ui counts to Brazil's day.
+- New check `test-overflow`. The rules are in `docs/STANDARDS.md` ("Text that doesn't fit"). The rule for labels is proposed and waits for Andre.
+
+## V5 Batch 27 — Figma records: Char mark
+
+Recorded: 2026-11-25 19:22 EST (-0500). Committed at 00:44 as [366420d](https://github.com/AndreFelipeRibeiro/red-thread/commit/366420d), pushed to `version/5.0` (V5 staging) on 2026-11-25 at 19:15 and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Docs and Figma tooling only.
+
+- Batch 26's Char mark in the repo's records: its row in `docs/figma-library.md`, its switch noted on the Spatial card, List row and Phone title row rows, and four entries in `tools/figma/components.json`. All four capture from the app.
+
 ## V5 Batch 27 — Findability 8 (second pass): supabase-js loads on demand
 
 Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:17 as
-[5fe6bb6](https://github.com/AndreFelipeRibeiro/red-thread/commit/5fe6bb6) and pushed to `version/5.0` (V5 staging) at 21:44, with the startup loader and the Figma records below. Not merged to `main`. Full regression on [4837cef](https://github.com/AndreFelipeRibeiro/red-thread/commit/4837cef)'s app tree, the tree that was pushed (4837cef adds only docs and Figma tooling): all 87 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on the staging preview.
+[5fe6bb6](https://github.com/AndreFelipeRibeiro/red-thread/commit/5fe6bb6) and pushed to `version/5.0` (V5 staging) at 21:44, with the startup loader and the Figma records below., and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Full regression on [4837cef](https://github.com/AndreFelipeRibeiro/red-thread/commit/4837cef)'s app tree, the tree that was pushed (4837cef adds only docs and Figma tooling): all 87 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on the staging preview.
 
 - A visitor who isn't signed in no longer downloads supabase-js (53 KB from unpkg) before the app can draw. `index.html` replaces its script tag with a small head script that holds the address and hash, and preloads it at once only when a session is saved (the `mcu.auth.v1` keys) or the address carries a Google return (`?code=`, `?error=`).
 - `src/supabase-client.ts`: `window.MCU_loadSupabase()` fetches it once and sends `mcu:supabase` when the client is ready or has failed. `src/app/account.tsx` follows the client as it arrives. A guest's Sign in fetches supabase-js first, then goes to Google. A session waiting on it shows "checking" and falls back to guest after 5 s.
@@ -33,7 +99,7 @@ Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:17 as
 ## V5 Batch 27 — Startup loader: the pin bounces while the app loads
 
 Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:27 as
-[54f184b](https://github.com/AndreFelipeRibeiro/red-thread/commit/54f184b) by the Lottie session, and pushed to `version/5.0` (V5 staging) at 21:44 in the same push. Not merged to `main`. Covered by the batch's full regression above. `qa/test-boot.js` (not in the regression) passes every loader case on the pushed tree. Its only `!!` is the intentional broken-bundle case.
+[54f184b](https://github.com/AndreFelipeRibeiro/red-thread/commit/54f184b) by the Lottie session, and pushed to `version/5.0` (V5 staging) at 21:44 in the same push., and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Covered by the batch's full regression above. `qa/test-boot.js` (not in the regression) passes every loader case on the pushed tree. Its only `!!` is the intentional broken-bundle case.
 
 - "Bounce", made in LottieFiles Creator: the pin from the logo lifts and pushes in with a ripple, a 1.2 s loop (`boot-loader.json`, 4.2 KB). It replaces the startup screen's spinner.
 - lottie-web 5.13.0, pinned. Its light SVG build (46 KB gzipped) is served at `/lottie-light.js`, not bundled. `boot.js` fetches it at low priority beside the bundle, and plays the animation once the markup is parsed and the stylesheet has sized the box.
@@ -43,14 +109,14 @@ Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:27 as
 ## V5 Batch 27 — Figma records: "Where it leads", the event guide's destination card
 
 Recorded: 2026-11-24 21:50 EST (-0500). Committed at 21:28 as
-[4837cef](https://github.com/AndreFelipeRibeiro/red-thread/commit/4837cef) by the Lottie session, and pushed to `version/5.0` at 21:44 in the same push. Docs and Figma tooling only, no app code.
+[4837cef](https://github.com/AndreFelipeRibeiro/red-thread/commit/4837cef) by the Lottie session, and pushed to `version/5.0` at 21:44 in the same push, and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Docs and Figma tooling only, no app code.
 
 - The repo records of the Design ticket "Library: Where it leads, the event guide's destination card…" (Completed 2026-11-23 without a commit): `docs/figma-library.md`, `docs/design-tokens.md`, and `tools/figma/` components, fingerprint and screens. They had sat uncommitted since then. Andre reviewed them and approved committing them.
 
 ## V5 Batch 27 — Findability 8 (first pass): first paint no longer waits on scripts, posters at the size shown
 
 Recorded: 2026-11-24 19:58 EST (-0500). Committed at 19:38 as
-[fe74ce4](https://github.com/AndreFelipeRibeiro/red-thread/commit/fe74ce4), pushed to `version/5.0` (V5 staging) at 19:51, not merged to `main`. The rest of Batch 27 joins before the merge. Full regression on fe74ce4's tree, the tree that was pushed: all 86 check runs clean, plus the accessibility scans in English, Portuguese and dark. `qa/smoke.js` clean on the staging preview.
+[fe74ce4](https://github.com/AndreFelipeRibeiro/red-thread/commit/fe74ce4), pushed to `version/5.0` (V5 staging) at 19:51, and merged to `main` (production) on 2026-11-25 at 19:19 as [02c8a23](https://github.com/AndreFelipeRibeiro/red-thread/commit/02c8a23). Full regression on fe74ce4's tree, the tree that was pushed: all 86 check runs clean, plus the accessibility scans in English, Portuguese and dark. `qa/smoke.js` clean on the staging preview.
 
 - `index.html`: the Google Fonts stylesheet for Bebas Neue and its two preconnects are gone. Nothing has used that face since the Monogram posters (Batch 8), and the stylesheet held up every first paint.
 - `index.html`: the classic scripts the bundle reads (`locales/en.js`, `locales/pt-BR.js`, `i18n.js`, supabase-js, `watch-data.js`) are now `defer` in `<head>`. They download at once and no longer stop the startup screen from painting. They still run in the same order before the bundle, which Vite places after them.
