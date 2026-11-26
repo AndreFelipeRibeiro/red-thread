@@ -508,8 +508,11 @@ It is switched on in the Vercel project's Analytics tab.
   adds confetti. The confetti is a Lottie animation ("A · Flutter", made in
   LottieFiles Creator) whose player is fetched only when a visitor is one title
   from a milestone, once the page is idle; until it arrives, the older canvas
-  confetti plays instead. Seen and Watchlist show a count badge (hidden at
-  zero) that animates as it changes. Motion is skipped with reduced motion.
+  confetti plays instead. A smaller win, a followed guide reaching halfway
+  (half its released essential stops, for a guide with at least four), shows
+  "Halfway there!" with a star pop from the toast's icon, fetched the same way
+  when one stop short. Seen and Watchlist show a count badge (hidden at zero)
+  that animates as it changes. Motion is skipped with reduced motion.
 - A title not out yet has no Seen button until 7 days before its release day
   (for early screenings), and none at all while only the month is known; the
   Watchlist button is always there. Progress and Up next still count it only

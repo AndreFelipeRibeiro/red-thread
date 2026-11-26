@@ -112,6 +112,64 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.waitForTimeout(3500);
   if (freshLottie.length) errors.push('a visit far from any milestone fetched the Lottie confetti: ' + freshLottie.join(', '));
   out.freshErrors = errors; await ctx.close();
+  // Small win: halfway through a followed guide (Notion "Small win: halfway
+  // through a guide"). Before Doomsday has 12 released essential stops and 5
+  // are seen, so the next one is halfway: "Halfway there!" with the star pop,
+  // fetched in advance because the visitor is one stop short.
+  const HALF_SEEN = ['infinity-war', 'endgame', 'loki-s1', 'shang-chi', 'no-way-home'];
+  const halfSeed = (extra) => "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:" + JSON.stringify(Object.fromEntries(HALF_SEEN.map(id => [id, 'seen']))) + "}));"
+    + "localStorage.setItem('mcu.guidesFollowed.v1', JSON.stringify([{ id: 'before-doomsday', at: 1 }]));" + (extra || '');
+  const halfProbe = (page) => page.evaluate(() => {
+    const t = document.querySelector('.mcu-toast'), p = document.querySelector('.mcu-starpop');
+    return { toast: t ? t.innerText.replace(/\\n/g, ' | ') : null, halfway: !!(t && t.classList.contains('halfway')),
+      pop: p ? { svg: p.querySelectorAll('svg').length, z: +getComputedStyle(p).zIndex, toastZ: t ? +getComputedStyle(t).zIndex : null, origin: p.dataset.origin } : null,
+      icon: (() => { const i = t && t.querySelector('.mt-ic'); if (!i) return null; const r = i.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })() };
+  });
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + halfSeed()));
+  const halfLottie = lottieGets(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('Doctor Strange in the Multiverse').locator('.tsa-btn.seen').click(); await page.waitForTimeout(450);
+  out.halfway = await halfProbe(page);
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-d-halfway.png'), clip: { x: 420, y: 640, width: 600, height: 260 } });
+  { const h = out.halfway;
+    if (!h.halfway || !/Halfway there!/.test(h.toast) || !/6 of 12 seen/.test(h.toast))
+      errors.push('halfway through a followed guide did not show its toast: ' + JSON.stringify(h));
+    else if (!h.pop || h.pop.svg !== 1 || !(h.pop.z > h.pop.toastZ))
+      errors.push('the halfway toast did not play the star pop above the toast: ' + JSON.stringify(h));
+    else { const [x, y] = h.pop.origin.split(',').map(Number);
+      if (Math.abs(x - h.icon[0]) > 8 || Math.abs(y - h.icon[1]) > 16) errors.push('the star pop did not start on the toast icon: ' + JSON.stringify(h)); } }
+  if (!halfLottie.some(u => /small-win/.test(u)) || halfLottie.some(u => /milestone/.test(u)))
+    errors.push('near halfway, only the star pop should be fetched: ' + halfLottie.join(', '));
+  // Undo, mark again: it shows again. One more mark, past halfway: it doesn't.
+  await page.locator('.mt-undo').click(); await page.waitForTimeout(300);
+  await row('Doctor Strange in the Multiverse').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.halfwayAgain = (await halfProbe(page)).halfway;
+  await page.waitForTimeout(1800);
+  await row('Black Panther: Wakanda Forever').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.pastHalfway = await halfProbe(page);
+  if (!out.halfwayAgain) errors.push('undo and mark again did not show the halfway toast again');
+  if (out.pastHalfway.halfway || !/Marked as seen/.test(out.pastHalfway.toast || '')) errors.push('a mark past halfway showed the halfway toast: ' + JSON.stringify(out.pastHalfway));
+  out.halfErrors = errors; await ctx.close();
+  // Celebrations off: the same mark gets an ordinary toast, and nothing is fetched.
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + halfSeed("localStorage.setItem('mcu.celebrations.v1', 'off');")));
+  const quietLottie = lottieGets(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('Doctor Strange in the Multiverse').locator('.tsa-btn.seen').click(); await page.waitForTimeout(400);
+  out.halfwayOff = await halfProbe(page);
+  if (out.halfwayOff.halfway || out.halfwayOff.pop || quietLottie.length) errors.push('with Celebrations off, halfway still celebrated: ' + JSON.stringify({ p: out.halfwayOff, fetched: quietLottie }));
+  out.halfOffErrors = errors; await ctx.close();
+  // ...and on a phone.
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, NOWELCOME + ART + halfSeed()));
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.waitForTimeout(3500);
+  await page.locator('.m-lrow', { hasText: 'Doctor Strange in the Multiverse' }).first().locator('.tsa-btn.seen').tap(); await page.waitForTimeout(450);
+  out.mHalfway = await halfProbe(page);
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-m-halfway.png') });
+  if (!out.mHalfway.halfway || !out.mHalfway.pop || out.mHalfway.pop.svg !== 1)
+    errors.push('halfway on a phone did not show the toast with the star pop: ' + JSON.stringify(out.mHalfway));
+  out.mHalfErrors = errors; await ctx.close();
   // phone
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, NOWELCOME + ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);

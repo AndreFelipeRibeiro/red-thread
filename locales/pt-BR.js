@@ -255,6 +255,9 @@ window.MCU_LOCALES['pt-BR'] = {
     'toast.phaseDoneSub': "Você viu todos os títulos lançados da Fase {n}.",
     'toast.allDone': "Você está em dia!",
     'toast.allDoneSub': "Você viu todos os títulos lançados do MCU.",
+    // A small win: a followed guide reaches half its released stops.
+    'toast.halfway': "Metade do caminho!",
+    'toast.halfwaySub': "{name} · {n} de {total} vistos",
     'collection.emptyWatchlist': 'Nada em Quero ver ainda',
     'collection.emptyWatchlistSub': 'Adicione títulos com o botão de marcador para planejar o que assistir.',
     'collection.emptySeen': 'Nada marcado como visto ainda',

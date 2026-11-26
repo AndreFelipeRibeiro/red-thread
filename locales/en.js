@@ -264,6 +264,9 @@ window.MCU_LOCALES.en = {
     'toast.phaseDoneSub': "You've seen every released Phase {n} title.",
     'toast.allDone': "You're all caught up!",
     'toast.allDoneSub': "You've seen every released MCU title.",
+    // A small win: a followed guide reaches half its released stops.
+    'toast.halfway': "Halfway there!",
+    'toast.halfwaySub': "{name} · {n} of {total} seen",
     'collection.emptyWatchlist': 'Your Watchlist is empty',
     'collection.emptyWatchlistSub': 'Add titles with the bookmark button to plan what to watch next.',
     'collection.emptySeen': 'Nothing marked as seen yet',

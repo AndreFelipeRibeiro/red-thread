@@ -64,6 +64,42 @@ function completedMilestoneBulk(e) {
   return null;
 }
 
+// A small win (Notion "Small win: halfway through a guide"): the mark that
+// brings a followed guide to halfway, half its released essential stops seen
+// (rounded up). Undo and mark again and it shows again; marks past halfway
+// never do. A guide with fewer than four released essential stops has no
+// halfway worth a toast. Not for the guide this mark started following (that
+// toast says "Following…" and its Undo stops following), nor one it finished.
+const HALFWAY_MIN = 4;
+function guideHalf(g, statusOf) {
+  const p = window.MCU_GUIDE.progress(g, statusOf);
+  return { seen: p.ess.seen, total: p.ess.released, half: Math.ceil(p.ess.released / 2), complete: p.complete };
+}
+function halfwayGuide(e) {
+  const G = window.MCU_GUIDE;
+  if (!G || (e.to !== 'seen' && e.to !== 'mixed')) return null;
+  const after = e.bulk ? e.after : Object.assign({}, e.states, { [e.title.id]: e.to });
+  for (const id of G.followed()) {
+    if (id === e.autoFollow || id === e.finishedGuide) continue;
+    const g = G.get(id);
+    if (!g) continue;
+    const a = guideHalf(g, (t) => after[t] || 'none'), b = guideHalf(g, (t) => e.states[t] || 'none');
+    if (a.total >= HALFWAY_MIN && !a.complete && b.seen < a.half && a.seen >= a.half) return { guide: g, seen: a.seen, total: a.total };
+  }
+  return null;
+}
+// One stop short of halfway in a followed guide: when the star pop is fetched.
+function nearHalfway(states) {
+  const G = window.MCU_GUIDE;
+  if (!G || !states || !window.MCU_PREFS.celebrations() || reducedMotion()) return false;
+  return G.followed().some(id => {
+    const g = G.get(id);
+    if (!g) return false;
+    const p = guideHalf(g, (t) => states[t] || 'none');
+    return p.total >= HALFWAY_MIN && !p.complete && p.seen === p.half - 1;
+  });
+}
+
 // One title from a milestone: the last released title of a phase, or of
 // everything, or the last stop of a guide being followed or open. That is when
 // the Lottie confetti is fetched (celebrate-lottie.ts), so a visit that never
@@ -128,13 +164,39 @@ function burstConfetti(palette) {
   // Off in Settings, or motion reduced.
   if (!window.MCU_PREFS.celebrations() || reducedMotion()) return;
   const W = celebrationArea().width || window.innerWidth, H = window.innerHeight;
-  // The phase colours are CSS tokens now (var(--phase-1)…), and neither a
-  // canvas nor the Lottie player can read var(): resolve each one first.
-  const root = getComputedStyle(document.documentElement);
-  const resolve = (c) => { const m = /^var\((--[\w-]+)\)$/.exec(c); return m ? root.getPropertyValue(m[1]).trim() || '#888' : c; };
-  const colors = (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['var(--seen)', '#d4a05a', '#ffffff'])).map(resolve);
+  const colors = celebrationColors(palette);
   if (celebrationReady('milestone')) { lottieBurst(W, colors); return; }
   canvasBurst(W, H, colors);
+}
+
+// The phase colours are CSS tokens now (var(--phase-1)…), and neither a
+// canvas nor the Lottie player can read var(): resolve each one first.
+function celebrationColors(palette) {
+  const root = getComputedStyle(document.documentElement);
+  const resolve = (c) => { const m = /^var\((--[\w-]+)\)$/.exec(c); return m ? root.getPropertyValue(m[1]).trim() || '#888' : c; };
+  return (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['var(--seen)', '#d4a05a', '#ffffff'])).map(resolve);
+}
+
+// "C · Star pop", a small win's celebration: from the toast's icon, above the
+// toast. Only once its file has been fetched (near the small win); otherwise
+// the toast shows alone. Small wins never fall back to the canvas confetti.
+function starPop() {
+  if (!window.MCU_PREFS.celebrations() || reducedMotion() || !celebrationReady('small-win')) return;
+  const layer = document.createElement('div');
+  layer.className = 'mcu-starpop pointer-events-none fixed inset-0 z-135';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(layer);
+  const colors = celebrationColors();
+  let tries = 0;
+  const launch = () => {
+    // This small win's own toast, not one still leaving.
+    const ic = document.querySelector('.mcu-toast.small-win .mt-ic');
+    if (!ic) { if (++tries <= 5) requestAnimationFrame(launch); else layer.remove(); return; }
+    const r = ic.getBoundingClientRect();
+    layer.dataset.origin = [r.left + r.width / 2, r.top + r.height / 2].map(Math.round).join(',');
+    playCelebration('small-win', layer, r.left + r.width / 2, r.top + r.height / 2, false, colors).then(() => layer.remove());
+  };
+  requestAnimationFrame(launch);
 }
 
 // "A · Flutter": one burst at each end, the left one mirrored, in a layer that
@@ -236,19 +298,24 @@ function StatusToast({ touch }) {
   // Close to a milestone: fetch the Lottie confetti while the page is idle.
   React.useEffect(() => {
     if (nearMilestone(states)) prefetchCelebrations(['milestone']);
+    if (nearHalfway(states)) prefetchCelebrations(['small-win']);
   }, [states]);
 
   React.useEffect(() => window.onStatusChange((e) => {
     // A single removal only updates the counters; a bulk one still gets its
     // toast, because "Mark as unseen" across many titles needs an Undo.
     if (e.to === 'none' && !e.bulk) return;
-    // Celebrations off in Settings: an ordinary toast, no confetti.
-    const milestone = e.to === 'seen' && window.MCU_PREFS.celebrations() ? (e.bulk ? completedMilestoneBulk(e) : completedMilestone(e)) : null;
+    // Celebrations off in Settings: an ordinary toast, no confetti. A
+    // milestone wins over a small win.
+    const cel = window.MCU_PREFS.celebrations();
+    const milestone = e.to === 'seen' && cel ? (e.bulk ? completedMilestoneBulk(e) : completedMilestone(e)) : null;
+    const halfway = !milestone && cel ? halfwayGuide(e) : null;
     if (milestone) burstConfetti();
-    setToast({ key: Date.now(), ...e, milestone, place: toastPlacement(touch) });
+    else if (halfway) starPop();
+    setToast({ key: Date.now(), ...e, milestone, halfway, place: toastPlacement(touch) });
   }), [touch]);
 
-  const life = toast && toast.milestone ? 6500 : 4500;
+  const life = toast && (toast.milestone || toast.halfway) ? 6500 : 4500;
   const arm = React.useCallback((ms) => {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setToast(null), ms);
@@ -276,22 +343,26 @@ function StatusToast({ touch }) {
   if (toast) {
     const I = window.MCU_I18N;
     const m = toast.milestone;
+    const half = toast.halfway;
+    const star = !!(m || half);
     const followed = !m && toast.autoFollow ? window.MCU_GUIDE.get(toast.autoFollow) : null;
     const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase })
+      : half ? tr('toast.halfway')
       : followed ? tr('toast.followed', { name: window.MCU_GUIDE.short(followed) })
       : toast.to === 'mixed' ? tr('toast.bulk.mixed', { s: toast.seenIds.length, u: toast.unseenIds.length })
       : toast.bulk ? tr('toast.bulk.' + toast.to, { n: toast.ids.length }) : I.titleName(toast.title);
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
+      : half ? tr('toast.halfwaySub', { name: window.MCU_GUIDE.short(half.guide), n: half.seen, total: half.total })
       : followed ? tr('toast.followedSub')
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
       <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-body text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
-        toast.to, m && 'milestone border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', touch && 'touch w-[calc(100vw-24px)]')}
+        toast.to, star && 'border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', m && 'milestone', half && 'small-win halfway', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
         <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-[9px] text-title text-(--on-color) [&_svg]:size-4',
-          m ? 'bg-linear-to-br from-[#f0c34a] to-[#e84a3a] text-white' : toast.to === 'watchlist' ? 'bg-(--status-watch)' : toast.to === 'none' ? 'bg-border text-foreground' : 'bg-(--seen) text-(--seen-foreground)')}>
-          {m ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
+          star ? 'bg-linear-to-br from-[#f0c34a] to-[#e84a3a] text-white' : toast.to === 'watchlist' ? 'bg-(--status-watch)' : toast.to === 'none' ? 'bg-border text-foreground' : 'bg-(--seen) text-(--seen-foreground)')}>
+          {star ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>
         <span className="mt-text flex min-w-0 flex-auto flex-col"><b className="truncate text-body font-semibold">{head}</b><span className={cn('text-caption', TOAST_DIM)}>{sub}</span></span>
         <Button variant="outline" size="sm" className="mt-undo h-auto min-h-[max(32px,2rem)] flex-none px-3 text-label font-semibold" onClick={undo}
@@ -369,7 +440,7 @@ function SignInNudge({ touch }) {
     if (!pending) return undefined;
     let timer;
     const check = () => {
-      if (document.querySelector('.m-sheet, .about-dialog, .mcu-confetti')) { timer = setTimeout(check, 700); return; }
+      if (document.querySelector('.m-sheet, .about-dialog, .mcu-confetti, .mcu-starpop')) { timer = setTimeout(check, 700); return; }
       if (accountRef.current.status !== 'signed_out') { setPending(null); return; }
       // Undone back under the threshold during the wait: drop the reminder and
       // hand its stage back, rather than opening with a count that no longer
