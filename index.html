@@ -101,17 +101,19 @@ window.MCU_SUPABASE_JS = {
 <body>
 <div id="root">
   <div id="mcu-boot" class="boot group flex min-h-screen min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center" data-state="loading" role="status" aria-live="polite">
-    <!-- The pin, still or bouncing (boot.js, <html data-boot-anim>). The box is
-         the animation's, 128px drawn at 78, which makes its pin the mark's 48px
-         tall. The still mark sits exactly where the animation's first frame
-         draws the pin, so the swap does not show. The paths take --logo, so
-         the animation follows the brand color as the mark does. -->
+    <!-- The pin, bouncing or still (boot.js sets <html data-boot-anim> before
+         the first paint). "Bounce" is CSS (boot-bounce and boot-ripple-* in
+         src/index.css), drawn in the 128px Lottie design's box at 78, so the
+         pin is the mark's 48px. The ripple sits under the pin's point, in
+         --logo like the mark. -->
     <div class="boot-anim relative size-[78px]" aria-hidden="true">
-      <div class="boot-mark logo-mark absolute top-[12.5px] left-[15px] size-[48px] [:root[data-boot-anim=playing]_&]:invisible" aria-hidden="true"></div>
-      <div class="boot-lottie absolute inset-0 [&_[fill^=rgb]]:fill-(--logo) [&_[stroke^=rgb]]:stroke-(--logo) [&_svg]:block"></div>
+      <div class="boot-ripple absolute top-[57.1px] left-[26.8px] h-[6.7px] w-[24.4px] opacity-0 [:root[data-boot-anim=playing]_&]:animate-[boot-ripple-fade_1.2s_linear_infinite]">
+        <div class="size-full rounded-[50%] border-[1.5px] border-(--logo) [:root[data-boot-anim=playing]_&]:animate-[boot-ripple-grow_1.2s_linear_infinite]"></div>
+      </div>
+      <div class="boot-mark logo-mark absolute top-[12.5px] left-[15px] size-[48px] [:root[data-boot-anim=playing]_&]:animate-[boot-bounce_1.2s_linear_infinite]" aria-hidden="true"></div>
     </div>
-    <!-- The ring, only when the pin can't bounce (motion reduced, or no player). -->
-    <div class="boot-spinner size-[22px] animate-[boot-spin_0.9s_linear_infinite] rounded-full border-2 border-muted border-t-foreground group-data-[state=failed]:hidden motion-reduce:[animation-duration:2.4s] [:root[data-boot-anim=pending]_&]:hidden [:root[data-boot-anim=playing]_&]:hidden" aria-hidden="true"></div>
+    <!-- The ring, only when the pin doesn't bounce (motion reduced). -->
+    <div class="boot-spinner size-[22px] animate-[boot-spin_0.9s_linear_infinite] rounded-full border-2 border-muted border-t-foreground group-data-[state=failed]:hidden motion-reduce:[animation-duration:2.4s] [:root[data-boot-anim=playing]_&]:hidden" aria-hidden="true"></div>
     <p class="boot-msg m-0 min-h-[1.4em] max-w-80 text-sm leading-[1.45] text-muted-foreground"></p>
     <button class="boot-reload h-9 min-h-9 cursor-pointer rounded-md border bg-background px-[18px] text-sm font-medium text-foreground shadow-xs outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50" type="button" hidden></button>
   </div>

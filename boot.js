@@ -12,32 +12,22 @@
 // button marked with an icon).
 //
 // The pin bounces while the app loads (Notion "Startup loader: a branded
-// Lottie animation instead of the plain spinner"). The screen first paints
-// the still pin. When motion is allowed, the Lottie player (/lottie-light.js,
-// vite.config.js) and the animation, "Bounce" (/boot-loader.json), download
-// beside the app at low priority. The pin then starts from the pose it was
-// already drawn in, so nothing jumps. <html data-boot-anim> says which is on
-// screen:
-// - pending: the still pin, while the player loads.
-// - playing: the animation.
+// Lottie animation instead of the plain spinner"). "Bounce" was designed in
+// LottieFiles Creator and ships as CSS keyframes (src/index.css): no player
+// to download. A Lottie player fetched beside the bundle cost about 0.3 s of
+// mobile LCP on a slow load, even when it waited a second (Lighthouse,
+// 2026-11-24). This file only picks the mode, before the first paint, as
+// <html data-boot-anim>:
+// - playing: the pin bounces.
 // - off: the still pin with the ring, when motion is reduced (Settings, or
-//   the system under Auto), the player cannot load, or startup failed.
-// The animation is optional: a player that fails never counts as a failed
-// startup, and nothing waits for it.
+//   the system under Auto), or once startup has failed.
 (function () {
   var SLOW_MS = 25000;
-  var ANIM_WAIT_MS = 3000;
   var MOTION_KEY = 'mcu.motion.v1'; // src/app/settings.tsx
   var state = 'loading';
-  var anim = null;
 
   function box() { return document.getElementById('mcu-boot'); }
   function setAnim(v) { document.documentElement.setAttribute('data-boot-anim', v); }
-  function animState() { return document.documentElement.getAttribute('data-boot-anim'); }
-  function stopAnim() {
-    if (anim) { try { anim.destroy(); } catch (e) { /* already gone */ } anim = null; }
-  }
-  function noAnim() { stopAnim(); setAnim('off'); }
 
   // The visitor's Reduce motion setting, read straight from storage: the
   // bundle's window.MCU_MOTION isn't here yet. Settings puts `reduce-motion`
@@ -50,60 +40,6 @@
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
-  // Runs once the page's markup is parsed, before the deferred scripts and
-  // the bundle run (readyState "interactive"). Waiting for DOMContentLoaded
-  // would also wait for the bundle, by which time the app has replaced the
-  // screen.
-  function whenParsed(fn) {
-    if (document.readyState !== 'loading') return fn();
-    document.addEventListener('readystatechange', function once() {
-      if (document.readyState === 'loading') return;
-      document.removeEventListener('readystatechange', once);
-      fn();
-    });
-  }
-
-  function startAnim() {
-    if (reducedMotion() || !window.fetch || !window.Promise) return setAnim('off');
-    setAnim('pending');
-    var data = null;
-    var player = false;
-    function play() {
-      if (!data || !player || anim) return;
-      whenParsed(function start() {
-        var b = box();
-        var holder = b && b.querySelector('.boot-lottie');
-        if (!holder || state === 'failed' || !window.lottie || anim) return noAnim();
-        // Only once the stylesheet has sized the box. Unstyled, the SVG fills
-        // the page width: a giant pin for an instant. The dev server only adds
-        // the stylesheet when the bundle runs, and a slow stylesheet would do
-        // the same in production.
-        if (getComputedStyle(holder.parentNode).position !== 'relative') return setTimeout(start, 50);
-        try {
-          anim = window.lottie.loadAnimation({
-            container: holder, renderer: 'svg', loop: true, autoplay: true, animationData: data,
-            rendererSettings: { preserveAspectRatio: 'xMidYMid meet' },
-          });
-        } catch (e) { return noAnim(); }
-        anim.addEventListener('DOMLoaded', function () { if (anim && state !== 'failed') setAnim('playing'); });
-        // Once the app has replaced the screen, stop drawing frames nobody sees.
-        anim.addEventListener('loopComplete', function () { if (!holder.isConnected) stopAnim(); });
-      });
-    }
-    fetch('/boot-loader.json')
-      .then(function (r) { if (!r.ok) throw new Error('boot-loader.json ' + r.status); return r.json(); })
-      .then(function (d) { data = d; play(); }, noAnim);
-    var s = document.createElement('script');
-    s.src = '/lottie-light.js';
-    s.async = true;
-    s.setAttribute('data-boot-optional', '');
-    if ('fetchPriority' in s) s.fetchPriority = 'low';
-    s.onload = function () { player = true; play(); };
-    s.onerror = noAnim;
-    document.head.appendChild(s);
-    // A slow player shows the ring meanwhile; if it arrives later, it still plays.
-    setTimeout(function () { if (animState() === 'pending') setAnim('off'); }, ANIM_WAIT_MS);
-  }
   function text(key) {
     var i18n = window.MCU_I18N;
     if (i18n) return i18n.tr(key);
@@ -116,7 +52,7 @@
     b.setAttribute('data-state', state);
     var msg = b.querySelector('.boot-msg');
     var btn = b.querySelector('.boot-reload');
-    if (state === 'failed') noAnim(); // the still pin above the message
+    if (state === 'failed') setAnim('off'); // the still pin above the message
     if (state === 'loading') {
       msg.textContent = text('boot.loading');
       btn.hidden = true;
@@ -137,12 +73,6 @@
     var isScript = t && t.tagName === 'SCRIPT';
     var isRuntime = t === window || !t || !t.tagName;
     if (!isScript && !isRuntime) return;
-    // The animated pin is optional: its player failing to load, or throwing,
-    // only brings the ring back.
-    if ((isScript && t.hasAttribute('data-boot-optional')) || (isRuntime && /\/lottie-light\.js/.test(e.filename || ''))) {
-      noAnim();
-      return;
-    }
     state = 'failed';
     render();
   }, true);
@@ -151,7 +81,7 @@
   // scripts); DOMContentLoaded is a second chance if it could not.
   window.MCU_BOOT = { refresh: render };
   document.addEventListener('DOMContentLoaded', render);
-  startAnim();
+  setAnim(reducedMotion() ? 'off' : 'playing');
 
   setTimeout(function () {
     if (state === 'loading' && box()) { state = 'slow'; render(); }

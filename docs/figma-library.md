@@ -57,6 +57,7 @@ surface uses them, so they have no Figma counterpart until one does.
 | Phone phase header | `63:642` | `desktop-list.tsx` `GroupHeader` (phone) |
 | Phone Up next | `63:705` | `src/app/upnext.tsx` (phone card) |
 | Logo / mark, Logo / wordmark | `17:2`, `17:3` | `src/assets/logo-mark.svg`, `logo-wordmark.svg` (CSS masks in the app) |
+| Startup loader (Motion: Bounce, the pin at rest in the animation's 78 px box; Reduced, the still pin and the ring). The bounce itself is designed in LottieFiles Creator ("Red Thread loader – Bounce") and shipped as CSS keyframes, not drawn here. No `components.json` entry: the app replaces the startup screen before the check can capture it; `qa/test-boot.js` checks it instead | `234:716` | `index.html` `#mcu-boot`, `boot.js`, `src/index.css` (`boot-bounce`, `boot-ripple-*`) |
 | App bar | `17:57` | `src/app/toolbar.tsx` `Toolbar`, `header-controls.tsx` (`StatusCounts`, `SortMenu`, `PickerButton`) |
 | Zoom control | `20:32` | `src/app/spatial-chrome.tsx` `ZoomControl` |
 | Title count | `20:35` | `spatial-chrome.tsx` `ContextSummary` |
@@ -129,9 +130,11 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Filters open (desktop) | `19:4050` | `19:4138` |
 | What have you seen? (desktop) | `19:4155` | `19:4252` |
 | Character pinned, Titles (desktop): the Character card top right | `19:4270` | `19:4565` |
+| Startup screen (desktop): the Startup loader (Bounce, drawn at rest) and "Loading…" | `114:9580` | `114:9595` |
 | Titles (phone) | `17:4759` | `17:4964` |
 | Details sheet over Titles (phone) | `17:4952` | `17:5267` |
 | Character pinned, Titles (phone): their titles, the card docked | `33:7655` | `33:7876` |
+| Startup screen (phone) | `114:9605` | `114:9615` |
 
 Posters are the app's TMDB posters: the library's **Poster** component set
 (`100:696`, Posters page) has one per catalog title, so a screen or an

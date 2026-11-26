@@ -95,58 +95,53 @@ const reload = async page => { await page.reload(); await settle(page); };
     await p.route(BUNDLE, () => {});   // never answers
   }, async (p, r) => { await p.waitForTimeout(500); await p.clock.fastForward(26000); await p.waitForTimeout(300); r.afterSlow = await bootState(p); });
 
-  // The animated pin (Notion "Startup loader: a branded Lottie animation
+  // The bouncing pin (Notion "Startup loader: a branded Lottie animation
   // instead of the plain spinner"), with the bundle held back so the screen
-  // stays up. It bounces when motion is allowed, and the still pin with the
-  // ring shows when motion is reduced (system or Settings) or the player
-  // can't load, which never counts as a failed start.
+  // stays up. "Bounce" is CSS keyframes (src/index.css), so nothing is
+  // downloaded for it. It bounces when motion is allowed, with the Lottie
+  // design's keys (sampled with the animation paused); the still pin and the
+  // ring show when motion is reduced (system or Settings) or startup failed.
   const problems = [];
   const expect = (ok, msg) => { if (!ok) problems.push(msg); };
   const animState = p => p.evaluate(() => {
     const h = document.documentElement;
     const ring = document.querySelector('.boot-spinner');
     const mark = document.querySelector('.boot-mark');
+    const ripple = document.querySelector('.boot-ripple');
+    // The pin's lift at a few moments of the loop, read off the paused animation.
+    const bounce = mark && mark.getAnimations().find(a => a.animationName === 'boot-bounce');
+    const lift = {};
+    if (bounce) {
+      bounce.pause();
+      for (const ms of [0, 400, 600, 760, 1000]) { bounce.currentTime = ms; lift[ms] = +new DOMMatrix(getComputedStyle(mark).transform).m42.toFixed(1); }
+    }
+    const r = mark && mark.getBoundingClientRect();
     return {
-      anim: h.getAttribute('data-boot-anim'), svg: !!document.querySelector('.boot-lottie svg'),
-      svgW: Math.round((document.querySelector('.boot-lottie svg') || { getBoundingClientRect: () => ({ width: 0 }) }).getBoundingClientRect().width),
-      svgMax: window.__svgMax || 0,
-      mark: mark && getComputedStyle(mark).visibility, ring: ring && getComputedStyle(ring).display,
-      reduceClass: h.classList.contains('reduce-motion'),
+      anim: h.getAttribute('data-boot-anim'),
+      markAnim: mark && getComputedStyle(mark).animationName, rippleAnim: ripple && getComputedStyle(ripple).animationName,
+      lift, markH: r && Math.round(r.height),
+      ring: ring && getComputedStyle(ring).display, reduceClass: h.classList.contains('reduce-motion'),
     };
   });
   const holdBundle = p => p.route(BUNDLE, () => {});   // never answers
-  const playerAsked = p => { p._player = 0; p.on('request', q => { if (/\/lottie-light\.js$/.test(q.url())) p._player++; }); };
-  const animRun = (name, opts, setup) => run(name, opts, async p => { playerAsked(p); await holdBundle(p); if (setup) await setup(p); },
-    async (p, r) => { await p.waitForTimeout(1500); r.anim = await animState(p); r.boot = await bootState(p); r.playerRequests = p._player; });
+  const extraAsked = p => { p._extra = []; p.on('request', q => { if (/lottie|boot-loader/.test(q.url())) p._extra.push(q.url()); }); };
+  const animRun = (name, opts, setup) => run(name, opts, async p => { extraAsked(p); await holdBundle(p); if (setup) await setup(p); },
+    async (p, r) => { await p.waitForTimeout(1500); r.anim = await animState(p); r.boot = await bootState(p); r.extraRequests = p._extra; });
   await animRun('anim-plays', DESKTOP, null);
   await animRun('anim-system-reduced', { ...MOBILE, reducedMotion: 'reduce' }, null);
   await animRun('anim-setting-reduced', DESKTOP, p => p.addInitScript("localStorage.setItem('mcu.motion.v1','reduced');"));
-  await animRun('anim-player-blocked', MOBILE, p => p.route('**/lottie-light.js', route => route.abort()));
-  // No stylesheet: unstyled, the animation's SVG would fill the page width (a
-  // giant pin for an instant; the dev server, which adds the stylesheet only
-  // when the bundle runs, showed it), so it must not start at all. The
-  // stylesheet fails rather than hangs: a hanging one holds up the parser
-  // here, and the screen never draws. Every frame's largest SVG width is
-  // recorded, not just the last.
-  await animRun('anim-no-styles', DESKTOP, async p => {
-    await p.addInitScript("window.__svgMax = 0; (function f(){ var s = document.querySelector('.boot-lottie svg'); if (s) window.__svgMax = Math.max(window.__svgMax, s.getBoundingClientRect().width); requestAnimationFrame(f); })();");
-    await p.route('**/assets/*.css', route => route.abort());
-  });
   {
-    const a = R['anim-plays'].anim;
-    expect(a.anim === 'playing' && a.svg && a.mark === 'hidden' && a.ring === 'none', 'anim-plays: ' + JSON.stringify(a));
-    expect(a.svgW === 78, 'anim-plays: the animation is ' + a.svgW + 'px wide, expected 78');
-    const ns = R['anim-no-styles'].anim;
-    expect(!ns.svg && ns.svgMax === 0 && ns.anim !== 'playing', 'anim-no-styles: the animation started unstyled: ' + JSON.stringify(ns));
+    const a = R['anim-plays'];
+    expect(a.anim.anim === 'playing' && a.anim.markAnim === 'boot-bounce' && a.anim.rippleAnim === 'boot-ripple-fade' && a.anim.ring === 'none', 'anim-plays: ' + JSON.stringify(a.anim));
+    const want = { 0: 0, 400: -7.3, 600: 1.8, 760: 0, 1000: 0 };
+    for (const ms in want) expect(Math.abs((a.anim.lift[ms] ?? 99) - want[ms]) <= 0.15, 'anim-plays: at ' + ms + ' ms the pin is at ' + a.anim.lift[ms] + 'px, expected ' + want[ms]);
+    expect(a.anim.markH === 48, 'anim-plays: the pin is ' + a.anim.markH + 'px tall, expected 48');
+    expect(a.extraRequests.length === 0, 'anim-plays: asked for ' + a.extraRequests.join(', '));
     for (const n of ['anim-system-reduced', 'anim-setting-reduced']) {
-      const r = R[n];
-      expect(r.anim.anim === 'off' && !r.anim.svg && r.anim.mark === 'visible' && r.anim.ring === 'block', n + ': ' + JSON.stringify(r.anim));
-      expect(r.playerRequests === 0, n + ': the player was requested ' + r.playerRequests + ' times');
+      const r = R[n].anim;
+      expect(r.anim === 'off' && r.markAnim === 'none' && r.rippleAnim === 'none' && r.ring === 'block', n + ': ' + JSON.stringify(r));
     }
     expect(R['anim-setting-reduced'].anim.reduceClass, 'anim-setting-reduced: <html> lacks .reduce-motion');
-    const b = R['anim-player-blocked'];
-    expect(b.boot.state === 'loading', 'anim-player-blocked: startup state is ' + b.boot.state + ', expected loading');
-    expect(b.anim.anim === 'off' && b.anim.mark === 'visible' && b.anim.ring === 'block', 'anim-player-blocked: ' + JSON.stringify(b.anim));
     const f = R['bundle-blocked'].final;
     expect(f && f.state === 'failed', 'bundle-blocked: ' + JSON.stringify(f));
   }
