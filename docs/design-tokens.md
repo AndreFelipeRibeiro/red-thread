@@ -43,7 +43,7 @@ primitive directly, in code or in Figma.
 
 The `:root` block is Light, `.dark` is Dark. Every value is an alias of a
 primitive (or of another color token: `progress` and `ring` are `brand`,
-`progress-done` is `seen`, the Dark canvas is `background`); only
+the Dark canvas is `background`); only
 `progress-track` and `canvas-dot`, which mix a color with transparency in
 code, hold computed values per mode. `thread-rest` (the resting threads'
 opacity, 42% / 55%) lives here too, as a number.
@@ -51,14 +51,14 @@ opacity, 42% / 55%) lives here too, as a number.
 | Group | Tokens |
 | --- | --- |
 | Surfaces and text | `background`, `foreground`, `card`, `card-foreground`, `popover`, `popover-foreground`, `secondary`, `secondary-foreground`, `muted`, `muted-foreground`, `accent`, `accent-foreground`, `border`, `input` |
-| Accent (red) | `brand`, `brand-foreground`, `primary`, `primary-foreground`, `ring`, `destructive`, `logo` |
-| Progress | `progress`, `progress-done`, `progress-track` |
-| Collection status | `seen`, `seen-foreground`, `seen-text`, `status-watch`, `on-color` |
+| Accent (red) | `brand`, `primary`, `primary-foreground`, `ring`, `destructive`, `logo` |
+| Progress | `progress`, `progress-track` (complete progress is `seen`) |
+| Collection status | `seen`, `seen-foreground`, `seen-text`, `status-watch`, `on-color` (ink on any solid color fill: phase, Watchlist, brand) |
 | Phases | `phase-1` … `phase-6` |
 | On artwork (same in both modes) | `on-image`, `on-image-dim`, `on-image-muted`, `on-image-ground`, `on-image-base` |
 | Score marks (same in both modes) | `imdb`, `rt`, `rt-text` |
 | Connections canvas | `canvas-top`, `canvas-bottom` (Light: `neutral-97` to `neutral-95`), `canvas-dot` |
-| Controls (shadcn at rest) | `field`, `button-outline`, `button-outline-border`, `destructive-tint`, `switch-track`, `switch-thumb`, `switch-thumb-off`, `invalid-border`, `invalid-ring` |
+| Controls (shadcn at rest) | `field`, `button-outline`, `destructive-tint`, `switch-track`, `switch-thumb`, `invalid-border`, `invalid-ring` |
 | Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `guide-current`, `highlight-border`, `control-surface`, `chip`, `chip-border`, `chip-imdb`, `chip-rt`, `chip-muted` |
 
 **Translucent colors** (2026-11-18, Notion "Library: translucent strokes
@@ -84,9 +84,20 @@ element in both themes). Aliases where a theme's value is a token; computed
 values where it is a mix, as for `progress-track`. Hover, focus and pressed
 states stay classes.
 
-`progress`, `progress-done`, `ring`, `progress-track` and the Dark canvas
+`progress`, `ring`, `progress-track` and the Dark canvas
 values point at other tokens in code; in Figma they are aliases of those
 variables, not copies.
+
+**Same values, kept apart** (Andre, 2026-11-26, Notion "Tokens: consolidate
+the ten color aliases"): ten groups of roles had the same Light and Dark
+values. Four were duplicates and are merged: `brand-foreground` into
+`on-color`, `progress-done` into `seen`, `button-outline-border` into
+`input` (the outline button's edge is the fields' edge in both themes), and
+`switch-thumb-off` into `switch-thumb` (one thumb color, on or off). The
+rest stay separate on purpose: shadcn's own roles (`card` and `popover`;
+`secondary`, `muted` and `accent`; the foregrounds), which its components
+reference; and ideas that only match today (`phase-1` and `status-watch`;
+`brand`, `progress`, `destructive` and `ring`). Don't merge those in passing.
 
 ### Elevation (modes: Light, Dark) → effect styles
 

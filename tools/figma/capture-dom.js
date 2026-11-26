@@ -21,12 +21,12 @@ import { iconName } from './icons.js';
 const COLOR_TOKENS = [
   'background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground',
   'primary', 'primary-foreground', 'secondary', 'secondary-foreground', 'muted', 'muted-foreground',
-  'accent', 'accent-foreground', 'destructive', 'border', 'input', 'ring', 'brand', 'brand-foreground',
-  'logo', 'progress', 'progress-done', 'progress-track', 'seen', 'seen-foreground', 'seen-text',
+  'accent', 'accent-foreground', 'destructive', 'border', 'input', 'ring', 'brand',
+  'logo', 'progress', 'progress-track', 'seen', 'seen-foreground', 'seen-text',
   'status-watch', 'on-color', 'phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5', 'phase-6',
   'on-image', 'on-image-dim', 'on-image-muted', 'on-image-ground', 'on-image-base', 'imdb', 'rt',
-  'rt-text', 'canvas-top', 'canvas-bottom', 'canvas-dot', 'field', 'button-outline', 'button-outline-border',
-  'destructive-tint', 'switch-track', 'switch-thumb', 'switch-thumb-off', 'invalid-border', 'invalid-ring',
+  'rt-text', 'canvas-top', 'canvas-bottom', 'canvas-dot', 'field', 'button-outline',
+  'destructive-tint', 'switch-track', 'switch-thumb', 'invalid-border', 'invalid-ring',
   'dim', 'brand-text', 'status-watch-text', 'status-watch-tint', 'status-watch-tint-strong', 'seen-hover',
   'secondary-hover', 'highlight-border', 'control-surface', 'chip', 'chip-border', 'chip-imdb', 'chip-rt',
   'chip-muted', 'brand-tint', 'brand-tint-strong', 'seen-tint', 'seen-tint-strong', 'neutral-tint', 'veil',
@@ -38,7 +38,7 @@ const COLOR_TOKENS = [
 const PREFER = {
   fill: ['field', 'button-outline', 'switch-thumb', 'background', 'card', 'popover', 'muted', 'secondary', 'accent', 'primary', 'brand', 'seen', 'border', 'input'],
   text: ['foreground', 'card-foreground', 'popover-foreground', 'muted-foreground', 'primary-foreground', 'secondary-foreground', 'accent-foreground', 'brand', 'seen-text'],
-  stroke: ['button-outline-border', 'invalid-border', 'invalid-ring', 'border', 'input', 'ring', 'brand'],
+  stroke: ['invalid-border', 'invalid-ring', 'border', 'input', 'ring', 'brand'],
 };
 const ELEVATIONS = ['mark', 'mark-lg', 'card', 'card-hover', 'float', 'pop', 'lift'];
 const TW_SHADOWS = {

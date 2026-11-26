@@ -138,7 +138,7 @@ export function ProgressHeader({ label, color, seen, released, upcoming, band, w
   // a phase keeps its phase colour.
   const style: Record<string, string> = {};
   if (color) style['--pm'] = color;
-  else if (released > 0 && seen >= released) style['--pm'] = 'var(--progress-done)';
+  else if (released > 0 && seen >= released) style['--pm'] = 'var(--seen)';
   if (width) style['--pgw'] = width + 'px';
   const styleOrNull = Object.keys(style).length ? (style as React.CSSProperties) : undefined;
   const root = (done: boolean) => cn('pgh flex min-w-0 flex-col gap-1.5', band && 'band w-full gap-[5px]', done && 'done');

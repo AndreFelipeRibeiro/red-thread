@@ -28,11 +28,20 @@ history (File → Show version history) at the entry's date.
 - **App Screens:** in Titles (Light, Dark), the Up next row had an old fill override, `brand` at a hand-set 10% opacity. A paint bound to a variable keeps a hand-set opacity only inside the library, so the Design System's re-publish turned that row solid red. It now uses the List row's own `brand-tint`, which carries its alpha. A scan of both pages found no other instance overriding its component's fill. The remaining differences are Dark-mode translucent tokens, whose opacity Figma takes from the token.
 - **Ticket:** [Version control for the Design System and App Screens](https://app.notion.com/p/4249e188029f81ac91afdfcd89830a92) (found while backfilling this log; Andre reported it).
 
-## DS · 2026-11-25 · Foundations reboot (not published yet)
+## DS · 2026-11-26 · Foundations reboot, four color merges
+
+Published 2026-11-26 by Andre. One publish carries both pieces of work: the Foundations reboot and the token merges below. App Screens takes it with Update all; its row is logged once that is done.
+
+- **Variables:** four Color duplicates merged, with every binding moved first (322 in the Design System, 30 stroke overrides in App Screens; the rest of App Screens follows when it takes this update): `brand-foreground` into `on-color`, `progress-done` into `seen`, `button-outline-border` into `input`, `switch-thumb-off` into `switch-thumb`. Color goes from 94 to 90 variables. The survivors' descriptions name what they took in. Nothing changes on screen: each pair had the same values in both modes.
+- **Foundations · Color · Roles:** the four rows and their "Same as" chips removed; 89 roles. The page now says the remaining "Same as" roles are kept apart on purpose.
+- **Ticket:** [Tokens: consolidate the ten color aliases](https://app.notion.com/p/4249e188029f815b9d22e6f8bbe2de96), Batch 29 (with `src/index.css` and the components).
+
+Foundations reboot, the same release:
+
 
 - **Foundations page:**
   - An index frame.
-  - Color · Roles: 93 roles in 14 groups by use, Light and Dark swatches bound to the variables, each role's token, aliases and use, and a "Same as" chip on the ten alias groups.
+  - Color · Roles: 93 roles in 14 groups (89 after the merges above) by use, Light and Dark swatches bound to the variables, each role's token, aliases and use, and a "Same as" chip on the ten alias groups.
   - Color · Primitives by hue.
   - Type: each style with its desktop and phone sizes and its use.
   - Size steps: aliases resolved; the old frame showed "NaN" for four of them.

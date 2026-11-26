@@ -168,7 +168,7 @@ function AllTitlesWidget({ info, all, label, onClose, collapsed = false, offScre
       {all && all.released > 0 && (
         <div className={cn(B.W_FOOT, 'pgh pointer-events-auto', done && 'done')} role="img"
           aria-label={untr('progress.seen', { seen: all.seen, n: all.released })}>
-          <span className={B.W_BAR}><span className={cn('pgh-fill block h-full rounded-full transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none', done ? 'bg-(--progress-done)' : 'bg-(--progress)')} style={{ width: Math.round(all.seen / all.released * 100) + '%' }}/></span>
+          <span className={B.W_BAR}><span className={cn('pgh-fill block h-full rounded-full transition-[width] duration-600 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none', done ? 'bg-(--seen)' : 'bg-(--progress)')} style={{ width: Math.round(all.seen / all.released * 100) + '%' }}/></span>
         </div>
       )}
     </>

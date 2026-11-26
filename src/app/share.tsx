@@ -152,7 +152,7 @@ export function ShareIcon({ size = 16 }: { size?: number }) {
 /** The Share button's look (shadcn's outline Button, with the icon buttons'
  *  press effect); callers size it with their own utilities, which merge. The
  *  share card's actions use it too, with SHARE_PRIMARY for the main one. */
-export const SHARE_BTN = 'share-btn inline-flex h-[max(36px,2.25rem)] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border bg-(--button-outline) px-3 text-body leading-none font-medium text-foreground no-underline shadow-xs outline-none transition-[scale,background-color,color,border-color,box-shadow] duration-150 hover:bg-(--field-hover) focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-disabled:scale-92 motion-reduce:active:scale-100 border-(--button-outline-border) [:root.reduce-motion_&]:active:scale-100 [&_svg]:flex-none';
+export const SHARE_BTN = 'share-btn inline-flex h-[max(36px,2.25rem)] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md border bg-(--button-outline) px-3 text-body leading-none font-medium text-foreground no-underline shadow-xs outline-none transition-[scale,background-color,color,border-color,box-shadow] duration-150 hover:bg-(--field-hover) focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-disabled:scale-92 motion-reduce:active:scale-100 border-input [:root.reduce-motion_&]:active:scale-100 [&_svg]:flex-none';
 export const SHARE_PRIMARY = 'border-transparent bg-primary text-primary-foreground hover:bg-primary/90 dark:border-transparent dark:bg-primary dark:hover:bg-primary/90';
 
 export function ShareButton({ label, payload, onShare, className = '', iconOnly = false, text, size }: {

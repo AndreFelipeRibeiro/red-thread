@@ -92,7 +92,7 @@ It is switched on in the Vercel project's Analytics tab.
   `--primary` fills buttons (white ink), `--brand` draws accent text, lines,
   focus rings and fills (the guide route, the Up next edge and outline, the
   active section on phones), and progress is `--progress` (red) everywhere,
-  turning `--progress-done` (the seen green) once complete. Seen keeps a muted
+  turning the seen green (`--seen`) once complete. Seen keeps a muted
   green of its own (`--status-seen`, `--seen-mark` on posters): done is not an
   action.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.

@@ -19,7 +19,7 @@ const DIM = 'text-(--dim)';
 export const PRESS = 'transition-[scale,background-color,color,border-color,box-shadow] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100';
 
 /** shadcn's outline Button, as the banner's and module's controls use it. */
-export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 leading-none text-foreground shadow-xs outline-none hover:bg-(--field-hover) focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-(--button-outline) border-(--button-outline-border)', PRESS);
+export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 leading-none text-foreground shadow-xs outline-none hover:bg-(--field-hover) focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-(--button-outline) border-input', PRESS);
 
 // Desktop: the guide's module in Titles.
 export const STEP = 'cb-step inline-flex flex-none items-center gap-1';

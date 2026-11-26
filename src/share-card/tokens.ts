@@ -109,7 +109,7 @@ export interface PreviewColors {
   foreground: string;
   muted: string;
   brand: string;
-  brandForeground: string;
+  onColor: string;
   logo: string;
   /** Text on the dark marks that sit on posters, and the mark's ground. */
   onImage: string;
@@ -135,7 +135,7 @@ export function previewColors(tokens: Tokens): PreviewColors {
     foreground: t('foreground'),
     muted: t('muted-foreground'),
     brand: t('brand'),
-    brandForeground: t('brand-foreground'),
+    onColor: t('on-color'),
     logo: t('logo'),
     onImage: t('on-image'),
     onImageBase: t('on-image-base'),

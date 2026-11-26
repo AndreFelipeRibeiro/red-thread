@@ -265,16 +265,15 @@
       --phase-6: var(--rose-50);
       /* Collection status, and the ink for text set on a phase or status fill.
          The light values reuse the darkened phase hues, which hold WCAG AA on
-         white; --on-color turns light because those fills turn dark. */
+         white; --on-color turns light because those fills turn dark. It is also
+         the ink on a brand fill (light on the light theme's deeper red, dark
+         on the dark theme's lighter one, AA); buttons use --primary instead. */
       --status-watch: var(--gold-55);
       --on-color: var(--neutral-98);
       /* The brand red for interface accents. The logo itself keeps the
          designer's red in both themes (--logo, styles.css .logo-mark): a
          logo is not text, so it needs no lighter dark-theme variant. */
       --brand: var(--red-55);
-      /* Ink on a brand fill: light on the light theme's deeper red, dark on
-         the dark theme's lighter one (AA). Buttons use --primary instead. */
-      --brand-foreground: var(--neutral-98);
       /* The accent roles (Notion "Use red as the interface accent", Andre
          2026-11-16): red is the one accent. --primary fills buttons and marks
          what is selected or active; --brand draws lines and fills (progress,
@@ -286,7 +285,6 @@
          which holds AA on the background in both themes (the dark theme's
          --primary is deeper so white ink holds AA, too deep for text). */
       --progress: var(--brand);
-      --progress-done: var(--seen);
       /* The part of a progress bar still ahead: a faint tint of the bar's own
          color, not gray (Andre, 2026-11-16: gray means "not in this guide" on
          the canvas, so gray dashes read as stops outside the guide). */
@@ -373,11 +371,9 @@
          colors are the ones the classes gave; hover and focus stay classes. */
       --field: transparent;
       --button-outline: var(--background);
-      --button-outline-border: var(--border);
       --destructive-tint: color-mix(in oklab, var(--destructive) 10%, transparent);
       --switch-track: var(--input);
       --switch-thumb: var(--background);
-      --switch-thumb-off: var(--background);
       --invalid-border: var(--destructive);
       --invalid-ring: color-mix(in oklab, var(--destructive) 20%, transparent);
       /* MIXED ROLES (Notion "Name the mixed colors and streamline the
@@ -440,7 +436,6 @@
       --status-watch: var(--gold-74);
       --on-color: var(--neutral-15);
       --brand: var(--red-68);
-      --brand-foreground: var(--neutral-15);
       --logo: var(--crimson-53);
       --elevation-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
       --elevation-card-hover: 0 18px 36px -12px rgb(0 0 0 / 0.55);
@@ -472,11 +467,9 @@
       --input: var(--neutral-100-a15);
       --field: color-mix(in oklab, var(--input) 30%, transparent);
       --button-outline: color-mix(in oklab, var(--input) 30%, transparent);
-      --button-outline-border: var(--input);
       --destructive-tint: color-mix(in oklab, var(--destructive) 20%, transparent);
       --switch-track: color-mix(in oklab, var(--input) 80%, transparent);
       --switch-thumb: var(--primary-foreground);
-      --switch-thumb-off: var(--foreground);
       --invalid-border: color-mix(in oklab, var(--destructive) 50%, transparent);
       --invalid-ring: color-mix(in oklab, var(--destructive) 40%, transparent);
       --highlight-border: color-mix(in oklab, var(--foreground) 53%, transparent);

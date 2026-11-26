@@ -28,7 +28,7 @@ const THUMB = 'overflow-hidden bg-muted [&>:first-child]:block [&>:first-child]:
 const FOCUS = 'outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 // shadcn's Card, as the guide's head, stops, cards and "Part of" rows use it.
 const CARD = 'rounded-xl border bg-card text-card-foreground shadow-sm';
-const OUTLINE_BTN = 'inline-flex cursor-pointer items-center rounded-md border bg-(--button-outline) font-medium whitespace-nowrap text-foreground shadow-xs hover:bg-(--field-hover) border-(--button-outline-border)';
+const OUTLINE_BTN = 'inline-flex cursor-pointer items-center rounded-md border bg-(--button-outline) font-medium whitespace-nowrap text-foreground shadow-xs hover:bg-(--field-hover) border-input';
 
 // Guides (guides.js): short, curated paths through the catalogue. This file
 // holds the helpers every surface shares and the guide's own pieces of UI:
@@ -1056,7 +1056,7 @@ function GuideSegments({ guide, statusOf, done = false, currentId = null, onJump
       // The stop the stepper is on gets a quiet gray outline (Andre,
       // 2026-11-16), so stepping shows where you are on the bar.
       const bar = <i key={s.id} className={cn(B.W_SEG_BAR, !onJump && 'flex-1',
-        done ? 'bg-(--progress-done)' : on ? 'on bg-(--progress)' : 'bg-(--progress-track)',
+        done ? 'bg-(--seen)' : on ? 'on bg-(--progress)' : 'bg-(--progress-track)',
         currentId === s.id && 'cur outline-1 outline-offset-2 outline-muted-foreground/70')}/>;
       // A dash pressed steps straight to its stop (B.W_SEG).
       return onJump

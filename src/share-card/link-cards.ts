@@ -306,7 +306,7 @@ function guideArt(art: Extract<LinkArt, { layout: 'guide' }>, c: PreviewColors):
   out.push(poster(art.last, g.big.x, g.big.y, g.big.w, g.big.h, 10), nodeDot(bigNode[0], bigNode[1], g.big.node, g.big.ring, c.brand, c.card));
   if (art.chip) {
     out.push(h('div', { position: 'absolute', left: g.big.x + 10, top: g.big.y + 10, display: 'flex', padding: '6px 12px', borderRadius: 999,
-      backgroundColor: c.brand, color: c.brandForeground, fontSize: 22, fontWeight: 600 }, art.chip));
+      backgroundColor: c.brand, color: c.onColor, fontSize: 22, fontWeight: 600 }, art.chip));
   }
   return out;
 }
