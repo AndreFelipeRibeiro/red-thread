@@ -400,9 +400,9 @@ never cut without "…" (Notion "Portuguese copy pass", 2026-11-25).
   floating cards; `line-clamp-2` with `[overflow-wrap:anywhere]` elsewhere.
   A button around a name needs `max-w-full`: a button sizes to its text.
 - **Labels and meta lines** (a kicker, a count, "2008 · via Tony Stark,
-  Pepper Potts", a menu's sub-line): one line, then "…". *Proposed; Andre to
-  confirm.* Where a label is a fixed word that keeps getting cut, the fix is
-  a shorter string in that language, not a smaller font.
+  Pepper Potts", a menu's sub-line): one line, then "…", as they are:
+  "Todos os…" in a narrow card is fine, with no shorter string (Andre,
+  2026-11-25). Never a smaller font to make a label fit.
 - **Running text** (synopses, a guide stop's reason): its own line clamp with
   a "See more" where the full text matters.
 - **Dates in tight chips**: the compact form, day and month only ("17 dez",
