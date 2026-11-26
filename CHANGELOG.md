@@ -13,6 +13,22 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 28 — Design system releases: named, logged in both files and the repo
+
+Recorded: 2026-11-25 21:58 EST (-0500). Committed at 21:52 as [3128638](https://github.com/AndreFelipeRibeiro/red-thread/commit/3128638) by the design session (Andre approved the process in chat), pushed to `version/5.0` (V5 staging) at 21:53 and merged to `main` (production) at 21:55 as [de954e5](https://github.com/AndreFelipeRibeiro/red-thread/commit/de954e5). Docs and skills only, no app code: the full regression was skipped (ship-batch, "When it can be skipped"), and `qa/smoke.js` is clean on staging and production. IndexNow accepted the live sitemap's 392 addresses (200).
+
+- `docs/design-system-changelog.md` (new): every Design System release and App Screens change, newest first, back to the first library on 2026-11-17. Each Figma file has a Changelog page with the same rows.
+- `docs/WORKFLOW.md` "Design system releases": a release is named "DS · YYYY-MM-DD · <short name>", logged before Andre publishes, published with that name and saved as a named version. App Screens is scanned for fill overrides after each update. Archived pages sit below an "--- Archive ---" divider.
+- The promote-design skill gains the release step and the scan. In ship-batch, the Figma gate now checks that the release is logged.
+- `docs/figma-library.md`: the Changelog and archive pages, and the lesson from the Titles Up next row. `docs/design-tokens.md`: the Typeface collection has one mode, Live · Inter.
+
+## V5 Batch 28 — Docs: the Portuguese addresses in the README, and the labels rule decided
+
+Recorded: 2026-11-25 21:58 EST (-0500). Committed at 21:51 as [7c2135e](https://github.com/AndreFelipeRibeiro/red-thread/commit/7c2135e), pushed to `version/5.0` (V5 staging) at 21:53 and merged to `main` (production) at 21:55 as [de954e5](https://github.com/AndreFelipeRibeiro/red-thread/commit/de954e5). Docs and skills only, no app code: the full regression was skipped (ship-batch, "When it can be skipped"), and `qa/smoke.js` is clean on staging and production. IndexNow accepted the live sitemap's 392 addresses (200).
+
+- `README.md`: a "Portuguese addresses (Findability 6)" entry, covering the `/pt` addresses, the frozen slugs, `hreflang`, the language switch and Brazil's names and date. The sitemap line covers both languages. "Shareable addresses" now says the language goes in as the `/pt` prefix.
+- `docs/STANDARDS.md` "Text that doesn't fit": labels and meta lines take one line, then "…", with no shorter strings (Andre: "Use 'Todos os...'"). The guide keeps "Antes de Doutor Destino".
+
 ## V5 Batch 27 — Startup loader: the bounce in CSS, no Lottie player
 
 Recorded: 2026-11-25 19:22 EST (-0500). Committed at 19:00 as
