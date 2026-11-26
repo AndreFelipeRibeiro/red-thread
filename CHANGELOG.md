@@ -15,7 +15,7 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 Batch 29 — Milestone confetti: a Lottie burst, fetched only near a milestone
 
-Recorded: 2026-11-26 15:44 EST (-0500). Committed at 13:19 as [4656449](https://github.com/AndreFelipeRibeiro/red-thread/commit/4656449) by the animation session (Andre approved it there), pushed to `version/5.0` (V5 staging) at 15:41. Not on `main`. Full regression on the pushed tree ([fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067)'s, frozen copy): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-26 15:44 EST (-0500). Committed at 13:19 as [4656449](https://github.com/AndreFelipeRibeiro/red-thread/commit/4656449) by the animation session (Andre approved it there), pushed to `version/5.0` (V5 staging) at 15:41 and merged to `main` (production) at 15:46 as [c9a868e](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9a868e). `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree ([fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067)'s, frozen copy): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
 
 - Milestones (a phase finished, every title seen, a guide finished) play A · Flutter, a Lottie burst from both ends of the toast, in the phase or guide palette. It stays clear of the desktop details drawer.
 - `lottie-web` 5.13.0 (pinned; its light build as a chunk of its own) and the two animations are fetched only when a visitor is one title or one essential stop from a milestone, never on the startup path. Until they arrive, the canvas confetti plays as before. Off when Celebrations is off or motion is reduced.
@@ -25,7 +25,7 @@ Recorded: 2026-11-26 15:44 EST (-0500). Committed at 13:19 as [4656449](https://
 
 ## V5 Batch 29 — Findability 11.1: the site's description uses the descriptor
 
-Recorded: 2026-11-26 15:44 EST (-0500). Committed at 15:26 as [56efb5a](https://github.com/AndreFelipeRibeiro/red-thread/commit/56efb5a), pushed to `version/5.0` (V5 staging) at 15:41. Not on `main`. Full regression on the pushed tree: all 90 check runs clean, plus the accessibility scans with no violations. `qa/smoke.js` clean on staging, which serves the new description.
+Recorded: 2026-11-26 15:44 EST (-0500). Committed at 15:26 as [56efb5a](https://github.com/AndreFelipeRibeiro/red-thread/commit/56efb5a), pushed to `version/5.0` (V5 staging) at 15:41 and merged to `main` (production) at 15:46 as [c9a868e](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9a868e). redthread.tv serves the new description; IndexNow accepted 392 addresses (200). Full regression on the pushed tree: all 90 check runs clean, plus the accessibility scans with no violations. `qa/smoke.js` clean on staging, which serves the new description.
 
 - The home page's description, link-preview and Twitter description, in English (`index.html`) and Portuguese (`og.defaultSub`), now open with the descriptor Andre picked: "An interactive map of how every Marvel film and series connects."
 - A new `site.descriptor` string feeds the WebSite, WebApplication and (new) Organization descriptions in the structured data, and the footer line under every page's crawler text.
@@ -34,7 +34,7 @@ Recorded: 2026-11-26 15:44 EST (-0500). Committed at 15:26 as [56efb5a](https://
 
 ## V5 Batch 29 — Standards: phone mockups keep a band above and below the screen
 
-Recorded: 2026-11-26 15:44 EST (-0500). Committed at 15:26 as [fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067), pushed to `version/5.0` (V5 staging) at 15:41. Not on `main`. Docs only; it shipped with the batch's full regression (90 check runs clean).
+Recorded: 2026-11-26 15:44 EST (-0500). Committed at 15:26 as [fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067), pushed to `version/5.0` (V5 staging) at 15:41 and merged to `main` (production) at 15:46 as [c9a868e](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9a868e). Docs only; it shipped with the batch's full regression (90 check runs clean).
 
 - `docs/STANDARDS.md`, Figma: a phone screenshot in any design, promo or marketing file sits in a device frame, with a band above the screen and a band with the home bar below it, so the rounded corners never cut into the app. The model is 1. Social Post's phone (364 px wide, 36 px above, 26 px below, radius 43).
 - Applied in the Social file's 3. Launch kit and the Promo file's ★ C · v1 storyboard.
