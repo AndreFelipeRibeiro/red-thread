@@ -138,7 +138,10 @@ window.MCU_LOCALES.en = {
     'card.daysTo': { one: '{n} day to {title}', other: '{n} days to {title}' },
     'og.pageTitle': '{name} · {app}',
     'og.defaultTitle': '{app}: Marvel films and series, connected',
-    'og.defaultSub': 'Every film and series is a card, and the lines between them are the characters they share.',
+    // The home page's description (meta, link previews) and the descriptor
+    // every listing uses (Notion "Findability 11", Andre, 2026-11-26).
+    'og.defaultSub': 'An interactive map of how every Marvel film and series connects. Follow the characters from title to title, and track what you’ve seen.',
+    'site.descriptor': 'An interactive map of how every Marvel film and series connects.',
     'og.defaultKicker': 'The MCU, connected',
     'og.defaultAlt': 'Marvel films and series drawn as cards, joined by the characters they share',
     'og.titleSub': { one: 'Connected to {n} other title through its characters', other: 'Connected to {n} other titles through its characters' },

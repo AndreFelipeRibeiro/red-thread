@@ -59,7 +59,9 @@ export function pageTexts(cat: Catalog, loc: LocaleTables, lang: AddressLang = '
   const appearances = (id: string) => byRelease.filter((t) => t.cast.some((x) => prime(x) === prime(id)));
   const hasPage = (id: string) => !!cat.characters[id] && appearances(id).length > 0;
   const guidesWith = (pred: (g: Guide) => boolean) => cat.guides.filter(pred);
-  const footer = `<p><a href="${homePath(lang)}">${esc(app)}</a>: ${esc(tr('og.defaultSub'))}</p>`;
+  // The descriptor (Findability 11), as the line that names Red Thread on every page.
+  const descriptor = tr('site.descriptor');
+  const footer = `<p><a href="${homePath(lang)}">${esc(app)}</a>: ${esc(descriptor.charAt(0).toLowerCase() + descriptor.slice(1))}</p>`;
   const wrap = (body: string) => `<article id="mcu-page-text" style="${HIDDEN}">${body}${footer}</article>`;
   const guideList = (gs: Guide[]) => (gs.length
     ? `<h2>${esc(tr('page.inGuides'))}</h2><ul>${gs.map((g) => `<li><a href="${path('guide', g.id)}">${esc(L(g.name))}</a></li>`).join('')}</ul>`

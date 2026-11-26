@@ -77,10 +77,10 @@ export function structuredData(site: string, cat: Catalog, loc: LocaleTables, la
   const out = new Map<string, Json>();
 
   out.set('home', page(
-    { '@type': 'WebSite', '@id': url('/#website'), name: app, url: url(homePath(lang)), description: tr('og.defaultSub'), inLanguage: ['en', 'pt-BR'], publisher: { '@id': url('/#organization') } },
-    { '@type': 'Organization', '@id': url('/#organization'), name: app, url: url('/'), logo: url('/apple-touch-icon.png') },
+    { '@type': 'WebSite', '@id': url('/#website'), name: app, url: url(homePath(lang)), description: tr('site.descriptor'), inLanguage: ['en', 'pt-BR'], publisher: { '@id': url('/#organization') } },
+    { '@type': 'Organization', '@id': url('/#organization'), name: app, url: url('/'), logo: url('/apple-touch-icon.png'), description: tr('site.descriptor') },
     {
-      '@type': 'WebApplication', name: app, url: url(homePath(lang)), description: tr('og.defaultSub'),
+      '@type': 'WebApplication', name: app, url: url(homePath(lang)), description: tr('site.descriptor'),
       applicationCategory: 'EntertainmentApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript',
       inLanguage: ['en', 'pt-BR'], isAccessibleForFree: true,
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
