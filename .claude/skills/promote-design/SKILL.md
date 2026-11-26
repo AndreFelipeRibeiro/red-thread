@@ -28,6 +28,15 @@ Moved verbatim from AGENTS.md ("Figma", "Keeping the library whole"), 2026-11-21
 
 Then:
 
+- **Log the release** before Andre publishes ([docs/WORKFLOW.md](../../../docs/WORKFLOW.md),
+  "Design system releases"): name it `DS · YYYY-MM-DD · <short name>`, add
+  its row to the Changelog page of the Design System (and of App Screens when
+  frames changed), and its entry to `docs/design-system-changelog.md`. Ask
+  Andre to publish with that name as the description and to save a named
+  version with it; after the publish, mark the row Published.
+- After App Screens takes the update, scan its pages for instances whose
+  fills override their component's: a token at a hand-set opacity renders
+  solid outside the library (2026-11-25, the Titles Up next row).
 - Tick the ticket's "Figma: library + App Screens updated" item and fill in
   the Library line of its Trail (component and frame links, the publish date).
 - Run "check components against the app" (the `figma-components` skill) for

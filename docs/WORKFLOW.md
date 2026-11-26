@@ -247,6 +247,39 @@ Claude and Codex take turns in one worktree. Uncommitted changes are the
 hand-off point, and the Notion claim says who holds which ticket
 (AGENTS.md, "Working with another agent").
 
+## Design system releases
+
+Every publish of the Design System is a **release**, logged in three places so
+the history can be traced back (Andre, 2026-11-25: "I am missing version
+control and log on the design system in general, as well as the App
+Screens"). Figma's plugin API can't save a named version, so that step is
+always Andre's; everything else is the agent's job, at the Library stage, in
+the same session as the change.
+
+1. **Name it:** `DS · YYYY-MM-DD · <short name>`, the ticket's short name. App
+   Screens' own changes are `Screens · YYYY-MM-DD · <short name>`, named after
+   the release they follow.
+2. **Log it before Andre publishes:**
+   - a row on the **Changelog** page of the Design System, and of App Screens
+     when its frames changed;
+   - an entry at the top of [design-system-changelog.md](design-system-changelog.md),
+     with the components, variables and frames touched, and the ticket.
+3. **Andre publishes** with the release name as the publish description (App
+   Screens shows it when updates are accepted), then saves a named version with
+   the same name (File → Save to version history). The agent checks each
+   changed asset reads Current and marks the row Published.
+4. **App Screens:** accept the update, then scan for instances whose fills
+   override their component's (a token at a hand-set opacity renders solid
+   outside the library), and save a named version there too.
+
+Archived pages (explorations, drafts, a page before a reboot) go below the
+"--- Archive ---" divider of their file, named `Archive · <short name> ·
+<date>`, with a note saying what they are and which ticket moved them. Nothing
+is deleted that a named version or an archive page doesn't keep.
+
+The Figma gate in the `ship-batch` skill checks that every ticket that
+changed the library has its release logged.
+
 ## Where work lives
 
 | What | Where | Holds |
@@ -263,6 +296,7 @@ hand-off point, and the Notion claim says who holds which ticket
 | Code | GitHub `AndreFelipeRibeiro/red-thread`: `red-thread-wip` (`version/5.0`, staging), `red-thread-live` (`main`, production) | The app, its docs, the QA checks |
 | Rules and context | [AGENTS.md](../AGENTS.md) (the core), [STANDARDS.md](STANDARDS.md), the skills in `.claude/skills/`, this file, [HANDOFF.md](HANDOFF.md), [decisions.md](decisions.md), [glossary.md](glossary.md) | How to do each step; why things are as they are |
 | Release history | [CHANGELOG.md](../CHANGELOG.md) | Every committed change, with real times |
+| Design system history | [design-system-changelog.md](design-system-changelog.md), and the Changelog page of the Design System and of App Screens | Every Design System release and App Screens change, back to the first library (2026-11-17) |
 | Time log | Google Calendar, Personal (fronted by Notion Calendar) | One purple event per session |
 
 All Figma files live in the AFR team folder

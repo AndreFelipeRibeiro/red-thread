@@ -123,19 +123,18 @@ The shadcn components keep Tailwind's own `shadow-xs`, `shadow-sm`,
   body pairings"): `headline-family` and `headline-style` (text-display,
   text-title, other 20px+ titles, and every title's name: List and phone
   rows, phase headings, Spatial cards, Up next, guide and thread stops),
-  `headline-medium` (the same, for names drawn in Inter Medium: Medium in
-  Live, the display face's own weight in a pairing), `body-family` and `body-regular`,
-  `-medium`, `-semibold`, `-bold` (everything else; the weight names differ
-  between families). Modes: **Live · Inter** (the default), then five free
-  pairings: Instrument Serif + Inter, Fraunces + Instrument Sans, Playfair
-  Display + Source Sans 3, DM Serif Display + DM Sans, Bodoni Moda + Manrope.
-  The text styles and the components' text bind to these, so setting a
-  frame's Typeface mode restyles it; the Foundations page shows all six. In
-  the app, the dev-only Theme lab (`?lab`) offers the same faces on the same
-  places, each scaled by a measured size step (`DISPLAY_ADJUST` in
-  `src/app/theme-lab.tsx`; Instrument Serif 1.24×) because a display face
-  reads smaller than Inter at one size. Figma has no such step, so its
-  pairings look a little smaller than the lab's.
+  `headline-medium` (the same, for names drawn in Inter Medium), `body-family`
+  and `body-regular`, `-medium`, `-semibold`, `-bold` (everything else). One
+  mode, **Live · Inter**. The text styles and the components' text bind to
+  these. The five headline pairings it used to hold as modes (Instrument
+  Serif + Inter, Fraunces + Instrument Sans, Playfair Display + Source Sans 3,
+  DM Serif Display + DM Sans, Bodoni Moda + Manrope) were archived on
+  2026-11-25 (Notion "Foundations reboot"): the Design System's page "Archive ·
+  Foundations explorations · 2026-11-25" keeps the Headline pairings frame,
+  baked to literal fonts, and each mode's values. In the app, the dev-only
+  Theme lab (`?lab`) still offers the same faces on the same places, each
+  scaled by a measured size step (`DISPLAY_ADJUST` in
+  `src/app/theme-lab.tsx`; Instrument Serif 1.24×).
 - **Text styles**, one per type role, named like the utility: `text-display`,
   `text-display-sm` (added 2026-11-21 with its `fs-display-sm` variable),
   `text-title`, `text-heading`, `text-body`, `text-label`, `text-caption`,
