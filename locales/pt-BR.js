@@ -261,6 +261,9 @@ window.MCU_LOCALES['pt-BR'] = {
     // A small win: a visitor's very first seen mark, once.
     'toast.firstTitle': "Seu primeiro título!",
     'toast.firstTitleSub': "{title} foi marcado como visto",
+    // A small win: the newest release marked seen in its first week.
+    'toast.upToDate': "Tudo em dia com as estreias!",
+    'toast.upToDateSub': "Você viu {title}, o lançamento mais recente",
     'collection.emptyWatchlist': 'Nada em Quero ver ainda',
     'collection.emptyWatchlistSub': 'Adicione títulos com o botão de marcador para planejar o que assistir.',
     'collection.emptySeen': 'Nada marcado como visto ainda',

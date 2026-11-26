@@ -198,6 +198,53 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.halfwayOff = await halfProbe(page);
   if (out.halfwayOff.halfway || out.halfwayOff.pop || quietLottie.length) errors.push('with Celebrations off, halfway still celebrated: ' + JSON.stringify({ p: out.halfwayOff, fetched: quietLottie }));
   out.halfOffErrors = errors; await ctx.close();
+  // Small win: up to date with the newest release (Notion "Small win: up to
+  // date with the newest release"). On 2026-10-15, VisionQuest (2026-10-13) is
+  // the newest release and in its week; the seed has seen marks, so it is not
+  // a first title either.
+  const upCtx = async (when, init) => {
+    const r = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + (init || SEED));
+    r.fetched = lottieGets(r.page);
+    await r.page.clock.setFixedTime(new Date(when));
+    await r.page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(r.page);
+    return r;
+  };
+  let upLottie;
+  ({ ctx, page, errors, fetched: upLottie } = await upCtx('2026-10-15T15:00:00'));
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('VisionQuest').locator('.tsa-btn.seen').click(); await page.waitForTimeout(450);
+  out.upToDate = await halfProbe(page);
+  out.upToDate.cls = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return !!(t && t.className.includes('up-to-date')); });
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-d-uptodate.png'), clip: { x: 420, y: 640, width: 600, height: 260 } });
+  { const u = out.upToDate;
+    if (!u.cls || !/You're up to date!/.test(u.toast) || !/You've seen VisionQuest, the newest release/.test(u.toast)) errors.push('the newest release in its week did not show its toast: ' + JSON.stringify(u));
+    else if (!u.pop || u.pop.svg !== 1 || !(u.pop.z > u.pop.toastZ)) errors.push('the newest release toast did not play the star pop: ' + JSON.stringify(u)); }
+  if (!upLottie.some(x => /small-win/.test(x))) errors.push('a release in its week did not fetch the star pop: ' + upLottie.join(', '));
+  // Any other title that day: an ordinary toast.
+  await page.waitForTimeout(500);
+  await row('Wonder Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.notNewest = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('up-to-date') : null; });
+  if (out.notNewest !== false) errors.push('a title that is not the newest release showed the up-to-date toast');
+  out.upErrors = errors; await ctx.close();
+  // After its week (12 days on): an ordinary toast, and nothing fetched.
+  let lateLottie;
+  ({ ctx, page, errors, fetched: lateLottie } = await upCtx('2026-10-25T15:00:00'));
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('VisionQuest').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.upLate = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('up-to-date') : null; });
+  if (out.upLate !== false || lateLottie.some(x => /small-win/.test(x))) errors.push('the newest release celebrated after its week: ' + JSON.stringify({ toast: out.upLate, fetched: lateLottie }));
+  out.upLateErrors = errors; await ctx.close();
+  // When it is also the last unseen release, the milestone wins.
+  // (Every title released by then, from a first visit, seeds a second one.)
+  ({ ctx, page, errors } = await upCtx('2026-10-15T15:00:00'));
+  const allButVq = await page.evaluate(() => window.TITLES.filter(t => window.MCU_isReleased(t) && t.id !== 'visionquest').map(t => t.id));
+  await ctx.close();
+  ({ ctx, page, errors } = await upCtx('2026-10-15T15:00:00', "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:" + JSON.stringify(Object.fromEntries(allButVq.map(id => [id, 'seen']))) + "}));"));
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('VisionQuest').locator('.tsa-btn.seen').click(); await page.waitForTimeout(350);
+  out.upMilestone = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return { milestone: !!(t && t.classList.contains('milestone')), upToDate: !!(t && t.className.includes('up-to-date')), pop: !!document.querySelector('.mcu-starpop'), confetti: !!document.querySelector('.mcu-confetti') }; });
+  if (!out.upMilestone.milestone || out.upMilestone.upToDate || out.upMilestone.pop || !out.upMilestone.confetti) errors.push('the milestone did not win over the newest release: ' + JSON.stringify(out.upMilestone));
+  out.upMilestoneErrors = errors; await ctx.close();
   // ...and on a phone.
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, NOWELCOME + ART + halfSeed()));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);

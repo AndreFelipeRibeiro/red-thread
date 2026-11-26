@@ -270,6 +270,9 @@ window.MCU_LOCALES.en = {
     // A small win: a visitor's very first seen mark, once.
     'toast.firstTitle': "Your first title!",
     'toast.firstTitleSub': "{title} is marked as seen",
+    // A small win: the newest release marked seen in its first week.
+    'toast.upToDate': "You're up to date!",
+    'toast.upToDateSub': "You've seen {title}, the newest release",
     'collection.emptyWatchlist': 'Your Watchlist is empty',
     'collection.emptyWatchlistSub': 'Add titles with the bookmark button to plan what to watch next.',
     'collection.emptySeen': 'Nothing marked as seen yet',

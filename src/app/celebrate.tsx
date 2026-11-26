@@ -112,6 +112,38 @@ function nearFirstTitle(states) {
   return !!states && !anySeen(states) && !firstSeenUsed() && window.MCU_PREFS.celebrations() && !reducedMotion();
 }
 
+// A small win (Notion "Small win: up to date with the newest release"): the
+// newest released title marked seen in its release week, the 7 days from its
+// release day (the visitor's market's day, i18n.js releaseDay; for a series,
+// its premiere, the date the app dates it by), counted in the visitor's own
+// calendar. A single mark only; titles released the same day are all "the
+// newest".
+const LATEST_WEEK_DAYS = 7;
+function newestThisWeek() {
+  const released = window.MCU_isReleased;
+  if (!released) return [];
+  const I = window.MCU_I18N;
+  const day = (t) => (I && I.releaseDay && I.releaseDay(t)) || t.release;
+  const list = (window.TITLES || []).filter(t => released(t));
+  if (!list.length) return [];
+  const newest = list.reduce((a, t) => (day(t) > a ? day(t) : a), '');
+  const d = new Date();
+  const today = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const [y, m, dd] = newest.split('-').map(Number);
+  const age = Math.round((today - Date.UTC(y, m - 1, dd)) / 864e5);
+  return age >= 0 && age < LATEST_WEEK_DAYS ? list.filter(t => day(t) === newest) : [];
+}
+function upToDate(e) {
+  if (e.bulk || e.to !== 'seen' || e.from === 'seen') return null;
+  return newestThisWeek().some(t => t.id === e.title.id) ? e.title : null;
+}
+// A release in its week that the visitor hasn't marked seen: when the star
+// pop is fetched.
+function nearUpToDate(states) {
+  if (!states || !window.MCU_PREFS.celebrations() || reducedMotion()) return false;
+  return newestThisWeek().some(t => states[t.id] !== 'seen');
+}
+
 // One stop short of halfway in a followed guide: when the star pop is fetched.
 function nearHalfway(states) {
   const G = window.MCU_GUIDE;
@@ -322,7 +354,7 @@ function StatusToast({ touch }) {
   // Close to a milestone: fetch the Lottie confetti while the page is idle.
   React.useEffect(() => {
     if (nearMilestone(states)) prefetchCelebrations(['milestone']);
-    if (nearHalfway(states)) prefetchCelebrations(['small-win']);
+    if (nearHalfway(states) || nearUpToDate(states)) prefetchCelebrations(['small-win']);
   }, [states]);
   React.useEffect(() => {
     if (!nearFirstTitle(states)) return undefined;
@@ -344,12 +376,15 @@ function StatusToast({ touch }) {
     const halfway = !milestone && cel ? halfwayGuide(e) : null;
     // Checked on every seen mark, so the first one is used up whatever shows.
     const first = firstTitle(e) && cel && !milestone && !halfway;
+    // The newest release comes last: a milestone, halfway or a first title
+    // on the same mark says more.
+    const latest = cel && !milestone && !halfway && !first ? upToDate(e) : null;
     if (milestone) burstConfetti();
-    else if (halfway || first) starPop();
-    setToast({ key: Date.now(), ...e, milestone, halfway, first, place: toastPlacement(touch) });
+    else if (halfway || first || latest) starPop();
+    setToast({ key: Date.now(), ...e, milestone, halfway, first, latest, place: toastPlacement(touch) });
   }), [touch]);
 
-  const life = toast && (toast.milestone || toast.halfway || toast.first) ? 6500 : 4500;
+  const life = toast && (toast.milestone || toast.halfway || toast.first || toast.latest) ? 6500 : 4500;
   const arm = React.useCallback((ms) => {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setToast(null), ms);
@@ -379,22 +414,25 @@ function StatusToast({ touch }) {
     const m = toast.milestone;
     const half = toast.halfway;
     const first = toast.first;
-    const star = !!(m || half || first);
+    const latest = toast.latest;
+    const star = !!(m || half || first || latest);
     const followed = !m && toast.autoFollow ? window.MCU_GUIDE.get(toast.autoFollow) : null;
     const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase })
       : half ? tr('toast.halfway')
       : first ? tr('toast.firstTitle')
+      : latest ? tr('toast.upToDate')
       : followed ? tr('toast.followed', { name: window.MCU_GUIDE.short(followed) })
       : toast.to === 'mixed' ? tr('toast.bulk.mixed', { s: toast.seenIds.length, u: toast.unseenIds.length })
       : toast.bulk ? tr('toast.bulk.' + toast.to, { n: toast.ids.length }) : I.titleName(toast.title);
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
       : half ? tr('toast.halfwaySub', { name: window.MCU_GUIDE.short(half.guide), n: half.seen, total: half.total })
       : first ? tr('toast.firstTitleSub', { title: I.titleName(toast.title) })
+      : latest ? tr('toast.upToDateSub', { title: I.titleName(toast.title) })
       : followed ? tr('toast.followedSub')
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
       <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-body text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
-        toast.to, star && 'border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', m && 'milestone', half && 'small-win halfway', first && 'small-win first-title', touch && 'touch w-[calc(100vw-24px)]')}
+        toast.to, star && 'border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', m && 'milestone', half && 'small-win halfway', first && 'small-win first-title', latest && 'small-win up-to-date', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
         <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-[9px] text-title text-(--on-color) [&_svg]:size-4',
