@@ -511,8 +511,11 @@ It is switched on in the Vercel project's Analytics tab.
   confetti plays instead. A smaller win, a followed guide reaching halfway
   (half its released essential stops, for a guide with at least four), shows
   "Halfway there!" with a star pop from the toast's icon, fetched the same way
-  when one stop short. Seen and Watchlist show a count badge (hidden at zero)
-  that animates as it changes. Motion is skipped with reduced motion.
+  when one stop short. A visitor's very first seen mark, once per device
+  (`mcu.firstSeen.v1`), shows "Your first title!" with the same star pop,
+  fetched at their first scroll, tap or key on a screen with Seen buttons.
+  Seen and Watchlist show a count badge (hidden at zero) that animates as it
+  changes. Motion is skipped with reduced motion.
 - A title not out yet has no Seen button until 7 days before its release day
   (for early screenings), and none at all while only the month is known; the
   Watchlist button is always there. Progress and Up next still count it only

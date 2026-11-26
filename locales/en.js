@@ -267,6 +267,9 @@ window.MCU_LOCALES.en = {
     // A small win: a followed guide reaches half its released stops.
     'toast.halfway': "Halfway there!",
     'toast.halfwaySub': "{name} · {n} of {total} seen",
+    // A small win: a visitor's very first seen mark, once.
+    'toast.firstTitle': "Your first title!",
+    'toast.firstTitleSub': "{title} is marked as seen",
     'collection.emptyWatchlist': 'Your Watchlist is empty',
     'collection.emptyWatchlistSub': 'Add titles with the bookmark button to plan what to watch next.',
     'collection.emptySeen': 'Nothing marked as seen yet',
