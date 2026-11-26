@@ -19,7 +19,7 @@ const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(k
 // On a poster the overlay sits on an image, so it stays a dark glass chip in
 // both themes (the `dark:` copies outrank the outline button's own).
 const ON_POSTER = /\b(card-tsa|m-card-tsa|m-fp-tsa|g-card-tsa)\b/;
-const GLASS = 'border-white/15 bg-(--on-image-base)/78 text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-(--on-image-base)/92 hover:text-(--on-image) dark:border-white/15 dark:bg-(--on-image-base)/78 dark:hover:bg-(--on-image-base)/92';
+const GLASS = 'border-white/15 bg-(--on-image-ground) text-(--on-image-dim) shadow-none backdrop-blur-[6px] hover:border-(--on-image-dim) hover:bg-(--on-image-base)/92 hover:text-(--on-image) dark:border-white/15 dark:bg-(--on-image-ground) dark:hover:bg-(--on-image-base)/92';
 const ON = {
   // Seen is quiet (Notion "Simplify the Spatial cards": with real progress a
   // solid green button on most titles was the loudest colour on screen): a
@@ -172,7 +172,7 @@ export function TitleStatusActions({ title, variant = 'overlay', className, upNe
 export function SeenMarker({ seen }: { seen: boolean }) {
   if (!seen) return null;
   return (
-    <span className="seen-marker flex size-[26px] items-center justify-center rounded-[7px] bg-(--seen) text-(--seen-foreground) [&_svg]:size-[14px]"
+    <span className="seen-marker flex size-[26px] items-center justify-center rounded-md bg-(--seen) text-(--seen-foreground) [&_svg]:size-[14px]"
       title={tr('status.seen')} aria-hidden="true"><window.CheckIcon/></span>
   );
 }

@@ -575,7 +575,7 @@ export function ThreadView({ id, surface, headingId, headingRef, onLeave, onOpen
                   <span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-(--brand)"/>
                   <span className="absolute top-1/2 left-0 size-3.5 -translate-y-1/2 rounded-full border-2 border-(--brand) bg-popover"/>
                 </span>
-                <span className={cn('h-[60px] w-10 flex-none rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
+                <span className={cn('h-[60px] w-10 flex-none rounded-xs', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
                 <span className="min-w-0 flex-1">
                   <span className="line-clamp-2 text-body font-semibold text-foreground [overflow-wrap:anywhere]" title={I18N().titleName(t)}>{I18N().titleName(t)}</span>
                   <span className="mt-0.5 block truncate text-label text-muted-foreground tabular-nums">{t.year} · {tr('thread.via', { names: shown })}</span>
@@ -660,7 +660,7 @@ export function TrailView({ char, from, current, pinned = false, surface, headin
                   {list.length > 1 && <span className={cn('absolute left-1/2 w-0.5 -translate-x-1/2 bg-(--match-color)', i === 0 ? 'top-1/2' : 'top-0', i === list.length - 1 ? 'bottom-1/2' : 'bottom-0')}/>}
                   <span className={cn('relative size-3.5 rounded-full border-2 border-(--match-color)', here ? 'bg-(--match-color)' : 'bg-popover')}/>
                 </span>
-                <span className={cn('h-[60px] w-10 flex-none rounded-[5px]', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
+                <span className={cn('h-[60px] w-10 flex-none rounded-xs', THUMB)} aria-hidden="true"><PosterArt title={t}/></span>
                 <span className="min-w-0 flex-1">
                   <span className="line-clamp-2 text-body font-semibold text-foreground [overflow-wrap:anywhere]" title={I18N().titleName(t)}>{I18N().titleName(t)}</span>
                   <span className={cn('mt-0.5 block truncate text-label', here ? 'text-(--brand)' : 'text-muted-foreground')}>

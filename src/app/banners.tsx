@@ -19,7 +19,7 @@ const DIM = 'text-(--dim)';
 export const PRESS = 'transition-[scale,background-color,color,border-color,box-shadow] duration-150 active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100';
 
 /** shadcn's outline Button, as the banner's and module's controls use it. */
-export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 leading-none text-foreground shadow-xs outline-none hover:bg-(--field-hover) focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-(--button-outline) border-(--button-outline-border)', PRESS);
+export const OUTLINE = cn('inline-flex flex-none cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 leading-none text-foreground shadow-xs outline-none hover:bg-(--field-hover) focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-(--button-outline) border-input', PRESS);
 
 // Desktop: the guide's module in Titles.
 export const STEP = 'cb-step inline-flex flex-none items-center gap-1';
@@ -39,7 +39,7 @@ const ROUND = cn('inline-flex flex-none cursor-pointer items-center justify-cent
 export const WIDGET = 'rounded-lg border border-border bg-background/95 pt-2.5 pr-2 pb-2 pl-2.5 text-foreground shadow-sm backdrop-blur-md';
 export const W_ROW = 'w-row flex min-w-0 items-center gap-2.5';
 export const W_OPEN = 'w-open flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
-export const W_POSTER = 'h-[54px] w-9 flex-[0_0_36px] rounded-[5px] in-[.app.touch]:h-12 in-[.app.touch]:w-8 in-[.app.touch]:basis-8 in-[.app.touch]:rounded-[4px]';
+export const W_POSTER = 'h-[54px] w-9 flex-[0_0_36px] rounded-xs in-[.app.touch]:h-12 in-[.app.touch]:w-8 in-[.app.touch]:basis-8 in-[.app.touch]:rounded-xs';
 export const W_TEXT = 'flex min-w-0 flex-1 flex-col gap-px text-left';
 export const W_KICKER = 'truncate text-label font-medium text-muted-foreground';
 export const W_TITLE = 'truncate text-body font-semibold text-foreground';
@@ -58,7 +58,7 @@ export const W_FOOT = 'w-foot mt-2 flex items-center gap-2';
 /** ‹ ›, side by side at the end of the progress. */
 export const W_STEP = 'cb-step -my-1.5 -mr-0.5 inline-flex flex-none items-center gap-0.5';
 export const W_STEP_BTN = cn(ROUND, "relative size-7 text-title after:absolute after:-inset-1.5 after:content-['']");
-export const W_BAR = 'h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-(--progress-track)';
+export const W_BAR = 'h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-(--brand-tint-strong)';
 /** A stepper's dashes (the character's and a guide's cards): the row, and
  *  each dash as a press target that jumps straight to its title (Notion
  *  "Steppers: tap a dash to jump to that title", Andre, 2026-11-18). The

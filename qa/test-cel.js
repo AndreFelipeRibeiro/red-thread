@@ -33,6 +33,13 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   // must only be fetched near a milestone.
   const LOTTIE = /lottie_light|milestone-(up|down)|small-win/;
   const lottieGets = (page) => { const got = []; page.on('request', r => { if (LOTTIE.test(r.url())) got.push(r.url().split('/').pop()); }); return got; };
+  // A small win's toast and star pop (.mcu-starpop), with the icon it starts from.
+  const halfProbe = (page) => page.evaluate(() => {
+    const t = document.querySelector('.mcu-toast'), p = document.querySelector('.mcu-starpop');
+    return { toast: t ? t.innerText.replace(/\\n/g, ' | ') : null, halfway: !!(t && t.classList.contains('halfway')),
+      pop: p ? { svg: p.querySelectorAll('svg').length, z: +getComputedStyle(p).zIndex, toastZ: t ? +getComputedStyle(t).zIndex : null, origin: p.dataset.origin } : null,
+      icon: (() => { const i = t && t.querySelector('.mt-ic'); if (!i) return null; const r = i.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })() };
+  });
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + SEED);
   const dLottie = lottieGets(page);
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
@@ -41,6 +48,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   const row = (name) => page.locator('.dl-row', { hasText: name }).first();
   await row('Ant-Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(150);
   out.markSeen = await st(page);
+  if (/first-title/.test((out.markSeen.toast || {}).cls || '')) errors.push('a visitor with seen marks got the first title toast');
   out.ring = await page.evaluate(() => { const b = document.querySelector('.tsa-btn.pop'); const w = b && b.parentElement.querySelector('.tsa-btn.watch');
     return b && { z: getComputedStyle(b).zIndex, neighbourZ: getComputedStyle(w).zIndex }; });
   await page.screenshot({ path: path.join(S, 'shots', 'cel-d-toast.png') });
@@ -104,14 +112,149 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.fresh = await st(page);
   out.vq = await page.evaluate(() => { const t = window.TITLES.find(x => x.id === 'visionquest'); return { cast: t.cast, paladin: window.CHARACTERS.paladin && window.CHARACTERS.paladin.actor, bnd: window.TITLES.find(x => x.id === 'brand-new-day').imdb, chars: Object.keys(window.CHARACTERS).length, titles: window.TITLES.length }; });
+  // Nothing Lottie on the way in: the first-title star pop waits for the
+  // visitor's first scroll, tap or key on a screen with Seen buttons.
+  out.freshLoadFetched = freshLottie.slice();
+  if (freshLottie.length) errors.push('a fresh visit fetched Lottie files before any interaction: ' + freshLottie.join(', '));
   await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
+  await page.mouse.move(700, 500); await page.mouse.wheel(0, 120); await page.waitForTimeout(3500);
+  await page.mouse.wheel(0, -120); await page.waitForTimeout(300);
   await row('Iron Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(120);
   out.firstMark = await st(page);
   await page.screenshot({ path: path.join(S, 'shots', 'cel-d-first.png'), clip: { x: 900, y: 50, width: 540, height: 80 } });
-  // Nowhere near a milestone: the Lottie confetti is never fetched.
-  await page.waitForTimeout(3500);
-  if (freshLottie.length) errors.push('a visit far from any milestone fetched the Lottie confetti: ' + freshLottie.join(', '));
+  // Small win: the first title marked (Notion "Small win: the first title
+  // marked"), with the star pop, once.
+  await page.waitForTimeout(300);
+  out.firstTitle = await halfProbe(page);
+  out.firstTitle.cls = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t && t.className.includes('first-title'); });
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-d-first-title.png'), clip: { x: 420, y: 640, width: 600, height: 260 } });
+  { const f = out.firstTitle;
+    if (!f.cls || !/Your first title!/.test(f.toast) || !/Iron Man is marked as seen/.test(f.toast)) errors.push('the first seen mark did not show its toast: ' + JSON.stringify(f));
+    else if (!f.pop || f.pop.svg !== 1 || !(f.pop.z > f.pop.toastZ)) errors.push('the first title toast did not play the star pop: ' + JSON.stringify(f)); }
+  // Once: Undo, mark again, and it's an ordinary toast; so is a reload and the next one.
+  await page.locator('.mt-undo').click(); await page.waitForTimeout(300);
+  await row('Iron Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.firstAgain = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('first-title') : null; });
+  await page.reload(); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
+  await row('The Incredible Hulk').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.firstAfterReload = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('first-title') : null; });
+  if (out.firstAgain !== false || out.firstAfterReload !== false) errors.push('the first title toast showed more than once: ' + JSON.stringify({ again: out.firstAgain, reload: out.firstAfterReload }));
+  // Nowhere near a milestone: the confetti itself is never fetched.
+  await page.waitForTimeout(1500);
+  if (freshLottie.some(u => /milestone/.test(u))) errors.push('a visit far from any milestone fetched the Lottie confetti: ' + freshLottie.join(', '));
   out.freshErrors = errors; await ctx.close();
+  // The first title marked and the sign-in reminder (due at 3 marks) never
+  // show together: two watchlist titles, then the first seen mark.
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART
+    + "localStorage.setItem('mcu.signInNudge.v1', '0'); localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'thor':'watchlist','hawkeye':'watchlist'}}));"));
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(600);
+  await row('Iron Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(2500);
+  out.firstNudge = await page.evaluate(() => ({ first: !!document.querySelector('.mcu-toast.first-title'), nudge: !!document.querySelector('.nudge') }));
+  await page.waitForTimeout(6500);
+  out.firstNudgeAfter = await page.evaluate(() => ({ first: !!document.querySelector('.mcu-toast.first-title'), nudge: !!document.querySelector('.nudge') }));
+  if (!out.firstNudge.first || out.firstNudge.nudge) errors.push('the first title toast and the sign-in reminder showed together: ' + JSON.stringify(out.firstNudge));
+  out.firstNudgeErrors = errors; await ctx.close();
+  // Small win: halfway through a followed guide (Notion "Small win: halfway
+  // through a guide"). Before Doomsday has 12 released essential stops and 5
+  // are seen, so the next one is halfway: "Halfway there!" with the star pop,
+  // fetched in advance because the visitor is one stop short.
+  const HALF_SEEN = ['infinity-war', 'endgame', 'loki-s1', 'shang-chi', 'no-way-home'];
+  const halfSeed = (extra) => "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:" + JSON.stringify(Object.fromEntries(HALF_SEEN.map(id => [id, 'seen']))) + "}));"
+    + "localStorage.setItem('mcu.guidesFollowed.v1', JSON.stringify([{ id: 'before-doomsday', at: 1 }]));" + (extra || '');
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + halfSeed()));
+  const halfLottie = lottieGets(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('Doctor Strange in the Multiverse').locator('.tsa-btn.seen').click(); await page.waitForTimeout(450);
+  out.halfway = await halfProbe(page);
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-d-halfway.png'), clip: { x: 420, y: 640, width: 600, height: 260 } });
+  { const h = out.halfway;
+    if (!h.halfway || !/Halfway there!/.test(h.toast) || !/6 of 12 seen/.test(h.toast))
+      errors.push('halfway through a followed guide did not show its toast: ' + JSON.stringify(h));
+    else if (!h.pop || h.pop.svg !== 1 || !(h.pop.z > h.pop.toastZ))
+      errors.push('the halfway toast did not play the star pop above the toast: ' + JSON.stringify(h));
+    else { const [x, y] = h.pop.origin.split(',').map(Number);
+      if (Math.abs(x - h.icon[0]) > 8 || Math.abs(y - h.icon[1]) > 16) errors.push('the star pop did not start on the toast icon: ' + JSON.stringify(h)); } }
+  if (!halfLottie.some(u => /small-win/.test(u)) || halfLottie.some(u => /milestone/.test(u)))
+    errors.push('near halfway, only the star pop should be fetched: ' + halfLottie.join(', '));
+  // Undo, mark again: it shows again. One more mark, past halfway: it doesn't.
+  await page.locator('.mt-undo').click(); await page.waitForTimeout(300);
+  await row('Doctor Strange in the Multiverse').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.halfwayAgain = (await halfProbe(page)).halfway;
+  await page.waitForTimeout(1800);
+  await row('Black Panther: Wakanda Forever').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.pastHalfway = await halfProbe(page);
+  if (!out.halfwayAgain) errors.push('undo and mark again did not show the halfway toast again');
+  if (out.pastHalfway.halfway || !/Marked as seen/.test(out.pastHalfway.toast || '')) errors.push('a mark past halfway showed the halfway toast: ' + JSON.stringify(out.pastHalfway));
+  out.halfErrors = errors; await ctx.close();
+  // Celebrations off: the same mark gets an ordinary toast, and nothing is fetched.
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + halfSeed("localStorage.setItem('mcu.celebrations.v1', 'off');")));
+  const quietLottie = lottieGets(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('Doctor Strange in the Multiverse').locator('.tsa-btn.seen').click(); await page.waitForTimeout(400);
+  out.halfwayOff = await halfProbe(page);
+  if (out.halfwayOff.halfway || out.halfwayOff.pop || quietLottie.length) errors.push('with Celebrations off, halfway still celebrated: ' + JSON.stringify({ p: out.halfwayOff, fetched: quietLottie }));
+  out.halfOffErrors = errors; await ctx.close();
+  // Small win: up to date with the newest release (Notion "Small win: up to
+  // date with the newest release"). On 2026-10-15, VisionQuest (2026-10-13) is
+  // the newest release and in its week; the seed has seen marks, so it is not
+  // a first title either.
+  const upCtx = async (when, init) => {
+    const r = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + (init || SEED));
+    r.fetched = lottieGets(r.page);
+    await r.page.clock.setFixedTime(new Date(when));
+    await r.page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(r.page);
+    return r;
+  };
+  let upLottie;
+  ({ ctx, page, errors, fetched: upLottie } = await upCtx('2026-10-15T15:00:00'));
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('VisionQuest').locator('.tsa-btn.seen').click(); await page.waitForTimeout(450);
+  out.upToDate = await halfProbe(page);
+  out.upToDate.cls = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return !!(t && t.className.includes('up-to-date')); });
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-d-uptodate.png'), clip: { x: 420, y: 640, width: 600, height: 260 } });
+  { const u = out.upToDate;
+    if (!u.cls || !/You're up to date!/.test(u.toast) || !/You've seen VisionQuest, the newest release/.test(u.toast)) errors.push('the newest release in its week did not show its toast: ' + JSON.stringify(u));
+    else if (!u.pop || u.pop.svg !== 1 || !(u.pop.z > u.pop.toastZ)) errors.push('the newest release toast did not play the star pop: ' + JSON.stringify(u)); }
+  if (!upLottie.some(x => /small-win/.test(x))) errors.push('a release in its week did not fetch the star pop: ' + upLottie.join(', '));
+  // Any other title that day: an ordinary toast.
+  await page.waitForTimeout(500);
+  await row('Wonder Man').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.notNewest = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('up-to-date') : null; });
+  if (out.notNewest !== false) errors.push('a title that is not the newest release showed the up-to-date toast');
+  out.upErrors = errors; await ctx.close();
+  // After its week (12 days on): an ordinary toast, and nothing fetched.
+  let lateLottie;
+  ({ ctx, page, errors, fetched: lateLottie } = await upCtx('2026-10-25T15:00:00'));
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('VisionQuest').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.upLate = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('up-to-date') : null; });
+  if (out.upLate !== false || lateLottie.some(x => /small-win/.test(x))) errors.push('the newest release celebrated after its week: ' + JSON.stringify({ toast: out.upLate, fetched: lateLottie }));
+  out.upLateErrors = errors; await ctx.close();
+  // When it is also the last unseen release, the milestone wins.
+  // (Every title released by then, from a first visit, seeds a second one.)
+  ({ ctx, page, errors } = await upCtx('2026-10-15T15:00:00'));
+  const allButVq = await page.evaluate(() => window.TITLES.filter(t => window.MCU_isReleased(t) && t.id !== 'visionquest').map(t => t.id));
+  await ctx.close();
+  ({ ctx, page, errors } = await upCtx('2026-10-15T15:00:00', "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:" + JSON.stringify(Object.fromEntries(allButVq.map(id => [id, 'seen']))) + "}));"));
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('VisionQuest').locator('.tsa-btn.seen').click(); await page.waitForTimeout(350);
+  out.upMilestone = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return { milestone: !!(t && t.classList.contains('milestone')), upToDate: !!(t && t.className.includes('up-to-date')), pop: !!document.querySelector('.mcu-starpop'), confetti: !!document.querySelector('.mcu-confetti') }; });
+  if (!out.upMilestone.milestone || out.upMilestone.upToDate || out.upMilestone.pop || !out.upMilestone.confetti) errors.push('the milestone did not win over the newest release: ' + JSON.stringify(out.upMilestone));
+  out.upMilestoneErrors = errors; await ctx.close();
+  // ...and on a phone.
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, NOWELCOME + ART + halfSeed()));
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.waitForTimeout(3500);
+  await page.locator('.m-lrow', { hasText: 'Doctor Strange in the Multiverse' }).first().locator('.tsa-btn.seen').tap(); await page.waitForTimeout(450);
+  out.mHalfway = await halfProbe(page);
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-m-halfway.png') });
+  if (!out.mHalfway.halfway || !out.mHalfway.pop || out.mHalfway.pop.svg !== 1)
+    errors.push('halfway on a phone did not show the toast with the star pop: ' + JSON.stringify(out.mHalfway));
+  out.mHalfErrors = errors; await ctx.close();
   // phone
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, NOWELCOME + ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);

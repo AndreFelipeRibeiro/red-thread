@@ -147,7 +147,7 @@ export function CharCard({ touch, inList = false, color, photo, initials, name, 
             {titles.map((t, i) => (
               <button key={t.id} type="button" tabIndex={-1} aria-hidden="true" className={B.W_SEG} title={I18N.titleName(t)} onClick={() => onJump(t.id)}>
                 <i className={cn(B.W_SEG_BAR,
-                  statusOf(t.id) === 'seen' ? 'on bg-(--progress)' : 'bg-(--progress-track)',
+                  statusOf(t.id) === 'seen' ? 'on bg-(--progress)' : 'bg-(--brand-tint-strong)',
                   stepping && i === stepIndex && 'cur outline-1 outline-offset-2 outline-muted-foreground/70')}/>
               </button>
             ))}

@@ -594,7 +594,7 @@ function GearIcon() {
 function SettingsButton({ onOpen, open, className = '' }: { onOpen: () => void; open?: boolean; className?: string }) {
   const tr = window.MCU_I18N.tr;
   return (
-    <button type="button" className={cn('settings-btn inline-flex size-[max(44px,2.75rem)] shrink-0 cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 text-foreground shadow-xs outline-none transition-[scale,background-color,color,border-color,box-shadow] duration-150 hover:bg-(--field-hover) focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-disabled:scale-92 motion-reduce:active:scale-100 border-(--button-outline-border) [:root.reduce-motion_&]:active:scale-100',
+    <button type="button" className={cn('settings-btn inline-flex size-[max(44px,2.75rem)] shrink-0 cursor-pointer items-center justify-center rounded-md border bg-(--button-outline) p-0 text-foreground shadow-xs outline-none transition-[scale,background-color,color,border-color,box-shadow] duration-150 hover:bg-(--field-hover) focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-disabled:scale-92 motion-reduce:active:scale-100 border-input [:root.reduce-motion_&]:active:scale-100',
       open && 'open bg-(--field-hover)', className)}
       onClick={onOpen} aria-label={tr('settings.title')} title={tr('settings.title')} aria-expanded={!!open}>
       <GearIcon/>

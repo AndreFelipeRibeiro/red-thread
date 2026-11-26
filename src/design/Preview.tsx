@@ -177,7 +177,7 @@ function PhoneSheet() {
 export default function Preview() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 border-b bg-background">
         {/* Wraps rather than squeezes: at 375px the title and the three theme
             buttons do not fit on one line, and a four-line heading beside a
             crowded control is worse than two rows. */}

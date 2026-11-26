@@ -23,7 +23,7 @@ const tok = (p) => (!p ? null : p.v ? p.v : 'raw');
 // (docs/design-tokens.md, "Translucent colors"): compared as that token.
 export const TRANSLUCENT = {
   'background-glass': 'background', 'border-soft': 'border', 'foreground-strong': 'foreground',
-  'on-image-veil': 'on-image-base', 'seen-foreground-soft': 'seen-foreground', 'popover-ring': 'foreground',
+  'seen-foreground-soft': 'seen-foreground', 'popover-ring': 'foreground',
   'muted-soft': 'muted', 'muted-foreground-soft': 'muted-foreground',
 };
 

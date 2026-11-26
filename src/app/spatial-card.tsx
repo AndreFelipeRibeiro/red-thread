@@ -259,7 +259,7 @@ export function CardMark({ seen, guideBadge, skipped = false, connections = 0, p
     <>
       {connections > 0 && (
         <span className={cn('card-conn-pill absolute left-2 z-3', corner, pop && 'left-2.5')}>
-          <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-(--on-image-base)/78 font-semibold text-(--on-image) tabular-nums shadow-mark-lg',
+          <span className={cn('card-conn inline-flex items-center gap-1 rounded-full bg-(--on-image-ground) font-semibold text-(--on-image) tabular-nums shadow-mark-lg',
             pop ? 'h-[30px] px-2.5 text-card-meta-pop [&_svg]:size-[13px]' : 'h-[24px] px-2 text-card-meta [&_svg]:size-[11px]')}
             role="img" aria-label={label} title={`${label} · ${tr('card.connectionsTip')}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.4 6.5 15.6 7.5M7 8.4 9.2 15.6M16.5 10.1 11.6 16.2"/></svg>
@@ -344,7 +344,7 @@ export function CardText({ title, skipped = false, query, mark, pop = false, tou
             details keep "Series". */}
         {title.type === 'series' && !upcoming && <>{dot}<span className="card-type flex-none whitespace-nowrap">{window.typeLabel(title.type)}</span></>}
         {upcoming && <window.ReleaseBadge title={title} className="card-release ml-0 min-w-0 px-1.5"/>}
-        {skipped && <span className="card-skiptag flex-none rounded-[4px] border border-dashed border-border px-[5px] text-card-micro font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
+        {skipped && <span className="card-skiptag flex-none rounded-xs border border-dashed border-border px-[5px] text-card-micro font-semibold tracking-[.6px] uppercase">{tr('guide.skippedTag')}</span>}
       </div>}
     </div>
   );

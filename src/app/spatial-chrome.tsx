@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 const tr = (key: string, vars?: Record<string, unknown>) => window.MCU_I18N.tr(key, vars);
 
 // A card floating over the canvas: the band labels, the meter, the empty note.
-const FLOAT = 'border border-border bg-background/95 shadow-sm';
+const FLOAT = 'border border-border bg-background shadow-sm';
 
 /** − / value / +, bottom-left on desktop (Notion "Spatial: the zoom
  *  control overlaps title cards", 2026-11-16: bottom-right it sat on the next
@@ -41,7 +41,7 @@ export function ZoomControl({ scale, min, max, touch, rest, edit, onEdit, onComm
     touch && 'h-[max(40px,2.5rem)] min-w-[54px]');
   const start = String(Math.round(scale * 100));
   return (
-    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-(--button-outline-border) bg-(--control-surface) shadow-xs',
+    <div className={cn('zoom-ctl absolute flex items-stretch gap-px overflow-hidden rounded-md border border-input bg-(--control-surface) shadow-xs',
       touch
         ? 'touch top-3 right-3 z-22 rounded-lg transition-opacity duration-250 motion-reduce:transition-none'
         : 'bottom-4 left-4',
@@ -232,7 +232,7 @@ export function ContextSummary({ variant, inList = false, showing, total, filter
   );
   const row = (
     <div className={cn('ctx flex items-center gap-x-2 gap-y-1.5 text-label text-muted-foreground', `ctx-${variant}`,
-      pill ? 'absolute top-3 left-3.5 z-40 box-border min-h-[max(26px,1.625rem)] max-w-[calc(100%-164px)] rounded-[13px] border border-border bg-background/82 px-2.5 py-0.5 backdrop-blur-[6px] has-[.ctx-clear]:pr-1'
+      pill ? 'absolute top-3 left-3.5 z-40 box-border min-h-[max(26px,1.625rem)] max-w-[calc(100%-164px)] rounded-full border border-border bg-background/82 px-2.5 py-0.5 backdrop-blur-[6px] has-[.ctx-clear]:pr-1'
         : '-mt-0.5 mb-2.5 min-h-[22px] justify-between')} onTouchStart={stop} onMouseDown={stop}>
       <span className="ctx-text inline-flex min-w-0 flex-nowrap gap-x-[1ch] overflow-hidden text-label leading-[1.4] tabular-nums [&_b]:font-semibold [&_b]:text-foreground" role="status">
         <span className="ctx-seg whitespace-nowrap"><b>{count}</b></span>
