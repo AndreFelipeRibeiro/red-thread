@@ -45,7 +45,7 @@ surface uses them, so they have no Figma counterpart until one does.
 
 | Figma | Node | Code |
 | --- | --- | --- |
-| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines; Char mark and Year switches: a picked or searched character's Char mark takes the year line's place, so the card keeps its height, V5 Batch 26) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
+| Spatial card (Seen × Release × Ring: None, Up next, Guide stop, Selected (2026-11-27: the selected title at its own size, phase-color border, ring and glow; the app draws no enlarged copy); rings are token-bound spread shadows standing in for the code's outlines; Char mark and Year switches: a picked or searched character's Char mark takes the year line's place, so the card keeps its height, V5 Batch 26) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
 | Poster (Title: one variant per catalog title id, 64; on the Posters page, 168 × 252, live TMDB posters at w500 over the poster's own color, checked 2026-11-19) | `100:696` | `src/app/poster.tsx` `PosterArt`; paths in `src/data/media-data.ts` |

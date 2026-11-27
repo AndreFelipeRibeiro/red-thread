@@ -3811,24 +3811,11 @@ function App() {
   // Phones dock the card where the All titles card sits.
   const charPill = isTouch && charCard ? charCard(false) : null;
 
-  const focusPop = (() => {
-    // Phones have no focus ring or pop card any more (E 5/5).
-    if (isTouch || viewMode !== 'spatial' || !selectedId) return null;
-    const p = positions[selectedId];
-    const t = window.TITLES.find(x => x.id === selectedId);
-    if (!p || !t) return null;
-    return (
-      <window.FocusPop
-        facet={cardFacet}
-        title={t}
-        x={view.x + (p.x + CARD_W/2) * view.scale}
-        y={view.y + (p.y + CARD_H/2) * view.scale}
-        onOpenCast={() => setDrawerId(selectedId)}
-        guide={guide} guideSkip={guideSkipInfo ? guideSkipInfo[t.id] : null} guideBadge={guideBadges ? guideBadges[t.id] : null} onGuideSkip={onCanvasSkip}
-        connections={connCounts[t.id] || 0}
-      />
-    );
-  })();
+  // No pop card for the selected title anywhere (Andre, 2026-11-27: "Never,
+  // one card"). Phones lost it in Explore E 5/5; on desktop its leftover
+  // guard read the phone's view (viewMode), so it showed whenever that was
+  // Connections, and past 188px of zoom the canvas card showed behind it too.
+  // The selected card is the canvas card itself, outlined, at its own size.
 
   // Seen on the next stop in a guide's dock or bar while the camera is on
   // another stop: the camera glides back to it, so the mark is seen landing
@@ -4037,7 +4024,6 @@ function App() {
           the bottom bar instead (below). */}
       {!guide && !isTouch && (charCard ? charCard(false) : !selectedId && compactCard && compactCard(false))}
       {guide && !isTouch && guideModule('spatial')}
-      {focusPop}
     </div>
   );
 

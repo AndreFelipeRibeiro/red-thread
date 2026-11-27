@@ -150,6 +150,24 @@ const LINEFIT = () => {
     errors.push(...e);
     await ctx.close();
   }
+  // Desktop: one card for the selected title at any zoom (Notion
+  // "Connections: a second copy of the selected card shows on desktop",
+  // Andre 2026-11-27: "Never, one card"). The old pop card showed whenever
+  // the phone's saved view was Connections, so that is the setting here.
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, { ...prefs, viewMode: 'spatial' }, {});
+    // The plain address, so the saved prefs apply (a ?title= link ignores them).
+    await page.goto(URL); await settle(page);
+    await page.locator('.canvas .card[data-id="thor"]').click(); await page.waitForTimeout(900);
+    const zoom = page.getByRole('button', { name: 'Zoom in', exact: true });
+    for (let i = 0; i < 6; i++) { await zoom.click(); await page.waitForTimeout(150); }
+    await page.getByRole('button', { name: 'Zoom out', exact: true }).click(); await page.waitForTimeout(700);
+    const one = out.oneCard = await page.evaluate(() => ({ pop: document.querySelectorAll('.m-focuspop').length,
+      thor: document.querySelectorAll('.canvas .card[data-id="thor"]').length, selected: !!document.querySelector('.canvas .card[data-id="thor"]') }));
+    expect(!one.pop && one.thor === 1, `desktop: the selected title should show once at any zoom: ${JSON.stringify(one)}`);
+    errors.push(...e);
+    await ctx.close();
+  }
   // The phone: the selected card is the same card, at phone sizes, with Cast.
   {
     const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }, { ...prefs, viewMode: 'spatial' }, {});
