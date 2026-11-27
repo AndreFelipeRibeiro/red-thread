@@ -59,6 +59,7 @@ import './app/share-image'; // the share card (Share 2/3), drawn on demand
 import './app/celebrate';
 import './app/account';
 import './app/about';
+import './app/first-visit'; // the first visit's tour: drawings, Spotlight, tour card, finish
 import './app/search-suggest';
 import './app/mobile';
 import './app/theme-lab'; // the dev-only Theme lab (renders nothing in production)

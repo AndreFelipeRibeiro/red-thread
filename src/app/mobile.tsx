@@ -466,7 +466,7 @@ const sheetHistory = (() => {
 // `onClose` may return false to stay open (the picker asks before dropping
 // unsaved picks): Back then gets the sheet a new history entry, and a swipe
 // springs back.
-function Sheet({ children, onClose, tall, label, labelledBy, describedBy, className = '' }: {
+function Sheet({ children, onClose, tall, label, labelledBy, describedBy, className = '', scrimClassName = '' }: {
   children: React.ReactNode;
   /** Returning false keeps the sheet open (the picker asks before dropping
    *  unsaved picks). */
@@ -476,6 +476,8 @@ function Sheet({ children, onClose, tall, label, labelledBy, describedBy, classN
   labelledBy?: string;
   describedBy?: string;
   className?: string;
+  /** A scrim other than the dialogs' 10% (the first visit's welcome-scrim). */
+  scrimClassName?: string;
 }) {
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
@@ -578,7 +580,7 @@ function Sheet({ children, onClose, tall, label, labelledBy, describedBy, classN
   // pass 3/5); the behaviour above stays here.
   return (
     <window.SheetFrame sheetRef={ref} onClose={onClose} tall={tall} label={label} labelledBy={labelledBy}
-      describedBy={describedBy} className={className}>{children}</window.SheetFrame>
+      describedBy={describedBy} className={className} scrimClassName={scrimClassName}>{children}</window.SheetFrame>
   );
 }
 

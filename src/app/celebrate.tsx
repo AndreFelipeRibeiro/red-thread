@@ -88,6 +88,34 @@ function halfwayGuide(e) {
   }
   return null;
 }
+// A small win (Notion "Small win: halfway through a phase"): the single mark
+// that brings the title's phase to half its released titles seen (rounded up),
+// for a phase with at least four. The same rules as a guide's halfway, which
+// wins on the same mark.
+function phaseHalf(list, seen) {
+  const n = list.length, half = Math.ceil(n / 2);
+  return { total: n, half, seen: list.filter(t => seen(t.id)).length };
+}
+function halfwayPhase(e) {
+  const released = window.MCU_isReleased;
+  if (e.bulk || e.to !== 'seen' || !released || !released(e.title)) return null;
+  const list = (window.TITLES || []).filter(t => released(t) && t.phase === e.title.phase);
+  const b = phaseHalf(list, (id) => e.states[id] === 'seen');
+  const a = phaseHalf(list, (id) => id === e.title.id || e.states[id] === 'seen');
+  if (a.total >= HALFWAY_MIN && a.seen < a.total && b.seen < a.half && a.seen >= a.half) return { phase: e.title.phase, seen: a.seen, total: a.total };
+  return null;
+}
+// A phase one title short of halfway: when the star pop is fetched.
+function nearPhaseHalf(states) {
+  const released = window.MCU_isReleased;
+  if (!states || !released || !window.MCU_PREFS.celebrations() || reducedMotion()) return false;
+  const phases = {};
+  (window.TITLES || []).filter(t => released(t)).forEach(t => (phases[t.phase] = phases[t.phase] || []).push(t));
+  return Object.values(phases).some(list => {
+    const p = phaseHalf(list, (id) => states[id] === 'seen');
+    return p.total >= HALFWAY_MIN && p.seen === p.half - 1;
+  });
+}
 // A small win (Notion "Small win: the first title marked"): a visitor's very
 // first seen mark, once ever on this device (mcu.firstSeen.v1; Undo doesn't
 // reset it). A visitor who already has seen marks (an account synced here, or
@@ -354,7 +382,7 @@ function StatusToast({ touch }) {
   // Close to a milestone: fetch the Lottie confetti while the page is idle.
   React.useEffect(() => {
     if (nearMilestone(states)) prefetchCelebrations(['milestone']);
-    if (nearHalfway(states) || nearUpToDate(states)) prefetchCelebrations(['small-win']);
+    if (nearHalfway(states) || nearPhaseHalf(states) || nearUpToDate(states)) prefetchCelebrations(['small-win']);
   }, [states]);
   React.useEffect(() => {
     if (!nearFirstTitle(states)) return undefined;
@@ -374,17 +402,19 @@ function StatusToast({ touch }) {
     const cel = window.MCU_PREFS.celebrations();
     const milestone = e.to === 'seen' && cel ? (e.bulk ? completedMilestoneBulk(e) : completedMilestone(e)) : null;
     const halfway = !milestone && cel ? halfwayGuide(e) : null;
+    const phaseHalfway = !milestone && !halfway && cel ? halfwayPhase(e) : null;
     // Checked on every seen mark, so the first one is used up whatever shows.
-    const first = firstTitle(e) && cel && !milestone && !halfway;
+    const first = firstTitle(e) && cel && !milestone && !halfway && !phaseHalfway;
     // The newest release comes last: a milestone, halfway or a first title
     // on the same mark says more.
-    const latest = cel && !milestone && !halfway && !first ? upToDate(e) : null;
+    const latest = cel && !milestone && !halfway && !phaseHalfway && !first ? upToDate(e) : null;
+    // One animation at most (Andre, 2026-11-26): the confetti, or one star pop.
     if (milestone) burstConfetti();
-    else if (halfway || first || latest) starPop();
-    setToast({ key: Date.now(), ...e, milestone, halfway, first, latest, place: toastPlacement(touch) });
+    else if (halfway || phaseHalfway || first || latest) starPop();
+    setToast({ key: Date.now(), ...e, milestone, halfway, phaseHalfway, first, latest, place: toastPlacement(touch) });
   }), [touch]);
 
-  const life = toast && (toast.milestone || toast.halfway || toast.first || toast.latest) ? 6500 : 4500;
+  const life = toast && (toast.milestone || toast.halfway || toast.phaseHalfway || toast.first || toast.latest) ? 6500 : 4500;
   const arm = React.useCallback((ms) => {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setToast(null), ms);
@@ -413,12 +443,14 @@ function StatusToast({ touch }) {
     const I = window.MCU_I18N;
     const m = toast.milestone;
     const half = toast.halfway;
+    const phaseHalfway = toast.phaseHalfway;
     const first = toast.first;
     const latest = toast.latest;
-    const star = !!(m || half || first || latest);
+    const star = !!(m || half || phaseHalfway || first || latest);
     const followed = !m && toast.autoFollow ? window.MCU_GUIDE.get(toast.autoFollow) : null;
     const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase })
       : half ? tr('toast.halfway')
+      : phaseHalfway ? tr('toast.phaseHalfway', { n: phaseHalfway.phase })
       : first ? tr('toast.firstTitle')
       : latest ? tr('toast.upToDate')
       : followed ? tr('toast.followed', { name: window.MCU_GUIDE.short(followed) })
@@ -426,13 +458,14 @@ function StatusToast({ touch }) {
       : toast.bulk ? tr('toast.bulk.' + toast.to, { n: toast.ids.length }) : I.titleName(toast.title);
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
       : half ? tr('toast.halfwaySub', { name: window.MCU_GUIDE.short(half.guide), n: half.seen, total: half.total })
+      : phaseHalfway ? tr('toast.phaseHalfwaySub', { n: phaseHalfway.seen, total: phaseHalfway.total, phase: phaseHalfway.phase })
       : first ? tr('toast.firstTitleSub', { title: I.titleName(toast.title) })
       : latest ? tr('toast.upToDateSub', { title: I.titleName(toast.title) })
       : followed ? tr('toast.followedSub')
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
       <div key={toast.key} className={cn('mcu-toast fixed left-1/2 z-130 flex w-max max-w-[min(460px,calc(100vw-24px))] animate-[toast-in_280ms_cubic-bezier(.2,.9,.3,1.2)] items-center gap-3 rounded-xl border bg-popover py-2.5 pr-2.5 pl-3 text-body text-popover-foreground shadow-lg [transform:translateX(-50%)] motion-reduce:animate-none',
-        toast.to, star && 'border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', m && 'milestone', half && 'small-win halfway', first && 'small-win first-title', latest && 'small-win up-to-date', touch && 'touch w-[calc(100vw-24px)]')}
+        toast.to, star && 'border-[color-mix(in_oklab,#f0c34a_55%,var(--border))]', m && 'milestone', half && 'small-win halfway', phaseHalfway && 'small-win phase-halfway', first && 'small-win first-title', latest && 'small-win up-to-date', touch && 'touch w-[calc(100vw-24px)]')}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
         <span aria-hidden="true" className={cn('mt-ic inline-flex h-8 flex-[0_0_32px] items-center justify-center rounded-md text-title text-(--on-color) [&_svg]:size-4',

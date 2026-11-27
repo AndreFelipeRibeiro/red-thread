@@ -8,7 +8,9 @@
 // - a guide on Connections points at its ×;
 // - hints stay away from the welcome, and from a shared link's landing;
 // - Show the welcome again resets them; Portuguese; a phone shows the canvas
-//   hint above the cards, inside the screen.
+//   hint above the cards, inside the screen;
+// - a phone, once a title has been picked, points at the bottom bar's Guides
+//   (Notion "First visit", 2026-11-27); opening Guides marks it done.
 // Automated browsers get hints only with localStorage `mcu.hints.qa` = '1'.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8251; // regress/quick give each check its own port
@@ -114,6 +116,26 @@ const wait = (page) => page.waitForTimeout(1300);
     await page.goto(URL + '?view=spatial'); await appReady(page); await wait(page);
     const m = out.phone = await page.evaluate(H);
     expect(m && m.id === 'canvas' && /Escolha um título/.test(m.text) && m.inside, `the phone should show the canvas hint in Portuguese, inside the screen: ${JSON.stringify(m)}`);
+    errors.push(...e);
+    await ctx.close();
+  }
+  {
+    // A phone, once a title has been picked (Notion "First visit",
+    // 2026-11-27): the bottom bar's Guides gets its hint, above the tab;
+    // opening Guides marks it done.
+    const { ctx, page, errors: e } = await ctxPage(browser, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await page.addInitScript(() => { if (!sessionStorage.getItem('qa-tabs')) { sessionStorage.setItem('qa-tabs', '1'); localStorage.setItem('mcu.hints.v1', JSON.stringify({ canvas: 1 })); } });
+    await page.goto(URL + '?view=spatial'); await appReady(page); await wait(page);
+    const t = out.tabs = await page.evaluate(() => {
+      const h = document.querySelector('.first-hint'), tab = document.querySelector('.m-tab[data-section="guides"]');
+      if (!h || getComputedStyle(h).opacity !== '1' || !tab) return null;
+      const r = h.getBoundingClientRect(), tr = tab.getBoundingClientRect();
+      return { id: h.dataset.hint, text: h.textContent, above: r.bottom <= tr.top, inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 };
+    });
+    expect(t && t.id === 'tabs' && /Guides are short watch lists/.test(t.text) && t.above && t.inside, `a phone should point at Guides once a title has been picked: ${JSON.stringify(t)}`);
+    await page.locator('.m-tab[data-section="guides"]').tap(); await page.waitForTimeout(600);
+    const done = out.tabsDone = await page.evaluate(() => JSON.parse(localStorage.getItem('mcu.hints.v1') || '{}').tabs === 1);
+    expect(done, 'opening Guides should mark the tabs hint done');
     errors.push(...e);
     await ctx.close();
   }

@@ -42,7 +42,7 @@ Reconcile catches whatever slipped through.
 | --- | --- | --- | --- | --- |
 | Idea | A ticket: the request, why, done when; Track; placement (parent epic or standalone) | Notion master backlog | Someone claims it (top of the Backlog column first) | Backlog |
 | Explore | Options to compare, named A, B, C…, each round versioned (see "The paper trail") | Claude Design (a claude.ai artifact), or straight in Figma Explorations | Andre picks a direction, written in the ticket's Trail | In progress |
-| Design | Hi-fi frames built from library instances, each exploration a named Figma version, the selected one marked; behavior as Dev Mode annotations | Figma Explorations file | Andre reviews it | In progress, then Awaiting review |
+| Design | Hi-fi frames built from library instances, each exploration a named Figma version, the selected one marked; behavior as Dev Mode annotations. Light first (Dark too when it's cheap); Portuguese only once a direction is close or approved, not in the first rounds (Andre, 2026-11-27) | Figma Explorations file | Andre reviews it | In progress, then Awaiting review |
 | Design approved | Andre's sign-off; the ticket's **Figma** field holds the exact frame (`node-id` link) and the body names the approved version | Notion ticket | Andre sets it | **Design approved** |
 | Library | The design as a component, variant or property in the Design System, then in the App Screens frames that show it; Andre publishes; each changed asset reads Current | Figma Design System, App Screens | Publish checked; the ticket's "Figma: library + App Screens updated" item is ticked | Design approved |
 | Build | Code that follows the library and tokens (when the design changed a variable, the Figma ⇄ code check brings it into the code first); the ticket's QA check; Awaiting review with what was verified | `red-thread-wip`, uncommitted | Andre approves that revision | Awaiting review, then **Ship approved** |
@@ -285,6 +285,7 @@ changed the library has its release logged.
 | What | Where | Holds |
 | --- | --- | --- |
 | Backlog | Notion **Red Thread - Backlog/Tasks (MASTER)** (https://app.notion.com/p/4189e188029f809c9a95e8b91ae22bdf), board **All tasks** | Every ticket, every version; the record of each stage |
+| References | Figma [Red Thread – References](https://www.figma.com/design/Y5nR5BRabTbZA028Ewakfb), one page per topic; the matching private Mobbin collection ("Red Thread – <topic>") | Explore stage: other products' screens for a pattern, each with its app, why it's there and its Mobbin link, beside how Red Thread does it today. Linked from the ticket's Explore line. References only: never copied into the app |
 | Lo-fi prototypes | Claude Design (claude.ai artifacts) | Explore options, linked from the ticket |
 | Hi-fi explorations | Figma [Red Thread – Explorations (HI-FI)](https://www.figma.com/design/v2yL8aeK8uyRfgUfhVm74z) | Design stage: versioned explorations, the selected one marked, archived once shipped |
 | Earlier explorations | Figma [file `HFwjyn1zLiNJGSfGtSfrr3`](https://www.figma.com/design/HFwjyn1zLiNJGSfGtSfrr3) (pages 1–8: Navigation to Explore E) | V5's first explorations, from before the library; history |

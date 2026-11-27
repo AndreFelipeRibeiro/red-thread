@@ -141,8 +141,8 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
 
     // Show the welcome again.
     await page.locator('.settings-btn').click(); await page.waitForTimeout(500);
-    await page.locator('.settings-panel button', { hasText: 'Show the welcome again' }).click(); await page.waitForTimeout(500);
-    expect(await page.locator('.about-dialog .welcome-pick').count() === 1, 'show welcome: the welcome did not open');
+    await page.locator('.settings-panel button', { hasText: 'Show the welcome tour again' }).click(); await page.waitForTimeout(500);
+    expect(await page.locator('.about-dialog .welcome-tour').count() === 1, 'show welcome: the welcome did not open');
     await ctx.close();
   }
 
@@ -278,7 +278,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     const { ctx, page } = await open(DESK);
     await page.goto(URL_BASE + '?welcome'); await ready(page);
     out.welcomeLang = await page.locator('.welcome-lang').count();
-    expect(await page.locator('.about-dialog .welcome-pick').count() === 1 && out.welcomeLang === 0, 'welcome: expected the welcome without a language choice');
+    expect(await page.locator('.about-dialog .welcome-tour').count() === 1 && out.welcomeLang === 0, 'welcome: expected the welcome without a language choice');
     await ctx.close();
   }
 

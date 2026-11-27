@@ -749,9 +749,9 @@ Object.assign(window, { Hourglass, StoryYear, ReleaseLine, ReleaseBadge, Synopsi
  *  surface, rounded top, the dialogs' overlay). Its behaviour (focus trap,
  *  Back, swipe to close) is `Sheet` in mobile.tsx, which renders this. The
  *  frame and its contents are on the design system. */
-export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describedBy, className = '', children }: {
+export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describedBy, className = '', scrimClassName = '', children }: {
   sheetRef: React.Ref<HTMLDivElement>; onClose: () => void; tall?: boolean; label?: string;
-  labelledBy?: string; describedBy?: string; className?: string; children: React.ReactNode;
+  labelledBy?: string; describedBy?: string; className?: string; scrimClassName?: string; children: React.ReactNode;
 }) {
   // Height (Andre, 2026-11-16): one standard for every sheet. A sheet is as
   // tall as its content, up to the screen less a 32px strip of the page above
@@ -759,7 +759,7 @@ export function SheetFrame({ sheetRef, onClose, tall, label, labelledBy, describ
   // height, the Follow the thread sheet's. dvh follows the browser's bars.
   return (
     <>
-      <div className="m-scrim fixed inset-0 z-90 animate-[mfade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none" onClick={onClose} aria-hidden="true"/>
+      <div className={cn('m-scrim fixed inset-0 z-90 animate-[mfade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none', scrimClassName)} onClick={onClose} aria-hidden="true"/>
       <div ref={sheetRef} role="dialog" aria-modal="true" aria-label={labelledBy ? undefined : (label || tr('details.label'))}
         aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}
         className={cn('m-sheet fixed inset-x-0 bottom-0 z-100 flex max-h-[calc(100dvh-32px-env(safe-area-inset-top,0px))] touch-pan-y flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-lg outline-none',

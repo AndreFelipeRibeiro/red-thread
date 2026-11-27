@@ -22,6 +22,7 @@ the Portuguese "Quero ver" by Andre on 2026-11-16.
 | The list of every title | Titles | Títulos | My list, Lists, Library |
 | Curated viewing orders | Guides (one: a guide) | Guias | Paths, Playlists |
 | Go from a title to its place on the canvas | See connections | Ver conexões | Show in Explore, Open in Spatial |
+| The first visit's five steps on one card (Notion "First visit", 2026-11-27) | the tour; Show me around; Skip tour | o tour; Fazer o tour; Pular tour | walkthrough, onboarding, tutorial |
 
 ## A title and the collection
 

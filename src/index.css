@@ -34,6 +34,7 @@
 @source "./app/about.tsx";
 @source "./app/whats-new.tsx";
 @source "./app/hints.tsx";
+@source "./app/first-visit.tsx";
 @source "./app/char-card.tsx";
 @source "./app/shortcuts.tsx";
 @source "./app/celebrate.tsx";
@@ -210,6 +211,7 @@
       --neutral-71: oklch(0.708 0 0);
       --neutral-52: oklch(0.52 0 0);
       --neutral-27: oklch(0.269 0 0);
+      --neutral-24: oklch(0.239 0 0); /* #1f1f1f: Dark surface-raised */
       --neutral-20: oklch(0.205 0 0);
       --neutral-15: oklch(0.145 0 0);
       --neutral-100-a10: oklch(1 0 0 / 10%);
@@ -342,6 +344,10 @@
       --card-foreground: var(--neutral-15);
       --popover: var(--neutral-100);
       --popover-foreground: var(--neutral-15);
+      /* A surface raised over the canvas that must read apart from the cards
+         in Dark: the first visit's welcome, tour card, finish and their
+         drawing panels (Notion "First visit", 2026-11-27). */
+      --surface-raised: var(--popover);
       /* The brand red with white ink: 5.37:1. */
       --primary: var(--red-55);
       --primary-foreground: var(--neutral-98);
@@ -405,6 +411,11 @@
       --neutral-tint: color-mix(in oklab, var(--foreground) 8%, transparent);
       --veil: color-mix(in oklab, var(--background) 90%, transparent);
       --veil-light: color-mix(in oklab, var(--background) 50%, transparent);
+      /* The first visit's dims (Notion "First visit", 2026-11-27): the tour's
+         spotlight darkens all but the control a step points at; the scrim
+         sits behind its welcome and finish (Light as the dialogs' bg-black/10). */
+      --spotlight-dim: oklch(0 0 0 / 40%);
+      --welcome-scrim: oklch(0 0 0 / 10%);
       --border-strong: color-mix(in oklch, var(--foreground) 20%, var(--background));
       --seen-border: color-mix(in oklab, var(--seen) 55%, var(--border));
       --seen-line: color-mix(in oklab, var(--seen) 30%, var(--background));
@@ -453,6 +464,9 @@
       --card-foreground: var(--neutral-98);
       --popover: var(--neutral-20);
       --popover-foreground: var(--neutral-98);
+      --surface-raised: var(--neutral-24);
+      --spotlight-dim: oklch(0 0 0 / 70%);
+      --welcome-scrim: oklch(0 0 0 / 50%);
       /* The same red as Light's primary (Andre, 2026-11-17, palette proposal
          P3; was red-58): white ink at 5.37:1; the lines and fills keep the
          lighter --brand (6.35:1 on the background). */
@@ -545,7 +559,7 @@
      are the exception, as fixed compositions. */
   :root {
     --fs-display: 2.25rem;  /* 36px */
-    --fs-display-sm: 1.75rem; /* 28px: the welcome's heading */
+    --fs-display-sm: 1.875rem; /* 30px: the welcome headline, About and What's new titles */
     --fs-title: 1.25rem;    /* 20px */
     --fs-heading: 1rem;     /* 16px */
     --fs-body: 0.9375rem;   /* 15px */
@@ -611,6 +625,18 @@
 /* The dialog shell (src/app/about.tsx ModalDialog, shadcn pass 5/5). */
 @keyframes about-fade { from { opacity: 0; } }
 @keyframes about-rise { from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } }
+/* The first visit (src/app/about.tsx WelcomeContent, src/app/first-visit.tsx):
+   the map blurs and dims in after a beat, the welcome rises and fades in,
+   and each leaves with a short fade; the tour card fades up where it sits.
+   Reduce motion cuts them all (motion-reduce, :root.reduce-motion). */
+@keyframes welcome-scrim-in { from { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); } }
+@keyframes welcome-rise { from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)) scale(.985); } }
+@keyframes welcome-sheet-rise { from { opacity: 0; transform: translateY(32px); } }
+@keyframes welcome-out { to { opacity: 0; } }
+@keyframes welcome-sink { to { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.99); } }
+@keyframes welcome-sheet-sink { to { opacity: 0; transform: translateY(24px); } }
+@keyframes tour-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes tour-swap { from { opacity: 0; transform: translateY(4px); } }
 /* Toasts and the List's bulk bar rising in (celebrate.tsx, desktop-list.tsx). */
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px) scale(.97); } }
 /* Saving and loading spinners (status-actions.tsx, account.tsx). */

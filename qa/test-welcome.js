@@ -21,7 +21,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
-  const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .about'),
+  const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .welcome, .m-sheet .about'), tour: !!document.querySelector('.welcome-tour'),
     title: (document.querySelector('.about-title') || {}).textContent || null, cta: !!document.querySelector('.welcome-start, .about-cta'), flag: localStorage.getItem('mcu.welcome.v1'),
     cols: (() => { const u = document.querySelector('.about-ways'); return u ? getComputedStyle(u).gridTemplateColumns.split(' ').length : null; })(),
     scroll: (() => { const d = document.querySelector('.about-dialog'); return d ? d.scrollHeight > d.clientHeight : null; })(), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))) }));
@@ -46,6 +46,12 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page); out.returning = await st(page);
   await ctx.close();
+  // 2b. a returning visitor on a phone with no saved view keeps the list
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED));
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  out.mReturningTab = await page.evaluate(() => { const t = document.querySelector('.m-tab[aria-current="page"]'); return t ? t.dataset.section : null; });
+  out.returningErrors = out.mReturningTab === 'mylist' ? [] : ['a returning visitor on a phone should keep Titles, not ' + out.mReturningTab];
+  await ctx.close();
   // 3. phone first visit (pt-BR)
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: 'pt-BR' }, ART));
   await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
@@ -55,7 +61,15 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-m-end.png') });
   await page.locator('.welcome-start').tap(); await page.waitForTimeout(500);
   out.mAfter = await st(page);
+  // A first visit on a phone opens on Connections, and stays there on a
+  // reload (Notion "First visit", Andre 2026-11-27: "On Connections").
+  const tab = (page) => page.evaluate(() => { const t = document.querySelector('.m-tab[aria-current="page"]'); return t ? t.dataset.section : null; });
+  out.mLanding = await tab(page);
   await page.reload(); await require('./ready').appReady(page); out.mReload = await st(page);
+  out.mLandingReload = await tab(page);
+  out.landingErrors = [];
+  if (out.mLanding !== 'explore') out.landingErrors.push('a first visit on a phone should open on Connections, not ' + out.mLanding);
+  if (out.mLandingReload !== 'explore') out.landingErrors.push('a reload after the first visit should stay on Connections, not ' + out.mLandingReload);
   out.mErrors = errors; await ctx.close();
   // 4. storage blocked: no welcome, no errors
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, "Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });"));
@@ -82,6 +96,18 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
       out.sharedErrors.push(...errors.map(e => kind + ' ' + q + ': ' + e)); await ctx.close();
     }
   }
+  // The welcome itself (Notion "First visit", 2026-11-27): once per browser,
+  // with Show me around; About from the menu is not the welcome.
+  out.welcomeErrors = [];
+  const W = (c, m) => { if (!c) out.welcomeErrors.push(m); };
+  W(out.first.dialog && out.first.tour, 'desktop first visit: no welcome with Show me around');
+  W(!out.afterCta.dialog, 'desktop: Skip did not close the welcome');
+  W(!out.reload.dialog, 'desktop: the welcome showed again after a reload');
+  W(out.menuAbout.dialog && !out.menuAbout.tour, 'About from the menu should be About, not the welcome');
+  W(out.forced.dialog && out.forced.tour, '?welcome did not force the welcome');
+  W(out.mFirst.sheet && out.mFirst.tour, 'phone first visit: no welcome sheet with Show me around');
+  W(!out.mAfter.sheet, 'phone: Skip did not close the welcome');
+  W(!out.mReload.sheet, 'phone: the welcome showed again after a reload');
   console.log(JSON.stringify(out));
   await browser.close(); server.close();
 })().catch(e => { console.error('FAIL', e.message.split('\\n')[0]); console.log(JSON.stringify(globalThis.__o).slice(0, 3000)); process.exit(1); });

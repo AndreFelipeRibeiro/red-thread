@@ -29,7 +29,7 @@ surface uses them, so they have no Figma counterpart until one does.
 
 | Figma | Node | Code | Variants and properties |
 | --- | --- | --- | --- |
-| Button | `11:243` | `src/components/ui/button.tsx` `<Button>` | Variant (default, outline, secondary, ghost, destructive, link) × Size (xs, sm, default, lg); Label; Icon (on/off) and Icon glyph (swap) |
+| Button | `11:243` | `src/components/ui/button.tsx` `<Button>` | Variant (default, outline, secondary, ghost, destructive, link) × Size (xs, sm, default, lg); Label; Icon (on/off) and Icon glyph (swap), before the label; Trailing icon (on/off, off by default) and Trailing glyph (swap, `icon/arrow-right`), after it |
 | Icon button | `11:308` | `button.tsx` `<Button size="icon…">` | Variant (default, outline, secondary, ghost) × Size (icon-xs, icon-sm, icon, icon-lg); Icon glyph |
 | Badge | `12:36` | `src/components/ui/badge.tsx` | Variant (6); Label |
 | Input | `12:49` | `src/components/ui/input.tsx` | State (placeholder, filled, disabled, invalid) |
@@ -45,7 +45,7 @@ surface uses them, so they have no Figma counterpart until one does.
 
 | Figma | Node | Code |
 | --- | --- | --- |
-| Spatial card (Seen × Release × Ring: None, Up next, Guide stop; rings are token-bound spread shadows standing in for the code's outlines; Char mark and Year switches: a picked or searched character's Char mark takes the year line's place, so the card keeps its height, V5 Batch 26) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
+| Spatial card (Seen × Release × Ring: None, Up next, Guide stop, Selected (2026-11-27: the selected title at its own size, phase-color border, ring and glow; the app draws no enlarged copy); rings are token-bound spread shadows standing in for the code's outlines; Char mark and Year switches: a picked or searched character's Char mark takes the year line's place, so the card keeps its height, V5 Batch 26) | `14:59` | `src/app/spatial-card.tsx` `SpatialCard`, `CardMark`, `CardText` |
 | Score chip (IMDb, RT) | `24:25` | `src/app/list-parts.tsx` `ScoreChip` |
 | Phase badge (1–6) | `24:44` | `list-parts.tsx` `PhaseBadge` |
 | Poster (Title: one variant per catalog title id, 64; on the Posters page, 168 × 252, live TMDB posters at w500 over the poster's own color, checked 2026-11-19) | `100:696` | `src/app/poster.tsx` `PosterArt`; paths in `src/data/media-data.ts` |
@@ -58,11 +58,11 @@ surface uses them, so they have no Figma counterpart until one does.
 | Phone Up next | `63:705` | `src/app/upnext.tsx` (phone card) |
 | Logo / mark, Logo / wordmark | `17:2`, `17:3` | `src/assets/logo-mark.svg`, `logo-wordmark.svg` (CSS masks in the app) |
 | Startup loader (Motion: Bounce, the pin at rest in the animation's 78 px box; Reduced, the still pin and the ring). The bounce itself is designed in LottieFiles Creator ("Red Thread loader – Bounce") and shipped as CSS keyframes, not drawn here. No `components.json` entry: the app replaces the startup screen before the check can capture it; `qa/test-boot.js` checks it instead | `234:716` | `index.html` `#mcu-boot`, `boot.js`, `src/index.css` (`boot-bounce`, `boot-ripple-*`) |
-| App bar | `17:57` | `src/app/toolbar.tsx` `Toolbar`, `header-controls.tsx` (`StatusCounts`, `SortMenu`, `PickerButton`) |
+| App bar (View: Titles, Connections; the view switch's current page, since 2026-11-27) | `295:762` (Titles `17:57`) | `src/app/toolbar.tsx` `Toolbar`, `header-controls.tsx` (`StatusCounts`, `SortMenu`, `PickerButton`) |
 | Zoom control | `20:32` | `src/app/spatial-chrome.tsx` `ZoomControl` |
 | Title count | `20:35` | `spatial-chrome.tsx` `ContextSummary` |
 | Band label | `20:38` | `spatial-chrome.tsx` `BandLabel` |
-| Phone nav bar | `22:42` | `src/app/phone-header.tsx` `MobileNavBar` |
+| Phone nav bar (View: Titles, Connections; the current tab, since 2026-11-27) | `295:780` (Titles `22:42`) | `src/app/phone-header.tsx` `MobileNavBar` |
 | Details panel | `19:104` | `src/app/title-details.tsx` `DrawerFrame`, `TitleDetailsBody` |
 | Status actions | `19:24` | `src/app/status-actions.tsx` `TitleStatusActions` (inline) |
 | Cast row | `19:14` | `title-details.tsx` `CastConnections` |
@@ -96,10 +96,18 @@ surface uses them, so they have no Figma counterpart until one does.
 | Phone guide destination (State: Watchlist off, On Watchlist; "Then: …" after the stops) | `192:1629` | `guides-ui.tsx` `GuideDest` (phones) |
 | Phone guide stop (Up next, Default, Seen) | `64:704` | `guides-ui.tsx` (g-stop, phones) |
 | Phone guide promo (State: Not started, Complete: every stop a small seen poster) | `167:815` | `guides-ui.tsx` `GuidesHero` (phones) |
-| About dialog (Kind: Welcome, About × Device: Desktop, Phone; the guide offer's poster is a nested Poster) | `119:1765` | `src/app/about.tsx` `AboutContent` in `ModalDialog` (desktop) or `Sheet` (phones) |
+| About dialog (Device: Desktop, Phone; the Welcome drawing and descriptor, three rows each led by a drawing, credits) | `119:1765` | `src/app/about.tsx` `AboutContent` in `ModalDialog` (desktop) or `Sheet` (phones) |
+| First visit welcome (Device: Desktop dialog, Phone sheet; the Welcome drawing, the descriptor, Show me around, Skip; Notion "First visit", 2026-11-27) | `300:1309` | `src/app/about.tsx` (the first visit's welcome) in `ModalDialog` or `Sheet` |
+| Tour card (Device: Desktop, Phone × Step: 1–5; × in the corner, the step's drawing (Desktop only), kicker, title, body, progress dashes, Back and Next → or Finish) | `300:2756` | `src/app/first-visit.tsx` `TourCard` |
+| First visit finish (Device: Desktop panel of three cards, Phone sheet of three rows: Doomsday guide, Mark what you've seen, Explore) | `302:3598` | `src/app/first-visit.tsx` `TourFinish` |
+| Spotlight (size the instance to the control; `spotlight-dim` outside, 2px brand ring) | `300:868` | `src/app/first-visit.tsx` `Spotlight` |
+| Illustration (Drawing: Welcome, Look around, Pick, Follow, Sort, Track, Guide, Mark seen, Explore, Take the tour, What's new, Share; Illustrations page; `paper` under locked `ink`, pinned to Light) | `293:2004` | `src/assets/first-visit/*.svg`, drawn by `src/app/first-visit.tsx` (`Drawing`) |
 | Retired: Welcome dialog (2026-11-19, replaced by About dialog) | `65:796` | — |
+| Retired: About dialog · Welcome (2026-11-27; the old first-visit welcome, About dialog's Kind = Welcome, replaced by First visit welcome) | `320:3653` | — |
 
 Icons: the Icons page, one component per entry in `tools/figma/icons.js`.
+
+Illustrations: the Illustrations page (since 2026-11-27), the Illustration set. The drawings are hand-drawn ink with a red thread, made with Andre's saved Recraft styles ("Red Thread – ink and thread", and "… rich" for new ones). They keep black ink on white paper in Dark: each variant is pinned to the Color Light mode in Figma, and the SVGs in the app carry literal colors.
 
 Foundations page: generated from the file's own variables and styles
 (2026-11-17), so it lists exactly what exists: the 38 primitives, every
@@ -135,6 +143,14 @@ Light and a Dark frame (the Dark one sets the Color collection to Dark).
 | Details sheet over Titles (phone) | `17:4952` | `17:5267` |
 | Character pinned, Titles (phone): their titles, the card docked | `33:7655` | `33:7876` |
 | Startup screen (phone) | `114:9605` | `114:9615` |
+| First visit · 0 Welcome (desktop; the welcome dialog over Connections) | `151:13290` | `151:21539` |
+| First visit · 4 Watch your way (desktop; Tour card step 4, the Sort menu open under a Spotlight) | `151:13913` | `151:21574` |
+| About (desktop; the About dialog over the Connections canvas) | `160:12806` | `160:13861` |
+| First visit · 6 Finish (desktop) | `151:14570` | `151:21610` |
+| First visit · 0 Welcome (phone; the welcome sheet) | `151:17149` | `151:19804` |
+| First visit · 1 Look around (phone; Tour card step 1 docked above the nav bar) | `151:17853` | `151:19838` |
+| About (phone; the About sheet) | `160:20065` | `160:21118` |
+| First visit · 6 Finish (phone; the finish sheet) | `151:18407` | `151:19871` |
 
 Posters are the app's TMDB posters: the library's **Poster** component set
 (`100:696`, Posters page) has one per catalog title, so a screen or an

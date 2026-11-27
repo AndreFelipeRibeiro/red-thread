@@ -1,16 +1,16 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { XIcon, ChevronRightIcon, SparklesIcon } from 'lucide-react';
+import { XIcon, ChevronRightIcon } from 'lucide-react';
 import { WhatsNew, RELEASES, releaseMonth } from './whats-new';
 import { Button } from '@/components/ui/button';
 import type { Guide, Title } from '@/types/catalog';
 import { stateParams } from '@/share-card/addresses';
 
-// About Red Thread: what the app is, ways to explore it, and credits
-// (TMDB requires its logo and notice in an About or Credits section).
-// Desktop shows it as a centred dialog; phones reuse the bottom Sheet.
-// Opened from the account menu/sheet footer, which is also where a future
-// Settings entry will live. First-time visitors see it once as a welcome.
+// About Red Thread: what the app is, the tour again, what's new, sharing,
+// and credits (TMDB requires its notice in an About or Credits section).
+// Desktop shows it as a centered dialog; phones reuse the bottom Sheet.
+// Opened from the account menu/sheet footer and Settings. First-time visitors see the
+// welcome instead (WelcomeContent below, Notion "First visit", 2026-11-27).
 
 // Welcome: shown once per browser to visitors with no history here (no saved
 // preferences, language, collection or sign-in). Decided when this file loads,
@@ -50,42 +50,6 @@ function decideWelcome() {
 window.MCU_WELCOME = decideWelcome();
 window.MCU_RETURNING = returningVisit;
 
-function AboutIcon({ kind }: { kind: string }) {
-  const common: React.SVGProps<SVGSVGElement> = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
-    strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true' };
-  if (kind === 'connect') return (
-    <svg {...common}><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.2 8.3 10.6 15M15.8 8.3 13.4 15M8.5 7h7"/></svg>
-  );
-  if (kind === 'follow') return (
-    <svg {...common}><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
-  );
-  if (kind === 'order') return (
-    <svg {...common}><path d="M7 4v16M3.5 16.5 7 20l3.5-3.5M17 20V4M13.5 7.5 17 4l3.5 3.5"/></svg>
-  );
-  return (
-    <svg {...common}><path d="m5 12.5 4.2 4.2L19 7"/></svg>
-  );
-}
-
-// The welcome's pinned footer covers the end of whatever scrolls behind it.
-// A fade above it says the list carries on (Notion "Phone welcome: the pinned
-// buttons cut the list mid-sentence"); it goes once the content has scrolled
-// to its end, so it never dims the last lines for good.
-function useScrolledToEnd(ref: React.RefObject<HTMLElement | null>) {
-  const [end, setEnd] = React.useState(false);
-  React.useEffect(() => {
-    const box = ref.current && ref.current.closest<HTMLElement>('.m-sheet-body, .about-dialog');
-    if (!box) return undefined;
-    const check = () => setEnd(box.scrollTop + box.clientHeight >= box.scrollHeight - 2);
-    check();
-    box.addEventListener('scroll', check, { passive: true });
-    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
-    if (ro) ro.observe(box);
-    return () => { box.removeEventListener('scroll', check); if (ro) ro.disconnect(); };
-  }, [ref]);
-  return end;
-}
-
 /** The recipes the small dialogs share (About, the sign-in reminder, the
  *  bulk confirmation, the picker's leave prompt): body, heading row, title,
  *  lead paragraph, the stacked actions and their two buttons. */
@@ -105,136 +69,111 @@ export const DIALOG = {
 // or else an evergreen one, so the welcome stays right after Doomsday.
 export type WelcomeGuide = { guide: Guide; title: Title | null; days: number | null };
 
-function AboutContent({ titleId, welcome, onClose, onPick, guide, onGuide, onNews, newsRef }: {
-  titleId?: string; welcome?: boolean; onClose: () => void; onPick?: () => void;
-  guide?: WelcomeGuide | null; onGuide?: () => void;
-  onNews?: () => void; newsRef?: React.Ref<HTMLButtonElement>;
+// About (Notion "About: the new style, after the first-visit tour", design
+// B · v3, 2026-11-27; library: About dialog, Kind = About). The logo; the
+// welcome's drawing beside what Red Thread is; one list of three equal rows,
+// each led by its own drawing (the tour again, What's new, Share); credits as
+// a source list, then the TMDB notice and the fan-project line.
+const ABOUT_ROWS = { desk: [96, 72, 100], phone: [72, 63, 84] };
+const SOURCES = ['posters', 'watch', 'ratings', 'synopses'];
+
+function AboutContent({ titleId, phone, onNews, newsRef, onTour }: {
+  titleId?: string; phone?: boolean; onNews?: () => void; newsRef?: React.Ref<HTMLButtonElement>; onTour?: () => void;
 }) {
   // Subscribed, so it redraws when Settings switches the language.
   const { tr, lang } = window.useI18n();
-  const ways = [['connect', 'about.connect'], ['follow', 'about.follow'], ['order', 'about.order'], ['track', 'about.track']];
-  const pickRef = React.useRef<HTMLDivElement>(null);
-  const atEnd = useScrolledToEnd(pickRef);
+  const Drawing = window.Drawing;
+  const widths = phone ? ABOUT_ROWS.phone : ABOUT_ROWS.desk;
+  const rows: { key: string; drawing: string; title: string; text: string; go?: () => void; ref?: React.Ref<HTMLButtonElement> }[] = [];
+  if (onTour) rows.push({ key: 'tour', drawing: 'take-the-tour', title: tr('about.tourTitle'), text: tr('about.tourText', { n: 5 }), go: onTour });
+  if (onNews) rows.push({ key: 'news', drawing: 'whats-new', title: tr('news.title'), go: onNews, ref: newsRef,
+    text: tr('news.version', { n: RELEASES[0].version }) + ' · ' + releaseMonth(RELEASES[0].month, lang) });
+  rows.push({ key: 'share', drawing: 'share', title: tr('share.appLabel'), text: tr('about.shareText'),
+    go: () => { window.MCU_SHARE.share({ text: tr('share.appText') }); } });
+  const art = { tour: widths[0], news: widths[1], share: widths[2] } as Record<string, number>;
   return (
-    <div className={DIALOG.body}>
-      <div className={DIALOG.head}>
-        <div className="brand-mark logo-mark size-8 flex-[0_0_32px]" aria-hidden="true"/>
-        <div>
-          <h2 id={titleId} className={cn(DIALOG.title, 'in-[.about-dialog]:text-display-sm')}>{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
-          <div className="about-tag mt-[3px] text-body text-muted-foreground">{tr('about.tagline')}</div>
-        </div>
+    <div className="about text-body text-foreground">
+      <div className={cn('about-head flex items-center gap-2', phone ? 'pt-1' : 'pt-[19px] pr-14 pl-8')}>
+        <span className={cn('logo-mark flex-none', phone ? 'h-6 w-[13px]' : 'h-[26px] w-[14px]')} aria-hidden="true"/>
+        <span className={cn('logo-word flex-none', phone ? 'h-[21px] w-[112px]' : 'h-[23px] w-[123px]')} aria-hidden="true"/>
+        <span className="sr-only">{tr('about.title')}</span>
       </div>
-      {/* No language choice here (Andre, 2026-11-18): the browser's language
-          is the guess, and Settings switches it. */}
-      <p className={cn(DIALOG.lead, 'leading-[1.45]')}>{tr('about.lead')}</p>
-      <h3 className="about-h mt-[22px] mb-2.5 text-label font-medium text-muted-foreground">{tr('about.waysTitle')}</h3>
-      {/* Open rows, not boxed cards (Andre, 2026-11-18): the icon in its grey
-          tile beside its line, two columns on wide screens. */}
-      <ul className="about-ways grid grid-cols-2 gap-x-6 gap-y-4 max-[520px]:grid-cols-1 max-[520px]:gap-y-3.5">
-        {ways.map(([icon, key]) => (
-          <li key={key} className="flex items-start gap-3">
-            <span className={DIALOG.ic}><AboutIcon kind={icon}/></span>
-            <span><b className="block text-body font-medium">{tr(key + '.title')}</b><span className="mt-0.5 block max-w-[28ch] text-body leading-snug text-pretty text-muted-foreground">{tr(key + '.text')}</span></span>
-          </li>
-        ))}
-      </ul>
-      {/* Credits and Share belong to About; the welcome stays on what Red
-          Thread is and where to start (Notion "Welcome: streamline the first
-          moment", Andre 2026-11-18). About from the menu keeps both. */}
-      {!welcome && (<>
-        {/* What's new: the version, and what each release brought (Notion
-            "What's new: a changelog in the app"). A row in the style of the
-            welcome's guide offer, without its wash. */}
-        {onNews && (
-          <button type="button" ref={newsRef} onClick={onNews}
-            className="about-news mt-[22px] flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-card p-3 text-left text-card-foreground outline-none hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50">
-            <span className={DIALOG.ic}><SparklesIcon className="size-[18px]" aria-hidden="true"/></span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-body font-medium">{tr('news.title')}</span>
-              <span className="block text-label text-muted-foreground">{tr('news.version', { n: RELEASES[0].version })} · {releaseMonth(RELEASES[0].month, lang)}</span>
-            </span>
-            <ChevronRightIcon className="size-4 flex-none text-muted-foreground" aria-hidden="true"/>
-          </button>
-        )}
-        {/* Credits, quieter: small print under a rule (TMDB requires its
-            notice in About or Credits). Share closes the dialog's content. */}
-        <div className="about-credits-block mt-[22px] border-t pt-4">
-          <h3 className="about-h mb-2 text-label font-medium text-muted-foreground">{tr('about.creditsTitle')}</h3>
-          <div className="about-credits flex flex-col gap-1.5 text-caption leading-snug text-muted-foreground">
-            <p>{tr('about.tmdb')} {tr('about.tmdbNotice')}</p>
-            <p>{tr('about.justwatch')}</p>
-            <p>{tr('about.ratings')}</p>
-            <p>{tr('about.fan')}</p>
+      <div className={cn('about-body flex flex-col', phone ? 'gap-5 pt-3 pb-1.5' : 'gap-6 px-8 pt-[22px] pb-7')}>
+        <div className={cn('about-intro flex items-center', phone ? 'gap-3.5' : 'gap-6')}>
+          <Drawing name="welcome" width={phone ? 120 : 210}/>
+          <div className={cn('flex min-w-0 flex-1 flex-col', phone ? 'gap-1' : 'gap-2')}>
+            <h2 id={titleId} className={cn('about-title font-semibold tracking-tight text-pretty text-foreground', phone ? 'text-heading' : 'text-title')}>{tr('about.descriptor')}</h2>
+            <p className={cn('about-line text-pretty text-muted-foreground', phone ? 'text-label' : 'text-body')}>{tr('about.line')}</p>
           </div>
         </div>
-        {/* Share the app (Notion "Share 1/3"). */}
-        <div className="about-share-row mt-4 flex">
-          <window.ShareButton text={tr('share.appLabel')} label={tr('share.appLabel')} payload={() => ({ text: tr('share.appText') })}/>
+        {/* One list, three equal rows; each whole row is the button. */}
+        <ul className="about-rows flex flex-col">
+          {rows.map((r, i) => (
+            <li key={r.key} className={cn('border-t', i === rows.length - 1 && 'border-b')}>
+              <button type="button" ref={r.ref} onClick={r.go} data-row={r.key}
+                className={cn('about-' + r.key, 'about-row group flex w-full cursor-pointer items-center text-left outline-none transition-colors duration-150 hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset motion-reduce:transition-none',
+                  phone ? 'gap-3 py-2.5' : 'gap-4 py-3')}>
+                <span className={cn('flex flex-none items-center justify-center', phone ? 'h-[52px] w-[72px]' : 'h-[60px] w-[88px]')}>
+                  <Drawing name={r.drawing} width={art[r.key]}/>
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-body font-medium text-foreground">{r.title}</span>
+                  <span className="text-label text-muted-foreground">{r.text}</span>
+                </span>
+                <ChevronRightIcon className="size-3.5 flex-none text-muted-foreground [&_path]:[stroke-width:1.5]" aria-hidden="true"/>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {/* Credits, small print: the sources, then the TMDB notice it
+            requires and the fan-project line. */}
+        <div className="about-credits flex flex-col gap-2.5 text-caption">
+          <h3 className="font-semibold text-muted-foreground">{tr('about.creditsTitle')}</h3>
+          <dl className={cn('about-sources grid gap-x-3 gap-y-1 pb-3.5', phone ? 'grid-cols-[max-content_minmax(0,1fr)] gap-x-5' : 'grid-cols-[128px_minmax(0,1fr)]')}>
+            {SOURCES.map(k => (
+              <React.Fragment key={k}>
+                <dt className="text-muted-foreground">{tr('about.src.' + k)}</dt>
+                <dd className="font-medium text-foreground">{tr('about.src.' + k + 'From')}</dd>
+              </React.Fragment>
+            ))}
+          </dl>
+          <p className="about-notice text-pretty text-muted-foreground">{tr('about.tmdbNotice')} {tr('about.fan')}</p>
         </div>
-      </>)}
-      {welcome && (onPick ? (
-        // First visit: offer the "What have you seen?" picker (picker.tsx),
-        // pinned to the bottom of the dialog or sheet.
-        <div ref={pickRef}
-          className={cn("welcome-pick sticky bottom-[-26px] -mx-[30px] mt-[22px] -mb-[26px] border-t bg-popover px-[30px] pt-3.5 pb-3",
-            'in-[.m-sheet]:bottom-[calc(-24px-env(safe-area-inset-bottom,0px))] in-[.m-sheet]:-mx-[18px] in-[.m-sheet]:-mb-[calc(24px+env(safe-area-inset-bottom,0px))] in-[.m-sheet]:px-[18px] in-[.m-sheet]:pt-3 in-[.m-sheet]:pb-[calc(6px+env(safe-area-inset-bottom,0px))]',
-            "before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-12 before:bg-linear-to-b before:from-transparent before:to-popover before:transition-opacity before:duration-200 before:content-['']",
-            atEnd && 'before:opacity-0')}>
-          {/* Only the actions are pinned (Andre, 2026-11-18: the guide's
-              block and the picker's question took most of a phone's sheet).
-              One primary: the promoted guide, as a button that carries its
-              poster, name, size and countdown, or else Mark what I've seen.
-              Then the rest side by side, quiet. */}
-          {(() => {
-            const G = window.MCU_GUIDE;
-            const offer = guide && onGuide ? guide : null;
-            const art = offer ? offer.title || (G.stops(offer.guide, false)[0] || {}).title : null;
-            const n = offer ? G.stops(offer.guide, false).length : 0;
-            // Each part of the second line stays whole when it wraps ("faltam
-            // 30 dias" never splits).
-            // As the Guides hero: the kicker ("Coming up · Dec 18 · 30 days to
-            // go") in the brand red, the question, the guide's size and time.
-            const date = offer && offer.days != null && offer.days > 0 ? G.targetDate(offer.guide) : null;
-            // Phones drop the date so the kicker keeps to one line.
-            const kicker = offer && offer.days != null && offer.days > 0 ? <>{tr('guide.group.coming')}{date && <span className="in-[.m-sheet]:hidden"> · {date}</span>} · {tr('guide.hero.daysLeft', { n: offer.days })}</> : null;
-            // Each part stays whole when the line wraps ("14 h 30 min").
-            const meta = offer ? String(G.size(offer.guide) || tr('guide.stops', { n })).split(' · ')
-              .map((part, i) => <React.Fragment key={i}>{i > 0 && ' · '}<span className="whitespace-nowrap">{part}</span></React.Fragment>) : null;
-            const pick = <Button variant={offer ? 'outline' : 'default'} className={cn('picker-go h-auto min-h-10 gap-2 [&_svg]:size-[15px]', offer && 'min-w-[min(100%,11rem)] flex-1')} onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</Button>;
-            const start = <Button variant={offer ? 'ghost' : 'outline'} className={cn('nudge-later welcome-start h-auto', offer ? 'min-h-9 min-w-[min(100%,11rem)] flex-1' : 'min-h-10')} onClick={onClose}>{tr('about.start')}</Button>;
-            return offer ? (
-              <>
-                {/* Dressed as the Guides page's hero (Andre, 2026-11-18): the card
-                    surface with the brand wash from the left, dark text, the
-                    kicker's red for the action. */}
-                <button type="button" onClick={onGuide}
-                  className="welcome-guide-go flex w-full cursor-pointer items-center gap-4 rounded-xl border bg-card p-3 pr-4 text-left text-card-foreground transition-[filter] outline-none hover:brightness-[.97] focus-visible:ring-3 focus-visible:ring-ring/50 dark:hover:brightness-110 in-[.m-sheet]:gap-3 in-[.m-sheet]:p-2.5"
-                  style={{ backgroundImage: 'linear-gradient(90deg, color-mix(in oklab, var(--brand) 22%, transparent) 0%, transparent 85%)' }}>
-                  {art && <span className="welcome-guide-art h-[84px] w-14 flex-none overflow-hidden rounded-md bg-muted shadow-sm [&>:first-child]:block [&>:first-child]:size-full [&_img]:size-full [&_img]:object-cover [&_svg]:size-full in-[.m-sheet]:h-[72px] in-[.m-sheet]:w-12" aria-hidden="true"><window.PosterArt title={art}/></span>}
-                  <span className="min-w-0 flex-1">
-                    {kicker && <span className="welcome-guide-kicker block text-caption font-semibold tracking-[.04em] text-(--brand-text) uppercase in-[.m-sheet]:tracking-normal in-[.m-sheet]:normal-case">{kicker}</span>}
-                    <span className="welcome-guide-q mt-1 block text-heading leading-snug font-semibold text-foreground in-[.m-sheet]:mt-0.5 in-[.m-sheet]:text-body">{offer.title ? tr('welcome.guideGo', { title: window.MCU_I18N.titleName(offer.title) }) : G.name(offer.guide)}</span>
-                    <span className="welcome-guide-meta mt-0.5 block text-label leading-snug text-muted-foreground tabular-nums">{meta}</span>
-                  </span>
-                  {/* The action, said: a pill on wide screens; a chevron on
-                      phones, where the words stay for screen readers. */}
-                  <span className="welcome-guide-cta inline-flex h-9 flex-none items-center gap-1 rounded-full bg-primary px-3.5 text-label font-medium text-primary-foreground in-[.m-sheet]:size-9 in-[.m-sheet]:justify-center in-[.m-sheet]:px-0">
-                    <span className="in-[.m-sheet]:sr-only">{tr('guide.promoStart')}</span>
-                    <ChevronRightIcon className="hidden size-4 in-[.m-sheet]:block" aria-hidden="true"/>
-                  </span>
-                </button>
-                <div className="about-cta-row mt-2 flex flex-wrap items-stretch gap-2">{pick}{start}</div>
-              </>
-            ) : (
-              <div className="about-cta-row flex flex-col items-stretch gap-2">{pick}{start}</div>
-            );
-          })()}
+      </div>
+    </div>
+  );
+}
+
+// The first visit's welcome (Notion "First visit", design B · v5; library:
+// First visit welcome, Device: Desktop dialog, Phone sheet): the logo, a
+// drawing of the idea, the descriptor as the headline, then the tour or the
+// map. Shown once per browser (decideWelcome above), never over a shared
+// link; Settings' "Show the welcome tour again" brings it back. Skip, ×, Escape
+// or the scrim close it, and the canvas hint follows as before.
+function WelcomeContent({ titleId, phone, onTour, onClose }: {
+  titleId?: string; phone?: boolean; onTour: () => void; onClose: () => void;
+}) {
+  const { tr } = window.useI18n();
+  const Drawing = window.Drawing;
+  return (
+    <div className="welcome text-body text-foreground">
+      <div className={cn('welcome-head flex items-center', phone ? 'gap-2.5 pt-1.5 pb-2' : 'gap-[9px] pt-6 pr-14 pb-2.5 pl-7')}>
+        <span className={cn('logo-mark flex-none', phone ? 'h-[30px] w-4' : 'h-8 w-[17px]')} aria-hidden="true"/>
+        <span className={cn('logo-word flex-none', phone ? 'h-[26px] w-[139px]' : 'h-7 w-[150px]')} aria-hidden="true"/>
+        <span className="sr-only">{tr('app.name')}</span>
+      </div>
+      <div className={cn('welcome-hero flex items-center justify-center overflow-hidden', phone ? 'pt-3.5 pb-5' : 'h-[315px] pt-6 pb-8')}>
+        <Drawing name="welcome" width={phone ? 340 : 520}/>
+      </div>
+      <div className={cn('welcome-body flex flex-col', phone ? 'gap-4' : 'gap-3.5 px-12 pt-2 pb-9')}>
+        <h2 id={titleId} className={cn('about-title welcome-title font-semibold tracking-tight text-pretty text-foreground', phone ? 'text-title' : 'text-display-sm')}>{tr('welcome.headline')}</h2>
+        <p className="welcome-lead text-body text-pretty text-muted-foreground">{tr('welcome.lead')}</p>
+        <div className={cn('welcome-actions flex flex-col items-stretch', phone ? 'gap-1.5 pt-2' : 'gap-2 pt-[18px]')}>
+          <Button size="lg" className="welcome-tour h-auto min-h-10" onClick={onTour}>{tr('welcome.tour')}</Button>
+          <Button variant="ghost" className="welcome-start h-auto min-h-9" onClick={onClose}>{tr('welcome.skip')}</Button>
+          <p className="welcome-steps text-center text-caption text-muted-foreground">{tr('welcome.steps', { n: 5 })}</p>
         </div>
-      ) : (
-        <div className={DIALOG.actions}>
-          <Button className={DIALOG.primary} onClick={onClose}>{tr('about.start')}</Button>
-        </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -245,9 +184,13 @@ function AboutContent({ titleId, welcome, onClose, onPick, guide, onGuide, onNew
 // the dimmed and blurred overlay); not Base UI's Dialog, because the shell's
 // own focus handling and Escape (one layer per press) are what AGENTS.md's
 // interaction rules ask for.
-function ModalDialog({ onClose, labelledBy, describedBy, className = '', children }: {
+function ModalDialog({ onClose, labelledBy, describedBy, className = '', scrimClassName = '', leaving = false, children }: {
   onClose: () => void; labelledBy?: string; describedBy?: string;
   className?: string; children: React.ReactNode;
+  /** The first visit's welcome and finish dim harder in Dark (welcome-scrim). */
+  scrimClassName?: string;
+  /** Fading out before it unmounts (the first visit's welcome and finish). */
+  leaving?: boolean;
 }) {
   const tr = window.MCU_I18N.tr;
   const ref = React.useRef<HTMLDivElement>(null);
@@ -282,9 +225,9 @@ function ModalDialog({ onClose, labelledBy, describedBy, className = '', childre
   }, []);
   return (
     <>
-      <div className="about-scrim fixed inset-0 z-110 animate-[about-fade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none" onClick={onClose} aria-hidden="true"/>
+      <div className={cn('about-scrim fixed inset-0 z-110 animate-[about-fade_180ms_ease] bg-black/10 backdrop-blur-xs motion-reduce:animate-none', scrimClassName, leaving && 'pointer-events-none animate-[welcome-out_200ms_ease_both]')} onClick={onClose} aria-hidden="true"/>
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}
-        className={cn('about-dialog fixed top-1/2 left-1/2 z-111 max-h-[calc(100vh-64px)] w-[min(560px,calc(100vw-48px))] overflow-y-auto rounded-xl bg-popover px-[30px] pt-7 pb-[26px] text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none [transform:translate(-50%,-50%)] animate-[about-rise_220ms_cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none', className)}>
+        className={cn('about-dialog fixed top-1/2 left-1/2 z-111 max-h-[calc(100vh-64px)] w-[min(560px,calc(100vw-48px))] overflow-y-auto rounded-xl bg-popover px-[30px] pt-7 pb-[26px] text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none [transform:translate(-50%,-50%)] animate-[about-rise_220ms_cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none', className, leaving && 'pointer-events-none animate-[welcome-sink_200ms_ease_both]')}>
         <Button variant="ghost" size="icon-sm" className="about-x absolute top-3.5 right-3.5 z-2 text-muted-foreground" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}><XIcon/></Button>
         {children}
       </div>
@@ -304,23 +247,62 @@ function useNewsView(onClose: () => void) {
   return { news, open: () => setNews(true), leave, close, newsRef };
 }
 
-function AboutDialog({ onClose, welcome, onPick, guide, onGuide }: { onClose: () => void; welcome?: boolean; onPick?: () => void; guide?: WelcomeGuide | null; onGuide?: () => void }) {
+// The welcome's entrance (app.tsx shows it once the map is drawn and a beat
+// has passed): the map blurs and dims in while the welcome rises; leaving, both fade out before the welcome
+// unmounts (so the tour card or the map follows without a jump).
+export const WELCOME_IN = {
+  scrim: 'bg-(--welcome-scrim) animate-[welcome-scrim-in_500ms_ease-out_both]',
+  dialog: 'animate-[welcome-rise_560ms_cubic-bezier(.2,.8,.2,1)_150ms_both]',
+  sheet: 'animate-[welcome-sheet-rise_560ms_cubic-bezier(.2,.8,.2,1)_150ms_both]',
+};
+export const LEAVE_MS = 200;
+export function useLeaving() {
+  const [leaving, setLeaving] = React.useState(false);
+  const leave = (then: () => void) => () => {
+    if (window.MCU_MOTION.reduced()) { then(); return; }
+    setLeaving(true); window.setTimeout(then, LEAVE_MS);
+  };
+  return { leaving, leave };
+}
+
+function AboutDialog({ onClose, welcome, onTour }: { onClose: () => void; welcome?: boolean; onTour?: () => void }) {
   const v = useNewsView(onClose);
+  const w = useLeaving();
+  if (welcome && onTour) return (
+    <ModalDialog onClose={w.leave(onClose)} labelledBy="about-title" scrimClassName={WELCOME_IN.scrim} leaving={w.leaving}
+      className={cn('welcome-dialog w-[min(600px,calc(100vw-48px))] bg-(--surface-raised) p-0', WELCOME_IN.dialog)}>
+      <WelcomeContent titleId="about-title" onTour={w.leave(onTour)} onClose={w.leave(onClose)}/>
+    </ModalDialog>
+  );
   return (
-    <ModalDialog onClose={v.close} labelledBy="about-title">
+    <ModalDialog onClose={v.close} labelledBy="about-title" scrimClassName="bg-(--welcome-scrim)"
+      className={v.news ? '' : 'about-v3 w-[min(560px,calc(100vw-48px))] bg-(--surface-raised) p-0 [&>.about-x]:top-4 [&>.about-x]:right-4'}>
       {v.news ? <WhatsNew titleId="about-title" onBack={v.leave}/>
-        : <AboutContent titleId="about-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide} onNews={welcome ? undefined : v.open} newsRef={v.newsRef}/>}
+        : <AboutContent titleId="about-title" onNews={v.open} newsRef={v.newsRef} onTour={onTour}/>}
     </ModalDialog>
   );
 }
 
-function AboutSheet({ onClose, welcome, onPick, guide, onGuide }: { onClose: () => void; welcome?: boolean; onPick?: () => void; guide?: WelcomeGuide | null; onGuide?: () => void }) {
+// The phone sheet as designed: a short handle, then the logo row with the
+// sheet's × beside it.
+const ABOUT_SHEET = 'about-sheet bg-(--surface-raised) [&_.m-grab]:mb-0 [&_.m-grab]:h-3 [&_.m-grab]:after:top-0 [&_.m-sheet-x]:top-[22px]';
+
+function AboutSheet({ onClose, welcome, onTour }: { onClose: () => void; welcome?: boolean; onTour?: () => void }) {
   const Sheet = window.Sheet;
   const v = useNewsView(onClose);
+  const w = useLeaving();
+  if (welcome && onTour) return (
+    <Sheet onClose={w.leave(onClose)} label={window.MCU_I18N.tr('about.welcomeTitle')}
+      className={cn('welcome-sheet bg-(--surface-raised)', WELCOME_IN.sheet, w.leaving && 'pointer-events-none animate-[welcome-sheet-sink_200ms_ease_both]')}
+      scrimClassName={cn(WELCOME_IN.scrim, w.leaving && 'pointer-events-none animate-[welcome-out_200ms_ease_both]')}>
+      <WelcomeContent titleId="about-sheet-title" phone onTour={w.leave(onTour)} onClose={w.leave(onClose)}/>
+    </Sheet>
+  );
   return (
-    <Sheet onClose={v.close} tall label={window.MCU_I18N.tr(v.news ? 'news.title' : welcome ? 'about.welcomeTitle' : 'about.title')}>
+    <Sheet onClose={v.close} tall label={window.MCU_I18N.tr(v.news ? 'news.title' : 'about.title')} className={v.news ? '' : ABOUT_SHEET}
+      scrimClassName="bg-(--welcome-scrim)">
       {v.news ? <WhatsNew titleId="about-sheet-title" onBack={v.leave}/>
-        : <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose} onPick={onPick} guide={guide} onGuide={onGuide} onNews={welcome ? undefined : v.open} newsRef={v.newsRef}/>}
+        : <AboutContent titleId="about-sheet-title" phone onNews={v.open} newsRef={v.newsRef} onTour={onTour}/>}
     </Sheet>
   );
 }

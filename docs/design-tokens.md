@@ -31,11 +31,12 @@ The `@primitives` block at the top of `src/index.css`: every color in the
 app, named by hue family and OKLCH lightness × 100 (`red-55` is L 0.55;
 `-aNN` is that color at NN% opacity): `neutral-*`, `slate-*`, `red-*`
 (three: `red-50`, `red-55`, `red-68`), `rose-*`, `crimson-53`, `tomato-*`,
-`yellow-84`, `gold-*`, `green-*`, `blue-*`, `purple-*`; 37 in all (the
+`yellow-84`, `gold-*`, `green-*`, `blue-*`, `purple-*`; 38 in all (the
 2026-11-17 merges folded `red-70`, `red-58`, `red-52` and `coral-68` into
 their neighbors; on 2026-11-18 the light canvas moved from `slate-97` and
 `slate-95`, a faint blue, to `neutral-97` and the new `neutral-95`, and the
-slate pair was retired). In Figma they're hidden from the pickers
+slate pair was retired; `neutral-24`, #1f1f1f, came on 2026-11-27 for the Dark
+`surface-raised`). In Figma they're hidden from the pickers
 (no scopes): designers pick the semantic colors below. Components never use a
 primitive directly, in code or in Figma.
 
@@ -50,7 +51,7 @@ opacity, 42% / 55%) lives here too, as a number.
 
 | Group | Tokens |
 | --- | --- |
-| Surfaces and text | `background`, `foreground`, `card`, `card-foreground`, `popover`, `popover-foreground`, `secondary`, `secondary-foreground`, `muted`, `muted-foreground`, `accent`, `accent-foreground`, `border`, `input` |
+| Surfaces and text | `background`, `foreground`, `card`, `card-foreground`, `popover`, `popover-foreground`, `surface-raised` (Light: `popover`; Dark: `neutral-24`, #1f1f1f, lighter than `card` so the first visit's welcome, tour card, finish and drawing panels stand off the dark canvas; 2026-11-27), `secondary`, `secondary-foreground`, `muted`, `muted-foreground`, `accent`, `accent-foreground`, `border`, `input` |
 | Accent (red) | `brand`, `primary`, `primary-foreground`, `ring`, `destructive`, `logo` |
 | Progress | `progress` (the track still ahead is `brand-tint-strong`; complete progress is `seen`) |
 | Collection status | `seen`, `seen-foreground`, `seen-text`, `status-watch`, `on-color` (ink on any solid color fill: phase, Watchlist, brand) |
@@ -58,6 +59,7 @@ opacity, 42% / 55%) lives here too, as a number.
 | On artwork (same in both modes) | `on-image`, `on-image-dim`, `on-image-muted`, `on-image-ground`, `on-image-base` |
 | Score marks (same in both modes) | `imdb`, `rt`, `rt-text` |
 | Connections canvas | `canvas-top`, `canvas-bottom` (Light: `neutral-97` to `neutral-95`), `canvas-dot` |
+| First visit dims (black, the alpha in the token) | `spotlight-dim` (40% Light, 70% Dark: the tour's spotlight), `welcome-scrim` (10% Light, 50% Dark: behind the welcome and finish) |
 | Controls (shadcn at rest) | `field`, `button-outline`, `destructive-tint`, `switch-track`, `switch-thumb`, `invalid-border`, `invalid-ring` |
 | Mixed roles | `dim`, `brand-tint`, `brand-tint-strong`, `seen-tint`, `seen-tint-strong`, `neutral-tint`, `veil`, `veil-light`, `border-strong`, `seen-border`, `seen-line`, `brand-border`, `status-watch-border`, `destructive-border`, `field-hover`, `segment-on`, `brand-text`, `status-watch-text`, `status-watch-tint`, `status-watch-tint-strong`, `seen-hover`, `secondary-hover`, `guide-current`, `highlight-border`, `control-surface`, `chip`, `chip-imdb`, `chip-rt`, `chip-muted` |
 
@@ -134,7 +136,7 @@ them already gives (2026-11-26, Notion "Tokens: second consolidation pass").
 
 ### Type (one mode) → number variables + text styles
 
-- Sizes: `fs-display`, `fs-display-sm` (28px, the welcome's heading), `fs-title`, `fs-heading`, `fs-body`, `fs-label`,
+- Sizes: `fs-display`, `fs-display-sm` (30px since 2026-11-27, was 28: the welcome headline and the About and What's new titles), `fs-title`, `fs-heading`, `fs-body`, `fs-label`,
   `fs-caption`, `fs-numeral`, `fs-ticker` (the guide countdown, 30px; rem in code, px in Figma at the default text
   size; phones use the smaller display and body sizes declared beside them).
 - The Type collection has two modes, **Desktop** and **Phone**: phones use

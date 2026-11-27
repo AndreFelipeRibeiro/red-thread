@@ -13,9 +13,62 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 31 — First visit: a graphic welcome, a five-step tour and a finish
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed at 16:05 as [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- A first visit (once per browser, never over a shared link) gets a welcome over a blurred, dimmed map: the logo, the Welcome drawing, "An interactive map of how every Marvel film and series connects." at 30px, then Show me around or skip. Settings › Show the welcome tour again brings it back.
+- The tour: five steps on one card. Look around ends after a drag or zoom and a short rest; Pick a title spotlights Iron Man, glided into view; then the cast, the Sort menu (opened) and the counts with Sign in. Between steps the card fades out, the dim lifts, the page changes, then the spotlight and the card return. The dim blocks the page outside the spotlight; × skips to the finish; Back, the dashes and Escape work; opening Sort, a character or a sheet pauses it. On phones the map moves so the first row of titles clears the card.
+- The finish: three equal choices (the promoted guide, Mark what you've seen, Explore), a panel on desktop and a sheet on phones. The tour marks the canvas and ring hints done; no hint shows while it runs.
+- Nine hand-drawn drawings (black ink, red thread, white paper that stays white in Dark); tokens `--surface-raised`, `--neutral-24`, `--spotlight-dim`, `--welcome-scrim`, `--fs-display-sm` 30px. The red hint tooltips' arrow is a plain triangle with straight sides.
+- Figma: DS · 2026-11-27 · First visit, · First visit finish and · About published and Current; App Screens has the first-visit frames. `qa/test-firstvisit.js` covers the welcome rules, every step forward and back, Escape, the pauses, Dark and Reduce motion, desktop and a Portuguese phone.
+- Not checked: real iPhone Safari.
+
+## V5 Batch 31 — About: the new style, after the first-visit tour
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed at 16:05 as [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- About shows the welcome's drawing beside what Red Thread is, then three rows each led by its own drawing: Take the tour again (closes About and starts the tour), What's new (opens in place) and Share Red Thread; then credits as a source list, the TMDB notice and the fan-project line. Phones get a sheet with the × beside the logo; the scrim dims harder in Dark.
+- Ways to explore, the lead paragraph and the old tagline are gone, with their strings. Three new drawings; Take the tour has a Dark copy whose dashed route is white.
+- Figma: About dialog rebuilt, its old Welcome variants retired; App Screens has About frames, Light and Dark. `qa/test-about.js` covers the new layout and Take the tour again, desktop, Portuguese and phones at 390 and 320.
+- Not checked: real iPhone Safari.
+
+## V5 Batch 31 — Workflow: Design rounds are Light first, Portuguese once a direction is close
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed at 15:41 as [f53017a](https://github.com/AndreFelipeRibeiro/red-thread/commit/f53017a), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- Explorations start in Light (Dark too when it's cheap); Portuguese frames wait until a direction is close or approved.
+
+## V5 Batch 31 — Connections: one selected card at its own size
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed at 15:16 as [75da639](https://github.com/AndreFelipeRibeiro/red-thread/commit/75da639), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- The desktop's enlarged copy of the selected card is gone: the selected card is the canvas card itself, outlined, at its neighbors' size, at every zoom. Figma's Spatial card has a Ring = Selected variant.
+- `qa/test-cards.js` selects Thor with the phone's view on Connections, zooms in and out, and expects one Thor card.
+
+## V5 Batch 31 — Workflow: the Red Thread – References file in Where work lives
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed at 07:44 as [821a81e](https://github.com/AndreFelipeRibeiro/red-thread/commit/821a81e), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- The Figma References file (one page per topic) and its private Mobbin collections are listed as Explore-stage material, never copied into the app.
+
+## V5 Batch 31 — First visit 1: phones open on Connections, and a Guides mark on the tab bar
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed at 07:44 as [5d04cf2](https://github.com/AndreFelipeRibeiro/red-thread/commit/5d04cf2), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- A first visit on a phone opens on Connections and keeps that view; shared links and returning visitors are unchanged.
+- A one-time "tabs" hint points at the bottom bar's Guides once a title has been picked and closed. English and Portuguese. `qa/test-welcome.js` and `qa/test-hints.js` cover both.
+
+## V5 Batch 31 — Small win: halfway through a phase, with a star pop
+
+Recorded: 2026-11-27 16:22 EST (-0500). Committed on 2026-11-26 at 21:00 as [8d32307](https://github.com/AndreFelipeRibeiro/red-thread/commit/8d32307), pushed to `version/5.0` (V5 staging) at 16:19 with the batch at [855d670](https://github.com/AndreFelipeRibeiro/red-thread/commit/855d670). Full regression on the pushed tree (frozen copy of 855d670): all 91 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+
+- The mark that brings a phase (four or more released titles) to half seen shows "Halfway through Phase 1!" with one star pop. Undo and mark again shows it again; marks past halfway and bulk marks never do. A guide's halfway on the same mark wins; one animation at most.
+- `qa/test-cel.js` covers the toast, the single star pop, the prefetch and the mark past halfway.
+
 ## V5 Batch 30 — Small win: halfway through a guide, with a star pop
 
-Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:04 as [8e0e386](https://github.com/AndreFelipeRibeiro/red-thread/commit/8e0e386), pushed to `version/5.0` (V5 staging) at 17:06 with the batch at [35f4159](https://github.com/AndreFelipeRibeiro/red-thread/commit/35f4159). Not on production. Full regression on the pushed tree (frozen copy of 35f4159): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:04 as [8e0e386](https://github.com/AndreFelipeRibeiro/red-thread/commit/8e0e386), pushed to `version/5.0` (V5 staging) at 17:06 with the batch at [35f4159](https://github.com/AndreFelipeRibeiro/red-thread/commit/35f4159). Merged to `main` (production) at 18:43 as [8def450](https://github.com/AndreFelipeRibeiro/red-thread/commit/8def450); `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 35f4159): all 90 check runs clean, plus the accessibility scans in English, Portuguese and dark, with no violations. `qa/smoke.js` clean on staging.
 
 - A mark that brings a followed guide (4 or more released essential stops) to half its stops seen shows "Halfway there!" with the guide's name and "6 of 12 seen", and plays C · Star pop from the toast's star, above the toast. The star pop is fetched when the guide is one stop short.
 - Once per guide: Undo and mark again shows it again, never after the guide is past halfway. A milestone on the same mark wins; Celebrations off gives an ordinary toast, reduced motion the toast with no star pop. Small wins never fall back to the canvas confetti.
@@ -25,7 +78,7 @@ Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:04 as [8e0e386](https://
 
 ## V5 Batch 30 — Small win: the first title marked, once, with a star pop
 
-Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:23 as [4e3ff0e](https://github.com/AndreFelipeRibeiro/red-thread/commit/4e3ff0e), pushed to `version/5.0` (V5 staging) at 17:06 with the batch. Not on production. Full regression: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:23 as [4e3ff0e](https://github.com/AndreFelipeRibeiro/red-thread/commit/4e3ff0e), pushed to `version/5.0` (V5 staging) at 17:06 with the batch. Merged to `main` (production) at 18:43 as [8def450](https://github.com/AndreFelipeRibeiro/red-thread/commit/8def450); `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
 
 - A visitor's very first seen mark shows "Your first title!" with C · Star pop, once per device (`mcu.firstSeen.v1`, which Undo doesn't reset). A visitor who already has seen marks, such as a synced account, never gets it; a bulk mark, a mark that starts following a guide, or Celebrations off uses it up silently.
 - The star pop is fetched at a markless visitor's first scroll, tap or key on a screen with Seen buttons, once the page is idle, never on the way in. The sign-in reminder waits while a small win's toast is on screen.
@@ -34,7 +87,7 @@ Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:23 as [4e3ff0e](https://
 
 ## V5 Batch 30 — Small win: up to date with the newest release, with a star pop
 
-Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:38 as [c60d365](https://github.com/AndreFelipeRibeiro/red-thread/commit/c60d365), pushed to `version/5.0` (V5 staging) at 17:06 with the batch. Not on production. Full regression: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:38 as [c60d365](https://github.com/AndreFelipeRibeiro/red-thread/commit/c60d365), pushed to `version/5.0` (V5 staging) at 17:06 with the batch. Merged to `main` (production) at 18:43 as [8def450](https://github.com/AndreFelipeRibeiro/red-thread/commit/8def450); `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
 
 - Marking the newest release seen in its first 7 days shows "You're up to date!" with C · Star pop. The week runs from the release day in the visitor's market, in their own calendar; a series counts by its premiere; titles released the same day are all the newest. Single marks only.
 - A milestone, halfway or a first title on the same mark wins. The star pop is fetched once the page is idle while the newest release is in its week and unseen.
@@ -43,14 +96,14 @@ Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:38 as [c60d365](https://
 
 ## V5 Batch 30 — Tokens: merge four duplicate color roles, in the code and the Design System
 
-Recorded: 2026-11-26 17:08 EST (-0500). Committed at 15:42 as [c9bdff5](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9bdff5). It reached `version/5.0` (V5 staging) earlier, under Batch 29's CHANGELOG push, before its full regression; production doesn't have it (Batch 29 merged [fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067) only). This batch's full regression covers it: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 15:42 as [c9bdff5](https://github.com/AndreFelipeRibeiro/red-thread/commit/c9bdff5). It reached `version/5.0` (V5 staging) earlier, under Batch 29's CHANGELOG push, before its full regression; merged to `main` (production) at 18:43 as [8def450](https://github.com/AndreFelipeRibeiro/red-thread/commit/8def450) with the batch (Batch 29 had merged [fd0b067](https://github.com/AndreFelipeRibeiro/red-thread/commit/fd0b067) only); `qa/smoke.js` clean on production; IndexNow accepted 392 addresses (200). This batch's full regression covers it: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
 
 - `brand-foreground` into `on-color`, `progress-done` into `seen`, `button-outline-border` into `input`, `switch-thumb-off` into `switch-thumb`. Each pair had the same Light and Dark values, so nothing changes on screen.
 - Figma: bindings moved first, then the variables merged, published as "DS · 2026-11-26 · Foundations reboot, four color merges". `docs/design-tokens.md` records the six groups kept apart on purpose.
 
 ## V5 Batch 30 — Tokens: second consolidation pass (solid bars, named radii, three color merges)
 
-Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:53 as [35f4159](https://github.com/AndreFelipeRibeiro/red-thread/commit/35f4159), pushed to `version/5.0` (V5 staging) at 17:06. Not on production. Full regression on this tree: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-26 17:08 EST (-0500). Committed at 16:53 as [35f4159](https://github.com/AndreFelipeRibeiro/red-thread/commit/35f4159), pushed to `version/5.0` (V5 staging) at 17:06. Merged to `main` (production) at 18:43 as [8def450](https://github.com/AndreFelipeRibeiro/red-thread/commit/8def450); `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on this tree: all 90 check runs clean, accessibility scans with no violations. `qa/smoke.js` clean on staging.
 
 - The desktop and phone app bars, the phone nav bar, the band labels, the meter and the empty note are solid `background` with no blur: nothing scrolls under them, so the 95% glass never showed. The floating cards over the canvas keep their glass.
 - A new `--radius-xs` (4 px). Every one-off `rounded-[Npx]` in `src/` becomes a named size (14 → `xl`, 10 → `lg`, 9 and 7 → `md`, 5/4/3 → `xs`; the filter badge and the canvas count pill → `rounded-full`), all within 2 px of before.
