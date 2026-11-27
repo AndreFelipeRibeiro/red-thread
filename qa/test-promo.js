@@ -226,7 +226,7 @@ const labelsOverlap = (page) => page.evaluate(() => {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2026-11-01');
     await seed(page, storage({ returning: false }));
     await page.goto(URL); await settle(page);
-    const first = await page.evaluate(() => ({ welcome: !!document.querySelector('.welcome-pick'), promo: !!document.querySelector('.gp') }));
+    const first = await page.evaluate(() => ({ welcome: !!document.querySelector('.welcome-tour'), promo: !!document.querySelector('.gp') }));
     expect(first.welcome && !first.promo, `first visit: ${JSON.stringify(first)}`);
     await seed(page, storage());
     await page.goto(URL + '?title=iron-man'); await settle(page);

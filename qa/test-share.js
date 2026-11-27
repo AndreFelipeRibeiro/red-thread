@@ -130,7 +130,7 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     // About is in the account menu's footer.
     await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
     await page.locator('.acct-foot-link').click(); await page.waitForTimeout(400);
-    await reset(); await page.locator('.about-share-row .share-btn').click(); await copiedShown('about');
+    await reset(); await page.locator('.about-share').click(); await copiedShown('about');
     goodLink(await clip(), '', 'desktop about');
     await page.keyboard.press('Escape'); await page.waitForTimeout(300);
 

@@ -32,6 +32,7 @@ const COLOR_TOKENS = [
   'chip-muted', 'brand-tint', 'brand-tint-strong', 'seen-tint', 'seen-tint-strong', 'neutral-tint', 'veil',
   'veil-light', 'border-strong', 'seen-border', 'seen-line', 'brand-border', 'status-watch-border',
   'destructive-border', 'field-hover', 'segment-on',
+  'surface-raised', 'spotlight-dim', 'welcome-scrim',
 ];
 // When several tokens give the same colors, the first that fits the property wins
 // (unless the element's own classes name one).

@@ -136,8 +136,12 @@ const readWord = (sel) => {
       expect(await page.evaluate(() => document.documentElement.classList.contains('dark')) === (theme === 'dark'), theme + ': theme class not applied');
       checkMark(theme + ' toolbar', await page.evaluate(read, '.toolbar .brand-mark'), 15, 28);
       checkWord(theme + ' toolbar word', await page.evaluate(readWord, '.toolbar .brand-title .logo-word'), 111, 21, theme);
-      await page.waitForSelector('.about-head .brand-mark', { timeout: 4000 }).catch(() => {});
-      checkMark(theme + ' welcome', await page.evaluate(read, '.about-head .brand-mark'), 32);
+      // The first-visit welcome's header row: the mark and the wordmark
+      // (Notion "First visit", 2026-11-27).
+      await page.waitForSelector('.welcome-head .logo-mark', { timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(1000); // the welcome rises in after a beat
+      checkMark(theme + ' welcome', await page.evaluate(read, '.welcome-head .logo-mark'), 17, 32);
+      checkWord(theme + ' welcome word', await page.evaluate(readWord, '.welcome-head .logo-word'), 150, 28, theme);
       brands[theme] = out[theme + ' toolbar'] && out[theme + ' toolbar'].brand;
       await ctx.close();
     }

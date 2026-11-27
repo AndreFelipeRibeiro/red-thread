@@ -21,7 +21,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
-  const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .about'),
+  const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .welcome, .m-sheet .about'), tour: !!document.querySelector('.welcome-tour'),
     title: (document.querySelector('.about-title') || {}).textContent || null, cta: !!document.querySelector('.welcome-start, .about-cta'), flag: localStorage.getItem('mcu.welcome.v1'),
     cols: (() => { const u = document.querySelector('.about-ways'); return u ? getComputedStyle(u).gridTemplateColumns.split(' ').length : null; })(),
     scroll: (() => { const d = document.querySelector('.about-dialog'); return d ? d.scrollHeight > d.clientHeight : null; })(), url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))) }));
@@ -96,6 +96,18 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
       out.sharedErrors.push(...errors.map(e => kind + ' ' + q + ': ' + e)); await ctx.close();
     }
   }
+  // The welcome itself (Notion "First visit", 2026-11-27): once per browser,
+  // with Show me around; About from the menu is not the welcome.
+  out.welcomeErrors = [];
+  const W = (c, m) => { if (!c) out.welcomeErrors.push(m); };
+  W(out.first.dialog && out.first.tour, 'desktop first visit: no welcome with Show me around');
+  W(!out.afterCta.dialog, 'desktop: Skip did not close the welcome');
+  W(!out.reload.dialog, 'desktop: the welcome showed again after a reload');
+  W(out.menuAbout.dialog && !out.menuAbout.tour, 'About from the menu should be About, not the welcome');
+  W(out.forced.dialog && out.forced.tour, '?welcome did not force the welcome');
+  W(out.mFirst.sheet && out.mFirst.tour, 'phone first visit: no welcome sheet with Show me around');
+  W(!out.mAfter.sheet, 'phone: Skip did not close the welcome');
+  W(!out.mReload.sheet, 'phone: the welcome showed again after a reload');
   console.log(JSON.stringify(out));
   await browser.close(); server.close();
 })().catch(e => { console.error('FAIL', e.message.split('\\n')[0]); console.log(JSON.stringify(globalThis.__o).slice(0, 3000)); process.exit(1); });

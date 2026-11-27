@@ -2,6 +2,31 @@ import React from 'react';
 import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+/** A tooltip's arrow: a plain triangle, 16 by 8, its tip a little softened
+ *  and its two sides running straight into the bubble's edge, which it
+ *  overlaps by 1px so the two read as one shape (Andre, 2026-11-27: no
+ *  rounded corner where the arrow meets the surface). `at` is where the tip
+ *  sits along that edge; the hints and the tour card share it. */
+const CARET_PATH = {
+  top: 'M0 8 L6.6 1.4 Q8 0 9.4 1.4 L16 8 Z',
+  bottom: 'M0 0 L6.6 6.6 Q8 8 9.4 6.6 L16 0 Z',
+  left: 'M8 0 L1.4 6.6 Q0 8 1.4 9.4 L8 16 Z',
+  right: 'M0 0 L6.6 6.6 Q8 8 6.6 9.4 L0 16 Z',
+};
+export type CaretSide = keyof typeof CARET_PATH;
+export function Caret({ side, at, className }: { side: CaretSide; at: number; className: string }) {
+  const flat = side === 'top' || side === 'bottom';
+  const w = flat ? 16 : 8, h = flat ? 8 : 16;
+  const along = Math.round(at - 8);
+  const style: React.CSSProperties = flat ? { left: along, [side]: -7 } : { top: along, [side]: -7 };
+  return (
+    <svg aria-hidden="true" data-caret={side} width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={style}
+      className="pointer-events-none absolute block overflow-visible">
+      <path d={CARET_PATH[side]} className={className}/>
+    </svg>
+  );
+}
+
 // First-use hints (Notion "First-use hints: teach Connections, the character
 // view and guides when they're first used", 2026-11-18): one short line, at
 // the moment an interaction is first met, once per device. The welcome names
@@ -125,12 +150,11 @@ export function FirstHint({ id, text, anchor }: { id: string; text: string; anch
       style={{ left: place ? place.x : -9999, top: place ? place.y : -9999 }}
       className={'first-hint fixed z-80 w-max max-w-[min(300px,calc(100vw-24px))] rounded-lg bg-primary py-2.5 pr-9 pl-3.5 text-label leading-snug font-medium text-primary-foreground shadow-lg transition-opacity duration-200 motion-reduce:transition-none '
         + (shown ? 'opacity-100' : 'pointer-events-none opacity-0')}>
-      {/* The arrow: a square turned 45°, half outside the bubble's edge. The
-          bubble is the brand red (--primary: the same red and white in both
-          themes, as on Mark seen), so it reads as a note on top of the
-          interface (Andre, 2026-11-18). */}
-      {place && <span aria-hidden="true" style={{ left: place.ax - 6 }}
-        className={'absolute size-3 rotate-45 rounded-[2px] bg-primary ' + (place.below ? '-top-1.5' : '-bottom-1.5')}/>}
+      {/* The arrow: a triangle in the bubble's color. The bubble is the brand
+          red (--primary: the same red and white in both themes, as on Mark
+          seen), so it reads as a note on top of the interface (Andre,
+          2026-11-18). */}
+      {place && <Caret side={place.below ? 'top' : 'bottom'} at={place.ax} className="fill-primary"/>}
       <span className="relative block text-pretty">{shown ? text : ''}</span>
       <Button variant="ghost" size="icon-sm" className="hint-x absolute top-1 right-1 rounded-full text-primary-foreground/80 hover:bg-primary-foreground/15 hover:text-primary-foreground [&_svg]:size-3.5" aria-label={tr('hint.dismiss')} title={tr('hint.dismiss')}
         tabIndex={shown ? 0 : -1} onClick={() => MCU_HINTS.done(id)}>

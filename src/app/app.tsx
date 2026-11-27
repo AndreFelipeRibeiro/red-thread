@@ -6,6 +6,7 @@
 // is already typed in src/types/globals.d.ts, so the errors it reports are the
 // real ones.
 import { FirstHint, MCU_HINTS, useHintsVersion } from './hints'
+import { TOUR_TITLE, TOUR_CHANGE_MS } from './first-visit';
 import { CharCard } from './char-card';
 import { MCU_KEYS, ShortcutsDialog, SORT_BY_KEY, SECTION_BY_KEY, STATUS_BY_KEY, keyIsTaken } from './shortcuts';
 import React from 'react';
@@ -981,6 +982,17 @@ function App() {
   useEffect(() => { if (settingsOpen) setSettingsShown(true); }, [settingsOpen]);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
+  // Its tour ("Show me around"): steps 1…5, then 'finish' (see the first
+  // visit's tour below).
+  const [tour, setTour] = useState(null);
+  // Whether the last step change came from the visitor doing the step (a
+  // drag, a tap on Iron Man) rather than Next, Back or a dash.
+  const [tourByAction, setTourByAction] = useState(false);
+  // The title tapped on step 2: its details open once step 2 has gone.
+  const tourPickRef = useRef(null);
+  const tourStep = typeof tour === 'number' ? tour : null;
+  // After the tour, the phone's Guides tip waits (see the tour below).
+  const [tourHoldsTabs, setTourHoldsTabs] = useState(false);
   // "What have you seen?" (picker.jsx): from the welcome, the account menu or
   // sheet, and the Seen tab's empty state. It replaces whatever layer opened it.
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -2775,6 +2787,10 @@ function App() {
   }, [drawerId]);
 
   const onCardTap = (id) => {
+    // Step 2 of the first visit's tour: the tap ends the step; the details
+    // open once the card and highlight have gone (the step 3 change below),
+    // not under them (Andre, 2026-11-27).
+    if (tourStep === 2) { tourPickRef.current = id; setTourByAction(true); setTour(3); return; }
     setPair(null);
     canvasPickRef.current = id;
     if (settingsOpen && !isTouch) {
@@ -3202,6 +3218,17 @@ function App() {
     const id = requestAnimationFrame(() => { document.documentElement.dataset.ready = '1'; });
     return () => cancelAnimationFrame(id);
   }, [collectionReady]);
+  // The first visit's welcome waits for the map to be drawn and a beat more,
+  // so its fade-in plays on a settled page instead of during the first,
+  // heavy render (Andre, 2026-11-27: "still don't see an animation").
+  const [welcomeReady, setWelcomeReady] = useState(false);
+  useEffect(() => {
+    if (!collectionReady || welcomeReady) return undefined;
+    // (No pause for automated browsers, as for the hints: the QA checks
+    // look for the welcome as soon as the app is ready.)
+    const t = setTimeout(() => setWelcomeReady(true), window.MCU_MOTION.reduced() || navigator.webdriver ? 0 : 600);
+    return () => clearTimeout(t);
+  }, [collectionReady]);
 
   // ---- Coming back to a guide --------------------------------------------
   // A visit that starts on the home page (no title, character, guide or
@@ -3261,7 +3288,7 @@ function App() {
   // visitor came for what it shows). Each is marked done by its action below.
   const hintsV = useHintsVersion();
   const landedOnLinkRef = useRef(['guide', 'title', 'char'].some(k => stateParams(window.location.pathname, window.location.search).has(k)));
-  const hintOverlay = welcome || !!sheet || aboutOpen || settingsOpen || pickerOpen || !!promo || keysOpen;
+  const hintOverlay = welcome || !!tour || !!sheet || aboutOpen || settingsOpen || pickerOpen || !!promo || keysOpen;
   const hintId = useMemo(() => {
     if (!MCU_HINTS.enabled() || hintOverlay || !spatialShown) return null;
     const open = (id) => !MCU_HINTS.isDone(id);
@@ -3272,9 +3299,9 @@ function App() {
     // Phones (Notion "First visit", 2026-11-27): once a title has been
     // picked and closed, the bottom bar's Guides, which nothing else points
     // to on the first visit now that it opens on Connections.
-    if (isTouch && !selectedId && !drawerId && !open('canvas') && open('tabs')) return 'tabs';
+    if (isTouch && !selectedId && !drawerId && !tourHoldsTabs && !open('canvas') && open('tabs')) return 'tabs';
     return null;
-  }, [hintsV, hintOverlay, spatialShown, guide, guideLineIds, highlightedChar, isTouch, ringIds, selectedId, drawerId]);
+  }, [hintsV, hintOverlay, spatialShown, guide, guideLineIds, highlightedChar, isTouch, ringIds, selectedId, drawerId, tourHoldsTabs]);
   const hintText = hintId ? tr('hint.' + (hintId === 'char' && isTouch ? 'charTouch' : hintId),
     hintId === 'char' && highlightedChar ? { name: pinnedActor || I18N.charName(highlightedChar) } : undefined) : '';
   // What each hint points at: Up next's card (or the card nearest the
@@ -3314,25 +3341,242 @@ function App() {
     if (guide && guideLineIds && guideLineIds.length) hintGuideRef.current = true;
     else if (!guide && hintGuideRef.current) { hintGuideRef.current = false; MCU_HINTS.done('guide'); }
   }, [guide, guideLineIds]);
-  // The welcome's guide offer (Notion "Welcome: offer to start the Doomsday
+  // ---- The first visit's tour (Notion "First visit: a graphic welcome on
+  // Connections", design B · v5, 2026-11-27) ------------------------------
+  // The welcome's "Show me around" starts it: five steps on one card
+  // (first-visit.tsx), then the finish with three ways in. Steps 1–2 end when
+  // the visitor does them (a drag of 80px or a zoom; a title's details), or
+  // with Next; steps 3–5 put a spotlight on the real control. It replaces
+  // hint.canvas (step 2) and hint.ring (step 3) and marks them done, and no
+  // hint shows while it runs. Skip tour or Escape jumps to the finish.
+  // About's "Take the tour again" starts it too, closing About first.
+  const startTour = () => {
+    setWelcome(false); setAboutOpen(false); setSheet(s => (s === 'about' ? null : s)); setTour(null);
+    if (section !== 'explore') goSection('explore', { force: true });
+    setTour(1);
+  };
+  // To the finish: the card and the dim fade out where they are, then the
+  // finish rises (rather than the dim cutting out under it).
+  const [tourLeaving, setTourLeaving] = useState(false);
+  const leaveTour = () => {
+    if (window.MCU_MOTION.reduced()) { setTour('finish'); return; }
+    setTourLeaving(true);
+    setTimeout(() => { setTourLeaving(false); setTour(t => (typeof t === 'number' ? 'finish' : t)); }, 240);
+  };
+  const nextTour = () => { setTourByAction(false); if (tourStep === 5) leaveTour(); else setTour(t => (typeof t === 'number' && t < 5 ? t + 1 : 'finish')); };
+  const backTour = () => { setTourByAction(false); setTour(t => (typeof t === 'number' && t > 1 ? t - 1 : t)); };
+  const goTour = (n) => { setTourByAction(false); setTour(n); };
+  const skipTour = () => leaveTour();
+  // Step 4 opens the Sort menu (header-controls.tsx listens) and leaving it
+  // closes the menu again, without changing the sort.
+  const tourSortMenu = (open) => window.dispatchEvent(new CustomEvent('mcu:sort-menu', { detail: open }));
+  const tourBaseRef = useRef(null);
+  const viewNowRef = useRef(view);
+  viewNowRef.current = view;
+  useEffect(() => {
+    if (!tourStep) { if (tour === 'finish') tourSortMenu(false); return undefined; }
+    const reduce = window.MCU_MOTION.reduced();
+    const timers = [];
+    if (tourStep >= 2) MCU_HINTS.done('canvas');
+    if (tourStep >= 3) MCU_HINTS.done('ring');
+    tourBaseRef.current = null;
+    // Tells the tour card the page is ready for this step (first-visit.tsx
+    // opens the highlight then): after a glide, the details or the menu.
+    const settle = (ms = 0) => timers.push(setTimeout(() => window.dispatchEvent(new CustomEvent('mcu:tour-settled', { detail: tourStep })), reduce ? 0 : ms));
+    // The page changes for the step only once the card and the dim have
+    // faded out (first-visit.tsx, TOUR_CHANGE_MS; Andre, 2026-11-27: card
+    // out, dim out, the page changes, the highlight and dim in, the card in).
+    // Going back or jumping with the dashes undoes what later steps opened.
+    timers.push(setTimeout(() => {
+      if (tourStep !== 4) tourSortMenu(false);
+      if (tourStep !== 3) {
+        // A character picked on step 3 lets go too, under the dim, so the
+        // Sort step shows every title re-sorting (Andre, 2026-11-27). First,
+        // since letting go would select the open title again.
+        if (highlightedChar) unpinCharacter();
+        if (explore) setExplore(null);
+        setDrawerId(null); if (!isTouch) setSelectedId(null);
+      }
+      // Step 1 counts a drag or a zoom from here (the map doesn't move by
+      // itself: Andre took the nudge out, 2026-11-27). On phones the map
+      // first scrolls up enough that the first row of titles sits whole
+      // between the header and the tour card; the visitor's own drag counts
+      // after that.
+      if (tourStep === 1) {
+        let lift = 0;
+        // The first row on screen, not Iron Man: in Story order (or any
+        // order but Release) he isn't on the first row, and lifting him into
+        // view left the map on an empty patch (Andre, 2026-11-27).
+        if (isTouch) {
+          const tc = document.querySelector('.tour-card'), bar = document.querySelector('.m-toolrow');
+          const floor = bar ? bar.getBoundingClientRect().bottom + 12 : 120;
+          const shown = [...document.querySelectorAll('.card[data-id]')].map(c => c.getBoundingClientRect())
+            .filter(r => r.width && r.right > 0 && r.left < innerWidth && r.bottom > floor - 12 && r.top < innerHeight);
+          if (shown.length && tc) {
+            const rowTop = Math.min(...shown.map(r => r.top));
+            const rowBottom = Math.max(...shown.filter(r => r.top < rowTop + 40).map(r => r.bottom));
+            lift = Math.max(0, Math.min(rowBottom + 12 - tc.getBoundingClientRect().top, rowTop - floor));
+          }
+        }
+        if (lift > 4) {
+          stopCamera();
+          const v = viewNowRef.current;
+          if (reduce) setView({ ...v, y: v.y - lift }); else glideTo({ ...v, y: v.y - lift });
+          timers.push(setTimeout(() => { tourBaseRef.current = viewNowRef.current; }, reduce ? 50 : 750));
+          settle(700);
+        } else { tourBaseRef.current = viewNowRef.current; settle(); }
+      }
+      if (tourStep === 3) {
+        if (!drawerId) pickTitle(tourPickRef.current || TOUR_TITLE);
+        tourPickRef.current = null;
+        // The details open as usual, scrolled to the cast as soon as it is
+        // there (the card and spotlight wait for it to settle).
+        const findCast = (n) => {
+          const cast = document.querySelector(isTouch ? '.m-sheet .td-acc-cast' : '.drawer.open .td-acc-cast');
+          if (cast) { cast.scrollIntoView({ block: isTouch ? 'center' : 'nearest', behavior: reduce ? 'auto' : 'smooth' }); settle(450); }
+          else if (n > 0) timers.push(setTimeout(() => findCast(n - 1), 100));
+          else settle();
+        };
+        timers.push(setTimeout(() => findCast(30), 150));
+      }
+      if (tourStep === 4 && !isTouch) { tourSortMenu(true); settle(250); }
+      // On phones steps 4 and 5 dock the card under the top bar, over the
+      // first row of titles: while the highlight is closed, the map glides
+      // down so the first row on screen sits below the card: in the middle of
+      // the space above the nav bar when it is the only row (Andre,
+      // 2026-11-27). The first row
+      // on screen, not Iron Man: a sort picked on step 4 reframes the map on
+      // its new first row, right under the top bar.
+      if (isTouch && (tourStep === 4 || tourStep === 5)) {
+        const bar = document.querySelector('.m-toolrow'), tc = document.querySelector('.tour-card'), nav = document.querySelector('.m-navbar');
+        const barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+        const navTop = nav ? nav.getBoundingClientRect().top : innerHeight;
+        const shown = [...document.querySelectorAll('.card[data-id]')].map(c => c.getBoundingClientRect())
+          .filter(r => r.width && r.right > 0 && r.left < innerWidth && r.bottom > barBottom && r.top < navTop);
+        if (shown.length && tc) {
+          const rowTop = Math.min(...shown.map(r => r.top));
+          const rowBottom = Math.max(...shown.filter(r => r.top < rowTop + 40).map(r => r.bottom));
+          const top = barBottom + 14 + tc.offsetHeight + 16, bottom = navTop - 16;
+          if (rowTop < top) {
+            // One row: in the middle. A grid (IMDb, phase…): its first row
+            // just under the card, so the rows below aren't pushed off. The
+            // card still holds the last step's words here (this step's may
+            // run a line longer), hence the room.
+            const more = shown.some(r => r.top >= rowBottom);
+            const dy = Math.round(more ? top + 32 - rowTop : Math.max(top - rowTop, (top + bottom) / 2 - (rowTop + rowBottom) / 2));
+            stopCamera();
+            const v = viewNowRef.current;
+            if (reduce) setView({ ...v, y: v.y + dy }); else glideTo({ ...v, y: v.y + dy });
+            settle(720);
+          } else settle(150);
+        } else settle(150);
+      } else if (tourStep === 5) settle(150);
+      // Step 2 points at Iron Man, who step 1's looking around may have moved
+      // off screen (Andre, 2026-11-27): while the highlight is closed, the map
+      // glides him whole into the free space (on phones, above the docked
+      // card), and the highlight then opens on him.
+      if (tourStep === 2) {
+        const card = document.querySelector(`.card[data-id="${TOUR_TITLE}"]`);
+        if (card) {
+          const r = card.getBoundingClientRect();
+          const bar = document.querySelector(isTouch ? '.m-toolrow' : '.toolbar');
+          const top = (bar ? bar.getBoundingClientRect().bottom : 0) + 16;
+          const tc = document.querySelector('.tour-card'), nav = document.querySelector('.m-navbar');
+          const bottom = isTouch
+            ? (nav ? nav.getBoundingClientRect().top : innerHeight) - 10 - (tc ? tc.offsetHeight : 0) - 16
+            : innerHeight - 16;
+          const left = 16, right = (!isTouch && drawerId ? innerWidth - 380 : innerWidth) - 16;
+          const inside = r.top >= top && r.bottom <= bottom && r.left >= left && r.right <= right;
+          if (!inside) {
+            const dx = (left + right) / 2 - (r.left + r.right) / 2;
+            const dy = isTouch ? Math.min((top + bottom) / 2 - (r.top + r.bottom) / 2, bottom - r.bottom) : (top + bottom) / 2 - (r.top + r.bottom) / 2;
+            // A swipe on step 1 may still be coasting: stop it, or it wins.
+            stopCamera();
+            const v = viewNowRef.current;
+            if (reduce) setView({ ...v, x: v.x + dx, y: v.y + dy }); else glideTo({ ...v, x: v.x + dx, y: v.y + dy });
+            settle(720);
+          } else settle(100);
+        } else settle();
+      }
+    }, reduce ? 0 : TOUR_CHANGE_MS));
+    return () => timers.forEach(clearTimeout);
+  }, [tour]);
+  // Step 1 ends once the visitor has looked around (a drag of 80px or a
+  // zoom) and then let the map rest for 1.2s: every move restarts the
+  // wait, so the first swipe doesn't cut the exploring short (Andre,
+  // 2026-11-27). Next moves on at any time.
+  const tourRestRef = useRef(0);
+  useEffect(() => () => clearTimeout(tourRestRef.current), [tour]);
+  useEffect(() => {
+    const b = tourBaseRef.current;
+    if (tourStep !== 1 || !b) return;
+    if (Math.abs(view.x - b.x) + Math.abs(view.y - b.y) < 80 && Math.abs(view.scale - b.scale) / b.scale <= 0.02) return;
+    clearTimeout(tourRestRef.current);
+    tourRestRef.current = setTimeout(() => { setTourByAction(true); setTour(t => (t === 1 ? 2 : t)); }, 1200);
+  }, [view, tour]);
+  // Step 3: picking a character (its view on desktop, its thread on
+  // phones) pauses the tour while the visitor looks; coming back from it
+  // goes on to step 4 (Andre, 2026-11-27).
+  // The same when the visitor opens what step 4 or 5 points at: the phone's
+  // Sort sheet, or on step 5 the picker, Settings or a menu sheet (Andre,
+  // 2026-11-27). Coming back goes on to the next step (the finish after 5).
+  // The hold outlives what was open by the one render before the next step
+  // takes over, so the old step never shows again on the way.
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  useEffect(() => {
+    const f = (e) => { if (e.detail && e.detail.mobile) setSortSheetOpen(!!e.detail.open); };
+    window.addEventListener('mcu:sort-menu-open', f);
+    return () => window.removeEventListener('mcu:sort-menu-open', f);
+  }, []);
+  // Phones: a character's thread is a sheet over everything, so the tour
+  // waits for the visitor to come back. Desktop: the character's view floats
+  // over the map, so picking one counts as doing step 3 and the tour moves
+  // on after a moment, the character still pinned (Andre, 2026-11-27: the
+  // tour waited until the stepper was closed).
+  const tourExploring = (tourStep === 3 && isTouch && (!!highlightedChar || !!explore))
+    || (tourStep === 4 && isTouch && sortSheetOpen)
+    || (tourStep === 5 && (!!sheet || settingsOpen || pickerOpen));
+  useEffect(() => {
+    if (tourStep !== 3 || isTouch || !(highlightedChar || explore)) return undefined;
+    const t = setTimeout(() => { setTourByAction(true); setTour(s => (s === 3 ? 4 : s)); }, 1500);
+    return () => clearTimeout(t);
+  }, [tourStep, highlightedChar, explore]);
+  const [tourHold, setTourHold] = useState(null);
+  const tourPaused = tourExploring || !!tourHold;
+  useEffect(() => {
+    if (tourExploring) { setTourHold(tourStep); return; }
+    if (tourHold) { const from = tourHold; setTourHold(null); setTour(t => (t === from ? (from < 5 ? from + 1 : 'finish') : t)); }
+  }, [tourExploring]);
+  // Step 2 ends when a title opens on it (not one already open when Back
+  // returned to it).
+  const tourDrawerRef = useRef(drawerId);
+  useEffect(() => {
+    const prev = tourDrawerRef.current; tourDrawerRef.current = drawerId;
+    if (tourStep === 2 && drawerId && drawerId !== prev) { setTourByAction(true); setTour(3); }
+  }, [drawerId, tour]);
+  // After the tour the phone's Guides tip waits for the visitor to open a
+  // title on their own, rather than arriving as the finish closes.
+  useEffect(() => { if (tour) setTourHoldsTabs(true); }, [tour]);
+  useEffect(() => { if (!tour && drawerId) setTourHoldsTabs(false); }, [drawerId, tour]);
+  // The finish's guide (Notion "Welcome: offer to start the Doomsday
   // guide"): the promotion's pick while it is a guide to start (not a
-  // caught-up moment). Starting it from the welcome counts as its promotion
-  // (no promo card on top), follows it and opens it; Mark what you've seen
-  // still nudges later, as for any guide start.
+  // caught-up moment). Starting it counts as its promotion (no promo card on
+  // top), follows it and opens it; Mark what you've seen still nudges later,
+  // as for any guide start.
   const welcomeGuide = useMemo(() => {
-    if (!welcome || !window.MCU_GUIDE) return null;
+    if (tour !== 'finish' || !window.MCU_GUIDE) return null;
     const pick = window.MCU_GUIDE.promotion(statusOf, window.todayISO());
     return pick && pick.guide && !pick.caughtUp ? pick : null;
-  }, [welcome]);
+  }, [tour]);
   const startWelcomeGuide = () => {
     if (!welcomeGuide) return;
     const id = welcomeGuide.guide.id;
     window.MCU_GUIDE.markPromoted(welcomeGuide.key);
     window.MCU_GUIDE.follow(id);
-    setWelcome(false);
-    setAboutOpen(false);
+    setTour(null);
     openGuide(id);
   };
+  const tourPick = () => { setTour(null); openPicker(); };
   // ---- The address ------------------------------------------------------
   // The pinned character, when it is one portrayal (a performer pin covering
   // several characters has no single id to share). With a character pinned the
@@ -3985,7 +4229,7 @@ function App() {
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
               lineView={charLine}
-              isUpNext={upNextCardId === t.id} isPeek={!isTouch && peekId === t.id}
+              isUpNext={upNextCardId === t.id && !tour} isPeek={!isTouch && peekId === t.id}
               isGuideAt={!!guide && (stepId || drawerId) === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
               mark={charMarks ? charMarks[t.id] : null}
@@ -4031,7 +4275,8 @@ function App() {
   // in Titles (Notion "Titles 4/5"; Andre chose the dock over the top so it is
   // within thumb reach). A pinned character's or guide's pill takes that
   // place, and the card stands down while a title is selected on Connections.
-  const phoneCard = isTouch && !guide && !charPill && !guidesPage && compactCard
+  // The first visit's tour card docks in its place until the tour ends.
+  const phoneCard = isTouch && !guide && !charPill && !guidesPage && !tour && compactCard
     && (viewMode === 'list' || (viewMode === 'spatial' && !selectedId && filtered.length > 0)) ? compactCard(false) : null;
 
   if (isTouch) {
@@ -4097,10 +4342,10 @@ function App() {
             onAbout={() => setSheet('about')}
           />
         )}
-        {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
+        {sheet === 'about' && <window.AboutSheet onTour={startTour} onClose={() => setSheet(null)}/>}
         {sheet === 'settings' && (
           <window.SettingsSheet onClose={() => setSheet(null)}
-            onAbout={() => setSheet('about')} onShowWelcome={() => { setSheet(null); MCU_HINTS.reset(); setWelcome(true); }}/>
+            onAbout={() => setSheet('about')} onShowWelcome={() => { setSheet(null); setTour(null); MCU_HINTS.reset(); setWelcome(true); }}/>
         )}
         {sheet === 'guides' && (
           <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
@@ -4114,7 +4359,9 @@ function App() {
         <window.ShareImageHost touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
-        {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} guide={welcomeGuide} onGuide={startWelcomeGuide} onClose={() => setWelcome(false)}/>}
+        {welcome && welcomeReady && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onTour={startTour} onClose={() => setWelcome(false)}/>}
+        {tourStep && <window.TourCard step={tourStep} touch paused={tourPaused} count={window.TITLES.length} onNext={nextTour} onBack={backTour} onGo={goTour} byAction={tourByAction} leaving={tourLeaving} onSkip={skipTour}/>}
+        {tour === 'finish' && !pickerOpen && <window.TourFinish touch guide={welcomeGuide} onGuide={startWelcomeGuide} onPick={tourPick} onClose={() => setTour(null)}/>}
         {pickerOpen && <window.SeenPicker touch onClose={() => setPickerOpen(false)}/>}
         {promo && <window.GuidePromo promo={promo} touch onStart={startPromo} onClose={() => setPromo(null)}/>}
         {hintId && hintAnchor && <FirstHint id={hintId} text={hintText} anchor={hintAnchor} touch/>}
@@ -4222,7 +4469,7 @@ function App() {
       {/* The drawer that comes back must not take focus from the gear. */}
       {(settingsOpen || settingsShown) && <window.SettingsPanel leaving={!settingsOpen} onGone={() => setSettingsShown(false)}
         onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
-        onAbout={() => setAboutOpen(true)} onShowWelcome={() => { MCU_HINTS.reset(); setWelcome(true); }}/>}
+        onAbout={() => setAboutOpen(true)} onShowWelcome={() => { setTour(null); MCU_HINTS.reset(); setWelcome(true); }}/>}
       <CastDrawer
         title={settingsOpen || settingsShown ? null : drawerTitle} back={detailBackProp}
         onShowInExplore={section !== 'explore' ? showInExplore : null}
@@ -4241,9 +4488,10 @@ function App() {
       <window.ShareImageHost touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>
-      {(aboutOpen || welcome) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onPick={openPicker}
-        guide={welcome && !aboutOpen ? welcomeGuide : null} onGuide={startWelcomeGuide}
+      {(aboutOpen || (welcome && welcomeReady)) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onTour={startTour}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
+      {tourStep && <window.TourCard step={tourStep} touch={false} paused={tourPaused} count={window.TITLES.length} onNext={nextTour} onBack={backTour} onGo={goTour} byAction={tourByAction} leaving={tourLeaving} onSkip={skipTour}/>}
+      {tour === 'finish' && !pickerOpen && <window.TourFinish touch={false} guide={welcomeGuide} onGuide={startWelcomeGuide} onPick={tourPick} onClose={() => setTour(null)}/>}
       {pickerOpen && <window.SeenPicker touch={false} onClose={() => setPickerOpen(false)}/>}
       {promo && <window.GuidePromo promo={promo} touch={false} onStart={startPromo} onClose={() => setPromo(null)}/>}
       {hintId && hintAnchor && <FirstHint id={hintId} text={hintText} anchor={hintAnchor}/>}

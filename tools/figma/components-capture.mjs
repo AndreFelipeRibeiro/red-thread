@@ -51,7 +51,10 @@ try {
       await page.waitForFunction(() => document.documentElement.dataset.ready === '1', null, { timeout: 30000 });
       await page.waitForTimeout(900);
       // A first-visit offer (the promoted guide) can sit over the page.
-      for (let i = 0; i < 2 && (await page.$('[role=dialog]')); i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(400); }
+      // An entry that is itself a dialog (the first visit's welcome) keeps it.
+      for (let i = 0; i < 2 && !e.keepDialog && (await page.$('[role=dialog]')); i++) { await page.keyboard.press('Escape'); await page.waitForTimeout(400); }
+      // An entry opened by the visitor (About, from the account menu): its clicks, in order.
+      for (const sel of e.click || []) { await page.click(sel); await page.waitForTimeout(500); }
       const spec = await page.evaluate(async (sel) => {
         const el = [...document.querySelectorAll(sel)].find((x) => x.getClientRects().length);
         if (!el) return { missing: true };

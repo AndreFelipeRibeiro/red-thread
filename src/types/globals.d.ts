@@ -30,6 +30,7 @@ type Tracking = typeof import('../app/tracking');
 type Celebrate = typeof import('../app/celebrate');
 type Account = typeof import('../app/account');
 type About = typeof import('../app/about');
+type FirstVisit = typeof import('../app/first-visit');
 type Suggest = typeof import('../app/search-suggest');
 type Mobile = typeof import('../app/mobile');
 type DesktopList = typeof import('../app/desktop-list');
@@ -87,6 +88,8 @@ export interface GuideRuntime {
   name(guide: Guide): string;
   /** Minutes as words (Notion "Time to finish"); `about` rounds a total to the half hour. */
   duration(min: number, about?: boolean, word?: boolean): string;
+  /** Watching time over a guide's released stops (`total`, in minutes). */
+  minutes(guide: Guide, statusOf: ((id: string) => string | null) | null): { total: number };
   short(guide: Guide): string;
   kind(guide: Guide): string;
   blurb(guide: Guide): string;
@@ -218,6 +221,10 @@ declare global {
     AboutDialog: About['AboutDialog'];
     AboutSheet: About['AboutSheet'];
     ModalDialog: About['ModalDialog'];
+    Drawing: FirstVisit['Drawing'];
+    TourCard: FirstVisit['TourCard'];
+    TourFinish: FirstVisit['TourFinish'];
+    Spotlight: FirstVisit['Spotlight'];
     /** Decided once, when about.tsx loads. */
     MCU_WELCOME: boolean;
     MCU_RETURNING: boolean;

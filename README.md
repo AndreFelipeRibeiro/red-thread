@@ -536,10 +536,14 @@ It is switched on in the Vercel project's Analytics tab.
   Counts ignore the Seen/Watchlist tab, and the headers stand down during a
   text search or with a character pinned.
 - About Red Thread (account menu footer on desktop, account sheet on phones,
-  for guests too): what the app is, ways to explore it, and credits. A future
-  Settings entry will join it there. First-time visitors see it once as a
-  welcome (a browser with no saved preferences, language, collection or sign-in);
-  to see it again, use a private/incognito window or add `?welcome` to the URL.
+  and Settings, for guests too): what the app is, beside the welcome's
+  drawing; three rows, each with its own drawing: Take the tour again (closes
+  About and starts the first-visit tour), What's new (opened in place) and
+  Share Red Thread; then credits (the sources, the TMDB notice and the
+  fan-project line). First-time visitors get the first-visit welcome instead
+  (a browser with no saved preferences, language, collection or sign-in); to
+  see it again, use Settings › Show the welcome tour again, a private window,
+  or add `?welcome` to the URL.
 - Search suggestions: from two letters, a list under the search box previews
   matching actors, characters and titles (names in every language). Picking a
   character (or an actor who plays one character) opens that character's view,

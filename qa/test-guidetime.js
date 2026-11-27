@@ -113,19 +113,19 @@ const text = (sel) => (document.querySelector(sel) || {}).textContent || null;
     await ctx.close();
   }
 
-  // ---- The welcome offers the promoted guide --------------------------------
+  // ---- The tour's finish offers the promoted guide (Notion "First visit") ---
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, { welcome: true });
     await page.goto(URL + '?welcome'); await appReady(page); await page.waitForTimeout(800);
-    const w = await page.evaluate(() => ({ q: (document.querySelector('.welcome-guide-q') || {}).textContent || null,
-      first: (() => { const b = [...document.querySelectorAll('.welcome-pick button')]; return b.length ? (b[0].classList.contains('welcome-guide-go') ? (() => { const c = b[0].cloneNode(true); c.querySelectorAll('.welcome-guide-art').forEach(n => n.remove()); return c.textContent; })() : b[0].textContent) : null; })() }));
+    await page.locator('.welcome-tour').click(); await page.waitForTimeout(400); await page.locator('.tour-skip').click(); await page.waitForTimeout(600);
+    const w = await page.evaluate(() => { const b = [...document.querySelectorAll('.tour-finish .tour-choice')]; return { q: b[0] && b[0].dataset.choice === 'guide' ? b[0].textContent : null, first: b.length ? b[0].textContent : null }; });
     out.welcome = w;
-    expect(!!w.q && /Get ready for Avengers: Doomsday/.test(w.first || '') && /Start the guide/.test(w.first || ''), `the welcome should offer the guide first, as its primary button: ${JSON.stringify(w)}`);
+    expect(!!w.q && /Get ready for Avengers: Doomsday/.test(w.first || '') && /Start the guide/.test(w.first || ''), `the finish should offer the guide first: ${JSON.stringify(w)}`);
     if (w.q) {
-      await page.locator('.welcome-guide-go').click(); await page.waitForTimeout(900);
-      const after = await page.evaluate(() => ({ url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))), followed: window.MCU_GUIDE.followed(), open: !!document.querySelector('.welcome-pick') }));
+      await page.locator('.tour-choice[data-choice="guide"]').click(); await page.waitForTimeout(900);
+      const after = await page.evaluate(() => ({ url: (location.search + ((p) => ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] && p[2] ? (location.search ? '&' : '?') + ({ titles: 'title', guides: 'guide', characters: 'char' })[p[1]] + '=' + p[2] : ({ titles: 'list', guides: 'guides' })[p[1]] && !p[2] ? (location.search ? '&' : '?') + 'view=' + ({ titles: 'list', guides: 'guides' })[p[1]] : '')(location.pathname.split('/'))), followed: window.MCU_GUIDE.followed(), open: !!document.querySelector('.tour-finish') }));
       out.welcomeStart = after;
-      expect(/guide=/.test(after.url) && after.followed.length === 1 && !after.open, `Start the guide should close the welcome, follow and open the guide: ${JSON.stringify(after)}`);
+      expect(/guide=/.test(after.url) && after.followed.length === 1 && !after.open, `Start the guide should close the finish, follow and open the guide: ${JSON.stringify(after)}`);
     }
     errors.push(...e);
     await ctx.close();

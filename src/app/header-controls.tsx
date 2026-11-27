@@ -153,6 +153,17 @@ export function SortMenu({ sort, sortDir, onChange, mobile = false }: {
   mobile?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
+  // The first visit's tour opens the desktop menu on its step 4 and closes it
+  // after (app.tsx, Notion "First visit").
+  React.useEffect(() => {
+    if (mobile) return undefined;
+    const f = (e: Event) => setOpen(!!(e as CustomEvent<boolean>).detail);
+    window.addEventListener('mcu:sort-menu', f);
+    return () => window.removeEventListener('mcu:sort-menu', f);
+  }, [mobile]);
+  // …and is told when the visitor opens it themselves (on phones the menu
+  // is a sheet over the page, and the tour steps aside for it).
+  React.useEffect(() => { window.dispatchEvent(new CustomEvent('mcu:sort-menu-open', { detail: { open, mobile } })); }, [open, mobile]);
   const current = sortPhrase(sort, sortDir);
   const short = tr('sortmenu.short.' + sort);
   const pick = (k: string) => { onChange(k, DEFAULT_DIR[k] || 'asc'); setOpen(false); };

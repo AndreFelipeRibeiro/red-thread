@@ -38,6 +38,22 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
     await page.locator('.acct-pill').click(); await page.locator('.acct-foot-link').click(); await page.waitForTimeout(300);
     await page.mouse.click(40, 450); await page.waitForTimeout(300);
     out[loc + 'scrimClose'] = !(await page.locator('.about-dialog').count());
+    // About as designed (Notion "About: the new style…", B · v3): the
+    // drawing and descriptor, three rows each led by its drawing (loaded),
+    // credits; "Take the tour again" closes About and starts the tour.
+    await page.locator('.acct-pill').click(); await page.locator('.acct-foot-link').click(); await page.waitForTimeout(600);
+    const ab = out[loc + 'v3'] = await page.evaluate(() => ({
+      rows: [...document.querySelectorAll('.about-dialog .about-row')].map(r => r.dataset.row),
+      art: [...document.querySelectorAll('.about-dialog .fv-drawing')].filter(i => i.getClientRects().length).map(i => i.complete && i.naturalWidth > 0),
+      title: (document.querySelector('.about-dialog .about-title') || {}).textContent,
+      sources: document.querySelectorAll('.about-dialog .about-sources dt').length,
+      notice: !!document.querySelector('.about-dialog .about-notice'),
+      bg: getComputedStyle(document.querySelector('.about-dialog')).backgroundColor }));
+    if (ab.rows.join() !== 'tour,news,share' || ab.art.length !== 4 || ab.art.includes(false) || !ab.title || ab.sources !== 4 || !ab.notice)
+      errors.push('About is not as designed: ' + JSON.stringify(ab));
+    await page.locator('.about-tour').click(); await page.waitForTimeout(1200);
+    const tr = out[loc + 'tour'] = await page.evaluate(() => ({ about: !!document.querySelector('.about-dialog'), card: !!document.querySelector('.tour-card'), step: (document.querySelector('.tour-card') || { dataset: {} }).dataset.tourStep }));
+    if (tr.about || !tr.card || tr.step !== '1') errors.push('Take the tour again did not close About and start the tour: ' + JSON.stringify(tr));
     out[loc + 'errors'] = errors; await ctx.close();
   }
   for (const [loc, w] of [['pt-BR', 390], ['en-US', 320]]) {
@@ -47,7 +63,11 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
     await page.screenshot({ path: path.join(S, 'shots', 'about-m-acct-' + w + '.png') });
     await page.locator('.acct-foot-link').tap(); await page.waitForTimeout(600);
     out['m' + w] = await page.evaluate(() => { const s = document.querySelectorAll('.m-sheet'); const a = document.querySelector('.m-sheet .about');
-      return { sheets: s.length, about: !!a, hOverflow: a ? a.scrollWidth > a.clientWidth + 1 : null, title: a && a.querySelector('.about-title').textContent }; });
+      const x = document.querySelector('.m-sheet-x').getBoundingClientRect(), logo = a && a.querySelector('.logo-word').getBoundingClientRect();
+      return { sheets: s.length, about: !!a, hOverflow: a ? a.scrollWidth > a.clientWidth + 1 : null, title: a && a.querySelector('.about-title').textContent,
+        rows: a ? a.querySelectorAll('.about-row').length : 0, xBeside: !!logo && Math.abs((x.top + x.bottom) / 2 - (logo.top + logo.bottom) / 2) < 8,
+        labelsOneLine: a ? [...a.querySelectorAll('.about-sources dt')].every(d => { const r = document.createRange(); r.selectNodeContents(d); return new Set([...r.getClientRects()].map(q => Math.round(q.top))).size === 1; }) : false }; });
+    if (!out['m' + w].about || out['m' + w].hOverflow || out['m' + w].rows !== 3 || !out['m' + w].xBeside || !out['m' + w].labelsOneLine) errors.push('phone ' + w + ': About sheet not as designed: ' + JSON.stringify(out['m' + w]));
     await page.screenshot({ path: path.join(S, 'shots', 'about-m-' + w + '.png') });
     await page.locator('.m-sheet-body').evaluate(el => el.scrollTop = 9999); await page.waitForTimeout(200);
     await page.screenshot({ path: path.join(S, 'shots', 'about-m-' + w + '-end.png') });

@@ -88,11 +88,14 @@ const grid = page => page.evaluate(() => ({
   await page.goto(URL + '?welcome'); await settle(page);
   const plan = await page.evaluate(PLAN);
   out.released = plan.order.length;
-  if (!(await page.locator('.about-dialog .welcome-pick .picker-go').count())) err('desktop welcome: no "Mark what I\'ve seen" button');
-  await page.locator('.welcome-pick .picker-go').click(); await page.waitForTimeout(600);
+  // Since the first-visit tour (Notion "First visit", 2026-11-27) the offer
+  // is on the tour's finish: Show me around, Skip tour, then the choice.
+  await page.locator('.welcome-tour').click(); await page.waitForTimeout(400); await page.locator('.tour-skip').click(); await page.waitForTimeout(500); 
+  if (!(await page.locator('.tour-finish .tour-choice[data-choice="seen"]').count())) err('desktop finish: no "Mark what you\'ve seen" choice');
+  await page.locator('.tour-choice[data-choice="seen"]').click(); await page.waitForTimeout(600);
   let g = await grid(page);
-  if (!g.open) err('desktop: the picker did not open from the welcome');
-  if (await page.locator('.about-dialog:not(.pk-dialog)').count()) err('desktop: the welcome stayed open behind the picker');
+  if (!g.open) err('desktop: the picker did not open from the finish');
+  if (await page.locator('.about-dialog:not(.pk-dialog)').count()) err('desktop: the finish stayed open behind the picker');
   if (g.ids.join() !== plan.order.join()) err(`desktop: grid order ${g.ids.length} titles ≠ released by phase in release order (${plan.order.length})`);
   if (g.ids.some(id => plan.unreleased.includes(id))) err('desktop: an unreleased title is in the picker');
   if (g.on.length) err(`desktop: a new guest starts with ${g.on.length} picked`);
@@ -158,7 +161,7 @@ const grid = page => page.evaluate(() => ({
   // Over 20 picks: no confirmation; and the sign-in reminder once, after.
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, null, true));
   await page.goto(URL + '?welcome'); await settle(page);
-  await page.locator('.welcome-pick .picker-go').click(); await page.waitForTimeout(500);
+  await page.locator('.welcome-tour').click(); await page.waitForTimeout(400); await page.locator('.tour-skip').click(); await page.waitForTimeout(500); await page.locator('.tour-choice[data-choice="seen"]').click(); await page.waitForTimeout(500);
   for (let i = 0; i < 3; i++) await page.locator('.pk-pa:not(.pk-undo)').first().click();
   const many = plan.phases.slice(0, 3).reduce((n, x) => n + x.ids.length, 0);
   await page.locator('.pk-go').click(); await page.waitForTimeout(500);
@@ -235,8 +238,8 @@ const grid = page => page.evaluate(() => ({
   // ---- Phone ----
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE));
   await page.goto(URL + '?welcome'); await settle(page);
-  await page.locator('.m-sheet .welcome-pick .picker-go').click(); await page.waitForTimeout(700);
-  if (!(await page.locator('.m-sheet.pk-sheet').count())) err('phone: the picker sheet did not open from the welcome');
+  await page.locator('.welcome-tour').click(); await page.waitForTimeout(400); await page.locator('.tour-skip').click(); await page.waitForTimeout(500); await page.locator('.m-sheet .tour-choice[data-choice="seen"]').click(); await page.waitForTimeout(700);
+  if (!(await page.locator('.m-sheet.pk-sheet').count())) err('phone: the picker sheet did not open from the finish');
   // Back with nothing picked closes it.
   await page.goBack(); await page.waitForTimeout(500);
   if (await page.locator('.pk').count()) err('phone: Back with nothing picked did not close');
