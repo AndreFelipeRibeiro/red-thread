@@ -808,7 +808,15 @@ function readDisplayPrefs() {
   } catch (e) {
     return prefs; // Storage disabled, or not valid JSON.
   }
-  if (!parsed || typeof parsed !== 'object' || parsed.version !== PREFS_VERSION) return prefs;
+  if (!parsed || typeof parsed !== 'object' || parsed.version !== PREFS_VERSION) {
+    // A first visit on a phone opens on Connections, the map, rather than the
+    // list (Notion "First visit", Andre 2026-11-27: "On Connections"). Only the
+    // welcome's first visit: a shared link never reaches here (it takes the
+    // address's view). It is saved, so a reload or the next visit opens where
+    // this one did; visitors from before keep their list default.
+    if (window.MCU_WELCOME) { prefs.viewMode = 'spatial'; writeDisplayPrefs(prefs); }
+    return prefs;
+  }
   if (VIEW_MODE_VALUES.indexOf(parsed.viewMode) !== -1) prefs.viewMode = parsed.viewMode;
   if (DESKTOP_VIEW_VALUES.indexOf(parsed.desktopView) !== -1) prefs.desktopView = parsed.desktopView;
   if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, parsed.sort)) {
@@ -3261,6 +3269,10 @@ function App() {
     if (highlightedChar) return open('char') ? 'char' : null;
     if (!isTouch && ringIds && open('ring')) return 'ring';
     if (!selectedId && !drawerId && !landedOnLinkRef.current && open('canvas')) return 'canvas';
+    // Phones (Notion "First visit", 2026-11-27): once a title has been
+    // picked and closed, the bottom bar's Guides, which nothing else points
+    // to on the first visit now that it opens on Connections.
+    if (isTouch && !selectedId && !drawerId && !open('canvas') && open('tabs')) return 'tabs';
     return null;
   }, [hintsV, hintOverlay, spatialShown, guide, guideLineIds, highlightedChar, isTouch, ringIds, selectedId, drawerId]);
   const hintText = hintId ? tr('hint.' + (hintId === 'char' && isTouch ? 'charTouch' : hintId),
@@ -3285,10 +3297,12 @@ function App() {
     if (hintId === 'ring') return '.drawer.open .td-acc-cast .td-acc-head';
     if (hintId === 'char') return () => visible(`.char-card button[aria-label="${tr('highlight.next')}"]`);
     if (hintId === 'guide') return () => visible(`button[aria-label="${tr('guide.close')}"]`);
+    if (hintId === 'tabs') return '.m-tab[data-section="guides"]';
     return null;
   }, [hintId, lang]);
   // The actions that teach each one.
   useEffect(() => { if (spatialShown && (drawerId || selectedId)) { MCU_HINTS.done('canvas'); landedOnLinkRef.current = false; } }, [drawerId, selectedId, spatialShown]);
+  useEffect(() => { if (section === 'guides') MCU_HINTS.done('tabs'); }, [section]);
   useEffect(() => { if (highlightedChar) MCU_HINTS.done('ring'); }, [highlightedChar]);
   const hintStepRef = useRef(null);
   useEffect(() => {

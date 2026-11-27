@@ -701,6 +701,7 @@ window.MCU_LOCALES.en = {
     'charcard.showAll': 'Show all titles',
     'charcard.seen': '{seen} of {n} seen',
     'hint.guide': "Only this guide's stops are shown. Close it to see every title.",
+    'hint.tabs': "Guides are short watch lists, with a reason for every title.",
     'hint.dismiss': "Dismiss tip",
     'keys.title': "Keyboard shortcuts",
     'keys.lead': "Single keys, whenever you're not typing.",

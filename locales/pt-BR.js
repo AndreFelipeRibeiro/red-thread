@@ -686,6 +686,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'charcard.showAll': 'Mostrar todos os títulos',
     'charcard.seen': '{seen} de {n} vistos',
     'hint.guide': "Só as paradas deste guia aparecem. Feche-o para ver todos os títulos.",
+    'hint.tabs': "Os Guias são listas curtas para assistir, com o motivo de cada título.",
     'hint.dismiss': "Dispensar dica",
     'keys.title': "Atalhos de teclado",
     'keys.lead': "Teclas únicas, sempre que você não estiver digitando.",
