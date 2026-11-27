@@ -285,6 +285,7 @@ changed the library has its release logged.
 | What | Where | Holds |
 | --- | --- | --- |
 | Backlog | Notion **Red Thread - Backlog/Tasks (MASTER)** (https://app.notion.com/p/4189e188029f809c9a95e8b91ae22bdf), board **All tasks** | Every ticket, every version; the record of each stage |
+| References | Figma [Red Thread – References](https://www.figma.com/design/Y5nR5BRabTbZA028Ewakfb), one page per topic; the matching private Mobbin collection ("Red Thread – <topic>") | Explore stage: other products' screens for a pattern, each with its app, why it's there and its Mobbin link, beside how Red Thread does it today. Linked from the ticket's Explore line. References only: never copied into the app |
 | Lo-fi prototypes | Claude Design (claude.ai artifacts) | Explore options, linked from the ticket |
 | Hi-fi explorations | Figma [Red Thread – Explorations (HI-FI)](https://www.figma.com/design/v2yL8aeK8uyRfgUfhVm74z) | Design stage: versioned explorations, the selected one marked, archived once shipped |
 | Earlier explorations | Figma [file `HFwjyn1zLiNJGSfGtSfrr3`](https://www.figma.com/design/HFwjyn1zLiNJGSfGtSfrr3) (pages 1–8: Navigation to Explore E) | V5's first explorations, from before the library; history |
