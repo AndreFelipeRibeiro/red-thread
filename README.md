@@ -511,9 +511,12 @@ It is switched on in the Vercel project's Analytics tab.
   confetti plays instead. A smaller win, a followed guide reaching halfway
   (half its released essential stops, for a guide with at least four), shows
   "Halfway there!" with a star pop from the toast's icon, fetched the same way
-  when one stop short. A visitor's very first seen mark, once per device
-  (`mcu.firstSeen.v1`), shows "Your first title!" with the same star pop,
-  fetched at their first scroll, tap or key on a screen with Seen buttons.
+  when one stop short; so does a phase reaching half its released titles
+  ("Halfway through Phase 3!", for a phase with at least four). A milestone
+  plays only the confetti: never both. A visitor's very first seen mark, once
+  per device (`mcu.firstSeen.v1`), shows "Your first title!" with the same
+  star pop, fetched at their first scroll, tap or key on a screen with Seen
+  buttons.
   Marking the newest release seen in its first 7 days (a series by its
   premiere) shows "You're up to date!" with the star pop, fetched while it is
   in its week and unseen; a milestone, halfway or first title on the same

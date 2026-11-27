@@ -189,6 +189,29 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   if (!out.halfwayAgain) errors.push('undo and mark again did not show the halfway toast again');
   if (out.pastHalfway.halfway || !/Marked as seen/.test(out.pastHalfway.toast || '')) errors.push('a mark past halfway showed the halfway toast: ' + JSON.stringify(out.pastHalfway));
   out.halfErrors = errors; await ctx.close();
+  // Small win: halfway through a phase (Notion "Small win: halfway through a
+  // phase"). Phase 1 has 6 titles and 2 are seen, so the third is halfway: the
+  // toast with one star pop, and never the confetti with it.
+  ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART
+    + "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'iron-man':'seen','incredible-hulk':'seen'}}));"));
+  const phaseLottie = lottieGets(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
+  await page.locator('.nav-tabs button', { hasText: 'Titles' }).click(); await page.waitForTimeout(3500);
+  await row('Iron Man 2').locator('.tsa-btn.seen').click(); await page.waitForTimeout(450);
+  out.phaseHalfway = await halfProbe(page);
+  out.phaseHalfway.cls = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return !!(t && t.className.includes('phase-halfway')); });
+  out.phaseHalfway.pops = await page.evaluate(() => ({ pops: document.querySelectorAll('.mcu-starpop').length, confetti: !!document.querySelector('.mcu-confetti') }));
+  await page.screenshot({ path: path.join(S, 'shots', 'cel-d-phasehalf.png'), clip: { x: 420, y: 640, width: 600, height: 260 } });
+  { const h = out.phaseHalfway;
+    if (!h.cls || !/Halfway through Phase 1!/.test(h.toast) || !/3 of 6 Phase 1 titles seen/.test(h.toast)) errors.push('halfway through a phase did not show its toast: ' + JSON.stringify(h));
+    else if (!h.pop || h.pop.svg !== 1 || h.pops.pops !== 1 || h.pops.confetti) errors.push('halfway through a phase did not play exactly one star pop: ' + JSON.stringify(h)); }
+  if (!phaseLottie.some(u => /small-win/.test(u))) errors.push('one title short of a phase halfway did not fetch the star pop: ' + phaseLottie.join(', '));
+  // Past halfway: an ordinary toast.
+  await page.waitForTimeout(1800);
+  await row('Thor').locator('.tsa-btn.seen').click(); await page.waitForTimeout(300);
+  out.pastPhaseHalf = await page.evaluate(() => { const t = document.querySelector('.mcu-toast'); return t ? t.className.includes('small-win') : null; });
+  if (out.pastPhaseHalf !== false) errors.push('a mark past a phase halfway showed a small win');
+  out.phaseHalfErrors = errors; await ctx.close();
   // Celebrations off: the same mark gets an ordinary toast, and nothing is fetched.
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, NOWELCOME + ART + halfSeed("localStorage.setItem('mcu.celebrations.v1', 'off');")));
   const quietLottie = lottieGets(page);

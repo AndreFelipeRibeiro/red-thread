@@ -258,6 +258,9 @@ window.MCU_LOCALES['pt-BR'] = {
     // A small win: a followed guide reaches half its released stops.
     'toast.halfway': "Metade do caminho!",
     'toast.halfwaySub': "{name} · {n} de {total} vistos",
+    // A small win: a phase reaches half its released titles.
+    'toast.phaseHalfway': "Metade da Fase {n}!",
+    'toast.phaseHalfwaySub': "{n} de {total} títulos da Fase {phase} vistos",
     // A small win: a visitor's very first seen mark, once.
     'toast.firstTitle': "Seu primeiro título!",
     'toast.firstTitleSub': "{title} foi marcado como visto",
