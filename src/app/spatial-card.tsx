@@ -51,7 +51,10 @@ const SHADOW = {
   drag: 'shadow-[var(--elevation-lift),0_0_0_1px_var(--phase-color)]',
   // Hover is a slight lift, nothing more.
   hover: 'hover:shadow-card-hover',
-  selected: 'shadow-[0_0_0_2px_var(--phase-color),0_20px_50px_-8px_color-mix(in_oklab,var(--phase-color)_70%,transparent)]',
+  // The selected title: its phase-color border and a 1px ring (2px in all),
+  // and a soft glow below (Andre, 2026-11-28: "a bit more subtle"; it was a
+  // 2px ring and a 70% glow).
+  selected: 'shadow-[0_0_0_1px_var(--phase-color),0_14px_36px_-12px_color-mix(in_oklab,var(--phase-color)_40%,transparent)]',
   highlighted: 'shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_40%,transparent),0_16px_40px_-8px_color-mix(in_oklab,var(--foreground)_27%,transparent)] not-dark:shadow-[0_14px_34px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)]',
   current: 'shadow-[0_0_0_3px_var(--cur-color,var(--brand)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--brand))_50%,transparent),var(--elevation-lift)]',
 };
