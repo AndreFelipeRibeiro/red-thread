@@ -654,7 +654,11 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
       const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
-      const strokeW = (emphasized ? 3 : 1.8) + (spokes ? Math.min(2, spokeMore * 0.5) : 0);
+      // One even width per state. The ring's spokes, a selected title's
+      // dozens of lines, are a step thinner than a character's thread and no
+      // longer thicken with the characters they share (Notion "Connections: a
+      // selected title's lines drop the glow").
+      const strokeW = emphasized ? (spokes ? 2 : 3) : 1.8;
       const showLabel = emphasized && (isPair || involvesFocus) && (!spokes || isHovered || spokes.inner.has(conn.b) || !!activeChar);
       const drawDelay = emphasized && drawChar && primeOf(ch) === primeOf(drawChar) ? drawRank.get(conn.a + '__' + conn.b) : undefined;
       const draw = drawDelay !== undefined ? { className: 'thread-draw', pathLength: 1, style: { '--d': drawDelay + 'ms' } } : null;
@@ -4184,7 +4188,10 @@ function App() {
           activeChar={activeChar}
           activeChars={activeChars}
           drawChar={linesSettling ? null : highlightedChar}
-          quiet={charLine || !!guide}
+          // A title's own lines (selected, or hovered) are drawn quiet too, as
+          // a pinned character's and a guide's are: no halo, glow or end dots
+          // (Andre, 2026-11-27: "Not sure if we need that glow effect").
+          quiet={charLine || !!guide || (!pair && !!hoverFocusId)}
           litIds={activeChar ? highlightedIds : null}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
