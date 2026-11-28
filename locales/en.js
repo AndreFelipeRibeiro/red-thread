@@ -131,6 +131,8 @@ window.MCU_LOCALES.en = {
     'share.imageAltGuide': 'A Red Thread card: {name}, complete',
     'share.imageLoading': 'Drawing your card…',
     'share.imageFailed': 'Couldn’t draw the image. You can still copy the link.',
+    'share.imageStale': 'Red Thread was just updated. Reload the page to draw your card.',
+    'share.reload': 'Reload',
     'share.shareImage': 'Share image',
     'share.downloadImage': 'Download image',
     'share.copyLink': 'Copy link',

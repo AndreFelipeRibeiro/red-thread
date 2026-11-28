@@ -42,15 +42,24 @@ export const cardRenderer = () => import('../share-card/render-browser');
 // and stack, primary first, on phones (a long label never wraps inside one).
 const ACTION = 'h-[max(44px,2.75rem)] flex-[1_1_160px]';
 
+// The renderer, its fonts and its layout engine are hashed files loaded only
+// when a card is first drawn, and the renderer's name changes with every
+// deploy (it carries the app's stylesheet). A tab opened before a deploy then
+// asks for files that are gone (Notion "Share your progress: the image
+// doesn't draw"): only a reload brings the new ones. Chrome, Firefox and
+// Safari word a failed lazy import differently; a font or yoga 404 is ours.
+const STALE = /dynamically imported module|Importing a module script failed|share card: (font|yoga)\b.* 404$/i;
+const staleBuild = (e: unknown) => STALE.test(String((e && (e as Error).message) || e));
+
 function ShareImageBody({ req, touch }: { req: ShareImageRequest; touch: boolean }) {
   const tr = window.MCU_I18N.tr;
   const [blob, setBlob] = React.useState<Blob | null>(null);
-  const [failed, setFailed] = React.useState(false);
+  const [failed, setFailed] = React.useState<false | 'stale' | 'error'>(false);
   const [url, setUrl] = React.useState('');
   React.useEffect(() => {
     let live = true;
     req.render().then((b) => { if (live) { setBlob(b); setUrl(URL.createObjectURL(b)); } })
-      .catch((e) => { console.warn('[mcu] share card', e); if (live) setFailed(true); });
+      .catch((e) => { console.warn('[mcu] share card', e); if (live) setFailed(staleBuild(e) ? 'stale' : 'error'); });
     return () => { live = false; };
   }, [req]);
   React.useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
@@ -72,9 +81,14 @@ function ShareImageBody({ req, touch }: { req: ShareImageRequest; touch: boolean
       <h2 id="share-image-title" className="share-image-title pr-9 text-title font-semibold tracking-tight">{req.heading}</h2>
       <div className="share-image-frame mx-auto flex aspect-[4/5] h-[min(52vh,500px)] max-w-full items-center justify-center overflow-hidden rounded-xl border bg-muted [&_img]:block [&_img]:size-full [&_img]:object-contain" aria-busy={!url && !failed}>
         {url ? <img src={url} alt={req.alt} width={1080} height={1350}/>
-          : <span className="share-image-wait px-6 text-center text-body text-muted-foreground" role="status">{tr(failed ? 'share.imageFailed' : 'share.imageLoading')}</span>}
+          : <span className="share-image-wait px-6 text-center text-body text-muted-foreground" role="status">{tr(failed === 'stale' ? 'share.imageStale' : failed ? 'share.imageFailed' : 'share.imageLoading')}</span>}
       </div>
       <div className="share-image-actions flex flex-wrap gap-2">
+        {failed === 'stale' && (
+          <button type="button" className={cn('share-image-reload', window.MCU_SHARE.BTN, window.MCU_SHARE.PRIMARY, ACTION, touch && 'basis-full')} onClick={() => window.location.reload()}>
+            <span>{tr('share.reload')}</span>
+          </button>
+        )}
         {canShareFile && (
           <button type="button" className={cn(window.MCU_SHARE.BTN, window.MCU_SHARE.PRIMARY, ACTION, touch && 'basis-full')} onClick={shareImage}>
             <window.ShareIcon/><span>{tr('share.shareImage')}</span>
