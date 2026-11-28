@@ -191,8 +191,11 @@ function SeenPicker({ touch, onClose }) {
           return (
             <section key={g.phase} className="pk-phase" aria-labelledby={`pk-ph-${g.phase}`}>
               {/* Full bleed, so the posters' shadows don't show at its sides
-                  as they scroll under it. */}
-              <div className={cn('pk-ph sticky top-0 z-2 flex items-center gap-2.5 bg-popover pt-3.5 pb-2.5', touch ? '-mx-[18px] px-[18px]' : '-mx-[26px] px-[26px]')}>
+                  as they scroll under it. On the phone it sticks at the
+                  sheet's top edge, above the sheet body's top padding
+                  (pt-1.5), so no posters show above it (Notion "Seen picker:
+                  posters show above the phone's sticky phase header"). */}
+              <div className={cn('pk-ph sticky z-2 flex items-center gap-2.5 bg-popover pt-3.5 pb-2.5', touch ? '-top-1.5 -mx-[18px] px-[18px]' : 'top-0 -mx-[26px] px-[26px]')}>
                 <span aria-hidden="true" className="size-2.5 flex-none rounded-full" style={{ background: `var(--phase-${g.phase})` }}/>
                 <h3 id={`pk-ph-${g.phase}`} className="pk-pl flex min-w-0 flex-1 items-baseline gap-2">
                   <span className="text-heading font-semibold whitespace-nowrap text-foreground">{name}</span>
