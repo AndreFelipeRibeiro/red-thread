@@ -168,9 +168,16 @@ lines on Connections are drawn by hand (the app computes them), plain: a
 lit line is a plain stroke in the character's color with no glow, halo or
 end dots, the same for a selected title, a pinned character and a guide
 (2026-11-27, Notion "Connections: a selected title's lines drop the
-glow"): 3 px for a character's thread and a guide, and an even 2 px for
-a selected title's lines, which no longer thicken with the characters
-they share (2026-11-28). The
+glow"), and since 2026-11-28 in every state, the pair of two titles and a
+hovered line included (Notion "Connections: no glow on any line"). Every
+line is one 2.25 px width in every state, lit, resting or dimmed: a
+character's thread, a selected title's lines (which no longer thicken
+with the characters they share), Follow the thread, the pair of two
+titles, a guide's route (solid and dashed) and the threads among its
+stops; only the opacity tells the states apart (2026-11-28, Notion
+"Connections: one line width everywhere, a step thicker (2.25 px)", which
+replaces the 3 px / 2 px widths of "Follow the thread: every line one
+even width"). The
 canvas frames of Connections and Follow the thread carry the app's
 top-to-bottom gradient, its stops bound to `canvas-top` and `canvas-bottom`
 (2026-11-18). The Character card's photo badge keeps the component's

@@ -152,9 +152,15 @@ function poster(p: PosterArt, x: number, y: number, w: number, hgt: number, lit:
     overflow: 'hidden', backgroundColor: p.color, boxShadow: '0 10px 22px rgba(0, 0, 0, 0.32)', opacity: lit ? 1 : 0.35 }, ...art);
 }
 
+// The thread, 4.5 px, and the rings at its stops, 4 px: half the old 6 px
+// would be the app's 3 px guide line, but a 1080 px card is seen at about a
+// third of its size, where 3 px read too thin (Andre, 2026-11-28; Notion
+// "Social images: thinner thread lines, as in the app").
+const THREAD = 4.5, RING = 4;
+
 /** The ring at a stop's foot: red once seen, gray while ahead. */
 function ring(cx: number, cy: number, size: number, lit: boolean, c: ShareColors): Node {
-  const stroke = r1(size * 0.19), r = (size - stroke) / 2;
+  const stroke = RING, r = (size - stroke) / 2;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="${esc(c.card)}" stroke="${esc(lit ? c.brand : c.borderStrong)}" stroke-width="${stroke}"/></svg>`;
   return img(svgURI(svg), size, size, { position: 'absolute', left: r1(cx - size / 2), top: r1(cy - size / 2) });
 }
@@ -168,7 +174,7 @@ function thread(nodes: [number, number][], litUpTo: number, c: ShareColors): Nod
   // pts[k] is node k-1: the lit part runs from the entry to the last lit node.
   const cut = litUpTo + 1;
   const line = (from: number, to: number, color: string) => (to > from
-    ? `<polyline points="${pts.slice(from, to + 1).map((p) => `${r1(p[0])},${r1(p[1])}`).join(' ')}" fill="none" stroke="${esc(color)}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>` : '');
+    ? `<polyline points="${pts.slice(from, to + 1).map((p) => `${r1(p[0])},${r1(p[1])}`).join(' ')}" fill="none" stroke="${esc(color)}" stroke-width="${THREAD}" stroke-linecap="round" stroke-linejoin="round"/>` : '');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD.width}" height="${CARD.height}" viewBox="0 0 ${CARD.width} ${CARD.height}">${
     line(cut, pts.length - 1, c.borderStrong)}${line(0, cut, c.brand)}</svg>`;
   return img(svgURI(svg), CARD.width, CARD.height, { position: 'absolute', left: 0, top: 0 });

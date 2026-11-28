@@ -51,7 +51,10 @@ const SHADOW = {
   drag: 'shadow-[var(--elevation-lift),0_0_0_1px_var(--phase-color)]',
   // Hover is a slight lift, nothing more.
   hover: 'hover:shadow-card-hover',
-  selected: 'shadow-[0_0_0_2px_var(--phase-color),0_20px_50px_-8px_color-mix(in_oklab,var(--phase-color)_70%,transparent)]',
+  // The selected title: its phase-color border and a 1px ring (2px in all),
+  // and a soft glow below (Andre, 2026-11-28: "a bit more subtle"; it was a
+  // 2px ring and a 70% glow).
+  selected: 'shadow-[0_0_0_1px_var(--phase-color),0_14px_36px_-12px_color-mix(in_oklab,var(--phase-color)_40%,transparent)]',
   highlighted: 'shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_40%,transparent),0_16px_40px_-8px_color-mix(in_oklab,var(--foreground)_27%,transparent)] not-dark:shadow-[0_14px_34px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)]',
   current: 'shadow-[0_0_0_3px_var(--cur-color,var(--brand)),0_0_44px_6px_color-mix(in_oklab,var(--cur-color,var(--brand))_50%,transparent),var(--elevation-lift)]',
 };
@@ -124,7 +127,10 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (isDragging) { z = 'z-30'; shadow = SHADOW.drag; }
   if (isHighlighted) { border = 'border-(--highlight-border)'; shadow = SHADOW.highlighted; z = 'z-22'; }
   if (isSelected) { border = 'border-(--phase-color)'; shadow = SHADOW.selected; z = 'z-25'; }
-  if (isDimmed) fade = 'opacity-22 saturate-40';
+  // Dimmed by opacity alone: a saturate filter on every dimmed card made each
+  // hover restyle and repaint dozens of filtered layers (Notion "Connections:
+  // calm hover").
+  if (isDimmed) fade = 'opacity-22';
   if (listed) border = 'border-(--status-watch-border)';
   if (isCollDimmed) fade = 'opacity-26 saturate-30';
   if (skipped) border = 'border-dashed border-(--border-strong)';
@@ -149,7 +155,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
     <div
       data-id={title.id}
       onAnimationEnd={enter ? (e) => { if (e.animationName === 'card-enter') setEnter(false); } : undefined}
-      className={cn('card group/card absolute top-0 left-0 flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground',
+      // The poster is an <img>: no native image drag, or pressing on it and
+      // moving would hand the pointer to the browser (the card froze, then
+      // followed the pointer after release; Notion "Connections: dragging a
+      // card by its poster starts the browser's image drag").
+      className={cn('card group/card absolute top-0 left-0 flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground [&_img]:[-webkit-user-drag:none]',
         touch ? 'cursor-pointer' : isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isDragging ? '[transition:box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms]' : MOVE,
         border, shadow, z, fade, lift, hover,
@@ -181,6 +191,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         width: CARD_SIZE.w + 'px',
         height: CARD_SIZE.h + 'px',
       } as React.CSSProperties}
+      onDragStart={(e) => e.preventDefault()}
       onMouseDown={(e) => {
         downRef.current = { x: e.clientX, y: e.clientY, moved: false };
         onDragStart(e, title.id);

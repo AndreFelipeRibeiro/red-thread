@@ -180,10 +180,35 @@ const lit = (prime, ch) => {
     await page.mouse.move(5, 5); await page.waitForTimeout(80);
     const q = out.selectedQuiet = await page.evaluate(() => ({ lit: document.querySelectorAll('path[data-em="1"]').length,
       glow: document.querySelectorAll('.connection-layer [filter], svg [filter^="url(#"]').length,
-      // One even, thin width: the spokes no longer thicken with shared characters.
+      // One width: the spokes no longer thicken with shared characters.
       widths: [...new Set([...document.querySelectorAll('path[data-em="1"]')].map(p => p.getAttribute('stroke-width')))] }));
     if (!q.lit || q.glow) errors.push('a selected title\'s lines should be lit with no glow: ' + JSON.stringify(q));
-    if (q.widths.join() !== '2') errors.push('a selected title\'s lines should all be 2px: ' + JSON.stringify(q.widths));
+    if (q.widths.join() !== '2.25') errors.push('a selected title\'s lines should all be 2.25px: ' + JSON.stringify(q.widths));
+    // Follow the thread draws every line, lit or resting, at the one 2.25px
+    // width every line on Connections has (Notion "Connections: one line
+    // width everywhere, a step thicker (2.25 px)").
+    await go('?title=gotg&explore=thread'); await page.waitForTimeout(600);
+    const t = out.threadEven = await page.evaluate(() => ({ lines: document.querySelectorAll('path[data-ch]').length,
+      lit: document.querySelectorAll('path[data-em="1"]').length,
+      widths: [...new Set([...document.querySelectorAll('path[data-ch]')].map(p => p.getAttribute('stroke-width')))] }));
+    if (!t.lines || !t.lit) errors.push('Follow the thread drew no lit lines: ' + JSON.stringify(t));
+    if (t.widths.join() !== '2.25') errors.push('Follow the thread\'s lines should all be 2.25px: ' + JSON.stringify(t.widths));
+    // The pair of two titles (a line clicked) is plain too: no line glows in
+    // any state (Notion "Connections: no glow on any line").
+    await go('?title=gotg'); await page.waitForTimeout(1200);
+    // Click the line itself (its onClick opens the pair), not a point on the
+    // screen: the camera may still be gliding to the selection.
+    const hit = await page.evaluate(() => { const p = [...document.querySelectorAll('path[data-em="1"][data-ch]')].find(x => (x.dataset.a + ' ' + x.dataset.b).includes('gotg-2')); if (!p) return false; p.dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; });
+    if (!hit) errors.push('pair view: no lit line from Guardians of the Galaxy to Vol. 2');
+    else {
+      await page.waitForTimeout(900);
+      const pv = out.pairPlain = await page.evaluate(() => ({ lit: document.querySelectorAll('path[data-em="1"]').length,
+        glow: document.querySelectorAll('#line-glow, #strong-glow, svg [filter^="url(#"]').length,
+        dots: document.querySelectorAll('svg circle[filter]').length,
+        widths: [...new Set([...document.querySelectorAll('path[data-ch]')].map(p => p.getAttribute('stroke-width')))] }));
+      if (!pv.lit || pv.glow || pv.dots) errors.push('the pair view\'s lines should be lit and plain: ' + JSON.stringify(pv));
+      if (pv.widths.join() !== '2.25') errors.push('the pair view\'s lines should all be 2.25px: ' + JSON.stringify(pv.widths));
+    }
   }
 
   console.log(JSON.stringify({ ...out, errors }, null, 1));

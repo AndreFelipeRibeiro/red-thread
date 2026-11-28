@@ -615,7 +615,25 @@ const BRAND_TEXT = 'text-(--brand-text)';
 // Phones show four small posters beside it, the destination included (the
 // one before the next stop, when there is one, then the ones after); three
 // below 390px and two below 360px (Andre, 2026-11-16: only Loki and Doomsday read as sparse).
-function GuidesHero({ guide, followed, onPick }) {
+// Narrow desktops (Notion "Guides page hero: the title is cut off at narrow
+// desktop widths", 2026-11-28): the intro keeps at least 20rem and the strip
+// takes what's left, measuring itself (useFitSteps): each step hides one more
+// small poster, the one farthest from the next stop (the earliest when the
+// guide is complete), until the posters fit. The strip is measured, not the
+// hero, so the intro's own rows (the countdown, which wraps under About on its
+// own) never cost a poster. The next stop, the destination and the release
+// poster always stay. Before, the strip kept its full width and left the
+// title ~110px at 920px, "Doomsday" running under the posters.
+// Literal strings so Tailwind sees each class: rank r hides from step r on.
+const HERO_DROP = ['',
+  'group-data-[fit=1]/strip:hidden group-data-[fit=2]/strip:hidden group-data-[fit=3]/strip:hidden group-data-[fit=4]/strip:hidden group-data-[fit=5]/strip:hidden group-data-[fit=6]/strip:hidden',
+  'group-data-[fit=2]/strip:hidden group-data-[fit=3]/strip:hidden group-data-[fit=4]/strip:hidden group-data-[fit=5]/strip:hidden group-data-[fit=6]/strip:hidden',
+  'group-data-[fit=3]/strip:hidden group-data-[fit=4]/strip:hidden group-data-[fit=5]/strip:hidden group-data-[fit=6]/strip:hidden',
+  'group-data-[fit=4]/strip:hidden group-data-[fit=5]/strip:hidden group-data-[fit=6]/strip:hidden',
+  'group-data-[fit=5]/strip:hidden group-data-[fit=6]/strip:hidden',
+  'group-data-[fit=6]/strip:hidden',
+];
+function GuidesHero({ guide, followed, onPick, phone = false }) {
   const { statusOf, states, toggleSeen, toggleWatchlist } = window.useCollection();
   useGuideSkips();
   const [said, setSaid] = React.useState('');
@@ -665,6 +683,21 @@ function GuidesHero({ guide, followed, onPick }) {
     order.slice(Math.max(0, 2 - dest)).forEach(s => narrowOut.add(s.id));
     return { ids, midOut, narrowOut };
   })();
+  // Narrow desktops: the order the small posters give way in (see above),
+  // farthest from the next stop first, the one before it on a tie; with no
+  // next stop (complete), the earliest first.
+  const dropRank = (() => {
+    const small = shown.filter(s => !(next && s.id === next.id));
+    const away = (s) => { const i = stops.indexOf(s); return at < 0 ? -i : Math.abs(i - at) + (i < at ? 0.5 : 0); };
+    const order = [...small].sort((a, b) => away(b) - away(a));
+    return new Map(order.map((s, i) => [s.id, i + 1]));
+  })();
+  const stripRef = React.useRef(null);
+  const actsRef = React.useRef(null);
+  // The countdown goes under About when the row can't hold both (step 1, as
+  // the guide page's header does).
+  window.useFitSteps(actsRef, phone ? 0 : 1, [phone, GI18N.lang, guide.id, p.complete]);
+  window.useFitSteps(stripRef, phone ? 0 : Math.min(dropRank.size, HERO_DROP.length - 1), [phone, GI18N.lang, guide.id, next && next.id, p.complete, shown.length]);
   // Progress: under the blurb on desktop, under the strip on phones.
   const prog = (cls) => (
     <div className={cn('g-hero-prog flex items-center gap-3 text-label font-semibold text-muted-foreground tabular-nums', cls)}>
@@ -675,7 +708,7 @@ function GuidesHero({ guide, followed, onPick }) {
     </div>
   );
   return (
-    <section className="g-hero relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-8 overflow-hidden rounded-xl border bg-card p-11 text-card-foreground max-[1100px]:p-7 in-[.app.touch]:grid-cols-1 in-[.app.touch]:gap-4 in-[.app.touch]:p-4"
+    <section className="g-hero relative grid grid-cols-[minmax(20rem,1fr)_minmax(0,auto)] items-center gap-8 overflow-hidden rounded-xl border bg-card p-11 text-card-foreground max-[1100px]:p-7 in-[.app.touch]:grid-cols-1 in-[.app.touch]:gap-4 in-[.app.touch]:p-4"
       aria-labelledby="g-hero-title"
       style={{ backgroundImage: `linear-gradient(90deg, color-mix(in oklab, var(${done ? '--seen' : '--brand'}) 22%, transparent) 0%, transparent 75%)` }}>
       <div className="g-hero-intro flex min-w-0 flex-col items-start gap-4 in-[.app.touch]:gap-2.5">
@@ -689,12 +722,12 @@ function GuidesHero({ guide, followed, onPick }) {
         {prog('in-[.app.touch]:hidden')}
         {/* The countdown beside About this guide (Notion countdown ticket,
             desktop A). */}
-        <div className="g-hero-act flex items-center gap-4 in-[.app.touch]:hidden">
+        <div ref={actsRef} className="g-hero-act group/acts flex w-full flex-nowrap items-center gap-x-4 gap-y-3 data-[fit=1]:flex-wrap in-[.app.touch]:hidden">
           <Button variant="outline" className="g-hero-about h-[38px] px-3.5 text-label" onClick={() => onPick(guide.id)}>{gtr('guide.about')}</Button>
           <GuideTicker title={upcoming} complete={p.complete} divider/>
         </div>
       </div>
-      <ol className="g-strip relative m-0 flex list-none items-center gap-3 p-0 in-[.app.touch]:gap-1.5" aria-label={gtr('guide.promoStops')}>
+      <ol ref={stripRef} className="g-strip group/strip relative m-0 flex list-none items-center gap-3 p-0 in-[.app.touch]:gap-1.5" aria-label={gtr('guide.promoStops')}>
         <span aria-hidden="true" className="g-thread absolute inset-x-8 top-1/2 h-0.5 bg-border"/>
         {shown.map(s => {
           const seen = statusOf(s.id) === 'seen';
@@ -721,7 +754,7 @@ function GuidesHero({ guide, followed, onPick }) {
           }
           const far = !phoneShown.ids.has(s.id);
           return (
-            <li key={s.id} className={cn('g-hstop relative z-1 flex-none', seen && 'seen', far && 'in-[.app.touch]:hidden', phoneShown.midOut.has(s.id) && 'max-[389px]:in-[.app.touch]:hidden', phoneShown.narrowOut.has(s.id) && 'max-[359px]:in-[.app.touch]:hidden')}
+            <li key={s.id} className={cn('g-hstop relative z-1 flex-none', seen && 'seen', HERO_DROP[dropRank.get(s.id) || 0], far && 'in-[.app.touch]:hidden', phoneShown.midOut.has(s.id) && 'max-[389px]:in-[.app.touch]:hidden', phoneShown.narrowOut.has(s.id) && 'max-[359px]:in-[.app.touch]:hidden')}
               aria-label={gtr(seen ? 'guide.promoStopSeenAria' : 'guide.promoStopAria', { title: stopName(s), i: s.n })}>
               <span className={cn(POSTER, 'h-24 w-16 rounded-md in-[.app.touch]:h-12 in-[.app.touch]:w-8', seen && '[&>:first-child]:opacity-45')}>
                 <window.PosterArt title={s.title}/>
@@ -1006,7 +1039,7 @@ function GuidesPage({ onPick, inMain = false }) {
     <div ref={pageRef} onScroll={(e) => { guidesPageScroll = e.currentTarget.scrollTop; }} className="g-page @container min-h-0 flex-1 overflow-y-auto px-(--grid-margin) pt-8 pb-[72px] in-[.app.touch]:px-3.5 in-[.app.touch]:pt-4 in-[.app.touch]:pb-6" role={inMain ? 'region' : 'main'} aria-labelledby="g-page-title">
       <div className="step-sizes mx-auto flex max-w-(--content-max) flex-col gap-11 in-[.app.touch]:gap-7">
         <h1 id="g-page-title" className="story-sr">{gtr('guide.menuTitle')}</h1>
-        {hero && <GuidesHero guide={hero} followed={MCU_GUIDE.isFollowed(hero.id)} onPick={onPick}/>}
+        {hero && <GuidesHero guide={hero} followed={MCU_GUIDE.isFollowed(hero.id)} onPick={onPick} phone={inMain}/>}
         <ContinueShelf heroId={hero ? hero.id : null} onPick={onPick} phone={inMain}/>
         {shelves.map(sh => <GuideShelf key={sh.key} shelf={sh} onPick={onPick}/>)}
       </div>

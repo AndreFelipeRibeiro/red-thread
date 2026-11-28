@@ -13,9 +13,53 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V5 Batch 33 — Connections: one line width (2.25 px) and no glow on any line
+
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [11af63c](https://github.com/AndreFelipeRibeiro/red-thread/commit/11af63c), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+
+- Every line on Connections is 2.25 px in every state: a character's thread, a selected title's lines, Follow the thread, a guide's route and the threads among its stops, lit, resting or dimmed. Only the opacity tells the states apart.
+- Lit lines lose the halo, glow filter and end dots everywhere, so the `quiet` prop is gone. It replaces Batch 32's 2 px / 3 px widths, and closes "Follow the thread: every line one even width" as superseded.
+- Figma: App Screens' drawn lines are at 2.25 px ("Screens · 2026-11-28 · Canvas lines"); `docs/figma-library.md` updated. `qa/test-threads.js` checks the one width, the plain strokes and the pair view.
+- Not checked: real iPhone Safari.
+
+## V5 Batch 33 — Connections: a quieter outline and glow on the selected card
+
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [3b30d64](https://github.com/AndreFelipeRibeiro/red-thread/commit/3b30d64), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+
+- The selected card's ring is 1 px over its phase-color border, and its glow below is softer (40%, tighter); it was a 2 px ring and a 70% glow.
+- Figma: the Spatial card's Ring=Selected changed and published ("DS · 2026-11-28 · Canvas lines and selected card", Current); Andre updated App Screens; the release is on both Changelog pages and in `docs/design-system-changelog.md`.
+- Not checked: real iPhone Safari (the phone hides the selected card).
+
+## V5 Batch 33 — Connections: smooth card dragging, no image drag, and calm hover
+
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+
+- Dragging a card by its poster no longer starts the browser's image drag, where the card froze and then stuck to the pointer.
+- A drag repaints only the dragged card and its own lines, once per frame, and places their names again on the drop.
+- Hover waits for intent, no longer flashes between neighboring cards, and dims the rest by opacity only.
+- Three tickets in one commit: the hover timers live inside the drag code. New `qa/test-carddrag.js`. Behavior only, so nothing changes in Figma.
+- Not checked: a trackpad or touch drag on a real device.
+
+## V5 Batch 33 — Guides page hero: the title no longer cuts off at narrow desktop widths
+
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [41b84f4](https://github.com/AndreFelipeRibeiro/red-thread/commit/41b84f4), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+
+- At narrow desktop widths (900–1100 px) the hero's title wrapped to four lines and ran under the poster strip. The intro now keeps at least 20rem, and the strip hides its small posters one at a time, farthest from the next stop first; the next stop, the destination and the release poster stay.
+- When About and the countdown don't both fit, the countdown goes under About.
+- New `qa/test-herofit.js` (three guide states, English and Portuguese, 900 to 1280 px, Light and Dark); it fails on the old build. Nothing changes in Figma (narrow-width behavior only).
+- Not checked: real Safari, the Large text size by eye.
+
+## V5 Batch 33 — Social images: thinner thread lines, as in the app
+
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [7155ae5](https://github.com/AndreFelipeRibeiro/red-thread/commit/7155ae5), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+
+- Share cards draw their thread at 4.5 px and its rings at 4 px (were 6 px): a 1080 px card is seen at about a third of its size, where 3 px read too thin.
+- Link previews draw a title's lines and a character's or guide's thread at 3 px (were 6 px). Production's link previews change when this reaches `main`, since the build draws them.
+- Not checked: the previews as each social network crops them.
+
 ## V5 Batch 32 — Connections: the selected card shows its phase ring
 
-Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [f7a9bff](https://github.com/AndreFelipeRibeiro/red-thread/commit/f7a9bff), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
+Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [f7a9bff](https://github.com/AndreFelipeRibeiro/red-thread/commit/f7a9bff), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Merged to `main` (production) at 12:53 as [f5b7400](https://github.com/AndreFelipeRibeiro/red-thread/commit/f5b7400), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
 
 - A selected card is also highlighted (it lights its own threads), and the highlight's gray outline won. The selected card now shows its phase-color ring and glow, as the Spatial card's Ring=Selected variant does (Andre: the app follows Figma).
 - Figma: Ring=Selected (310:664) published and Current; App Screens' Connections frames already show it. `qa/test-cards.js` checks the outline in Light and Dark; the components check has a Ring=Selected entry.
@@ -23,7 +67,7 @@ Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [f7a9bff](https://
 
 ## V5 Batch 32 — Seen picker: no posters above the phone's sticky phase header
 
-Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [ea7ea1c](https://github.com/AndreFelipeRibeiro/red-thread/commit/ea7ea1c), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
+Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [ea7ea1c](https://github.com/AndreFelipeRibeiro/red-thread/commit/ea7ea1c), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Merged to `main` (production) at 12:53 as [f5b7400](https://github.com/AndreFelipeRibeiro/red-thread/commit/f5b7400), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
 
 - On the phone the Seen picker's phase header sticks at the sheet's top edge, so posters no longer show above it as the list scrolls. Desktop is unchanged.
 - `qa/test-picker.js` covers it at phone size. Nothing changes in Figma.
@@ -31,7 +75,7 @@ Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [ea7ea1c](https://
 
 ## V5 Batch 32 — Welcome: the finish card opens the guide it names
 
-Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [6156f79](https://github.com/AndreFelipeRibeiro/red-thread/commit/6156f79), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
+Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [6156f79](https://github.com/AndreFelipeRibeiro/red-thread/commit/6156f79), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Merged to `main` (production) at 12:53 as [f5b7400](https://github.com/AndreFelipeRibeiro/red-thread/commit/f5b7400), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
 
 - The guide a visitor last had open no longer reopens under the welcome and its tour, which end with a guide of their own.
 - The finish card picks its guide again once a signed-in collection lands, so it never offers a guide already finished: with Doomsday done it offers Your Friendly Neighborhood Spider-Man S2, and opens it.
@@ -40,7 +84,7 @@ Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [6156f79](https://
 
 ## V5 Batch 32 — Connections: a selected title's lines are plain, thin and even
 
-Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [6b91723](https://github.com/AndreFelipeRibeiro/red-thread/commit/6b91723), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
+Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [6b91723](https://github.com/AndreFelipeRibeiro/red-thread/commit/6b91723), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Merged to `main` (production) at 12:53 as [f5b7400](https://github.com/AndreFelipeRibeiro/red-thread/commit/f5b7400), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
 
 - A selected or hovered title's lines are drawn like a pinned character's and a guide's: no glow, halo or end dots. They are an even 2 px and no longer thicken with the characters they share (up to 5 px before); a character's thread and a guide stay 3 px.
 - Figma: App Screens' Connections — Light and Dark, lit lines at 2 px; docs/figma-library.md says the rule. `qa/test-threads.js` checks no filter and an even 2 px.
@@ -48,7 +92,7 @@ Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:03 as [6b91723](https://
 
 ## V5 Batch 32 — Share: after a deploy, the share card offers Reload
 
-Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:04 as [0e99e23](https://github.com/AndreFelipeRibeiro/red-thread/commit/0e99e23), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
+Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:04 as [0e99e23](https://github.com/AndreFelipeRibeiro/red-thread/commit/0e99e23), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Merged to `main` (production) at 12:53 as [f5b7400](https://github.com/AndreFelipeRibeiro/red-thread/commit/f5b7400), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
 
 - A tab opened before a deploy asked for the share renderer's old hashed file, which production no longer serves, and the card said "Couldn't draw the image". It now says Red Thread was just updated and offers Reload, in English and Portuguese; other errors keep the old message.
 - `qa/test-share.js` serves the renderer as a 404 and checks the message and that Reload reloads the page.
@@ -56,7 +100,7 @@ Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:04 as [0e99e23](https://
 
 ## V5 Batch 32 — Share images: every share card in the new light style
 
-Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:04 as [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
+Recorded: 2026-11-28 12:24 EST (-0500). Committed at 12:04 as [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290), pushed to `version/5.0` (V5 staging) at 12:21 with the batch at [5a45290](https://github.com/AndreFelipeRibeiro/red-thread/commit/5a45290). Merged to `main` (production) at 12:53 as [f5b7400](https://github.com/AndreFelipeRibeiro/red-thread/commit/f5b7400), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200). Full regression on the pushed tree (frozen copy of 5a45290, tree 55fa207): 90 of 91 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations; `test-micro` failed once under load (the settings button's press scale caught mid-transition, a button this batch doesn't touch) and passed twice on its own. `qa/smoke.js` clean on staging; the progress card drawn on staging (Chromium) with its TMDB posters.
 
 - The progress, All caught up, phase complete and guide complete cards (1080 × 1350, drawn on the device) take the OG link previews' light style: the canvas, the logo, a red kicker, the headline, and posters climbing the red thread, lit as far as you've seen. A finished event guide ends on its destination with its date chip.
 - Posters load from TMDB when the card is drawn (6 s limit); one that fails leaves its color, and the card always draws. New strings in English and pt-BR.

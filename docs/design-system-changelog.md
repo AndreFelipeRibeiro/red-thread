@@ -23,6 +23,14 @@ Those entries are rebuilt from CHANGELOG.md, the git history of
 Notion tickets. To see one of those states in Figma, open the file's version
 history (File → Show version history) at the entry's date.
 
+## DS · 2026-11-28 · Canvas lines and selected card
+
+Published 2026-11-28 by Andre. App Screens: "Screens · 2026-11-28 · Canvas lines".
+
+- **Spatial card** (`14:59`), Ring = Selected (`310:664`): the phase ring around the border goes from 2px to 1px (2px with the border; still bound to the phase color), and the glow from `0 20 50 -8` at 70% to `0 14 36 -12` at 40%, as in the app (`SHADOW.selected`, `src/app/spatial-card.tsx`).
+- **App Screens:** every drawn connection line (the "connections" and "thread lines" groups) at one 2.25px width, 278 lines in all (was 3px or 2px): Connections, Follow the thread, First visit 0 / 1 / 4 / 6 and About, Light and Dark, desktop and phone (`LINE_W`, `src/app/app.tsx`).
+- **Tickets:** "Connections: one line width everywhere (2.25 px)" and "Connections: a quieter outline and glow on the selected card" · Batch 33 (code).
+
 ## DS · 2026-11-27 · About
 
 Published 2026-11-27 by Andre; About dialog, Illustration, Tour card, Button, icon/arrow-right and the retired About dialog · Welcome read Current afterwards. App Screens: the new About frames and the Tour card swaps below ("Screens · 2026-11-27 · About"); every other Button instance takes the Trailing icon properties with Update all, and looks the same (off by default).
