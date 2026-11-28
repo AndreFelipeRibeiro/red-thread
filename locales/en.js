@@ -138,6 +138,11 @@ window.MCU_LOCALES.en = {
     'share.copyLink': 'Copy link',
     'card.progressCaption': 'released Marvel titles seen',
     'card.daysTo': { one: '{n} day to {title}', other: '{n} days to {title}' },
+    'card.kickerProgress': 'My progress',
+    'card.kickerAll': 'All caught up',
+    'card.kickerPhase': 'Phase {n} complete',
+    'card.countOf': 'of {total}',
+    'card.seenOf': '{n} of {total} released Marvel titles seen',
     'og.pageTitle': '{name} · {app}',
     'og.defaultTitle': '{app}: Marvel films and series, connected',
     // The home page's description (meta, link previews) and the descriptor

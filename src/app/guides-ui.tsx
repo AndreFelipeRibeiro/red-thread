@@ -169,14 +169,22 @@ function guideSharePayload(g, statusOf) {
     : days > 0 ? gtr('share.guideDoneDays', { name, n: days }) : gtr('share.guideDone', { name });
   return { params: { guide: g.id }, text };
 }
-// A finished guide shares its card (Notion "Share 2/3"): the guide, Complete,
-// and the days to its destination while that is still ahead.
+// A finished guide shares its card (Notion "Share 2/3"; the V5 style: Notion
+// "Share images: re-create every share card in the new style"): Guide
+// complete, the guide's name, the days to its destination while that is still
+// ahead (else its kind and size), and its stops climbing the thread to the
+// destination. An event guide ends on its release, with the date chip while
+// it is ahead; a story guide ends on its last stop.
 function openGuideCard(g, statusOf) {
   const name = MCU_GUIDE.name(g);
   const days = guideDaysLeft(g);
   const target = g.target && MCU_GUIDE.title(g.target);
   const line = days > 0 && target ? gtr('card.daysTo', { n: days, title: GI18N.titleName(target) }) : `${MCU_GUIDE.kind(g)} · ${MCU_GUIDE.size(g)}`;
-  const phases = MCU_GUIDE.stops(g, false).map(s => s.title.phase);
+  const poster = window.MCU_SHARE_IMAGE.poster;
+  const stops = MCU_GUIDE.stops(g, false).filter(s => !target || s.id !== target.id)
+    .map(s => ({ poster: poster(s.id), lit: statusOf(s.id) === 'seen' }));
+  const last = target ? { poster: poster(target.id), lit: statusOf(target.id) === 'seen' } : (stops.pop() || { poster: poster(''), lit: true });
+  const chip = target && days > 0 ? MCU_GUIDE.targetDate(g, true) : '';
   window.MCU_SHARE_IMAGE.open({
     heading: gtr('share.imageGuide', { name }),
     alt: gtr('share.imageAltGuide', { name }),
@@ -184,8 +192,9 @@ function openGuideCard(g, statusOf) {
     payload: guideSharePayload(g, statusOf),
     render: async () => {
       const r = await window.MCU_SHARE_IMAGE.renderer();
-      return r.renderGuideDone({ appName: gtr('app.name'), site: window.MCU_SHARE_IMAGE.site(), guideColor: g.color || '#4a6da3',
-        label: gtr('guide.complete'), name, line, stops: phases.map(p => r.cardPalette.phases[p - 1]) });
+      return r.renderShare({ site: window.MCU_SHARE_IMAGE.site(), kicker: gtr('guide.complete'), check: true,
+        headline: { kind: 'line', text: name }, support: line,
+        art: { layout: 'climb', stops, last, chip: chip || undefined } });
     },
   });
 }

@@ -1,9 +1,9 @@
-// Colours for the share images (Notion V4 Tasks, "Share 2/3" and "Share 3/3"),
+// Colors for the share images (Notion V4 Tasks, "Share 2/3" and "Share 3/3"),
 // read from the design-system token file, src/index.css, so the cards never
-// keep copies of their own. The share card uses the dark theme's values: it
-// leaves the app and has no light or dark mode, and the dark tile reads in any
-// chat app, as the icons do (tools/make-icons.js). The link previews use the
-// light theme's, on the app's canvas (V5, Notion "Link preview images").
+// keep copies of their own. Both use the light theme's values, on the app's
+// canvas: the link previews since V5 (Notion "Link preview images"), and the
+// share card since V5 Batch 32 (Notion "Share images: re-create every share
+// card in the new style"; it used the dark theme's before).
 //
 // The build (vite.config.js, link previews) passes the file's text from disk;
 // the app imports it with `?raw` (the share card). The tokens are oklch(),
@@ -34,11 +34,6 @@ function readTheme(css: string, start: number, which: string): Tokens {
     depth > 3 ? '' : resolve(palette[name] ?? out[name] ?? '', depth + 1));
   Object.keys(out).forEach((k) => { out[k] = resolve(out[k]); });
   return out;
-}
-
-/** The `.dark` block's tokens (the share card, which is always dark). */
-export function readDarkTokens(css: string): Tokens {
-  return readTheme(css, css.indexOf('.dark {'), '.dark');
 }
 
 /** The light theme's tokens: the `:root` block after the palette's own
@@ -82,20 +77,6 @@ export function toHex(value: string): string {
   const srgb = lin.map((c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055));
   if (alpha < 1) return `rgba(${srgb.map((c) => Math.round(clamp01(c) * 255)).join(', ')}, ${alpha})`;
   return '#' + srgb.map(hex2).join('');
-}
-
-/** The handful of colours the cards use, as hex. */
-export interface CardColors {
-  background: string;
-  card: string;
-  foreground: string;
-  muted: string;
-  border: string;
-  brand: string;
-  /** The logo mark's colour (--logo). */
-  logo: string;
-  seen: string;
-  phases: string[];
 }
 
 /** The link previews' colors (light), as hex or rgba(). */
@@ -143,17 +124,33 @@ export function previewColors(tokens: Tokens): PreviewColors {
   };
 }
 
-export function cardColors(tokens: Tokens): CardColors {
-  const t = (name: string) => toHex(tokens[name]);
+/** The share card's colors (light since V5, Notion "Share images: re-create
+ *  every share card in the new style"): the link previews' set, plus the seen
+ *  check and the thread still ahead. */
+export interface ShareColors extends PreviewColors {
+  seen: string;
+  seenForeground: string;
+  /** The thread and the rings of the stops still ahead. */
+  borderStrong: string;
+}
+
+/** A token's color, including color-mix(in …, A p%, B), mixed in sRGB: close
+ *  enough for a thread's gray (--border-strong is one). */
+function tokenHex(value: string): string {
+  const m = /^color-mix\(\s*in\s+[\w-]+\s*,\s*(.+?\))\s+([\d.]+)%\s*,\s*(.+\))\s*\)$/i.exec(value.trim());
+  if (!m) return toHex(value);
+  const [a, b] = [toHex(m[1]), toHex(m[3])];
+  const p = parseFloat(m[2]) / 100;
+  const ch = (hex: string, i: number) => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+  return '#' + [0, 1, 2].map((i) => Math.round(ch(a, i) * p + ch(b, i) * (1 - p)).toString(16).padStart(2, '0')).join('');
+}
+
+export function shareColors(tokens: Tokens): ShareColors {
   return {
-    background: t('background'),
-    card: t('card'),
-    foreground: t('foreground'),
-    muted: t('muted-foreground'),
-    border: t('border'),
-    brand: t('brand'),
-    logo: t('logo'),
-    seen: t('seen'),
-    phases: [1, 2, 3, 4, 5, 6].map((n) => t('phase-' + n)),
+    ...previewColors(tokens),
+    seen: toHex(tokens['seen']),
+    seenForeground: toHex(tokens['seen-foreground']),
+    borderStrong: tokenHex(tokens['border-strong']),
   };
 }
+

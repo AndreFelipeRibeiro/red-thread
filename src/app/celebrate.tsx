@@ -479,7 +479,7 @@ function StatusToast({ touch }) {
         {m && <window.ShareButton iconOnly size={15} className="mt-share size-[max(32px,2rem)]" label={tr('share.toastLabel', { what: head })}
           payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}
           onShare={() => window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal,
-            tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }))}/>}
+            m.kind === 'all' ? { kind: 'all' } : { kind: 'phase', phase: m.phase })}/>}
         <Button variant="ghost" size="icon-sm" className="mt-x size-[max(30px,1.875rem)] flex-none rounded-full text-title text-muted-foreground active:not-disabled:scale-92 motion-reduce:active:scale-100 [:root.reduce-motion_&]:active:scale-100" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</Button>
       </div>
     );

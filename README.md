@@ -156,8 +156,12 @@ It is switched on in the Vercel project's Analytics tab.
   https://redthread.tv and open the same title, character or guide; nothing
   personal is shared.
 - Share cards: your progress, a finished guide and a celebration share an
-  image (1080×1350, drawn on the device) with the link. Phones that can share
-  files send the image through the share sheet; elsewhere it can be
+  image (1080×1350, drawn on the device) with the link. They use the link
+  previews' light style: the posters climb the red thread, lit as far as
+  you've seen and faded beyond, with a phase's or guide's own titles on a
+  milestone or finished guide. The posters load from TMDB when the card is
+  drawn; one that doesn't load leaves its color in its place. Phones that can
+  share files send the image through the share sheet; elsewhere it can be
   downloaded.
 - Link previews: a shared title, character or guide shows its own preview card
   in chat apps and social networks (its name, a short description and the

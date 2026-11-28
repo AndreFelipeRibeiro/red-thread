@@ -98,7 +98,7 @@ function emWidth(s: string): number {
   return w;
 }
 /** How many lines `s` wraps to at `size` in `width`, word by word. */
-function lineCount(s: string, size: number, width: number): number {
+export function lineCount(s: string, size: number, width: number): number {
   let lines = 1, cur = 0;
   for (const word of s.split(/\s+/)) {
     const w = emWidth(word) * size, space = 0.27 * size;
