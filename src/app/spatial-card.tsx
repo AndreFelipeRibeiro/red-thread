@@ -127,7 +127,10 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   if (isDragging) { z = 'z-30'; shadow = SHADOW.drag; }
   if (isHighlighted) { border = 'border-(--highlight-border)'; shadow = SHADOW.highlighted; z = 'z-22'; }
   if (isSelected) { border = 'border-(--phase-color)'; shadow = SHADOW.selected; z = 'z-25'; }
-  if (isDimmed) fade = 'opacity-22 saturate-40';
+  // Dimmed by opacity alone: a saturate filter on every dimmed card made each
+  // hover restyle and repaint dozens of filtered layers (Notion "Connections:
+  // calm hover").
+  if (isDimmed) fade = 'opacity-22';
   if (listed) border = 'border-(--status-watch-border)';
   if (isCollDimmed) fade = 'opacity-26 saturate-30';
   if (skipped) border = 'border-dashed border-(--border-strong)';
@@ -152,7 +155,11 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
     <div
       data-id={title.id}
       onAnimationEnd={enter ? (e) => { if (e.animationName === 'card-enter') setEnter(false); } : undefined}
-      className={cn('card group/card absolute top-0 left-0 flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground',
+      // The poster is an <img>: no native image drag, or pressing on it and
+      // moving would hand the pointer to the browser (the card froze, then
+      // followed the pointer after release; Notion "Connections: dragging a
+      // card by its poster starts the browser's image drag").
+      className={cn('card group/card absolute top-0 left-0 flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground [&_img]:[-webkit-user-drag:none]',
         touch ? 'cursor-pointer' : isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isDragging ? '[transition:box-shadow_220ms,border-color_220ms,opacity_220ms,filter_220ms]' : MOVE,
         border, shadow, z, fade, lift, hover,
@@ -184,6 +191,7 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
         width: CARD_SIZE.w + 'px',
         height: CARD_SIZE.h + 'px',
       } as React.CSSProperties}
+      onDragStart={(e) => e.preventDefault()}
       onMouseDown={(e) => {
         downRef.current = { x: e.clientX, y: e.clientY, moved: false };
         onDragStart(e, title.id);

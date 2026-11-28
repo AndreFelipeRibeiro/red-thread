@@ -453,7 +453,33 @@ const ARC_MAX = 80;
 // board"; Notion "Connections: one line width everywhere").
 const LINE_W = 2.25;
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null }) {
+// Control point of a connection's curve. Titles on the same row (neighbours
+// on a timeline or grid) would be joined by a line hidden behind the cards,
+// so those arc below the row instead, one lane per character (`lane`).
+// The pair view keeps its two cards apart with nothing between, so it uses
+// the normal gentle curve. At module level so a card drag can redraw its own
+// lines between renders (see onCardDragStart).
+function lineControl(p1, p2, offset, lane, straight) {
+  const x1 = p1.x + CARD_W/2, y1 = p1.y + CARD_H/2;
+  const x2 = p2.x + CARD_W/2, y2 = p2.y + CARD_H/2;
+  const dx = x2 - x1, dy = y2 - y1;
+  if (!straight && Math.abs(dy) < CARD_H * 0.5) {
+    // The arc's lowest point sits this far below the cards, at most ARC_MAX,
+    // so it stays in the gap above the next row.
+    const depth = CARD_H / 2 + Math.min(ARC_MAX, 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04));
+    return { x1, y1, x2, y2, cx: (x1 + x2) / 2, cy: Math.max(y1, y2) + depth * 2 };
+  }
+  const dist = Math.hypot(dx, dy) || 1;
+  const nx = -dy/dist, ny = dx/dist;
+  const sag = Math.min(120, 30 + dist * 0.15);
+  return { x1, y1, x2, y2, cx: (x1+x2)/2 + nx * (sag*0.6 + offset), cy: (y1+y2)/2 + ny * (sag*0.6 + offset) };
+}
+function lineCurve(p1, p2, offset, lane, straight) {
+  const c = lineControl(p1, p2, offset, lane, straight);
+  return `M ${c.x1} ${c.y1} Q ${c.cx} ${c.cy} ${c.x2} ${c.y2}`;
+}
+
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null, dragId = null }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination. It used to be drawn in place of the character threads;
   // since the guide line puts the stops in one row, the threads among them
@@ -538,30 +564,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     }
   }
 
-  // Control point of a connection's curve. Titles on the same row (neighbours
-  // on a timeline or grid) would be joined by a line hidden behind the cards,
-  // so those arc below the row instead, one lane per character (`lane`).
-  // The pair view keeps its two cards apart with nothing between, so it uses
-  // the normal gentle curve.
-  function control(p1, p2, offset, lane, straight) {
-    const x1 = p1.x + CARD_W/2, y1 = p1.y + CARD_H/2;
-    const x2 = p2.x + CARD_W/2, y2 = p2.y + CARD_H/2;
-    const dx = x2 - x1, dy = y2 - y1;
-    if (!straight && Math.abs(dy) < CARD_H * 0.5) {
-      // The arc's lowest point sits this far below the cards, at most ARC_MAX,
-      // so it stays in the gap above the next row.
-      const depth = CARD_H / 2 + Math.min(ARC_MAX, 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04));
-      return { x1, y1, x2, y2, cx: (x1 + x2) / 2, cy: Math.max(y1, y2) + depth * 2 };
-    }
-    const dist = Math.hypot(dx, dy) || 1;
-    const nx = -dy/dist, ny = dx/dist;
-    const sag = Math.min(120, 30 + dist * 0.15);
-    return { x1, y1, x2, y2, cx: (x1+x2)/2 + nx * (sag*0.6 + offset), cy: (y1+y2)/2 + ny * (sag*0.6 + offset) };
-  }
-  function curve(p1, p2, offset, lane, straight) {
-    const c = control(p1, p2, offset, lane, straight);
-    return `M ${c.x1} ${c.y1} Q ${c.cx} ${c.cy} ${c.x2} ${c.y2}`;
-  }
+  const control = lineControl;
+  const curve = lineCurve;
 
   // Compute label point along curve at parameter t (0..1)
   function pointOnCurve(p1, p2, offset, t, lane, straight) {
@@ -670,7 +674,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       const drawDelay = emphasized && drawChar && primeOf(ch) === primeOf(drawChar) ? drawRank.get(conn.a + '__' + conn.b) : undefined;
       const draw = drawDelay !== undefined ? { className: 'thread-draw', pathLength: 1, style: { '--d': drawDelay + 'ms' } } : null;
 
-      if (showLabel) {
+      // While a card is dragged, its lines follow it frame by frame and
+      // their names wait for the drop, where they are placed again.
+      if (showLabel && !(dragId && (conn.a === dragId || conn.b === dragId))) {
         // Spread labels along the curve based on N: t in (0.15..0.85), then
         // move each to the nearest spot not covered by a card (see placeLabel).
         const t0 = N === 1 ? 0.5 : 0.15 + (i / (N - 1)) * 0.7;
@@ -689,6 +695,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
           <path
             d={curve(p1,p2,offset,i,isPair)}
             data-a={conn.a} data-b={conn.b} data-ch={ch} data-em={emphasized ? '1' : '0'}
+            data-lane={i} data-off={offset} data-straight={isPair ? '1' : undefined}
             onClick={(e) => { e.stopPropagation(); if (onPickConnection) onPickConnection({ a: conn.a, b: conn.b }); }}
             // A resting line takes the theme's --thread-rest (quieter on the
             // light paper than on black); lit and dimmed lines keep theirs.
@@ -2023,9 +2030,18 @@ function App() {
   const selectedIdRef = useRef(null);
   selectedIdRef.current = selectedId;
 
-  // Card drag handler
+  // Card drag (Notion "Connections: dragging a card by its poster starts the
+  // browser's image drag" and "smooth card dragging"). The press records
+  // where the card and the pointer start; each move only stores the pointer,
+  // and once per frame the card and its own lines are moved in place (the
+  // card's transform, each line's `d`, from lineCurve), with no render. The
+  // drop commits the place to `overrides` in one render, which re-places the
+  // card's labels. Hover is frozen meanwhile (hoverCard, hoverLine), so
+  // nothing under a card that lags the pointer re-dims the canvas.
+  const [dragLabelId, setDragLabelId] = useState(null);
   const onCardDragStart = (e, id) => {
     e.stopPropagation();
+    if (e.button !== undefined && e.button !== 0) return;
     const start = positions[id] || { x: 0, y: 0 };
     dragRef.current = {
       id,
@@ -2033,30 +2049,92 @@ function App() {
       sy: e.clientY,
       ox: start.x,
       oy: start.y,
+      x: start.x,
+      y: start.y,
       moved: false,
       scale: view.scale,
+      raf: 0,
+      el: null,
+      lines: null,
     };
     setDraggingId(id);
   };
+  // The card and its lines at the drag's current place, straight in the DOM.
+  const paintDrag = () => {
+    const d = dragRef.current;
+    if (!d) return;
+    d.raf = 0;
+    const vp = viewportRef.current;
+    if (!vp) return;
+    if (!d.el) {
+      d.el = vp.querySelector('.card[data-id="' + d.id + '"]');
+      const pos = positionsRef.current || {};
+      d.lines = [...vp.querySelectorAll('path[data-a="' + d.id + '"], path[data-b="' + d.id + '"]')].map(path => {
+        const a = path.getAttribute('data-a'), b = path.getAttribute('data-b');
+        return { path, a, b, pa: pos[a], pb: pos[b], lane: +(path.getAttribute('data-lane') || 0),
+          off: +(path.getAttribute('data-off') || 0), straight: path.getAttribute('data-straight') === '1' };
+      }).filter(l => l.pa && l.pb);
+    }
+    const here = { x: d.x, y: d.y };
+    if (d.el) d.el.style.transform = `translate(${d.x}px, ${d.y}px) scale(var(--lift, 1))`;
+    d.lines.forEach(l => {
+      l.path.setAttribute('d', lineCurve(l.a === d.id ? here : l.pa, l.b === d.id ? here : l.pb, l.off, l.lane, l.straight));
+    });
+  };
+  const endCardDrag = () => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (d.raf) cancelAnimationFrame(d.raf);
+    dragRef.current = null;
+    if (d.moved) setOverrides(prev => ({ ...prev, [d.id]: { x: d.x, y: d.y } }));
+    setDragLabelId(null);
+    setDraggingId(null);
+  };
+  const endCardDragRef = useRef(endCardDrag);
+  endCardDragRef.current = endCardDrag;
+  const paintDragRef = useRef(paintDrag);
+  paintDragRef.current = paintDrag;
+  // Hover with intent (Notion "Connections: calm hover"). A card lights its
+  // lines once the pointer has rested on it for HOVER_IN; leaving it keeps it
+  // lit until the pointer rests on empty canvas for HOVER_OUT, so crossing
+  // the gap to the next card no longer un-dims the whole canvas in between.
+  // A line lights after the pointer rests on it (LINE_IN), so crossing one on
+  // the way to a card changes nothing. While a card is held, hovering other
+  // cards and lines changes nothing.
+  const HOVER_IN = 120, HOVER_OUT = 160, LINE_IN = 160;
+  const hoverTimer = useRef(0);
+  const lineTimer = useRef(0);
+  const hoverCard = useCallback((id) => {
+    if (dragRef.current && dragRef.current.moved) return;
+    clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => setHoveredTitle(id), id ? HOVER_IN : HOVER_OUT);
+  }, []);
+  const hoverLine = useCallback((c) => {
+    if (dragRef.current) return;
+    clearTimeout(lineTimer.current);
+    if (c) lineTimer.current = setTimeout(() => setHoveredConnection(c), LINE_IN);
+    else setHoveredConnection(null);
+  }, []);
+  useEffect(() => () => { clearTimeout(hoverTimer.current); clearTimeout(lineTimer.current); }, []);
   useEffect(() => {
     const onMove = (e) => {
       const d = dragRef.current;
       if (!d) return;
+      // A release outside the window never reaches us: no button held means
+      // the drag is over.
+      if (e.buttons === 0) { endCardDragRef.current(); return; }
       const dx = (e.clientX - d.sx) / d.scale;
       const dy = (e.clientY - d.sy) / d.scale;
       if (!d.moved && Math.hypot(dx, dy) < 3) return;
-      d.moved = true;
-      setOverrides(prev => ({ ...prev, [d.id]: { x: d.ox + dx, y: d.oy + dy } }));
+      if (!d.moved) { d.moved = true; setDragLabelId(d.id); }
+      d.x = d.ox + dx; d.y = d.oy + dy;
+      if (!d.raf) d.raf = requestAnimationFrame(() => paintDragRef.current());
     };
-    const onUp = () => {
-      if (dragRef.current) {
-        dragRef.current = null;
-        setDraggingId(null);
-      }
-    };
+    const onUp = () => endCardDragRef.current();
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    window.addEventListener('blur', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); window.removeEventListener('blur', onUp); };
   }, []);
   useEffect(() => {
     const onMove = (e) => {
@@ -3651,6 +3729,7 @@ function App() {
     setSelectedId(null);
     setDrawerId(null);
     setPair(null);
+    clearTimeout(hoverTimer.current); clearTimeout(lineTimer.current);
     setHoveredTitle(null);
     setHoveredConnection(null);
     setPinnedActor(null);
@@ -4176,7 +4255,8 @@ function App() {
           activeChars={activeChars}
           drawChar={linesSettling ? null : highlightedChar}
           litIds={activeChar ? highlightedIds : null}
-          onHoverConnection={setHoveredConnection}
+          onHoverConnection={hoverLine}
+          dragId={dragLabelId}
           hoveredConnection={hoveredConnection}
           selectedId={selectedId}
           focusId={pair ? null : hoverFocusId}
@@ -4211,7 +4291,7 @@ function App() {
               connections={connCounts[t.id] || 0}
               pos={positions[t.id] || {x:0,y:0}}
               onClick={() => onCardTap(t.id)}
-              onHover={isTouch ? (() => {}) : setHoveredTitle}
+              onHover={isTouch ? (() => {}) : hoverCard}
               onDragStart={isTouch ? (() => {}) : onCardDragStart}
               focusable={!isTouch}
               onFocusCard={revealCard}
