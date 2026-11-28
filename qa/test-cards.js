@@ -114,6 +114,13 @@ const LINEFIT = () => {
     out[scheme + ' selected'] = { ...sel, restW, restScale, selScale };
     expect(!sel.acts && !sel.over.length && Math.abs(sel.ratio - 2 / 3) < 0.01 && Math.abs(sel.w / selScale - restW / restScale) < 2,
       `${scheme}: the selected card: ${JSON.stringify(out[scheme + ' selected'])}`);
+    // Its outline is its phase color, not the highlight's gray (Notion
+    // "Connections: the selected card shows its phase ring", Andre 2026-11-27:
+    // "App follows Figma, phase ring").
+    const ring = out[scheme + ' selected ring'] = await page.evaluate(() => { const c = document.querySelector('.card[data-id="thor"]');
+      const probe = document.createElement('div'); probe.style.color = getComputedStyle(c).getPropertyValue('--phase-color'); c.appendChild(probe);
+      const phase = getComputedStyle(probe).color; probe.remove(); return { border: getComputedStyle(c).borderTopColor, phase }; });
+    expect(ring.phase && ring.border === ring.phase, `${scheme}: the selected card's outline should be its phase color: ${JSON.stringify(ring)}`);
     errors.push(...e);
     await ctx.close();
   }

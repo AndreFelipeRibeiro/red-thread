@@ -114,13 +114,16 @@ export function SpatialCard({ title, pos, onClick, onHover, onDragStart, onFocus
   const skipped = !!guideSkip && guideSkip.state === 'skipped';
 
   // The states, resolved in the order they override each other (later wins):
-  // dragging, hover, selected, highlighted, dimmed, watchlisted, collection
+  // dragging, hover, highlighted, selected, dimmed, watchlisted, collection
   // dimming, hidden by a ring, a skipped guide stop, the stepper's current
-  // title. Hover only shows what no state after it overrides.
+  // title. Hover only shows what no state after it overrides. The selected
+  // title is also highlighted (it lights its own threads), and its phase-color
+  // ring wins over the highlight's gray outline (Andre, 2026-11-27: "App
+  // follows Figma, phase ring"; the Spatial card's Ring=Selected variant).
   let border = 'border-border', shadow = SHADOW.base, z = 'z-10', fade = '', lift = '';
   if (isDragging) { z = 'z-30'; shadow = SHADOW.drag; }
-  if (isSelected) { border = 'border-(--phase-color)'; shadow = SHADOW.selected; z = 'z-25'; }
   if (isHighlighted) { border = 'border-(--highlight-border)'; shadow = SHADOW.highlighted; z = 'z-22'; }
+  if (isSelected) { border = 'border-(--phase-color)'; shadow = SHADOW.selected; z = 'z-25'; }
   if (isDimmed) fade = 'opacity-22 saturate-40';
   if (listed) border = 'border-(--status-watch-border)';
   if (isCollDimmed) fade = 'opacity-26 saturate-30';

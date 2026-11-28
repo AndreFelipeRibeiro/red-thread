@@ -14,6 +14,7 @@
     {"name": "Band label", "figma": "20:38", "device": "desktop", "url": "?view=spatial", "selector": ".band-label", "size": "h"},
     {"name": "Spatial card · Seen=yes", "figma": "14:21", "device": "desktop", "url": "?view=spatial", "selector": ".card[data-id=\"thor\"]", "size": "wh"},
     {"name": "Spatial card · Seen=no", "figma": "14:38", "device": "desktop", "url": "?view=spatial", "selector": ".card[data-id=\"thor-ragnarok\"]", "size": "wh"},
+    {"name": "Spatial card · Ring=Selected", "figma": "310:664", "device": "desktop", "url": "?view=spatial&title=thor", "selector": ".card[data-id=\"thor\"]", "storage": {"mcu.collection.v1": "{\"version\":1,\"states\":{}}"}, "size": "wh"},
     {"name": "Guide card · State=Following", "figma": "21:88", "device": "desktop", "url": "?view=guides", "selector": ".g-gcard", "size": "", "storage": {"mcu.guidesFollowed.v1": "[{\"id\": \"before-doomsday\", \"at\": 1}, {\"id\": \"infinity-saga\", \"at\": 1}]"}},
     {"name": "Guide promo · State=Following", "figma": "21:44", "device": "desktop", "url": "?view=guides", "selector": ".g-hero", "size": "", "storage": {"mcu.guidesFollowed.v1": "[{\"id\": \"before-doomsday\", \"at\": 1}, {\"id\": \"infinity-saga\", \"at\": 1}]"}},
     {"name": "Guide card · State=Not followed", "figma": "147:695", "device": "desktop", "url": "?view=guides", "selector": ".g-gcard", "size": ""},
