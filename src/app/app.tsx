@@ -3253,6 +3253,11 @@ function App() {
     if (homeStartRef.current || !collectionSettled) return undefined;
     homeStartRef.current = true;
     if (urlLinked || guideId || !window.MCU_GUIDE) return undefined;
+    // A visit that opens on the welcome belongs to it: the remembered guide
+    // doesn't reopen under the welcome and its tour, which end with a guide
+    // of their own (Notion "Welcome: the finish's Doomsday card opened The
+    // Animated Series guide").
+    if (window.MCU_WELCOME) return undefined;
     const G = window.MCU_GUIDE;
     const kept = G.remembered();
     const keptGuide = kept && G.get(kept);
@@ -3562,12 +3567,14 @@ function App() {
   // guide"): the promotion's pick while it is a guide to start (not a
   // caught-up moment). Starting it counts as its promotion (no promo card on
   // top), follows it and opens it; Mark what you've seen still nudges later,
-  // as for any guide start.
+  // as for any guide start. Picked again when the titles change (a signed-in
+  // collection landing while the finish is up), so the card never offers a
+  // guide already finished and always names the guide it opens.
   const welcomeGuide = useMemo(() => {
     if (tour !== 'finish' || !window.MCU_GUIDE) return null;
     const pick = window.MCU_GUIDE.promotion(statusOf, window.todayISO());
     return pick && pick.guide && !pick.caughtUp ? pick : null;
-  }, [tour]);
+  }, [tour, collectionStates, collectionSettled]);
   const startWelcomeGuide = () => {
     if (!welcomeGuide) return;
     const id = welcomeGuide.guide.id;

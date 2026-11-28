@@ -255,6 +255,33 @@ const T = () => {
     await ctx.close();
   }
 
+  // ---- The finish's guide matches where it leads (Notion "Welcome: the
+  // finish's Doomsday card opened The Animated Series guide") -------------
+  // A browser that remembers an open guide, shown the welcome: that guide
+  // doesn't reopen under it; titles landing while the finish is up (a
+  // signed-in collection) change the card, and the card opens its own guide.
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK);
+    await page.addInitScript(() => { if (!sessionStorage.getItem('qa-kept')) { sessionStorage.setItem('qa-kept', '1'); localStorage.setItem('mcu.guide.v1', 'animated'); } });
+    await page.goto(URL + '?welcome'); await appReady(page); await page.waitForTimeout(1600);
+    const under = out.keptUnder = await page.evaluate(() => location.search.includes('guide='));
+    expect(!under, `the remembered guide doesn't reopen under the welcome: ${await page.evaluate(() => location.href)}`);
+    await page.locator('.welcome-tour').click(); await arrive(page, 1);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(700);
+    const card = () => page.evaluate(() => (document.querySelector('.tour-choice[data-choice="guide"]') || {}).textContent || '');
+    const before = out.finishBefore = await card();
+    expect(/Doomsday/.test(before), `finish: the Doomsday guide is offered first: ${before}`);
+    await page.evaluate(() => { const G = window.MCU_GUIDE; G.stops(G.get('before-doomsday'), false).forEach(s => window.MCU_COLLECTION.setStatus(s.id, 'seen')); });
+    await page.waitForTimeout(500);
+    const after = out.finishAfter = await card();
+    expect(!/Doomsday/.test(after) && /Spider-Man/.test(after), `finish: with the Doomsday guide finished, the card offers the next guide: ${after}`);
+    await page.locator('.tour-choice[data-choice="guide"]').click(); await page.waitForTimeout(900);
+    const opened = out.finishOpened = await page.evaluate(() => new URLSearchParams(location.search).get('guide') || location.pathname);
+    expect(opened === 'animated', `finish: the card opens the guide it names: ${opened}`);
+    errors.push(...e.map(x => 'finish guide: ' + x));
+    await ctx.close();
+  }
+
   // ---- A shared link on a first visit: no welcome, no tour ---------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
