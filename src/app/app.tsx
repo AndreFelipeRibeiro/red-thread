@@ -446,8 +446,14 @@ function connectionCounts(titles) {
 
 // How far below a row the arc joining two of its cards may dip (see control()).
 const ARC_MAX = 80;
+// The one width of every line on Connections: a character's thread, a
+// selected title's lines, Follow the thread, a guide's route and the threads
+// among its stops, lit or resting. Only the opacity tells the states apart
+// (Andre, 2026-11-28: "slightly thicker", "all the same size across the
+// board"; Notion "Connections: one line width everywhere").
+const LINE_W = 2.25;
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null, quiet = false }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, shownIds, route, drawChar, spokes = null }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination. It used to be drawn in place of the character threads;
   // since the guide line puts the stops in one row, the threads among them
@@ -471,7 +477,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     routeEl = (
       <svg className={`${S.THREADS} guide-route`} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
         {segs.map(([a, b, dashed], i) => (
-          <path key={i} d={d(a, b)} fill="none" style={{ stroke: 'var(--brand)' }} strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
+          <path key={i} d={d(a, b)} fill="none" style={{ stroke: 'var(--brand)' }} strokeWidth={LINE_W} strokeLinecap="round"
             strokeDasharray={dashed ? '10 9' : undefined} opacity={dashed ? 0.7 : 0.9}/>
         ))}
       </svg>
@@ -654,11 +660,12 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
       const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
-      // One even width per state. The ring's spokes, a selected title's
-      // dozens of lines, are a step thinner than a character's thread and no
-      // longer thicken with the characters they share (Notion "Connections: a
-      // selected title's lines drop the glow").
-      const strokeW = emphasized ? (spokes ? 2 : 3) : 1.8;
+      // Every line, in every state, is LINE_W wide; lit, resting and dimmed
+      // differ by opacity only (Notion "Connections: one line width
+      // everywhere", which follows "Follow the thread: every line one even
+      // width"). The ring's spokes no longer thicken with the characters they
+      // share.
+      const strokeW = LINE_W;
       const showLabel = emphasized && (isPair || involvesFocus) && (!spokes || isHovered || spokes.inner.has(conn.b) || !!activeChar);
       const drawDelay = emphasized && drawChar && primeOf(ch) === primeOf(drawChar) ? drawRank.get(conn.a + '__' + conn.b) : undefined;
       const draw = drawDelay !== undefined ? { className: 'thread-draw', pathLength: 1, style: { '--d': drawDelay + 'ms' } } : null;
@@ -675,20 +682,17 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 
       return (
         <g key={ch+i+conn.a+conn.b}>
-          {/* The pinned character's row draws its thread plain, as the guide
-              line does (Notion "Connections with a character pinned"): no
-              halo and no glow. */}
-          {emphasized && !quiet && (
-            <path d={curve(p1,p2,offset,i,isPair)} fill="none" stroke={charObj.color} strokeWidth={strokeW + 6} opacity={0.25} filter="url(#strong-glow)" strokeLinecap="round"
-              {...(draw ? { className: draw.className, pathLength: draw.pathLength, style: draw.style } : {})}/>
-          )}
+          {/* Every lit line is a plain stroke: no halo, glow or end dots, in
+              every state (a pinned character, a guide, a selected title, a
+              hovered line and the pair of two titles; Notion "Connections:
+              no glow on any line", 2026-11-28). */}
           <path
             d={curve(p1,p2,offset,i,isPair)}
             data-a={conn.a} data-b={conn.b} data-ch={ch} data-em={emphasized ? '1' : '0'}
             onClick={(e) => { e.stopPropagation(); if (onPickConnection) onPickConnection({ a: conn.a, b: conn.b }); }}
             // A resting line takes the theme's --thread-rest (quieter on the
             // light paper than on black); lit and dimmed lines keep theirs.
-            style={{transition:'opacity 220ms, stroke-width 220ms', cursor: 'pointer', ...(dimmed || emphasized ? {} : { opacity: 'var(--thread-rest)' }), ...(draw ? draw.style : {})}}
+            style={{transition:'opacity 220ms', cursor: 'pointer', ...(dimmed || emphasized ? {} : { opacity: 'var(--thread-rest)' }), ...(draw ? draw.style : {})}}
             className={draw ? draw.className : undefined}
             pathLength={draw ? draw.pathLength : undefined}
             fill="none"
@@ -696,17 +700,10 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
             strokeWidth={strokeW}
             opacity={baseOpacity}
             strokeLinecap="round"
-            filter={emphasized && !quiet ? 'url(#line-glow)' : undefined}
             pointerEvents="stroke"
             onMouseEnter={(e)=>onHoverConnection({a:conn.a,b:conn.b,characters:conn.characters,x:e.clientX,y:e.clientY})}
             onMouseLeave={()=>onHoverConnection(null)}
           />
-          {emphasized && !quiet && (
-            <>
-              <circle cx={p1.x + CARD_W/2} cy={p1.y + CARD_H/2} r={5} fill={charObj.color} opacity={0.9} filter="url(#strong-glow)"/>
-              <circle cx={p2.x + CARD_W/2} cy={p2.y + CARD_H/2} r={5} fill={charObj.color} opacity={0.9} filter="url(#strong-glow)"/>
-            </>
-          )}
         </g>
       );
     });
@@ -771,16 +768,6 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     <>
     {routeEl}
     <svg className={S.THREADS} style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
-      <defs>
-        <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="b"/>
-          <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="strong-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="5" result="b"/>
-          <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
       {lineEls}
       <style>{`.connection-layer path { pointer-events: stroke; }`}</style>
     </svg>
@@ -4188,10 +4175,6 @@ function App() {
           activeChar={activeChar}
           activeChars={activeChars}
           drawChar={linesSettling ? null : highlightedChar}
-          // A title's own lines (selected, or hovered) are drawn quiet too, as
-          // a pinned character's and a guide's are: no halo, glow or end dots
-          // (Andre, 2026-11-27: "Not sure if we need that glow effect").
-          quiet={charLine || !!guide || (!pair && !!hoverFocusId)}
           litIds={activeChar ? highlightedIds : null}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
