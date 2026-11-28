@@ -15,7 +15,7 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V5 Batch 33 — Connections: one line width (2.25 px) and no glow on any line
 
-Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [11af63c](https://github.com/AndreFelipeRibeiro/red-thread/commit/11af63c), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [11af63c](https://github.com/AndreFelipeRibeiro/red-thread/commit/11af63c), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging. Merged to `main` (production) at 16:09 as [396b3a2](https://github.com/AndreFelipeRibeiro/red-thread/commit/396b3a2), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200).
 
 - Every line on Connections is 2.25 px in every state: a character's thread, a selected title's lines, Follow the thread, a guide's route and the threads among its stops, lit, resting or dimmed. Only the opacity tells the states apart.
 - Lit lines lose the halo, glow filter and end dots everywhere, so the `quiet` prop is gone. It replaces Batch 32's 2 px / 3 px widths, and closes "Follow the thread: every line one even width" as superseded.
@@ -24,7 +24,7 @@ Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [11af63c](https://
 
 ## V5 Batch 33 — Connections: a quieter outline and glow on the selected card
 
-Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [3b30d64](https://github.com/AndreFelipeRibeiro/red-thread/commit/3b30d64), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [3b30d64](https://github.com/AndreFelipeRibeiro/red-thread/commit/3b30d64), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging. Merged to `main` (production) at 16:09 as [396b3a2](https://github.com/AndreFelipeRibeiro/red-thread/commit/396b3a2), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200).
 
 - The selected card's ring is 1 px over its phase-color border, and its glow below is softer (40%, tighter); it was a 2 px ring and a 70% glow.
 - Figma: the Spatial card's Ring=Selected changed and published ("DS · 2026-11-28 · Canvas lines and selected card", Current); Andre updated App Screens; the release is on both Changelog pages and in `docs/design-system-changelog.md`.
@@ -32,7 +32,7 @@ Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [3b30d64](https://
 
 ## V5 Batch 33 — Connections: smooth card dragging, no image drag, and calm hover
 
-Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging. Merged to `main` (production) at 16:09 as [396b3a2](https://github.com/AndreFelipeRibeiro/red-thread/commit/396b3a2), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200).
 
 - Dragging a card by its poster no longer starts the browser's image drag, where the card froze and then stuck to the pointer.
 - A drag repaints only the dragged card and its own lines, once per frame, and places their names again on the drop.
@@ -42,7 +42,7 @@ Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [0aaaebb](https://
 
 ## V5 Batch 33 — Guides page hero: the title no longer cuts off at narrow desktop widths
 
-Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [41b84f4](https://github.com/AndreFelipeRibeiro/red-thread/commit/41b84f4), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [41b84f4](https://github.com/AndreFelipeRibeiro/red-thread/commit/41b84f4), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging. Merged to `main` (production) at 16:09 as [396b3a2](https://github.com/AndreFelipeRibeiro/red-thread/commit/396b3a2), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200).
 
 - At narrow desktop widths (900–1100 px) the hero's title wrapped to four lines and ran under the poster strip. The intro now keeps at least 20rem, and the strip hides its small posters one at a time, farthest from the next stop first; the next stop, the destination and the release poster stay.
 - When About and the countdown don't both fit, the countdown goes under About.
@@ -51,7 +51,7 @@ Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [41b84f4](https://
 
 ## V5 Batch 33 — Social images: thinner thread lines, as in the app
 
-Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [7155ae5](https://github.com/AndreFelipeRibeiro/red-thread/commit/7155ae5), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging.
+Recorded: 2026-11-28 16:00 EST (-0500). Committed at 15:57 as [7155ae5](https://github.com/AndreFelipeRibeiro/red-thread/commit/7155ae5), pushed to `version/5.0` (V5 staging) at 15:58 with the batch at [0aaaebb](https://github.com/AndreFelipeRibeiro/red-thread/commit/0aaaebb). Full regression on the pushed tree (frozen copy, tree 39ebe10): all 93 check runs clean, including the accessibility scans in English, Portuguese and dark with no violations. `qa/smoke.js` clean on staging. Merged to `main` (production) at 16:09 as [396b3a2](https://github.com/AndreFelipeRibeiro/red-thread/commit/396b3a2), the staging tree plus the CHANGELOG commit, so no new regression; `qa/smoke.js` clean on production; IndexNow accepted the live sitemap's 392 addresses (200).
 
 - Share cards draw their thread at 4.5 px and its rings at 4 px (were 6 px): a 1080 px card is seen at about a third of its size, where 3 px read too thin.
 - Link previews draw a title's lines and a character's or guide's thread at 3 px (were 6 px). Production's link previews change when this reaches `main`, since the build draws them.
