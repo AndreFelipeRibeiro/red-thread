@@ -174,6 +174,16 @@ const lit = (prime, ch) => {
     await page.locator('.drawer.open .cast-row[data-char="peter"]').hover(); await page.waitForTimeout(80);
     const em = await page.locator('path[data-em="1"][data-a="no-way-home"][data-b="friendly-spidey"]').count();
     if (!em) errors.push('hovering Holland\'s Peter does not light No Way Home → Friendly Spider-Man');
+    // A selected title's lines are drawn quiet, as a pinned character's and a
+    // guide's are: no halo, glow or end dots (Notion "Connections: a selected
+    // title's lines drop the glow").
+    await page.mouse.move(5, 5); await page.waitForTimeout(80);
+    const q = out.selectedQuiet = await page.evaluate(() => ({ lit: document.querySelectorAll('path[data-em="1"]').length,
+      glow: document.querySelectorAll('.connection-layer [filter], svg [filter^="url(#"]').length,
+      // One even, thin width: the spokes no longer thicken with shared characters.
+      widths: [...new Set([...document.querySelectorAll('path[data-em="1"]')].map(p => p.getAttribute('stroke-width')))] }));
+    if (!q.lit || q.glow) errors.push('a selected title\'s lines should be lit with no glow: ' + JSON.stringify(q));
+    if (q.widths.join() !== '2') errors.push('a selected title\'s lines should all be 2px: ' + JSON.stringify(q.widths));
   }
 
   console.log(JSON.stringify({ ...out, errors }, null, 1));

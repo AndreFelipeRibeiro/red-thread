@@ -127,6 +127,25 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     expect(await page.locator('.share-image').count() === 0, 'desktop progress card: Escape did not close it');
 
+    // A deploy since the page loaded (Notion "Share your progress: the image
+    // doesn't draw"): the renderer's hashed file is gone, so the card says
+    // the app was updated and offers Reload, which reloads the page.
+    {
+      const { ctx: c2, page: p2 } = await open(DESK);
+      await go(p2, '');
+      await p2.route(/render-browser[^/]*\.js(\?|$)/, r => r.fulfill({ status: 404, body: 'gone' }));
+      await p2.evaluate(() => window.MCU_SHARE_IMAGE.progress(3, 60));
+      await p2.waitForSelector('.share-image-reload', { timeout: 8000 }).catch(() => {});
+      const stale = out.staleCard = await p2.evaluate(() => ({ text: (document.querySelector('.share-image-wait') || {}).textContent || null, reload: !!document.querySelector('.share-image-reload') }));
+      expect(stale.reload && stale.text === 'Red Thread was just updated. Reload the page to draw your card.', 'stale build: the card should offer Reload ' + JSON.stringify(stale));
+      if (stale.reload) {
+        const nav = p2.waitForNavigation({ timeout: 8000 }).then(() => true).catch(() => false);
+        await p2.locator('.share-image-reload').click();
+        expect(await nav, 'stale build: Reload did not reload the page');
+      }
+      await c2.close();
+    }
+
     // About is in the account menu's footer.
     await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
     await page.locator('.acct-foot-link').click(); await page.waitForTimeout(400);

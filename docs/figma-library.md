@@ -164,7 +164,13 @@ screens override only content (text, posters), the view switch, phase
 colors and unseen states; every other paint comes from the library, so
 don't copy fills or opacities onto instances (a copied fill stops taking
 library updates). The canvas
-lines on Connections are drawn by hand (the app computes them). The
+lines on Connections are drawn by hand (the app computes them), plain: a
+lit line is a plain stroke in the character's color with no glow, halo or
+end dots, the same for a selected title, a pinned character and a guide
+(2026-11-27, Notion "Connections: a selected title's lines drop the
+glow"): 3 px for a character's thread and a guide, and an even 2 px for
+a selected title's lines, which no longer thicken with the characters
+they share (2026-11-28). The
 canvas frames of Connections and Follow the thread carry the app's
 top-to-bottom gradient, its stops bound to `canvas-top` and `canvas-bottom`
 (2026-11-18). The Character card's photo badge keeps the component's

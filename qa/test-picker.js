@@ -261,6 +261,13 @@ const grid = page => page.evaluate(() => ({
   await page.waitForTimeout(200);
   const foot = await page.evaluate(() => { const f = document.querySelector('.pk-foot').getBoundingClientRect(); return f.bottom <= innerHeight + 1 && f.top < innerHeight; });
   if (!foot) err('phone: the footer is not on screen while scrolling');
+  // The stuck phase header sits at the sheet's top edge, with no posters
+  // showing above it (Notion "Seen picker: posters show above the phone's
+  // sticky phase header", 2026-11-27).
+  const stuck = await page.evaluate(() => { const b = document.querySelector('.pk-sheet .m-sheet-body'); const bt = b.getBoundingClientRect().top;
+    const h = [...document.querySelectorAll('.pk-ph')].map(x => x.getBoundingClientRect().top - bt).find(d => d > -40 && d < 40); return h == null ? null : Math.round(h * 10) / 10; });
+  out.phoneStuckHead = stuck;
+  if (stuck == null || Math.abs(stuck) > 0.5) err(`phone: the stuck phase header is ${stuck}px below the sheet's top edge, expected 0`);
   // Poster art is clipped by its button, so only the picker's own boxes count.
   const over = await page.evaluate(() => [...document.querySelectorAll('.pk *')].filter(e => !e.closest('.pk-art')).some(e => e.getBoundingClientRect().right > document.documentElement.clientWidth + 0.5));
   if (over) err('phone: something in the picker runs past the edge');
