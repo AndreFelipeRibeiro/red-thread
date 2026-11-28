@@ -181,9 +181,18 @@ function nodeDot(cx: number, cy: number, size: number, stroke: number, ring: str
   return img(svgURI(svg), size, size, { position: 'absolute', left: cx - size / 2, top: cy - size / 2 });
 }
 
-function threadsLayer(paths: { d: string; color: string }[]): Node {
+// The lines are the app's (Batch 32, Notion "Connections: a selected title's
+// lines are plain, thin and even"; Notion "Social images: thinner thread
+// lines, as in the app"): a character's thread and a guide 3 px, and a
+// title's lines 3 px too. The app draws a selected title's lines at 2 px, but
+// a preview is seen at feed size, where 2 px read too thin (Andre,
+// 2026-11-28, on the Iron Man preview). The rings at the stops are drawn as
+// thin as the thread they sit on.
+export const LINE = { title: 3, thread: 3 };
+
+function threadsLayer(paths: { d: string; color: string }[], width: number): Node {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${LINK.width}" height="${LINK.height}" viewBox="0 0 ${LINK.width} ${LINK.height}">${
-    paths.map((p) => `<path d="${p.d}" fill="none" stroke="${esc(p.color)}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</svg>`;
+    paths.map((p) => `<path d="${p.d}" fill="none" stroke="${esc(p.color)}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</svg>`;
   return img(svgURI(svg), LINK.width, LINK.height, { position: 'absolute', left: 0, top: 0 });
 }
 
@@ -269,7 +278,7 @@ function hubArt(art: Extract<LinkArt, { layout: 'hub' }>, c: PreviewColors): Nod
     }
   });
   const sats = art.satellites.slice(0, 3).map((sat, i) => spatialCard(sat.card, SATS[i].x, SATS[i].y, 0.7, c));
-  return [threadsLayer(paths), ...sats, spatialCard(art.center, CENTER.x, CENTER.y, CENTER.s, c)];
+  return [threadsLayer(paths, LINE.title), ...sats, spatialCard(art.center, CENTER.x, CENTER.y, CENTER.s, c)];
 }
 
 // Guide: Figma OG · Guide (up to 5 stops: 92 × 138, 78 apart, climbing 56)
@@ -286,19 +295,19 @@ function hubArt(art: Extract<LinkArt, { layout: 'hub' }>, c: PreviewColors): Nod
 const LONG_STEPS = 9;
 function guideArt(art: Extract<LinkArt, { layout: 'guide' }>, c: PreviewColors): Node[] {
   const n = art.stops.length;
-  const long = { w: 76, h: 114, dx: 46, dy: 36, lastX: 980, lastY: 164, node: 18, ring: 4.5, big: { x: 1020, y: 44, w: 120, h: 180, node: 24, ring: 6 } };
+  const long = { w: 76, h: 114, dx: 46, dy: 36, lastX: 980, lastY: 164, node: 18, ring: LINE.thread, big: { x: 1020, y: 44, w: 120, h: 180, node: 24, ring: LINE.thread } };
   const k = n > LONG_STEPS ? (LONG_STEPS - 1) / (n - 1) : 1;
   const g = n > LONG_STEPS
     ? { ...long, w: Math.round(long.w * k), h: Math.round(long.h * k), dx: long.dx * k, dy: long.dy * k,
       lastX: long.lastX + long.w - Math.round(long.w * k), node: Math.round(long.node * k), ring: Math.round(long.ring * k * 2) / 2 }
     : art.long ? long
-      : { w: 92, h: 138, dx: 78, dy: 56, lastX: 924, lastY: 206, node: 20, ring: 5, big: { x: 1000, y: 44, w: 140, h: 210, node: 26, ring: 6 } };
+      : { w: 92, h: 138, dx: 78, dy: 56, lastX: 924, lastY: 206, node: 20, ring: LINE.thread, big: { x: 1000, y: 44, w: 140, h: 210, node: 26, ring: LINE.thread } };
   const at = (i: number): [number, number] => [g.lastX - (n - 1 - i) * g.dx, g.lastY + (n - 1 - i) * g.dy];
   const nodes = art.stops.map((_, i) => { const [x, y] = at(i); return [x + g.w / 2, y + g.h] as [number, number]; });
   const bigNode: [number, number] = [g.big.x + g.big.w / 2, g.big.y + g.big.h];
   const first = nodes[0] || bigNode;
   const path = smooth([[first[0] - 100, first[1] + 115], ...nodes, bigNode]);
-  const out: Node[] = [threadsLayer([{ d: path, color: c.brand }])];
+  const out: Node[] = [threadsLayer([{ d: path, color: c.brand }], LINE.thread)];
   art.stops.forEach((p, i) => {
     const [x, y] = at(i);
     out.push(poster(p, x, y, g.w, g.h, 10), nodeDot(nodes[i][0], nodes[i][1], g.node, g.ring, c.brand, c.card));
@@ -346,10 +355,10 @@ function charArt(art: Extract<LinkArt, { layout: 'char' }>, c: PreviewColors): N
     }
     prev = nd;
   });
-  const out: Node[] = [threadsLayer([{ d, color: art.color }])];
+  const out: Node[] = [threadsLayer([{ d, color: art.color }], LINE.thread)];
   art.posters.forEach((p, i) => {
     const [x, y] = slot(i + 1);
-    out.push(poster(p, x, y, w, hgt, Math.min(10, w / 8)), nodeDot(nodes[i][0], nodes[i][1], 16 * k, 4 * k, art.color, c.card));
+    out.push(poster(p, x, y, w, hgt, Math.min(10, w / 8)), nodeDot(nodes[i][0], nodes[i][1], 16 * k, LINE.thread * k, art.color, c.card));
   });
   out.push(h('div', { position: 'absolute', left: pcx - portrait / 2, top: pcy - portrait / 2, width: portrait, height: portrait, display: 'flex',
     borderRadius: portrait / 2, border: `${5 * k}px solid ${art.color}`, overflow: 'hidden', backgroundColor: c.card, boxShadow: '0 10px 22px rgba(0, 0, 0, 0.45)' },
